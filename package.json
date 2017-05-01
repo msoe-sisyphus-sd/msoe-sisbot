@@ -1,0 +1,46 @@
+{
+  "name": "sisbot-server",
+  "version": "1.0.0",
+  "description": "Sisyphus sand plotter control server",
+  "main": "src/server.js",
+  "dependencies": {
+    "body-parser": "^1.15.2",
+    "cors": "^2.8.1",
+    "express": "^4.14.0",
+    "http-proxy": "^1.15.2",
+    "json-socket": "^0.2.0",
+    "underscore": "^1.8.3",
+    "uuid": "^2.0.2",
+    "basic-auth": "1.0.3",
+    "bluebird": "^3.3.4",
+    "body-parser": "^1.15.0",
+    "chalk": "1.1.1",
+    "cson": "^3.0.2",
+    "debug": "2.2.0",
+    "express": "^4.13.4",
+    "lodash": "^4.5.1",
+    "moment": "2.11.2",
+    "serialport": "3.1.0",
+    "wireless-tools": "^0.19.0",
+    "ws": "^1.0.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/builtbybig/sisbot-server"
+  },
+  "keywords": [
+    "sisyphus",
+    "sisbot",
+    "bruce shapiro",
+    "art",
+    "robot",
+    "control",
+    "server",
+    "sand",
+    "sand-plotter",
+    "zen",
+    "zen garden",
+    "installation"
+  ],
+  "license": "ISC"
+}

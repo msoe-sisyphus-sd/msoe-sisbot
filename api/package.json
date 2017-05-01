@@ -1,0 +1,29 @@
+{
+  "name": "ease_api",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node ./server.js"
+  },
+  "dependencies": {
+    "bcrypt": "^0.8.7",
+    "body-parser": "1.16.1",
+    "cors": "2.8.1",
+    "events": "1.1.1",
+    "express": "4.14.1",
+    "fs": "0.0.0",
+    "http": "0.0.0",
+    "json-socket": "0.2.1",
+    "moment": "^2.18.1",
+    "tls": "0.0.1",
+    "underscore": "^1.8.3",
+    "util": "0.10.3",
+    "uuid": "^2.0.2",
+		"shelljs": "0.7.7"
+  },
+  "description": "start node server.js create a socket connection to the server running on port 3003 access the following methods using socket.emit( method_name , data_object );",
+  "main": "server.js",
+  "devDependencies": {},
+  "author": "Ease",
+  "license": "ISC"
+}
