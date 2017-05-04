@@ -168,12 +168,12 @@ var playlist = {
 						console.log("Merge", randomized_tracks, remaining_tracks);
 						best_count = randomized_tracks.length;
 						var append_list = [];
-						_.each(remaining_tracks, function(track) {
-							var track_r = self.tracks[track];
+						_.each(remaining_tracks, function(remaining_track) {
+							var track_r = self.tracks[remaining_track];
 							var firstR = parseInt(track_r.substring(1,2));
 							var lastR = parseInt(track_r.substring(2));
 							var track_obj = {
-								id: next_track,
+								id: remaining_track,
 								firstR: firstR,
 								lastR: lastR,
 								reversible: (firstR != lastR),
