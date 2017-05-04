@@ -87,7 +87,7 @@ var playlist = {
 			var success = false;
 
 			console.log("Place track", next_track, this.tracks[next_track]);
-			var track_r = this.tracks[next_track].r;
+			var track_r = this.tracks[next_track];
 			var firstR = parseInt(track_r.substring(1,1));
 			var lastR = parseInt(track_r.substring(2,1));
 			var track_obj = {
