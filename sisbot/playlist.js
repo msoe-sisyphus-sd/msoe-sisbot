@@ -168,7 +168,8 @@ var playlist = {
 					}
 					// cancel out if retries is greater than max
 					if (retries >= self.config.max_rand_retries) {
-						remaining_tracks = best_matches.concat(remaining_tracks);
+						randomized_tracks = best_matches.concat(remaining_tracks);
+						remaining_tracks = [];
 					} else {
 						remaining_tracks = self.track_ids.slice();
 						randomized_tracks = [];

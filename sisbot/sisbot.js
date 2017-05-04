@@ -110,7 +110,8 @@ var sisbot = {
 					self.setPlaylist({
 							name: 'default',
 							repeat:true,
-							track_ids:['testpath1', 'testpath1', 'line','sine', 'circam2s', 'cwarp3b', 'dces4p', 'hep', 'india1p', 'para2b', 'tensig1'],
+							//track_ids:['testpath1', 'testpath1', 'line','sine', 'circam2s', 'cwarp3b', 'dces4p', 'hep', 'india1p', 'para2b', 'tensig1'],
+							track_ids:['sine','testr','testth','india1p'],
 							tracks:self.tracks
 					}, null);
 				}
