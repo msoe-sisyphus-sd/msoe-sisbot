@@ -136,7 +136,7 @@ var playlist = {
 				var no_win = true;
 				// check for no-win situation
 				_.each(remaining_tracks, function(track) {
-					var track_r = self.tracks[track].r;
+					var track_r = self.tracks[track];
 					var firstR = parseInt(track_r.substring(1,2));
 					var lastR = parseInt(track_r.substring(2));
 					var track_obj = {
