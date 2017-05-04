@@ -4,7 +4,8 @@ var config = {
 	sisbot_config : 'default.cson',
 	serial_path: '/dev/ttyACM0',
 	autoplay: true,
-	skip_incompatible: true
+	skip_incompatible: true,
+	max_rand_retries: 10
 };
 
 module.exports = config;

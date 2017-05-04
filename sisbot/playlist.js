@@ -85,6 +85,7 @@ var playlist = {
 		// else next, or if end and doesn't fit either, start over
 		var remaining_tracks = this.track_ids.slice();
 		var randomized_tracks = [];
+		var best_matches = [];
 		var retries = 0;
 
 		while (remaining_tracks.length > 0) {
@@ -109,7 +110,7 @@ var playlist = {
 				var first_track = randomized_tracks[0];
 				var last_track = randomized_tracks[randomized_tracks.length-1];
 
-				// add to end?
+				// add to end or front
 				//console.log("Track comparison", randomized_tracks.length, track_obj, first_track, last_track);
 				if (last_track.lastR == track_obj.firstR) {
 					randomized_tracks.push(track_obj);
@@ -126,7 +127,7 @@ var playlist = {
 				} else {
 					console.log("Track unable to fit", track_obj, first_track.firstR, last_track.lastR);
 				}
-			} else {
+			} else { // only track, just add
 				randomized_tracks.push(track_obj);
 				success = true;
 			}
@@ -161,9 +162,18 @@ var playlist = {
 
 				if (no_win) {
 					console.log("No solution, try again");
-					remaining_tracks = this.track_ids.slice();
-					randomized_tracks = [];
-					retries++;
+					// save best match
+					if (best_matches.length < randomized_tracks.length) {
+						best_matches = randomized_tracks.slice();
+					}
+					// cancel out if retries is greater than max
+					if (retries >= max_rand_retries) {
+						remaining_tracks = best_matches.concat(remaining_tracks);
+					} else {
+						remaining_tracks = this.track_ids.slice();
+						randomized_tracks = [];
+						retries++;
+					}
 				}
 			}
 		}
