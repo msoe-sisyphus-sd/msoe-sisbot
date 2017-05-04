@@ -13,7 +13,7 @@ var Ansible = function() {
 		_cb_hash : 				{},
 		_listeners :			{},
 		_address : 				'localhost',
-		_port : 					443,
+		_port : 					80,
 		_is_receiver :		false,
 		_cert : 					{
 								  			key: '/etc/ssl/private/private-key.pem',

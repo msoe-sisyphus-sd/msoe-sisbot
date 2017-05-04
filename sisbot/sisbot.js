@@ -55,7 +55,7 @@ var sisbot = {
 					});
 	      }
 	      this.ansible.setHandler(this);
-	      this.ansible.init(config.services.sisbot.address, config.services.sisbot.ansible_port, true);
+	      this.ansible.init(config.services.sisbot.address, config.services.sisbot.ansible_port, config.receiver);
 	      _.each(config.services.sisbot.connect, function(obj) {
 					console.log('obj', obj);
 					self.ansible.connect(obj, config.services[obj].address, config.services[obj].ansible_port, function(err, resp) {
