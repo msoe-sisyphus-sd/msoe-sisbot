@@ -150,10 +150,6 @@ var playlist = {
 
 					if (first_track.firstR == track_obj.firstR ||
 						first_track.firstR == track_obj.lastR ||
-						first_track.lastR == track_obj.firstR ||
-						first_track.lastR == track_obj.lastR ||
-						last_track.firstR == track_obj.firstR ||
-						last_track.firstR == track_obj.lastR ||
 						last_track.lastR == track_obj.firstR ||
 						last_track.lastR == track_obj.lastR) {
 							no_win = false;
