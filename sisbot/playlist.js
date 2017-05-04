@@ -86,6 +86,7 @@ var playlist = {
 		var remaining_tracks = this.track_ids.slice();
 		var randomized_tracks = [];
 		var best_matches = [];
+		var best_count = 0;
 		var retries = 0;
 
 		while (remaining_tracks.length > 0) {
@@ -163,11 +164,8 @@ var playlist = {
 				if (no_win) {
 					console.log("No solution, try again");
 					// save best match
-					if (best_matches.length < randomized_tracks.length) {
-						best_matches = randomized_tracks.slice();
-					}
-					// cancel out if retries is greater than max
-					if (retries >= self.config.max_rand_retries) {
+					if (best_count < randomized_tracks.length) {
+						best_count = randomized_tracks.length;
 						var append_list = [];
 						_.each(remaining_tracks, function(track) {
 							var track_r = self.tracks[track];
@@ -182,8 +180,12 @@ var playlist = {
 								verts: [] // purposely empty
 							};
 							append_list.push(track_obj);
-						})
-						randomized_tracks = best_matches.concat(append_list);
+						});
+						best_matches = randomized_tracks.concat(append_list);
+					}
+					// cancel out if retries is greater than max
+					if (retries >= self.config.max_rand_retries) {
+						randomized_tracks = best_matches.slice();
 						remaining_tracks = [];
 					} else {
 						remaining_tracks = self.track_ids.slice();
