@@ -1,3 +1,6 @@
+//sis03f.js 12/13/15 from 03e
+//  plugged pos'n leak to <1 step over 10K paths
+
 
 var util = require('util');
 var path = require('path');
@@ -66,71 +69,8 @@ var plistRepeat = true;
 var PLHOMED = false;
 var ABLETOPLAY = true;
 var moment = require("moment");
-//globals for autodimming:
-var rawPhoto = 1;  //raw photosensor 10-bit analog value
-var rawPhotoLast = 1;
-var photoArraySize = 32; //higher-->slower change
-var photoArray = [];
-photoArray.length = photoArraySize;
-photoArray.fill(0);
-var BR = 1; // user brightness scalar 0-1
-var BRamp = 2; //BR multiplier
-var photoAvgOld = 0;
-var photoSum = 0;
-var photoMin = 5; //minimum non-off LED brightness
-var photoMsec = 250; // -sample potosensor every.  higher-->slower change
 
-var maTheta; //Theta current
-var maR;     //R current
-var Vm;      //motor voltage
 }
-
-function checkPhoto() { //autodimming functionality:
-	var photo, photoAvg = 0, delta; 
-
-return;
-	
-	sp.write("A\r"); //SBB command to check analog inputs
-	
-	if (rawPhoto > 250) { //skip very low as spurious vals
-		photo = (1023 - rawPhoto);
-		if (photo > 1023) {photo = 1023;}
-		if (photo < 1) {photo = 1;}
-		console.log(photo)
-		
-		photoSum -= photoArray.shift(); //delete first val in array and subtract from sum
-		photoSum += photoArray[photoArray.push(photo) - 1]; //add val to end and add it
-		photoAvg = Math.round(photoSum * BR * BRamp / photoArraySize);
-		
-		delta = photoAvg - photoAvgOld;
-		
-		if (Math.abs(delta) / photoAvgOld > 0.01) {
-			if (delta > 0) {
-				photoAvg *= 1.01;
-			}
-			
-			else {photoAvg /= 1.01;}
-			
-			if ((photoAvg > 0) && (photoAvg <= photoMin)) {photoAvg = photoMin;}
-			if (photoAvg > 1023) {photoAvg = 1023};
-			
-			//console.log("photoAvg2= " + photoAvg);
-			
-			if (Math.round(photoAvg) != Math.round(photoAvgOld)) {
-					if (Math.round(photoAvg) != 0) {
-					sp.write("SE,1," + Math.round(photoAvg) +"\r");
-				}
-				else {sp.write("SE,0\r")}
-				console.log("SE,1," + Math.round(photoAvg))
-				photoAvgOld = photoAvg;
-			}
-		}
-	}
-	if (STATUS != 'homing'){ //stop photosensing if homing
-	setTimeout(checkPhoto, photoMsec);
-	}
-}
-
 
 function setStatus(newStatus) {
 
@@ -190,6 +130,7 @@ function nextMove(mi) {
   var rStepsOld, rStepsNew, rStepsMove, rStepsComp, rStepsSeg, rLOsteps;
   var thOld, rOld, thNew, rNew;
   var headingNow;
+  // console.log(util.inspect(process.memoryUsage()));
 
   // if `mi` isn't set, we're starting a new track, so start at zero.
   mi = mi || 0;
@@ -254,8 +195,22 @@ function nextMove(mi) {
   rStepsOld = Math.floor(rOld * rSPInch * plotRadius) * rDirSign;
   rStepsMove = rStepsNew - rStepsOld;
 
+
+  //rStepsComp =  (Math.floor(thNew * thSPRad * rthAsp) -
+                  //  Math.floor(thOld  * thSPRad * rthAsp))  * nestedAxisSign;
+
+  //rStepsComp =  Math.floor(thNew / (2 * Math.PI) * rSPRev ) -
+              //      Math.floor(thOld / (2 * Math.PI) * rSPRev )  * nestedAxisSign;
+//  console.log(rStepsComp + '*');
+
   rStepsComp = Math.floor(thStepsNew * rthAsp * nestedAxisSign) -
                     Math.floor(thStepsOld * rthAsp * nestedAxisSign);
+
+  //console.log(rStepsComp + '');
+
+  //rStepsComp = Math.floor(thStepsMove * rthAsp )* nestedAxisSign;
+  //console.log(rStepsComp + '*');
+
 
   rStepsMove += rStepsComp;
 
@@ -417,7 +372,7 @@ function go() {
 //////      GO THETA HOME    ///////////////////////////////////
 function goThetaHome() {
   var thetaHomingStr, thetaHomeQueryStr = "PI," + homingThPin + "\r";
-	//Theta home pin B7 sbb1, D2 sbb1.1, (C0 ebb)
+	//Theta home pin B7 sbb1, D2 sbb1.1, (C0 ebb)//R home pin C6
 
 	WAITING_THETA_HOMED = true;
 	
@@ -425,10 +380,9 @@ function goThetaHome() {
     pauseRequest = false;
     setStatus('waiting');
     console.log('theta homing aborted');
-		setTimeout(checkPhoto, photoMsec); //restart photosensing for autodim
     return;
   }
-	
+
   if (THETA_HOME_COUNTER == THETA_HOME_MAX) {
     console.log('Failed to find Theta home!');
     logEvent('Th homing failure ');
@@ -488,119 +442,82 @@ function goThetaHome() {
 			console.log('THETA AT HOME!');
 			RETESTCOUNTER = 0;
 			WAITING_THETA_HOMED = false;
+
+			goRhoHome();
 			
-			WAITING_RHO_HOMED = true;
-			setTimeout(goRhoHome, 150);
 		}
+
 		
 	}
 	
 }	
+	
+	
+ 
+
+
 
  //////      GO RHO HOME    ///////////////////////////////////
- 
 function goRhoHome() {
   var rhoHomingStr, rhoHomeQueryStr = "PI," + homingRPin + "\r";
-	//R home pin C6
+  // R home pin C6
 
-	WAITING_RHO_HOMED = true;
-	
   if (pauseRequest) {
     pauseRequest = false;
     setStatus('waiting');
-    console.log('theta homing aborted');
-		setTimeout(checkPhoto, photoMsec); //restart photosensing for autodim
+    console.log('r homing aborted');
     return;
   }
-	
+
   if (RHO_HOME_COUNTER == RHO_HOME_MAX) {
     console.log('Failed to find Rho home!');
     logEvent('R homing failure ');
-    //handle error condition here
     setStatus('waiting');
     return;
   }
 
-	sp.write(rhoHomeQueryStr);
-		
-	if (!RHO_HOMED) { //not home yet, move toward home:
-		
-		rhoHomingStr = "SM,"+ baseMS + "," + 0 + "," + -HOMERSTEPS * rDirSign + "\r";
-				
-		RHO_HOME_COUNTER++;
-		console.log (RHO_HOME_COUNTER);
-		
-		sp.write(rhoHomingStr, function(err, res) {
-			sp.drain(function(err, result) {
-				if (err) {console.log(err, result);}
-				else {
-					console.log (rhoHomingStr);
-					WAITING_RHO_HOMED = true;
-								
-					goRhoHome();  
-				}
-			});
-		});
-	
-	}
-	
-	else { //Rho home sensor activated, confirm it:
-	
-		if (RETESTCOUNTER < RETESTNUM) {//not fully confirmed yet:
-			RETESTCOUNTER++;
-			console.log("RETESTCOUNTER: " + RETESTCOUNTER);
-			sp.write(rhoHomeQueryStr, function(err, res) {
-				sp.drain(function(err, result) {
-					if (err) {console.log(err, result);}
-					else {
-						console.log (rhoHomeQueryStr);
-						WAITING_RHO_HOMED = true;
-						//allow time for return of sensor state:		
-						setTimeout(goRhoHome, 15);
+  if (RHO_HOMED) {
+    if (RETESTCOUNTER < RETESTNUM) {
+      sp.write(rhoHomeQueryStr); //check inputs again
+      WAITING_RHO_HOMED = true;
+      RETESTCOUNTER++;
+      console.log("RETESTCOUNTER: " + RETESTCOUNTER);
+      return;
+    }
 
-					}
-				});
-			});
-		}	
+    rAccum = 0;
+    RHO_HOME_COUNTER = 0;
+    console.log('RHO AT HOME!');
+    RETESTCOUNTER = 0;
+    WAITING_RHO_HOMED = false;
 
-		else { //passed retesting so truly home:
-			thAccum = 0;
-			THETA_HOME_COUNTER = 0;
-			console.log('THETA AT HOME!');
-			RETESTCOUNTER = 0;
-			WAITING_THETA_HOMED = false;
-			
-			rAccum = 0;
-			RHO_HOME_COUNTER = 0;
-			console.log('RHO AT HOME!');
-			RETESTCOUNTER = 0;
-			WAITING_RHO_HOMED = false;
-			
-			logEvent('homed');
+    logEvent('homed');
 
-			if (PLHOMED) { //homed from playlist
-				setStatus('playing');
-				if (PLAYTYPE == 'shuffle') { //relevant only for homes in shuffleplay
-					plistLines.splice(PLINDEX,1); //pluck out plLines[PLINDEX]
-					//console.log(plistLines);
-					REMAINING--;
-				}
-				nextPlaylistLine(PLINDEX, plLinesMax);
-			}
-			else { //homed manually
-				setStatus('waiting');
-			}
-    
-			setTimeout(checkPhoto, photoMsec); //restart photosensing for autodim
-		
-			return;
-			
-		}
-		
-	}
-	
-}	
- 
+    if (PLHOMED) { //homed from playlist
+      setStatus('playing');
+      if (PLAYTYPE == 'shuffle') { //relevant only for homes in shuffleplay
+        plistLines.splice(PLINDEX,1); //pluck out plLines[PLINDEX]
+        //console.log(plistLines);
+        REMAINING--;
+      }
+      nextPlaylistLine(PLINDEX, plLinesMax);
+    }
+    else { //homed manually
+      setStatus('waiting');
+    }
+    return;
+  }
+  // not at rho home yet, so:
+  sp.write(rhoHomeQueryStr); //EBB inputs query command
+
+  rhoHomingStr = "SM,"+ baseMS + "," + 0 + "," + -HOMERSTEPS * rDirSign + "\r";
+  sp.write(rhoHomingStr);
+  WAITING_RHO_HOMED = true;
+  // console.log('homing rho...');
+  RHO_HOME_COUNTER++;
+
+  }
+
 //////      JOG     ///////////////////////////////////
 function jog(axis, direction) {
   var jogThsteps = 0, jogRsteps = 0;
@@ -668,44 +585,21 @@ function logEvent(event) {
   // });
 }
 
+{////////Serial Port events--//////////////////////////////////////////
 
+}
 function parseReceivedSerialData(data) {
   var parts;
 	//remove any line breaks in string:
 	data = String(data).replace(/(\r\n|\n|\r)/gm,"");
-  //console.log("in " + data);
+
+  console.log("in " + data);
   parts = String(data).split(',');
 
   if (parts[0] == '!')  {console.log("EBB error: " + data);}
 	else {
-  	if (parts[0] == 'A'){ //analog pin states
-				//console.log(parts)
-			
-			if (data.length == 33){ //analog report came back complete
-				if (parts[1]) {
-					maTheta = Number(parts[1].slice(3,7)) * 707 * 3.3 / 1023 ;
-					console.log('Theta current = ' + Math.round(maTheta) + 'mA') ;
-				} 
-			
-				if (parts[1]) {
-					maR = Number(parts[2].slice(3,7)) * 707 * 3.3 / 1023;
-					console.log('R current = ' + Math.round(maR) + 'mA') ;
-				}
-		
-				if (parts[3]) {
-					rawPhoto = Number(parts[3].slice(3,7));
-					//console.log(rawPhoto);	
-				}
-				
-				if (parts[4]) {
-					Vm = Number(parts[4].slice(3,7))*25*3.3/1023/2.717;
-					console.log("Vm= " + Math.round(Vm * 10)/10);	
-				}
-			}
-		}
-	 if (parts[0] == 'PI') {//EBB Pin Input return prefix
+  //if (parts[0] == 'PI') { 
     if (WAITING_THETA_HOMED) {
-			
       if (parseInt(parts[1], 10) == homingThHitState)  {
         THETA_HOMED = true;
       }
@@ -718,18 +612,17 @@ function parseReceivedSerialData(data) {
     }
 
     if (WAITING_RHO_HOMED) {
-      if (parseInt(parts[1], 10) == homingRHitState)  {
-        RHO_HOMED = true;
+      if (parseInt(parts[1], 10) !== homingRHitState)  {
+        RHO_HOMED = false;
+        RETESTCOUNTER = 0;
       }
-			else {
-				RHO_HOMED = false;
-				RETESTCOUNTER = 0;
-			}
-			
+      else RHO_HOMED = true;
+
+      goRhoHome();
       return;
     }
-   }
-	}
+  }
+	
 }
 
 /* ------------------------------
@@ -785,16 +678,6 @@ module.exports = {
 
     sp.on('data', parseReceivedSerialData);
     sp.write('CU,1,0\r'); // turn off EBB sending "OK"s
-		
-		sp.write('AC,0,1\r'); // turn on analog channel 0 for current reading Theta
-		sp.write('AC,1,1\r'); // turn on analog channel 1 for current reading R
-		sp.write('PD,B,3,1\r'); //set analog pin to input
-		sp.write('AC,9,1\r'); // turn on analog channel 9 for reading photosensor
-		
-		sp.write('SE,1\r'); //turn LED's on 50%
-
-		checkPhoto();
-				
   },
 
   // Returns the current state of the machine activity.
@@ -884,12 +767,8 @@ module.exports = {
   setSpeed: function(speed) {
     Voverride = speed;
   },
-	
-	setBrightness: function(brightness) {
-    BR = brightness;
-  },
-	
-  // Retrieve the current speed scalar.
+
+  // Retrieve the current speed sclar.
   getSpeed: function() {
     return Voverride;
   },
@@ -902,7 +781,7 @@ module.exports = {
         THETA_HOME_COUNTER = 0;
         RHO_HOME_COUNTER = 0;
         setStatus('homing');
-        setTimeout(goThetaHome, 1500);
+        goThetaHome();
 
       } else {
 
@@ -911,12 +790,10 @@ module.exports = {
         console.log('Current THETA/RHO set as HOME');
         thAccum = rAccum = 0;
         THETA_HOMED = RHO_HOMED = true;
-						
+
         setTimeout(function() {
           setStatus('waiting');
         }, 1)
-				
-				setTimeout(checkPhoto, photoMsec); //restart photosensing for autodim
       }
     }
   },

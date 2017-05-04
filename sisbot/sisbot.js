@@ -17,31 +17,51 @@ var sisbot = {
 	serial: null,
 	plotter: plotter,
 
-	_homed: true,
-  _brightness: 0.8,
 	playlist: playlist,
+	tracks: { // change to autoload, or passed in by app
+		circam2s:'r01',
+		cwarp3b:'r01',
+		dces4p:'r11',
+		erase:'r01',
+		hep:'r01',
+		india1p:'r11',
+		line:'r01',
+		para2b:'r01',
+		sine:'r00',
+		tensig1:'r01',
+		testpath1:'r01',
+		testr:'r00',
+		testth:'r00'
+	},
+
+	_autoplay: false,
+	_homed: false,
+  _brightness: 0.8,
 	_playing: true,
 
   init: function(config, session_manager) {
       var self = this;
       console.log("Init Sisbot");
+
       this.config = config;
+			if (this.config.autoplay) this._autoplay = this.config.autoplay;
+
 			if (session_manager != null) {
 	      this.ansible = session_manager;
 	      if (config.cert) {
-	          this.ansible.setCert({
-	              key : config.base_certs + config.cert.key,
-	              cert: config.base_certs + config.cert.cert
-	          });
+					this.ansible.setCert({
+						key : config.base_certs + config.cert.key,
+						cert: config.base_certs + config.cert.cert
+					});
 	      }
 	      this.ansible.setHandler(this);
 	      this.ansible.init(config.services.sisbot.address, config.services.sisbot.ansible_port, true);
 	      _.each(config.services.sisbot.connect, function(obj) {
-	          console.log('obj', obj);
-	          self.ansible.connect(obj, config.services[obj].address, config.services[obj].ansible_port, function(err, resp) {
-	              if (resp == true) console.log("Sisbot Connected to " + obj);
-	              else console.log(obj + " Sisbot Connect Error", err);
-	          });
+					console.log('obj', obj);
+					self.ansible.connect(obj, config.services[obj].address, config.services[obj].ansible_port, function(err, resp) {
+						if (resp == true) console.log("Sisbot Connected to " + obj);
+						else console.log(obj + " Sisbot Connect Error", err);
+					});
 	      });
 			}
 
@@ -53,9 +73,13 @@ var sisbot = {
 			});
 	    plotter.onStateChanged(function(newState, oldState) {
 				console.log("State changed to", newState, oldState);
-				if (oldState == 'homing') self._homed = true;
-				if (newState == 'waiting') {
-					if (self._playing) self.playNextTrack(null, null);
+				if (oldState == 'homing') {
+					self._homed = true;
+
+					if (newState == 'waiting' && self._autoplay) {
+						self.playNextTrack(null, null); // autoplay after first home
+						self._autoplay = false;
+					}
 				}
 			});
 
@@ -77,12 +101,18 @@ var sisbot = {
 
 				console.info('connect: connected!');
 
+				self.set_brightness({value:self._brightness}, null);
+
 				if (self.config.autoplay) {
 					//this.playPlaylist('default', {shuffle: true,repeat: true});
-					self.set_brightness({value:self._brightness}, null);
 
 					// playlist
-					self.setPlaylist({name: 'default', repeat:true, track_ids:['sine', 'circam2s', 'cwarp3b', 'dces4p', 'hep', 'india1p', 'para2b', 'tensig1$']}, null);
+					self.setPlaylist({
+							name: 'default',
+							repeat:true,
+							track_ids:['testpath1', 'testpath1', 'line','sine', 'circam2s', 'cwarp3b', 'dces4p', 'hep', 'india1p', 'para2b', 'tensig1$'],
+							tracks:self.tracks
+					}, null);
 				}
 			});
     } catch(err) {
@@ -129,14 +159,11 @@ var sisbot = {
 		console.log("Sisbot Set Playlist", data);
 
 		// load playlist
-		this.playlist.init(data);
-		this._playing = true;
+		this.playlist.init(this.config, data);
+		this._homed = false;
 
-		// !! debug exit //
-		if (cb) cb(null, 'setPlaylist');
-		return;
-
-		this.playNextTrack({}, null);
+		this.playlist.randomize(); // !! debugging
+		//this.playNextTrack({}, null);
 
 		if (cb)	cb(null, 'setPlaylist');
 	},
@@ -152,6 +179,7 @@ var sisbot = {
 					var track = JSON.parse(fs.readFileSync(this.config.base_dir+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+track_name+'.json', 'utf8'));
 
 					this.plotter.playTrack(track);
+					this._playing = true;
 
 					if (cb)	cb(null, 'next track '+track_name);
 				} else {
@@ -163,19 +191,20 @@ var sisbot = {
 		} else cb('No Connection', null);
 	},
 	playNextTrack: function(data, cb) {
-		console.log("Sisbot Play Next Track", data);
+		//console.log("Sisbot Play Next Track", data);
 		if (this._validateConnection()) {
 			this._playing = true;
 	    if (this._homed) {
-				var track_name = this.playlist.getNextTrack();
+				var track = this.playlist.getNextTrack();
 
 				// load track
-				if (track_name != null) {
-					var track = JSON.parse(fs.readFileSync(this.config.base_dir+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+track_name+'.json', 'utf8'));
-
+				if (track != null) {
+					console.log("Sisbot play next track", track.name, track.verts[0], track.verts[track.verts.length-1]);
 					this.plotter.playTrack(track);
+					this._playing = true;
+					this.playlist._rlast = track.lastR;
 
-					if (cb)	cb(null, 'next track '+track_name);
+					if (cb)	cb(null, 'next track '+track.name);
 				} else {
 					if (cb)	cb('no next track available', null);
 				}

@@ -1,6 +1,3 @@
-//sis03f.js 12/13/15 from 03e
-//  plugged pos'n leak to <1 step over 10K paths
-
 
 var util = require('util');
 var path = require('path');
@@ -375,7 +372,7 @@ function goThetaHome() {
 	//Theta home pin B7 sbb1, D2 sbb1.1, (C0 ebb)//R home pin C6
 
 	WAITING_THETA_HOMED = true;
-	
+
   if (pauseRequest) {
     pauseRequest = false;
     setStatus('waiting');
@@ -392,31 +389,31 @@ function goThetaHome() {
   }
 
 	sp.write(thetaHomeQueryStr);
-		
+
 	if (!THETA_HOMED) { //not home yet, move toward home:
-		
+
 		var rCompSteps = Math.round(HOMETHSTEPS * rthAsp * nestedAxisSign) * thDirSign;
 		thetaHomingStr = "SM,"+ baseMS + "," + HOMETHSTEPS * thDirSign+ "," + rCompSteps + "\r";
-				
+
 		THETA_HOME_COUNTER++;
 		console.log (THETA_HOME_COUNTER);
-		
+
 		sp.write(thetaHomingStr, function(err, res) {
 			sp.drain(function(err, result) {
 				if (err) {console.log(err, result);}
 				else {
 					console.log (thetaHomingStr);
 					WAITING_THETA_HOMED = true;
-								
-					goThetaHome();  
+
+					goThetaHome();
 				}
 			});
 		});
-	
+
 	}
-	
+
 	else { //Theta home sensor activated, confirm it:
-	
+
 		if (RETESTCOUNTER < RETESTNUM) {//not fully confirmed yet:
 			RETESTCOUNTER++;
 			console.log("RETESTCOUNTER: " + RETESTCOUNTER);
@@ -426,15 +423,15 @@ function goThetaHome() {
 					else {
 						console.log (thetaHomeQueryStr);
 						WAITING_THETA_HOMED = true;
-						//allow time for return of sensor state:		
+						//allow time for return of sensor state:
 						setTimeout(goThetaHome, 15);
 
 
-						//goThetaHome();  
+						//goThetaHome();
 					}
 				});
 			});
-		}	
+		}
 
 		else { //passed retesting so truly home:
 			thAccum = 0;
@@ -444,16 +441,16 @@ function goThetaHome() {
 			WAITING_THETA_HOMED = false;
 
 			goRhoHome();
-			
+
 		}
 
-		
+
 	}
-	
-}	
-	
-	
- 
+
+}
+
+
+
 
 
 
@@ -598,7 +595,7 @@ function parseReceivedSerialData(data) {
 
   if (parts[0] == '!')  {console.log("EBB error: " + data);}
 	else {
-  //if (parts[0] == 'PI') { 
+  //if (parts[0] == 'PI') {
     if (WAITING_THETA_HOMED) {
       if (parseInt(parts[1], 10) == homingThHitState)  {
         THETA_HOMED = true;
@@ -607,7 +604,7 @@ function parseReceivedSerialData(data) {
 				THETA_HOMED = false;
 				RETESTCOUNTER = 0;
 			}
-     
+
       return;
     }
 
@@ -622,7 +619,7 @@ function parseReceivedSerialData(data) {
       return;
     }
   }
-	
+
 }
 
 /* ------------------------------
