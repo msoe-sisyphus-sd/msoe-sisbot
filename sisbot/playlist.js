@@ -109,13 +109,13 @@ var playlist = {
 					randomized_tracks.push(track_obj);
 					success = true;
 				} else if (last_track.lastR == track_obj.lastR && track_obj.reversible) {
-					randomized_tracks.push(this.reverse(track_obj));
+					randomized_tracks.push(this._reverseTrack(track_obj));
 					success = true;
 				} else if (first_track.firstR == track_obj.lastR) {
 					randomized_tracks.unshift(track_obj);
 					success = true;
 				} else if (first_track.firstR == track_obj.firstR && track_obj.reversible) {
-					randomized_tracks.unshift(this.reverse(track_obj));
+					randomized_tracks.unshift(this._reverseTrack(track_obj));
 					success = true;
 				} else {
 					console.log("Track unable to fit", track_obj, first_track, last_track);
