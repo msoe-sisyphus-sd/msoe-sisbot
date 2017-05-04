@@ -75,6 +75,7 @@ var sisbot = {
 				console.log("State changed to", newState, oldState);
 				if (oldState == 'homing') {
 					self._homed = true;
+					self.playlist._rlast = 0; // reset
 
 					if (newState == 'waiting' && self._autoplay) {
 						self.playNextTrack(null, null); // autoplay after first home

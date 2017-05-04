@@ -1,4 +1,3 @@
-
 var util = require('util');
 var path = require('path');
 var fs = require('fs');// for file reading
@@ -133,10 +132,12 @@ function nextMove(mi) {
   mi = mi || 0;
 
   // log progress, without scrolling thousands of lines.
-  process.stdout.clearLine();
+  /*
+	process.stdout.clearLine();
   process.stdout.cursorTo(0);
   process.stdout.write('progress: ' + mi + ' / ' + miMax);
-
+	*/
+	
   if (mi >= miMax){
     console.log();
     console.log('all moves done');
