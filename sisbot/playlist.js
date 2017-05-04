@@ -113,16 +113,16 @@ var playlist = {
 
 				// add to end or front
 				//console.log("Track comparison", randomized_tracks.length, track_obj, first_track, last_track);
-				if (last_track.lastR == track_obj.firstR) {
+				if (last_track.lastR == track_obj.firstR && last_track.id != track_obj.id) {
 					randomized_tracks.push(track_obj);
 					success = true;
-				} else if (last_track.lastR == track_obj.lastR && track_obj.reversible) {
+				} else if (last_track.lastR == track_obj.lastR && track_obj.reversible && last_track.id != track_obj.id) {
 					randomized_tracks.push(this._reverseTrack(track_obj));
 					success = true;
-				} else if (first_track.firstR == track_obj.lastR) {
+				} else if (first_track.firstR == track_obj.lastR && first_track.id != track_obj.id) {
 					randomized_tracks.unshift(track_obj);
 					success = true;
-				} else if (first_track.firstR == track_obj.firstR && track_obj.reversible) {
+				} else if (first_track.firstR == track_obj.firstR && track_obj.reversible && first_track.id != track_obj.id) {
 					randomized_tracks.unshift(this._reverseTrack(track_obj));
 					success = true;
 				} else {
