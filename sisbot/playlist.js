@@ -85,6 +85,7 @@ var playlist = {
 		// else next, or if end and doesn't fit either, start over
 		var remaining_tracks = this.track_ids.slice();
 		var randomized_tracks = [];
+		var retries = 0;
 
 		while (remaining_tracks.length > 0) {
 			var rand = Math.floor(Math.random()*remaining_tracks.length);
@@ -123,7 +124,7 @@ var playlist = {
 					randomized_tracks.unshift(this._reverseTrack(track_obj));
 					success = true;
 				} else {
-					console.log("Track unable to fit", track_obj, first_track, last_track);
+					console.log("Track unable to fit", track_obj, first_track.firstR, last_track.lastR);
 				}
 			} else {
 				randomized_tracks.push(track_obj);
@@ -162,12 +163,13 @@ var playlist = {
 					console.log("No solution, try again");
 					remaining_tracks = this.track_ids.slice();
 					randomized_tracks = [];
+					retries++;
 				}
 			}
 		}
 
 		this.sorted_tracks = _.pluck(randomized_tracks,'id');
-		console.log("Randomized Tracks", this.sorted_tracks);
+		console.log("Randomized Tracks, retries:", retries, this.sorted_tracks);
 	},
 	setRepeat: function(value) {
 		this.repeat = Boolean(value);
