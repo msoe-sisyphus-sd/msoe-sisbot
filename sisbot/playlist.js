@@ -165,6 +165,7 @@ var playlist = {
 					console.log("No solution, try again");
 					// save best match
 					if (best_count < randomized_tracks.length) {
+						console.log("Merge", randomized_tracks, remaining_tracks);
 						best_count = randomized_tracks.length;
 						var append_list = [];
 						_.each(remaining_tracks, function(track) {

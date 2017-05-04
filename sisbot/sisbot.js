@@ -111,7 +111,7 @@ var sisbot = {
 							name: 'default',
 							repeat:true,
 							//track_ids:['testpath1', 'testpath1', 'line','sine', 'circam2s', 'cwarp3b', 'dces4p', 'hep', 'india1p', 'para2b', 'tensig1'],
-							track_ids:['sine','testr','testth','india1p'],
+							track_ids:['sine','testr','india1p','dces4p'],
 							tracks:self.tracks
 					}, null);
 				}
