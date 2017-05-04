@@ -87,8 +87,8 @@ var playlist = {
 			var success = false;
 
 			var track_r = this.tracks[next_track].r;
-			var firstR = Int(track_r.substring(1,1));
-			var lastR = Int(track_r.substring(2,1));
+			var firstR = parseInt(track_r.substring(1,1));
+			var lastR = parseInt(track_r.substring(2,1));
 			var track_obj = {
 				id: next_track,
 				firstR: firstR,
@@ -132,8 +132,8 @@ var playlist = {
 				// check for no-win situation
 				_.each(remaining_tracks, function(track) {
 					var track_r = self.tracks[track].r;
-					var firstR = Int(track_r.substring(1,1));
-					var lastR = Int(track_r.substring(2,1));
+					var firstR = parseInt(track_r.substring(1,1));
+					var lastR = parseInt(track_r.substring(2,1));
 					var track_obj = {
 						id: track,
 						firstR: firstR,
