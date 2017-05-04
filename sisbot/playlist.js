@@ -78,6 +78,8 @@ var playlist = {
 	},
 	randomize: function() {
 		var self = this;
+		console.log("Randomize Playlist");
+
 		// insert random value to end (if it verifies),
 		// else put in front (if it verifies),
 		// else next, or if end and doesn't fit either, start over
@@ -89,7 +91,7 @@ var playlist = {
 			var next_track = remaining_tracks[rand];
 			var success = false;
 
-			console.log("Place track", next_track, this.tracks[next_track]);
+			//console.log("Place track", next_track, this.tracks[next_track]);
 			var track_r = this.tracks[next_track];
 			var firstR = parseInt(track_r.substring(1,2));
 			var lastR = parseInt(track_r.substring(2));
@@ -107,7 +109,7 @@ var playlist = {
 				var last_track = randomized_tracks[randomized_tracks.length-1];
 
 				// add to end?
-				console.log("Track comparison", randomized_tracks.length, track_obj, first_track, last_track);
+				//console.log("Track comparison", randomized_tracks.length, track_obj, first_track, last_track);
 				if (last_track.lastR == track_obj.firstR) {
 					randomized_tracks.push(track_obj);
 					success = true;
@@ -164,7 +166,8 @@ var playlist = {
 			}
 		}
 
-		console.log("Randomized Tracks", _.pluck(randomized_tracks,'id'));
+		this.sorted_tracks = _.pluck(randomized_tracks,'id');
+		console.log("Randomized Tracks", this.sorted_tracks);
 	},
 	setRepeat: function(value) {
 		this.repeat = Boolean(value);
