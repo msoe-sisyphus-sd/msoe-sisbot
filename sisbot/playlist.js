@@ -37,6 +37,8 @@ var playlist = {
 			track.lastR = temp;
 			track.type = 'r'+track.firstR+track.lastR;
 		}
+
+		return track;
 	},
 	getCurrentTrack: function() {
 		return currentTrack;
