@@ -105,6 +105,7 @@ var playlist = {
 				var last_track = randomized_tracks[randomized_tracks.length-1];
 
 				// add to end?
+				console.log("Track comparison", track_obj, first_track, last_track);
 				if (last_track.lastR == track_obj.firstR) {
 					randomized_tracks.push(track_obj);
 					success = true;
