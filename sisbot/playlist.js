@@ -168,7 +168,22 @@ var playlist = {
 					}
 					// cancel out if retries is greater than max
 					if (retries >= self.config.max_rand_retries) {
-						randomized_tracks = best_matches.concat(remaining_tracks);
+						var append_list = [];
+						_.each(remaining_tracks, function(track) {
+							var track_r = self.tracks[track];
+							var firstR = parseInt(track_r.substring(1,2));
+							var lastR = parseInt(track_r.substring(2));
+							var track_obj = {
+								id: next_track,
+								firstR: firstR,
+								lastR: lastR,
+								reversible: (firstR != lastR),
+								reversed: false,
+								verts: [] // purposely empty
+							};
+							append_list.push(track_obj);
+						})
+						randomized_tracks = best_matches.concat(append_list);
 						remaining_tracks = [];
 					} else {
 						remaining_tracks = self.track_ids.slice();
