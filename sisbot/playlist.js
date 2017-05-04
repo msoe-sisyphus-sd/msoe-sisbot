@@ -198,7 +198,7 @@ var playlist = {
 		}
 
 		this.sorted_tracks = _.pluck(randomized_tracks,'id');
-		console.log("Randomized Tracks, retries:", retries, this.sorted_tracks);
+		console.log("Randomized Tracks, retries:", retries, "best:", best_count, this.sorted_tracks);
 	},
 	setRepeat: function(value) {
 		this.repeat = Boolean(value);
