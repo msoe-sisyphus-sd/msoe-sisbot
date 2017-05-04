@@ -72,9 +72,6 @@ static.post('/:service/:endpoint', function(req, res) {
 	services[service][endpoint](data,cb);
 });
 
-https.createServer({
-	key : fs.readFileSync(config.base_certs + config.default_domain + '/privkey.key'),
-	cert : fs.readFileSync(config.base_certs + config.default_domain + '/fullchain.crt')
-}, static).listen(443);
+http.createServer(static).listen(80);
 
 console.log("Server created");
