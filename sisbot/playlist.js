@@ -84,7 +84,7 @@ var playlist = {
 			this.sorted_tracks = this.track_ids.slice();
 		}
 		this.randomized = Boolean(value);
-	}
+	},
 	randomize: function() {
 		var self = this;
 		console.log("Randomize Playlist");
