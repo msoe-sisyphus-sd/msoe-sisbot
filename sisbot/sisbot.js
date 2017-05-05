@@ -163,7 +163,7 @@ var sisbot = {
 		this.playlist.init(this.config, data);
 		this._homed = false;
 
-		this.playlist.randomize(); // !! debugging
+		this.playlist.set_random(true); // !! debugging
 		//this.playNextTrack({}, null);
 
 		if (cb)	cb(null, 'setPlaylist');

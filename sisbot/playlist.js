@@ -71,12 +71,20 @@ var playlist = {
 			console.log("Track error:", err);
 		}
 
-		console.log("Next track", track);
+		console.log("Next track", track.firstR, track.lastR, track.reversed);
 		return track;
 	},
 	getTrackType: function(name) {
 		//
 	},
+	set_random: function(value) {
+		if (value) {
+			this.randomize();
+		} else if (this.randomized) {
+			this.sorted_tracks = this.track_ids.slice();
+		}
+		this.randomized = Boolean(value);
+	}
 	randomize: function() {
 		var self = this;
 		console.log("Randomize Playlist");

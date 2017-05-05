@@ -58,7 +58,7 @@ var config = {
 		dev: {
 			port_ssl: 3101,
 			port_redirect: 3000,
-			default_domain: 'raspberrypi.local'
+			default_domain: 'sisyphus.local'
 		},
     travis: {
         base_dir: '/Users/kiefertravis/Documents',
