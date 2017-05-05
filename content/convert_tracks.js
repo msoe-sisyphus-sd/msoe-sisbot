@@ -23,11 +23,12 @@ fs.readdir('tracks/', function(err, files) {
 
 	    // Step the file, line by line
 	    var lines = data.toString().trim().split('\n');
+			var regex = /^\s*$/; // eliminate empty lines
 
 			_.map(lines, function(line) {
 				line.trim();
 
-				if (line.length > 0 && line.substring(0,1) != '#') {
+				if (line.length > 0 && line.substring(0,1) != '#' && !line.match(regex)) {
 					var values = line.split(/\s+/);
 					var entry = {th:parseFloat(values[0]),r:parseFloat(values[1])};
 					track.verts.push(entry);
