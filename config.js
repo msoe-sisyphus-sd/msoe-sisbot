@@ -11,8 +11,8 @@ var config = {
 			neo4j           : 'TlNpb20yYjB1MnNkbwo=',
 			cert: function() {
 				return {
-					key: this.default_domain+"/privkey.key",
-					cert: this.default_domain+"/fullchain.crt"
+					key: this.default_domain+"/private-key.key",
+					cert: this.default_domain+"/public-cert.crt"
 				}
 			},
 			folders: {

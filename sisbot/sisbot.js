@@ -192,7 +192,7 @@ var sisbot = {
 		} else cb('No Connection', null);
 	},
 	playNextTrack: function(data, cb) {
-		//console.log("Sisbot Play Next Track", data);
+		console.log("Sisbot Play Next Track", data);
 		if (this._validateConnection()) {
 			this._playing = true;
 	    if (this._homed) {

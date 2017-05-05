@@ -47,7 +47,7 @@ var playlist = {
 		this.currentTrack++;
 		if (this.currentTrack > this.sorted_tracks.length) {
 			if (!this.repeat) return null;
-			this.currentTrack = 0;
+			this.currentTrack = -1;
 		}
 		var track = null;
 
@@ -71,6 +71,7 @@ var playlist = {
 			console.log("Track error:", err);
 		}
 
+		console.log("Next track", track);
 		return track;
 	},
 	getTrackType: function(name) {
