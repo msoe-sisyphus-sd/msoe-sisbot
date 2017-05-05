@@ -2,9 +2,9 @@ var _						= require('underscore');
 var exec 				= require('child_process').exec;
 var CSON				= require('cson');
 var fs 					= require('fs');
-var iwconfig			= require('wireless-tools/iwconfig');
+var iwconfig		= require('wireless-tools/iwconfig');
 var iwlist			= require('wireless-tools/iwlist');
-var exec 					= require('child_process').exec;
+var exec 				= require('child_process').exec;
 
 var SerialPort	= require('serialport').SerialPort;
 
