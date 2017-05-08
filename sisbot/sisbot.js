@@ -92,7 +92,7 @@ var sisbot = {
 			this._connect();
 
 			// wifi connect
-			if (!this._is_hotspot) _query_internet(5000); // check for internet connection after 5 seconds
+			if (!this._is_hotspot) this._query_internet(5000); // check for internet connection after 5 seconds
 
 			return this;
   },
