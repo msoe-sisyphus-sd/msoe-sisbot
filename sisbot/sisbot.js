@@ -39,6 +39,10 @@ var sisbot = {
   _brightness: 0.8,
 	_playing: true,
 
+	_is_hotspot: false,
+	_is_internet_connected: false,
+	_internet_check: 0,
+
   init: function(config, session_manager) {
       var self = this;
       console.log("Init Sisbot");
@@ -86,6 +90,9 @@ var sisbot = {
 
 			// connect
 			this._connect();
+
+			// wifi connect
+			if (!this._is_hotspot) _query_internet(5000); // check for internet connection after 5 seconds
 
 			return this;
   },
@@ -290,18 +297,58 @@ var sisbot = {
 		if (cb)	cb(null, value);
 	},
 	// work out with travis
+	_validate_internet: function(data, cb) {
+		exec('ping -c 1 -W 2 google.com', (error, stdout, stderr) => {
+		  if (error) {
+		    console.error('exec error:',error);
+		    return;
+		  }
+		  console.log('stdout:', stdout);
+		  console.log('stderr:', stderr);
+
+			if (cb) cb(null, true);
+		});
+	},
+	_query_internet: function(time_to_check) {
+		if (!this._is_hotspot) { // only bother if you are not a hotspot
+			var self = this;
+			_internet_check = this.setTimeout(function() {
+				self._validate_internet(null, function(err, resp) {
+					if (err) return console.log("Internet check err", err);
+					if (resp) {
+						self._is_hotspot = false;
+						self._is_internet_connected = true;
+
+						// check again later
+						self._query_internet(60*60*1000); // check again in an hour
+					} else {
+						self._is_internet_connected = false;
+						if (!self._is_hotspot) self.reset_to_hotspot();
+					}
+				})
+			}, time_to_check);
+		}
+	},
 	wifi: function(data, cb) {
 		iwlist.scan(req.body, cb);
 	},
 	change_to_wifi: function(data, cb) {
 		if (req.body.ssid && req.body.psk && req.body.ssid != 'false' && req.body.psk != "") {
-			exec('sudo /home/pi/sisbot-server/ease/stop_hotspot.sh '+req.body.ssid+' '+req.body.psk);
+			clearTimeout(this._internet_check);
+			// regex, remove or error on double quotes
+			exec('sudo /home/pi/sisbot-server/ease/stop_hotspot.sh "'+req.body.ssid+'" "'+req.body.psk+'"');
+			this._is_hotspot = false;
+			this._query_internet(15000); // check again in 15 seconds
 			cb(null, req.body.ssid);
 		}
 		cb('ssid or psk error', null);
 	},
 	reset_to_hotspot: function(data, cb) {
+		clearTimeout(this._internet_check);
 		exec('sudo /home/pi/sisbot-server/ease/start_hotspot.sh');
+
+		this._is_hotspot = true;
+		this._is_internet_connected = false;
 		cb(null, 'reset to hotspot');
 	},
 	install_updates: function(data, cb) {
