@@ -312,7 +312,7 @@ var sisbot = {
 	_query_internet: function(time_to_check) {
 		if (!this._is_hotspot) { // only bother if you are not a hotspot
 			var self = this;
-			_internet_check = this.setTimeout(function() {
+			_internet_check = setTimeout(function() {
 				self._validate_internet(null, function(err, resp) {
 					if (err) return console.log("Internet check err", err);
 					if (resp) {
