@@ -338,7 +338,7 @@ var sisbot = {
 		}
 	},
 	get_wifi: function(data, cb) {
-		iwlist.scan(req.body, cb);
+		iwlist.scan(data, cb);
 	},
 	change_to_wifi: function(data, cb) {
 		if (req.body.ssid && req.body.psk && req.body.ssid != 'false' && req.body.psk != "") {
