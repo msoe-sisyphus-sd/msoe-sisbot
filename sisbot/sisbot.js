@@ -20,19 +20,15 @@ var sisbot = {
 
 	playlist: playlist,
 	tracks: { // change to autoload, or passed in by app
-		circam2s:'r01',
-		cwarp3b:'r01',
-		dces4p:'r11',
-		erase:'r01',
-		hep:'r01',
-		india1p:'r11',
-		line:'r01',
-		para2b:'r01',
-		sine:'r00',
-		tensig1:'r01',
-		testpath1:'r01',
-		testr:'r00',
-		testth:'r00'
+		'2CBDAE96-EC22-48B4-A369-BFC624463C5F': 'r01',
+		'C3D8BC17-E2E1-4D6D-A91F-80FBB65620B8': 'r01',
+		'2B34822B-0A27-4398-AE19-23A3C83F1220': 'r00',
+		'93A90B6B-EAEE-48A3-9742-C688235D837D': 'r01',
+		'B7407A2F-04C3-4C92-B907-4C3869DA86D6': 'r01',
+		'7C046710-9F19-4423-B291-7394996F0913': 'r11',
+		'D14E0B41-E572-4B69-9827-4A07C503D031': 'r01',
+		'26FBFB10-4BC7-46BF-8D55-85AA52C19ADF': 'r11',
+		'75518177-0D28-4B2A-9B73-29E4974FB702': 'r01'
 	},
 
 	id: uuid(),
@@ -127,7 +123,7 @@ var sisbot = {
 							name: 'default',
 							repeat:true,
 							randomized:true,
-							track_ids:['testpath1', 'testpath1', 'line', 'sine', 'circam2s', 'india1p', 'cwarp3b', 'dces4p', 'hep', 'india1p', 'para2b', 'tensig1'],
+							track_ids:['2CBDAE96-EC22-48B4-A369-BFC624463C5F', 'C3D8BC17-E2E1-4D6D-A91F-80FBB65620B8', '2B34822B-0A27-4398-AE19-23A3C83F1220'],
 							tracks:self.tracks
 					}, null);
 				}
