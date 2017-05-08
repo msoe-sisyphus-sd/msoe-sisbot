@@ -172,7 +172,7 @@ var sisbot = {
 		this._homed = false;
 
 		this.playlist.set_random(data.randomized);
-		this.playNextTrack({}, null);
+		if (this._autoplay) this.playNextTrack({}, null);
 
 		if (cb)	cb(null, 'setPlaylist');
 	},
@@ -345,7 +345,7 @@ var sisbot = {
 			clearTimeout(this._internet_check);
 			// regex, remove or error on double quotes
 			// no spaces in password
-			var pwd_check =  data.psk.match(^([0-9A-Za-z@.]{1,255})$);
+			//var pwd_check =  data.psk.match(^([0-9A-Za-z@.]{1,255})$);
 			exec('sudo /home/pi/sisbot-server/ease/stop_hotspot.sh "'+req.body.ssid+'" "'+req.body.psk+'"');
 			this._is_hotspot = false;
 			this._query_internet(15000); // check again in 15 seconds

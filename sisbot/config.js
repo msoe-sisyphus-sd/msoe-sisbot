@@ -3,7 +3,7 @@ var config = {
 	receiver : true, // receive messages from cloud
 	sisbot_config : 'default.cson',
 	serial_path: '/dev/ttyACM0',
-	autoplay: true,
+	autoplay: false,
 	skip_incompatible: true,
 	max_rand_retries: 10
 };
