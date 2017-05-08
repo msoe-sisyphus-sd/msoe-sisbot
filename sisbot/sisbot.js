@@ -322,9 +322,13 @@ var sisbot = {
 						self._is_hotspot = false;
 						self._is_internet_connected = true;
 
+						console.log("Internet connected.");
+
 						// check again later
 						self._query_internet(60*60*1000); // check again in an hour
 					} else {
+						console.log("Internet not connected, reverting to hotspot.");
+
 						self._is_internet_connected = false;
 						if (!self._is_hotspot) self.reset_to_hotspot();
 					}
