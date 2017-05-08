@@ -152,7 +152,7 @@ var sisbot = {
 		var obj = {
 			id: this.id,
 			type: this.type,
-			pi_id: this.type,
+			pi_id: this.pi_id,
 			name: this.name,
 		  brightness: this.brightness,
 			speed: this.speed
