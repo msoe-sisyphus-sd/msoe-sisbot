@@ -346,7 +346,7 @@ var sisbot = {
 			// regex, remove or error on double quotes
 			// no spaces in password
 			//var pwd_check =  data.psk.match(^([0-9A-Za-z@.]{1,255})$);
-			exec('sudo /home/pi/sisbot-server/ease/stop_hotspot.sh "'+req.body.ssid+'" "'+req.body.psk+'"');
+			exec('sudo /home/pi/sisbot-server/ease/stop_hotspot.sh "'+data.ssid+'" "'+data.psk+'"');
 			this._is_hotspot = false;
 			this._query_internet(15000); // check again in 15 seconds
 			cb(null, req.body.ssid);
