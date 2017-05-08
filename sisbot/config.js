@@ -5,7 +5,8 @@ var config = {
 	serial_path: '/dev/ttyACM0',
 	autoplay: false,
 	skip_incompatible: true,
-	max_rand_retries: 10
+	max_rand_retries: 10,
+	check_internet_interval: 3600000 // once every hour, confirm an internet connection
 };
 
 module.exports = config;

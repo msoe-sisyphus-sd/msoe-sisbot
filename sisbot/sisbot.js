@@ -140,6 +140,9 @@ var sisbot = {
     }
     return true;
   },
+	exists: function(data, cb) {
+		cb(null, 'Ok');
+	},
 	play: function(data, cb) {
 		console.log("Sisbot Play", data);
 		if (this._validateConnection()) {
@@ -326,7 +329,7 @@ var sisbot = {
 						console.log("Internet connected.");
 
 						// check again later
-						self._query_internet(60*60*1000); // check again in an hour
+						self._query_internet(self.config.check_internet_interval);
 					} else {
 						console.log("Internet not connected, reverting to hotspot.");
 
@@ -348,7 +351,7 @@ var sisbot = {
 			//var pwd_check =  data.psk.match(^([0-9A-Za-z@.]{1,255})$);
 			exec('sudo /home/pi/sisbot-server/ease/stop_hotspot.sh "'+data.ssid+'" "'+data.psk+'"');
 			this._is_hotspot = false;
-			this._query_internet(15000); // check again in 15 seconds
+			this._query_internet(7000); // check again in 7 seconds
 			cb(null, data.ssid);
 		} else {
 			cb('ssid or psk error', null);
