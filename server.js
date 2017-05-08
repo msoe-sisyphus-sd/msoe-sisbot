@@ -14,6 +14,16 @@ var config 				= require('./config.js');
 var ansible 		= require('./ansible.js');
 // var api 					= require('./api/server.js')(config, null);
 
+function getserial(){
+   var fs = require('fs');
+   var content = fs.readFileSync('/proc/cpuinfo', 'utf8');
+   var cont_array = content.split("\n");
+   var serial_line = cont_array[cont_array.length-2];
+   var serial = serial_line.split(":");
+   return serial[1].slice(1);
+}
+config.pi_serial = getserial();
+
 /**************************** PROXY *******************************************/
 
 // var proxy       = httpProxy.createServer();

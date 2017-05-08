@@ -5,6 +5,7 @@ var fs 					= require('fs');
 var iwconfig		= require('wireless-tools/iwconfig');
 var iwlist			= require('wireless-tools/iwlist');
 var exec 				= require('child_process').exec;
+var uuid				= require('uuid');
 
 var SerialPort	= require('serialport').SerialPort;
 
@@ -34,9 +35,15 @@ var sisbot = {
 		testth:'r00'
 	},
 
+	id: uuid(),
+	type: 'sisbot',
+	pi_id: '',
+	name: 'Sisyphus',
+  brightness: 0.8,
+	speed: 0.5,
+
 	_autoplay: false,
 	_homed: false,
-  _brightness: 0.8,
 	_playing: true,
 
 	_is_hotspot: false,
@@ -49,6 +56,7 @@ var sisbot = {
 
       this.config = config;
 			if (this.config.autoplay) this._autoplay = this.config.autoplay;
+			this.pi_id = 'pi_'+this.config.pi_serial;
 
 			if (session_manager != null) {
 	      this.ansible = session_manager;
@@ -109,7 +117,7 @@ var sisbot = {
 
 				console.info('connect: connected!');
 
-				self.set_brightness({value:self._brightness}, null);
+				self.set_brightness({value:self.brightness}, null);
 
 				if (self.config.autoplay) {
 					//this.playPlaylist('default', {shuffle: true,repeat: true});
@@ -140,6 +148,18 @@ var sisbot = {
     }
     return true;
   },
+	connect: function(data, cb) {
+		var obj = {
+			id: this.id,
+			type: this.type,
+			pi_id: this.type,
+			name: this.name,
+		  brightness: this.brightness,
+			speed: this.speed
+		};
+
+		cb(null, obj);
+	},
 	exists: function(data, cb) {
 		cb(null, 'Ok');
 	},
@@ -260,7 +280,7 @@ var sisbot = {
 			is_homing: false,
 			is_shuffle: false,
 			is_loop: false,
-			brightness: this._brightness,
+			brightness: this.brightness,
 			speed: this._speed,
 			active_playlist: 'false',
 			active_track: 'false',
@@ -287,7 +307,7 @@ var sisbot = {
 		if (value < 0) value = 0;
 		if (value > 1) value = 1;
 
-		this._brightness = value;
+		this.brightness = value;
     // convert to an integer from 0 - 1023, parabolic scale.
     var pwm = Math.pow(2, value * 10) - 1;
     pwm = Math.floor(pwm);
