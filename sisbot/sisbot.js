@@ -341,15 +341,18 @@ var sisbot = {
 		iwlist.scan(data, cb);
 	},
 	change_to_wifi: function(data, cb) {
-		if (req.body.ssid && req.body.psk && req.body.ssid != 'false' && req.body.psk != "") {
+		if (data.ssid && data.psk && data.ssid != 'false' && data.psk != "") {
 			clearTimeout(this._internet_check);
 			// regex, remove or error on double quotes
+			// no spaces in password
+			var pwd_check =  data.psk.match(^([0-9A-Za-z@.]{1,255})$);
 			exec('sudo /home/pi/sisbot-server/ease/stop_hotspot.sh "'+req.body.ssid+'" "'+req.body.psk+'"');
 			this._is_hotspot = false;
 			this._query_internet(15000); // check again in 15 seconds
 			cb(null, req.body.ssid);
+		} else {
+			cb('ssid or psk error', null);
 		}
-		cb('ssid or psk error', null);
 	},
 	reset_to_hotspot: function(data, cb) {
 		clearTimeout(this._internet_check);
