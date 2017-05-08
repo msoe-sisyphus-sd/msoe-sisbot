@@ -1,6 +1,7 @@
 var util = require('util');
 var path = require('path');
 var fs = require('fs');// for file reading
+var config = require('./config');
 
 {//globals:
 var Vball=2,  Accel = 2, MTV=0.5, Vmin = 0.1, Voverride = 1;
@@ -137,7 +138,7 @@ function nextMove(mi) {
   process.stdout.cursorTo(0);
   process.stdout.write('progress: ' + mi + ' / ' + miMax);
 	*/
-	
+
   if (mi >= miMax){
     console.log();
     console.log('all moves done');
@@ -397,13 +398,13 @@ function goThetaHome() {
 		thetaHomingStr = "SM,"+ baseMS + "," + HOMETHSTEPS * thDirSign+ "," + rCompSteps + "\r";
 
 		THETA_HOME_COUNTER++;
-		console.log (THETA_HOME_COUNTER);
+		if (config.debug) console.log (THETA_HOME_COUNTER);
 
 		sp.write(thetaHomingStr, function(err, res) {
 			sp.drain(function(err, result) {
 				if (err) {console.log(err, result);}
 				else {
-					console.log (thetaHomingStr);
+					if (config.debug) console.log (thetaHomingStr);
 					WAITING_THETA_HOMED = true;
 
 					goThetaHome();
@@ -417,12 +418,12 @@ function goThetaHome() {
 
 		if (RETESTCOUNTER < RETESTNUM) {//not fully confirmed yet:
 			RETESTCOUNTER++;
-			console.log("RETESTCOUNTER: " + RETESTCOUNTER);
+			if (config.debug) console.log("RETESTCOUNTER: " + RETESTCOUNTER);
 			sp.write(thetaHomeQueryStr, function(err, res) {
 				sp.drain(function(err, result) {
 					if (err) {console.log(err, result);}
 					else {
-						console.log (thetaHomeQueryStr);
+						if (config.debug) console.log (thetaHomeQueryStr);
 						WAITING_THETA_HOMED = true;
 						//allow time for return of sensor state:
 						setTimeout(goThetaHome, 15);
@@ -479,7 +480,7 @@ function goRhoHome() {
       sp.write(rhoHomeQueryStr); //check inputs again
       WAITING_RHO_HOMED = true;
       RETESTCOUNTER++;
-      console.log("RETESTCOUNTER: " + RETESTCOUNTER);
+      if (config.debug) console.log("RETESTCOUNTER: " + RETESTCOUNTER);
       return;
     }
 
@@ -591,7 +592,7 @@ function parseReceivedSerialData(data) {
 	//remove any line breaks in string:
 	data = String(data).replace(/(\r\n|\n|\r)/gm,"");
 
-  console.log("in " + data);
+  if (config.debug) console.log("in " + data);
   parts = String(data).split(',');
 
   if (parts[0] == '!')  {console.log("EBB error: " + data);}
