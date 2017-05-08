@@ -349,7 +349,7 @@ var sisbot = {
 			exec('sudo /home/pi/sisbot-server/ease/stop_hotspot.sh "'+data.ssid+'" "'+data.psk+'"');
 			this._is_hotspot = false;
 			this._query_internet(15000); // check again in 15 seconds
-			cb(null, req.body.ssid);
+			cb(null, data.ssid);
 		} else {
 			cb('ssid or psk error', null);
 		}
