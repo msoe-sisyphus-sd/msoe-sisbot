@@ -118,6 +118,7 @@ var sisbot = {
 					self.setPlaylist({
 							name: 'default',
 							repeat:true,
+							randomized:true,
 							track_ids:['testpath1', 'testpath1', 'line', 'sine', 'circam2s', 'india1p', 'cwarp3b', 'dces4p', 'hep', 'india1p', 'para2b', 'tensig1'],
 							tracks:self.tracks
 					}, null);
@@ -170,8 +171,8 @@ var sisbot = {
 		this.playlist.init(this.config, data);
 		this._homed = false;
 
-		this.playlist.set_random(true); // !! debugging
-		//this.playNextTrack({}, null);
+		this.playlist.set_random(data.randomized);
+		this.playNextTrack({}, null);
 
 		if (cb)	cb(null, 'setPlaylist');
 	},
