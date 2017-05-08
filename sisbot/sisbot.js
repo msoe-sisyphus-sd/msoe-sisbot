@@ -310,7 +310,7 @@ var sisbot = {
 		  // console.log('stdout:', stdout);
 		  // console.log('stderr:', stderr);
 
-			if (cb) cb(null, true);
+			if (cb) cb(null, returnValue);
 		});
 	},
 	_query_internet: function(time_to_check) {
@@ -353,6 +353,9 @@ var sisbot = {
 		} else {
 			cb('ssid or psk error', null);
 		}
+	},
+	is_network_connected: function(data, cb) {
+		this._validate_internet(data, cb);
 	},
 	reset_to_hotspot: function(data, cb) {
 		clearTimeout(this._internet_check);
