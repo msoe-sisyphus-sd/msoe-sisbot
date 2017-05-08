@@ -193,6 +193,7 @@ var sisbot = {
 		// load playlist
 		this.playlist.init(this.config, data);
 		this._homed = false;
+		if (this._playing) plotter.pause();
 
 		this.playlist.set_random(data.randomized);
 		if (this._autoplay) this.playNextTrack({}, null);
