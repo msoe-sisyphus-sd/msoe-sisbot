@@ -303,8 +303,11 @@ var sisbot = {
 		    console.error('exec error:',error);
 		    return;
 		  }
-		  console.log('stdout:', stdout);
-		  console.log('stderr:', stderr);
+
+			var returnValue = false;
+			if (stdout.indexOf("1 packets transmitted") > -1) returnValue = true;
+		  // console.log('stdout:', stdout);
+		  // console.log('stderr:', stderr);
 
 			if (cb) cb(null, true);
 		});
