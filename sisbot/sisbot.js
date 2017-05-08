@@ -337,7 +337,7 @@ var sisbot = {
 			}, time_to_check);
 		}
 	},
-	wifi: function(data, cb) {
+	get_wifi: function(data, cb) {
 		iwlist.scan(req.body, cb);
 	},
 	change_to_wifi: function(data, cb) {
