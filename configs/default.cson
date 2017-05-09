@@ -24,7 +24,7 @@ jogStepsRadius: 100
 
 useHomeSensors: true # false means that a "home" event means to set the current position as home.
 homingThSteps: 30 # Steps per homing check on Theta
-homingRSteps: 30 # Steps per homing check on R
+homingRSteps: 24 # Steps per homing check on R (30)
 homingThPin: 'D,2'
 homingRPin: 'C,6'
 homingThHitState: 0 # The value the sensor reports when triggered. 0 or 1.
