@@ -53,7 +53,7 @@ var playlist = {
 
 		try {
 			var track_id = this.sorted_tracks[this.currentTrack];
-			track = JSON.parse(fs.readFileSync(this.config.base_dir+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+track_id+'.json', 'utf8'));
+			track = JSON.parse(fs.readFileSync(this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+track_id+'.json', 'utf8'));
 
 			if (this._rlast != track.firstR) {
 				if (track.reversible) {
