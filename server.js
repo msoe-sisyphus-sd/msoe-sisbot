@@ -82,6 +82,6 @@ static.post('/:service/:endpoint', function(req, res) {
 	services[service][endpoint](data,cb);
 });
 
-http.createServer(static).listen(80);
+http.createServer(static).listen(config.servers.sisbot.port);
 
-console.log("Server created");
+console.log("Sisbot Server created");
