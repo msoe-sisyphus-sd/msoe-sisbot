@@ -74,7 +74,7 @@ var sisbot = {
 			}
 
 			// plotter
-	    this.plotter.setConfig(CSON.load(config.base_dir+'/'+config.folders.config+'/'+config.sisbot_config));
+	    this.plotter.setConfig(CSON.load(config.base_dir+'/sisbot/'+config.folders.config+'/'+config.sisbot_config));
 			plotter.onFinishTrack(function() {
 				console.log("Track Finished");
 				self.playNextTrack(null, null);
@@ -205,7 +205,7 @@ var sisbot = {
 
 				// load track
 				if (track_name != null) {
-					var track = JSON.parse(fs.readFileSync(this.config.base_dir+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+track_name+'.json', 'utf8'));
+					var track = JSON.parse(fs.readFileSync(this.config.base_dir+'/sisbot/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+track_name+'.json', 'utf8'));
 
 					this.plotter.playTrack(track);
 					this._playing = true;
