@@ -40,7 +40,7 @@ var app = function(given_config,ansible) {
 
 	// var used_ports = [];
 	var services = {};
-	services.sisbot = sisbot_obj.init(config,ansible());
+	services.sisbot = sisbot_obj.init(config,ansible);
 	// console.log("Services:", config.services);
 	// _.each(config.services, function (service, key) {
 	//   if (service.address !== 'localhost') return this;
