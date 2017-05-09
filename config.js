@@ -2,6 +2,7 @@ var _           = require('underscore');
 
 var config = {
 		base: {
+			debug   : false,
 			cert: function() {
 				return {
 					key: this.default_domain+"/private-key.pem",
@@ -15,21 +16,15 @@ var config = {
 				tracks: 'models',
 				cloud: 'siscloud',
 				api: 'sisapi'
-			}
-		},
-		dev: {
-			port_ssl: 3101,
-			port_redirect: 3000,
-			default_domain: 'sisyphus.local'
-		},
-    travis: {
-        base_dir: '/Users/kiefertravis/Documents',
-        base_certs: '/Users/kiefertravis/Documents/ease_proxy/certs/'
-    },
-    matt: {
-      base_dir		: '/Users/mattfox12/Documents/Sodo/Ease/sisbot-server',
-      base_certs	: '/Users/mattfox12/Documents/Sodo/Ease/proxy/certs/',
-    }
+			},
+			receiver : true, // receive messages from cloud
+			sisbot_config : 'default.cson',
+			serial_path: '/dev/ttyACM0',
+			autoplay: true,
+			skip_incompatible: true,
+			max_rand_retries: 10,
+			check_internet_interval: 3600000 // once every hour, confirm an internet connection
+		}
 };
 
 var config_obj = config.base;

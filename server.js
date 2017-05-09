@@ -11,7 +11,8 @@ var exec 					= require('child_process').exec;
 // var httpProxy   = require('http-proxy');
 
 var local_config 				= require('./config.js');
-var ansible 		= require('./ansible.js');
+var sisbot_obj					= require('./sisbot.js');
+// var ansible 		= require('./ansible.js');
 // var api 					= require('./api/server.js')(config, null);
 
 var config = {};
@@ -39,17 +40,17 @@ var app = function(given_config,ansible) {
 
 	// var used_ports = [];
 	var services = {};
-	console.log("Services:", config.services);
-	_.each(config.services, function (service, key) {
-	  if (service.address !== 'localhost') return this;
-
-		console.log("Create Service", key, service);
-	  var service_obj = require(service.dir + '/'+key+'.js');
-		var local_config = require(service.dir + '/config.js');
-		local_config = _.extend(config, local_config);
-
-		services[key] = service_obj.init(local_config,ansible());
-	});
+	services.sisbot = sisbot_obj.init(config,ansible());
+	// console.log("Services:", config.services);
+	// _.each(config.services, function (service, key) {
+	//   if (service.address !== 'localhost') return this;
+	//
+	// 	console.log("Create Service", key, service);
+	//   var service_obj = require(service.dir + '/'+key+'.js');
+	// 	var local_config = require(service.dir + '/config.js');
+	// 	local_config = _.extend(config, local_config);
+	//
+	// });
 
 	/**************************** SERVER *******************************************/
 
