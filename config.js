@@ -3,6 +3,7 @@ var _           = require('underscore');
 var config = {
 		base: {
 			debug   : false,
+			default_domin: 'sisyphus.local'
 			cert: function() {
 				return {
 					key: this.default_domain+"/private-key.pem",

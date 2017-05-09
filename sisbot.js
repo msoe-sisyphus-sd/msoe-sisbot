@@ -58,8 +58,8 @@ var sisbot = {
 	      this.ansible = session_manager;
 	      if (config.cert) {
 					this.ansible.setCert({
-						key : config.base_certs + config.cert.key,
-						cert: config.base_certs + config.cert.cert
+						key : config.base_certs + "/" + config.cert.key,
+						cert: config.base_certs + "/" + config.cert.cert
 					});
 	      }
 	      this.ansible.setHandler(this);
