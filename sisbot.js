@@ -41,7 +41,7 @@ var sisbot = {
 	_firstplay: false,
 	_autoplay: true,
 	_homed: false,
-	_playing: true,
+	_playing: false,
 
 	_is_hotspot: false,
 	_is_internet_connected: false,
