@@ -84,8 +84,8 @@ var sisbot = {
 	    plotter.onStateChanged(function(newState, oldState) {
 				console.log("State changed to", newState, oldState, self._autoplay);
 				if (newState == 'homing') self._homing = true;
-				if (newState == 'waiting') self.playing = false;
-				if (newState == 'playing') self.playing = true;
+				if (newState == 'waiting') self._playing = false;
+				if (newState == 'playing') self._playing = true;
 
 				if (oldState == 'homing') {
 					self._homed = true;
