@@ -16,10 +16,9 @@ var Ansible = function() {
 		_port : 					80,
 		_is_receiver :		false,
 		_cert : 					{
-								  			key: '/etc/ssl/private/private-key.pem',
-								  			cert: '/etc/ssl/private/public-cert.pem'
-											},
-
+  			key: '/etc/ssl/private/privkey.pem',
+  			cert: '/etc/ssl/private/fullchain.pem'
+		},
 		init: function(address,port,is_receiver) {
 			this._address = address;
 			this._port = port;

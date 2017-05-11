@@ -10,4 +10,4 @@ dces4p.thr	  1	  .5	.5
 hep.thr	  1	  .5	.5
 india1p.thr	  1	  .5	.5
 para2b.thr	  1	  .5	.5
-tensig1$.thr	  1	  .5	.5
+tensig1.thr	  1	  .5	.5
