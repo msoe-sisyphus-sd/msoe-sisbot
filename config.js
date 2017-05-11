@@ -6,8 +6,8 @@ var config = {
 			default_domain: 'sisyphus.local',
 			cert: function() {
 				return {
-					key: this.default_domain+"/private-key.pem",
-					cert: this.default_domain+"/public-cert.pem"
+					key: this.default_domain+"/privkey.pem",
+					cert: this.default_domain+"/fullchain.pem"
 				}
 			},
 			folders: {
