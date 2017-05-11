@@ -91,6 +91,11 @@ var sisbot = {
 						self.playNextTrack(null, null); // autoplay after first home
 					}
 				}
+
+				// play next track after pausing (i.e. new playlist)
+				if (newState == 'waiting' && oldState == 'playing' && self._autoplay) {
+					self.playNextTrack(null, null); // autoplay after first home
+				}
 			});
 
 			// connect
@@ -164,6 +169,7 @@ var sisbot = {
 		console.log("Sisbot Play", data);
 		if (this._validateConnection()) {
 			this._playing = true;
+			this._autoplay = true;
 			plotter.resume();
 			if (cb)	cb(null, 'play');
 		} else cb('No Connection', null);
@@ -172,6 +178,7 @@ var sisbot = {
 		console.log("Sisbot Pause", data);
 		if (this._validateConnection()) {
 			this._playing = false;
+			this._autoplay = false;
 			plotter.pause();
 			if (cb)	cb(null, 'pause');
 		} else cb('No Connection', null);
