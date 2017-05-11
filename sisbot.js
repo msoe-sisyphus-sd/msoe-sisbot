@@ -82,18 +82,22 @@ var sisbot = {
 			});
 	    plotter.onStateChanged(function(newState, oldState) {
 				console.log("State changed to", newState, oldState, self._autoplay);
+				if (newState == 'homing') self._homing = true;
+				if (newState == 'waiting') self.playing = false;
+				if (newState == 'playing') self.playing = true;
+
 				if (oldState == 'homing') {
 					self._homed = true;
 					self.playlist._rlast = 0; // reset
 
 					if (newState == 'waiting' && self._autoplay) {
-						self._playing = false;
 						self.playNextTrack(null, null); // autoplay after first home
 					}
 				}
 
 				// play next track after pausing (i.e. new playlist)
 				if (newState == 'waiting' && oldState == 'playing' && self._autoplay) {
+					console.log("Play new playlist!");
 					self.playNextTrack(null, null); // autoplay after first home
 				}
 			});
