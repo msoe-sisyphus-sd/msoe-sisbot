@@ -41,6 +41,7 @@ var sisbot = {
 	_firstplay: false,
 	_autoplay: true,
 	_homed: false,
+	_homing: false,
 	_playing: false,
 
 	_is_hotspot: false,
@@ -198,7 +199,7 @@ var sisbot = {
 		_.extend(data, {tracks: this.tracks}); // fix later,
 
 		console.log("Sisbot Set Playlist", data);
-		
+
 		// load playlist
 		this.playlist.init(this.config, data);
 		this._homed = false;

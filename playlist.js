@@ -26,6 +26,7 @@ var playlist = {
 		if (data.vel) this.vel = data.vel;
 		if (data.accel) this.accel = data.accel;
 		if (data.thvmax) this.thvmax = data.thvmax;
+		this.currentTrack = -1; // reset to -1, so next track will be 0
 	},
 	_reverseTrack: function(track) {
 		if (track.reversible) {
