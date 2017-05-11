@@ -38,7 +38,8 @@ var sisbot = {
   brightness: 0.8,
 	speed: 0.5,
 
-	_autoplay: false,
+	_firstplay: false,
+	_autoplay: true,
 	_homed: false,
 	_playing: true,
 
@@ -86,8 +87,8 @@ var sisbot = {
 					self.playlist._rlast = 0; // reset
 
 					if (newState == 'waiting' && self._autoplay) {
+						self._playing = false;
 						self.playNextTrack(null, null); // autoplay after first home
-						self._autoplay = false;
 					}
 				}
 			});
@@ -193,8 +194,11 @@ var sisbot = {
 		this._homed = false;
 		if (this._playing) plotter.pause();
 
-		this.playlist.set_random(data.randomized);
-		if (this._autoplay) this.playNextTrack({}, null);
+		if (this.playlist.randomized) this.playlist.set_random(data.randomized);
+
+		if (!this._playing && this._autoplay) this.playNextTrack({}, null);
+		if (this._firstplay) this._autoplay = true;
+		this._firstplay = true;
 
 		if (cb)	cb(null, 'setPlaylist');
 	},
