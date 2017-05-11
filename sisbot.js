@@ -81,7 +81,7 @@ var sisbot = {
 				self.playNextTrack(null, null);
 			});
 	    plotter.onStateChanged(function(newState, oldState) {
-				console.log("State changed to", newState, oldState);
+				console.log("State changed to", newState, oldState, self._autoplay);
 				if (oldState == 'homing') {
 					self._homed = true;
 					self.playlist._rlast = 0; // reset
