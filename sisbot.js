@@ -186,6 +186,8 @@ var sisbot = {
 	setPlaylist: function(data, cb) {
 		console.log("Sisbot Set Playlist", data);
 
+		_.extend(data, {tracks: this.tracks}); // fix later,
+
 		// load playlist
 		this.playlist.init(this.config, data);
 		this._homed = false;
