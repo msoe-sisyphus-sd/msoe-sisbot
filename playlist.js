@@ -47,7 +47,7 @@ var playlist = {
 		this.currentTrack++;
 		if (this.currentTrack > this.sorted_tracks.length) {
 			if (!this.repeat) return null;
-			this.currentTrack = -1;
+			this.currentTrack = 0;
 		}
 		var track = null;
 
