@@ -89,6 +89,7 @@ var sisbot = {
 
 				if (oldState == 'homing') {
 					self._homed = true;
+					self._homing = false;
 					self.playlist._rlast = 0; // reset
 
 					if (newState == 'waiting' && self._autoplay) {
@@ -216,7 +217,7 @@ var sisbot = {
 	playTrack: function(data, cb) {
 		console.log("Sisbot Play Track", data);
 		if (this._validateConnection()) {
-			this._playing = true;
+			// this._playing = true;
 	    if (this._homed) {
 				var track_name = data.name;
 
@@ -225,7 +226,7 @@ var sisbot = {
 					var track = JSON.parse(fs.readFileSync(this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+track_name+'.json', 'utf8'));
 
 					this.plotter.playTrack(track);
-					this._playing = true;
+					// this._playing = true;
 
 					if (cb)	cb(null, 'next track '+track_name);
 				} else {
@@ -239,7 +240,7 @@ var sisbot = {
 	playNextTrack: function(data, cb) {
 		console.log("Sisbot Play Next Track", data);
 		if (this._validateConnection()) {
-			this._playing = true;
+			// this._playing = true;
 	    if (this._homed) {
 				var track = this.playlist.getNextTrack();
 
@@ -247,7 +248,7 @@ var sisbot = {
 				if (track != null) {
 					console.log("Sisbot play next track", track.name, track.verts[0], track.verts[track.verts.length-1]);
 					this.plotter.playTrack(track);
-					this._playing = true;
+					// this._playing = true;
 					this.playlist._rlast = track.lastR;
 
 					if (cb)	cb(null, 'next track '+track.name);
@@ -261,28 +262,28 @@ var sisbot = {
 	},
   jogThetaLeft: function(data,cb) {
 		if (this._validateConnection()) {
-			this._playing = false;
+			// this._playing = false;
 			plotter.jogThetaLeft();
 			if (cb)	cb(null, 'left');
 		} else cb('No Connection', null);
 	},
   jogThetaRight: function(data,cb) {
 		if (this._validateConnection()) {
-			this._playing = false;
+			// this._playing = false;
 			plotter.jogThetaRight();
 			if (cb)	cb(null, 'right');
 		} else cb('No Connection', null);
 	},
   jogRhoOutward: function(data,cb) {
 		if (this._validateConnection()) {
-			this._playing = false;
+			// this._playing = false;
 			plotter.jogRhoOutward();
 			if (cb)	cb(null, 'out');
 		} else cb('No Connection', null);
 	},
   jogRhoInward: function(data,cb) {
 		if (this._validateConnection()) {
-			this._playing = false;
+			// this._playing = false;
 			plotter.jogRhoInward();
 			if (cb)	cb(null, 'in');
 		} else cb('No Connection', null);
@@ -290,8 +291,8 @@ var sisbot = {
   get_state: function(data, cb) {
 		var state = plotter.getState();
 		var return_obj = {
-			is_playing: false,
-			is_homing: false,
+			is_playing: this._playing,
+			is_homing: this._homing,
 			is_shuffle: false,
 			is_loop: false,
 			brightness: this.brightness,
@@ -415,7 +416,7 @@ var sisbot = {
 		// download listed tracks
 	},
 	download_track: function(data, cb) {
-		cb(null, 'installing updates');
+		cb(null, 'downloading tracks');
 	},
 	restart: function(data,cb) {
 		cb(null, 'restarting sisyphus');
