@@ -97,7 +97,7 @@ var sisbot = {
 
 				// play next track after pausing (i.e. new playlist)
 				if (newState == 'waiting' && oldState == 'playing' && self._autoplay) {
-					console.log("Play new playlist!");
+					console.log("Play new playlist!", self.playlist);
 					self.playNextTrack(null, null); // autoplay after first home
 				}
 			});
@@ -134,7 +134,6 @@ var sisbot = {
 							repeat:true,
 							randomized:true,
 							track_ids:['2CBDAE96-EC22-48B4-A369-BFC624463C5F', 'C3D8BC17-E2E1-4D6D-A91F-80FBB65620B8', '2B34822B-0A27-4398-AE19-23A3C83F1220', '93A90B6B-EAEE-48A3-9742-C688235D837D','B7407A2F-04C3-4C92-B907-4C3869DA86D6','7C046710-9F19-4423-B291-7394996F0913','D14E0B41-E572-4B69-9827-4A07C503D031','26FBFB10-4BC7-46BF-8D55-85AA52C19ADF','75518177-0D28-4B2A-9B73-29E4974FB702'],
-							tracks:self.tracks
 					}, null);
 				}
 			});
@@ -196,10 +195,10 @@ var sisbot = {
 		} else cb('No Connection', null);
 	},
 	setPlaylist: function(data, cb) {
-		console.log("Sisbot Set Playlist", data);
-
 		_.extend(data, {tracks: this.tracks}); // fix later,
 
+		console.log("Sisbot Set Playlist", data);
+		
 		// load playlist
 		this.playlist.init(this.config, data);
 		this._homed = false;
