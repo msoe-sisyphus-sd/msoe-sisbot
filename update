@@ -1,0 +1,5 @@
+#!/bash/bin
+
+cd /home/pi/sisbot-server/$1
+git reset --hard
+git pull origin master

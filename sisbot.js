@@ -366,7 +366,7 @@ var sisbot = {
 			// regex, remove or error on double quotes
 			// no spaces in password
 			//var pwd_check =  data.psk.match(^([0-9A-Za-z@.]{1,255})$);
-			exec('sudo /home/pi/sisbot-server/ease/stop_hotspot.sh "'+data.ssid+'" "'+data.psk+'"');
+			exec('sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "'+data.ssid+'" "'+data.psk+'"');
 			this._is_hotspot = false;
 			this._query_internet(7000); // check again in 7 seconds
 			cb(null, data.ssid);
@@ -379,14 +379,19 @@ var sisbot = {
 	},
 	reset_to_hotspot: function(data, cb) {
 		clearTimeout(this._internet_check);
-		exec('sudo /home/pi/sisbot-server/ease/start_hotspot.sh');
+		exec('sudo /home/pi/sisbot-server/sisbot/start_hotspot.sh');
 
 		this._is_hotspot = true;
 		this._is_internet_connected = false;
 		cb(null, 'reset to hotspot');
 	},
-	install_updates: function(data, cb) {
-		cb(null, 'installing updates');
+	git_pull: function(data, cb) {
+		if (data.repo == 'sisbot' || data.repo == 'sisproxy' || data.repo == 'siscloud') {
+			exec('sudo /home/pi/sisbot-server/sisbot/update.sh "'+data.repo+'"');
+			cb(null, 'installing updates');
+		} else {
+			cb('repo not found', null);
+		}
 	},
 	download_playlist: function(data, cb) {
 		// save playlist
