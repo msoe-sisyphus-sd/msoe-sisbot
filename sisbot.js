@@ -18,7 +18,8 @@ var sisbot = {
 	serial: null,
 	plotter: plotter,
 
-	playlist: playlist,
+	playlist: playlist, // TODO: change to the id of the current one, relabel as currentPlaylist
+	playlists: [], // TODO: save every one
 	tracks: { // change to autoload, or passed in by app
 		'2CBDAE96-EC22-48B4-A369-BFC624463C5F': 'r01',
 		'C3D8BC17-E2E1-4D6D-A91F-80FBB65620B8': 'r01',
@@ -74,6 +75,9 @@ var sisbot = {
 					});
 	      });
 			}
+
+			// TODO: Load in the saved state
+
 
 			// plotter
 	    this.plotter.setConfig(CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config));
@@ -169,6 +173,21 @@ var sisbot = {
 	},
 	exists: function(data, cb) {
 		cb(null, 'Ok');
+	},
+	save: function(data, cb) {
+		console.log("Sisbot Save", data);
+		var save_obj = {
+			id: this.id,
+			type: this.type,
+			pi_id: this.pi_id,
+			name: this.name,
+		  brightness: this.brightness,
+			speed: this.speed,
+			playlists: [],
+			currentPlaylist: this.playlist // TODO: switch all instances of this.playlist to this.playlists[this.currentPlaylist]
+		};
+		fs.writeFile(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.content+'/status.json', save_obj, function(err) { if (err) return console.log(err); });
+		cb(null, 'Saved');
 	},
 	play: function(data, cb) {
 		console.log("Sisbot Play", data);
