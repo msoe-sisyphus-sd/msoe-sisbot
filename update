@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 
-cd /home/pi/sisbot-server/$1
+cd /home/pi/sisbot-server/sisbot
+git reset --hard
+git pull origin master
+
+cd /home/pi/sisbot-server/siscloud
+git reset --hard
+git pull origin master
+
+cd /home/pi/sisbot-server/sisproxy
 git reset --hard
 git pull origin master
 

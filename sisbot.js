@@ -404,13 +404,9 @@ var sisbot = {
 		cb(null, 'reset to hotspot');
 	},
 	git_pull: function(data, cb) {
-		if (data.repo == 'sisbot' || data.repo == 'sisproxy' || data.repo == 'siscloud') {
-			this.pause(null, null);
-			exec('sudo /home/pi/sisbot-server/sisbot/update.sh '+data.repo);
-			cb(null, 'installing updates');
-		} else {
-			cb('repo not found', null);
-		}
+		this.pause(null, null);
+		exec('sudo /home/pi/sisbot-server/sisbot/update.sh');
+		cb(null, 'installing updates');
 	},
 	download_playlist: function(data, cb) {
 		// save playlist
