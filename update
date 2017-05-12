@@ -1,5 +1,8 @@
-#!/bash/bin
+#!/usr/bin/env bash
 
 cd /home/pi/sisbot-server/$1
 git reset --hard
 git pull origin master
+
+cd /home/pi/sisbot-server/sisproxy
+sudo killall node && sudo NODE_ENV=sisbot node server.js
