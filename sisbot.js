@@ -405,7 +405,8 @@ var sisbot = {
 	},
 	git_pull: function(data, cb) {
 		if (data.repo == 'sisbot' || data.repo == 'sisproxy' || data.repo == 'siscloud') {
-			exec('sudo /home/pi/sisbot-server/sisbot/update.sh "'+data.repo+'"');
+			this.pause(null, null);
+			exec('sudo /home/pi/sisbot-server/sisbot/update.sh '+data.repo);
 			cb(null, 'installing updates');
 		} else {
 			cb('repo not found', null);
