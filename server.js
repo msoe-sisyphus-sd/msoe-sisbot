@@ -87,7 +87,11 @@ var app = function(given_config,ansible) {
 		var cb		= function (err, resp) {
 			res.json({ err: err, resp: resp });
 		};
-		services[service][endpoint](data,cb);
+		try {
+			services[service][endpoint](data,cb);
+		} catch (err) {
+			console.log("Error:", service, endpoint, err);
+		}
 	});
 
 	http.createServer(static).listen(config.servers.sisbot.port);
