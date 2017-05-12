@@ -69,7 +69,7 @@ var playlist = {
 				}
 			}
 		} catch(err) {
-			console.log("Track error:", err);
+			console.log("Track error:", err, this.currentTrack, this.sorted_tracks);
 		}
 
 		console.log("Next track", track.firstR, track.lastR, track.reversed);

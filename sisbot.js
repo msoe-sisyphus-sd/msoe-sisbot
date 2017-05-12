@@ -99,7 +99,7 @@ var sisbot = {
 
 				// play next track after pausing (i.e. new playlist)
 				if (newState == 'waiting' && oldState == 'playing' && self._autoplay) {
-					console.log("Play new playlist!", self.playlist);
+					//console.log("Play new playlist!", self.playlist);
 					self.playNextTrack(null, null); // autoplay after first home
 				}
 			});
