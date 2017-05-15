@@ -179,9 +179,11 @@ var sisbot = {
     return true;
   },
 	connect: function(data, cb) {
+		console.log("Sisbot Connect", data);
 		cb(null, this.current_state);
 	},
 	exists: function(data, cb) {
+		console.log("Sisbot Exists", data);
 		cb(null, 'Ok');
 	},
 	save: function(data, cb) {
@@ -303,6 +305,7 @@ var sisbot = {
 		} else cb('No Connection', null);
 	},
   get_state: function(data, cb) {
+		console.log("Sisbot get state", data);
     cb(null, this.current_state);
   },
 	_clamp: function(value, min, max) {
@@ -312,14 +315,14 @@ var sisbot = {
 		return return_value;
 	},
   set_speed: function(data, cb) {
-		console.log("Set Speed", data.value);
+		console.log("Sisbot Set Speed", data.value);
 		var speed = this._clamp(data.value, 0.0, 1.0); // 0.0-1.0f
     plotter.setSpeed(speed);
 		this.current_state.set('speed', speed);
     if (cb)	cb(null, plotter.getSpeed());
   },
 	set_brightness: function(data, cb) {
-		console.log('set brightness', data);
+		console.log('Sisbot set brightness', data);
 
     // Don't continue if we're disconnected from the sisbot
     if (!this._validateConnection()) {
@@ -380,9 +383,11 @@ var sisbot = {
 		}
 	},
 	get_wifi: function(data, cb) {
+		console.log("Sisbot get wifi", data);
 		iwlist.scan(data, cb);
 	},
 	change_to_wifi: function(data, cb) {
+		console.log("Sisbot change to wifi", data);
 		if (data.ssid && data.psk && data.ssid != 'false' && data.psk != "") {
 			clearTimeout(this._internet_check);
 			// regex, remove or error on double quotes
@@ -408,18 +413,22 @@ var sisbot = {
 		cb(null, 'reset to hotspot');
 	},
 	git_pull: function(data, cb) {
+		console.log("Sisbot Git Pull", data);
 		this.pause(null, null);
 		exec('sudo /home/pi/sisbot-server/sisbot/update.sh');
 		cb(null, 'installing updates');
 	},
 	download_playlist: function(data, cb) {
+		console.log("Sisbot Download Playlist", data);
 		// save playlist
 		// download listed tracks
 	},
 	download_track: function(data, cb) {
+		console.log("Sisbot Download Track", data);
 		cb(null, 'downloading tracks');
 	},
 	restart: function(data,cb) {
+		console.log("Sisbot Restart", data);
 		cb(null, 'restarting sisyphus');
 	}
 };
