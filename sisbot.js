@@ -75,29 +75,29 @@ var sisbot = {
 			}
 
 			// Load in the saved state
+			var objs = [];
 			if (fs.existsSync(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.content+'/'+config.sisbot_state)) {
 				console.log("Load saved state:", config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.content+'/'+config.sisbot_state);
-				var objs = JSON.parse(fs.readFileSync(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.content+'/'+config.sisbot_state, 'utf8'));
-				_.each(objs, function(obj) {
-					switch (obj.type) {
-						case "track":
-							this.collection.add(new Track(obj));
-							break;
-						case "playlist":
-							this.collection.add(new Playlist(obj));
-							break;
-						case "sisbot":
-							this.collection.add(new Sisbot(obj));
-							break;
-						default:
-							this.collection.add(obj);
-					}
-				});
-				this.current_state = this.collection.findWhere({type: "sisbot"});
+				objs = JSON.parse(fs.readFileSync(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.content+'/'+config.sisbot_state, 'utf8'));
 			} else {
-				this.current_state = new Sisbot_state();
-				this.collection.add(this.current_state);
+				objs = this.config.default_data;
 			}
+			_.each(objs, function(obj) {
+				switch (obj.type) {
+					case "track":
+						this.collection.add(new Track(obj));
+						break;
+					case "playlist":
+						this.collection.add(new Playlist(obj));
+						break;
+					case "sisbot":
+						this.collection.add(new Sisbot(obj));
+						break;
+					default:
+						this.collection.add(obj);
+				}
+			});
+			this.current_state = this.collection.findWhere({type: "sisbot"});
 			// force update pi_id, hardware could have changed
 			this.current_state.set("pi_id", 'pi_'+this.config.pi_serial);
 			// TODO: add ip address to current_state
