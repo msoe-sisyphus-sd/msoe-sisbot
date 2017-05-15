@@ -18,6 +18,15 @@ var track = Backbone.Model.extend({
 		reversible:	"true"
 	},
 	collection: null,
+	get_plotter_obj: function(data) {
+		var return_obj = this.toJSON();
+		if (data.reversed) {
+			return_obj.verts = this.get_reverse_verts();
+		} else {
+			return_obj.verts = this.get_verts();
+		}
+		return return_obj;
+	},
 	get_verts: function() {
 		var return_value = [];
 

@@ -267,11 +267,11 @@ var sisbot = {
 		    if (this.current_state.get("is_homed") == "true") {
 					if (track.get('firstR') == this.current_state.get('_end_rho')) {
 						this._paused = false;
-						this.plotter.playTrack(track.get_verts());
+						this.plotter.playTrack(track.get_plotter_obj({reversed:false}));
 						this.current_state.set('_end_rho', track.get('lastR'));
 					} else if (track.get('lastR') == this.current_state.get('_end_rho') && track.get('reversible') == "true") {
 						this._paused = false;
-						this.plotter.playTrack(track.get_reverse_verts());
+						this.plotter.playTrack(track.get_plotter_obj({reversed:true}));
 						this.current_state.set('_end_rho', track.get('firstR'));
 					} else {
 						// TODO: get next track, this one doesn't match
