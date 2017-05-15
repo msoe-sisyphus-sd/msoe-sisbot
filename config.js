@@ -14,12 +14,13 @@ var config = {
 				sisbot: 'sisbot',
 				content: 'content',
 				config: 'configs',
-				tracks: 'models',
+				tracks: 'tracks', // models
 				cloud: 'siscloud',
 				api: 'sisapi'
 			},
 			receiver : true, // receive messages from cloud
 			sisbot_config : 'default.cson',
+			sisbot_state : 'status.json',
 			serial_path: '/dev/ttyACM0',
 			autoplay: true,
 			skip_incompatible: true,

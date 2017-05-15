@@ -1,16 +1,20 @@
-var _						= require('underscore');
-var exec 				= require('child_process').exec;
-var CSON				= require('cson');
-var fs 					= require('fs');
-var iwconfig		= require('wireless-tools/iwconfig');
-var iwlist			= require('wireless-tools/iwlist');
-var exec 				= require('child_process').exec;
-var uuid				= require('uuid');
+var _							= require('underscore');
+var exec 					= require('child_process').exec;
+var CSON					= require('cson');
+var fs 						= require('fs');
+var iwconfig			= require('wireless-tools/iwconfig');
+var iwlist				= require('wireless-tools/iwlist');
+var exec 					= require('child_process').exec;
+var uuid					= require('uuid');
+var Backbone			= require('backbone');
 
-var SerialPort	= require('serialport').SerialPort;
+var SerialPort		= require('serialport').SerialPort;
 
-var plotter 		= require('./plotter');
-var playlist 		= require('./playlist');
+var plotter 			= require('./plotter');
+// var playlist 			= require('./playlist');
+var Sisbot_state 	= require ('./models.sisbot_state');
+var Playlist 			= require ('./models.playlist');
+var Track 				= require ('./models.track');
 
 var sisbot = {
   config: {},
@@ -18,35 +22,30 @@ var sisbot = {
 	serial: null,
 	plotter: plotter,
 
-	playlist: playlist, // TODO: change to the id of the current one, relabel as currentPlaylist
-	playlists: [], // TODO: save every one
-	tracks: { // change to autoload, or passed in by app
-		'2CBDAE96-EC22-48B4-A369-BFC624463C5F': 'r01',
-		'C3D8BC17-E2E1-4D6D-A91F-80FBB65620B8': 'r01',
-		'2B34822B-0A27-4398-AE19-23A3C83F1220': 'r00',
-		'93A90B6B-EAEE-48A3-9742-C688235D837D': 'r01',
-		'B7407A2F-04C3-4C92-B907-4C3869DA86D6': 'r01',
-		'7C046710-9F19-4423-B291-7394996F0913': 'r11',
-		'D14E0B41-E572-4B69-9827-4A07C503D031': 'r01',
-		'26FBFB10-4BC7-46BF-8D55-85AA52C19ADF': 'r11',
-		'75518177-0D28-4B2A-9B73-29E4974FB702': 'r01'
-	},
+	collection: new Backbone.collection(),
+	current_state: null,
 
-	id: uuid(),
-	type: 'sisbot',
-	pi_id: '',
-	name: 'Sisyphus',
-  brightness: 0.8,
-	speed: 0.5,
+	_paused: false,
 
-	_firstplay: false,
-	_autoplay: true,
-	_homed: false,
-	_homing: false,
-	_playing: false,
+	// playlists: [
+	// 	{
+	// 		name: 'default',
+	// 		repeat:true,
+	// 		randomized:true,
+	// 		track_ids:['2CBDAE96-EC22-48B4-A369-BFC624463C5F', 'C3D8BC17-E2E1-4D6D-A91F-80FBB65620B8', '2B34822B-0A27-4398-AE19-23A3C83F1220', '93A90B6B-EAEE-48A3-9742-C688235D837D','B7407A2F-04C3-4C92-B907-4C3869DA86D6','7C046710-9F19-4423-B291-7394996F0913','D14E0B41-E572-4B69-9827-4A07C503D031','26FBFB10-4BC7-46BF-8D55-85AA52C19ADF','75518177-0D28-4B2A-9B73-29E4974FB702'],
+	// 	}
+	// ],
+	// tracks: [
+	// 	{ id: '2CBDAE96-EC22-48B4-A369-BFC624463C5F', type:"r01", reversible:true },
+	// 	{ id: 'C3D8BC17-E2E1-4D6D-A91F-80FBB65620B8', type:"r01", reversible:true },
+	// 	{ id: '93A90B6B-EAEE-48A3-9742-C688235D837D', type:"r01", reversible:true },
+	// 	{ id: 'B7407A2F-04C3-4C92-B907-4C3869DA86D6', type:"r01", reversible:true },
+	// 	{ id: 'D14E0B41-E572-4B69-9827-4A07C503D031', type:"r01", reversible:true },
+	// 	{ id: '75518177-0D28-4B2A-9B73-29E4974FB702', type:"r01", reversible:true },
+	// 	{ id: '7C046710-9F19-4423-B291-7394996F0913', type:"r00", reversible:true },
+	// 	{ id: '26FBFB10-4BC7-46BF-8D55-85AA52C19ADF', type:"r11", reversible:true },
+	// ],
 
-	_is_hotspot: false,
-	_is_internet_connected: false,
 	_internet_check: 0,
 
   init: function(config, session_manager) {
@@ -55,7 +54,6 @@ var sisbot = {
 
       this.config = config;
 			if (this.config.autoplay) this._autoplay = this.config.autoplay;
-			this.pi_id = 'pi_'+this.config.pi_serial;
 
 			if (session_manager != null) {
 	      this.ansible = session_manager;
@@ -76,24 +74,51 @@ var sisbot = {
 	      });
 			}
 
-			// TODO: Load in the saved state
+			// Load in the saved state
+			if (fs.existsSync(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.content+'/'+config.sisbot_state)) {
+				var objs = JSON.parse(fs.readFileSync(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.content+'/'+config.sisbot_state, 'utf8'));
+				_.each(objs, function(obj) {
+					switch (obj.type) {
+						case "track":
+							this.collection.add(new Track(obj));
+							break;
+						case "playlist":
+							this.collection.add(new Playlist(obj));
+							break;
+						case "sisbot":
+							this.collection.add(new Sisbot_state(obj));
+							break;
+						default:
+							this.collection.add(obj);
+					}
+				});
+				this.current_state = this.collection.findWhere({type: "sisbot"});
+			} else {
+				this.current_state = new Sisbot_state();
+			}
+			// force update pi_id, hardware could have changed
+			current_state.set("pi_id", 'pi_'+this.config.pi_serial);
+			// TODO: add ip address to current_state
 
+			// assign collection and config to each track and playlist
+			this.collection.each(function (obj) {
+				obj.collection = self.collection;
+				obj.config = self.config;
+			});
 
 			// plotter
 	    this.plotter.setConfig(CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config));
 			plotter.onFinishTrack(function() {
 				console.log("Track Finished");
-				//self.playNextTrack(null, null);
 			});
 	    plotter.onStateChanged(function(newState, oldState) {
 				console.log("State changed to", newState, oldState, self._autoplay);
-				if (newState == 'homing') self._homing = true;
-				if (newState == 'waiting') self._playing = false;
-				if (newState == 'playing') self._playing = true;
+				if (newState == 'homing') self.current_state.set("state", "homing");
+				if (newState == 'playing') self.current_state.set("state", "playing");
+				if (newState == 'waiting') self.current_state.set("state", "waiting");
 
 				if (oldState == 'homing') {
-					self._homed = true;
-					self._homing = false;
+					self.current_state.set("is_homed", "true");
 					self.playlist._rlast = 0; // reset
 
 					if (newState == 'waiting' && self._autoplay) {
@@ -102,7 +127,7 @@ var sisbot = {
 				}
 
 				// play next track after pausing (i.e. new playlist)
-				if (newState == 'waiting' && oldState == 'playing' && self._autoplay) {
+				if (newState == 'waiting' && oldState == 'playing' && !self._paused) {
 					//console.log("Play new playlist!", self.playlist);
 					self.playNextTrack(null, null); // autoplay after first home
 				}
@@ -112,7 +137,7 @@ var sisbot = {
 			this._connect();
 
 			// wifi connect
-			if (!this._is_hotspot) this._query_internet(5000); // check for internet connection after 5 seconds
+			if (this.current_state.get("is_hotspot") == "false") this._query_internet(5000); // check for internet connection after 5 seconds
 
 			return this;
   },
@@ -120,27 +145,19 @@ var sisbot = {
     if (this.serial && this.serial.isOpen()) return true;
 
 		var self = this;
-		console.log("Serial Connect", this.config.serial_path);
+		//console.log("Serial Connect", this.config.serial_path);
  		this.serial = new SerialPort(this.config.serial_path, {}, false);
 
 		try {
       this.serial.open(function (error) {
       	self.plotter.useSerial(self.serial);
+				console.info('Serial: connected!');
 
-				console.info('connect: connected!');
-
-				self.set_brightness({value:self.brightness}, null);
+				self.current_state.set("is_serial_open", "true");
+				self.set_brightness({value:self.current_state.get("brightness")}, null);
 
 				if (self.config.autoplay) {
-					//this.playPlaylist('default', {shuffle: true,repeat: true});
-
-					// playlist
-					self.setPlaylist({
-							name: 'default',
-							repeat:true,
-							randomized:true,
-							track_ids:['2CBDAE96-EC22-48B4-A369-BFC624463C5F', 'C3D8BC17-E2E1-4D6D-A91F-80FBB65620B8', '2B34822B-0A27-4398-AE19-23A3C83F1220', '93A90B6B-EAEE-48A3-9742-C688235D837D','B7407A2F-04C3-4C92-B907-4C3869DA86D6','7C046710-9F19-4423-B291-7394996F0913','D14E0B41-E572-4B69-9827-4A07C503D031','26FBFB10-4BC7-46BF-8D55-85AA52C19ADF','75518177-0D28-4B2A-9B73-29E4974FB702'],
-					}, null);
+					self.setPlaylist(self.collection.get(self.current_state.get("playlist_id")), null);
 				}
 			});
     } catch(err) {
@@ -154,46 +171,28 @@ var sisbot = {
   },
   _validateConnection() {
     if (!this.serial || !this.serial.isOpen()) {
-      console.error('No serial connection')
+      console.error('No serial connection');
+			this.current_state.set("is_serial_open", "false");
       return false;
     }
+		this.current_state.set("is_serial_open", "true");
     return true;
   },
 	connect: function(data, cb) {
-		var obj = {
-			id: this.id,
-			type: this.type,
-			pi_id: this.pi_id,
-			name: this.name,
-		  brightness: this.brightness,
-			speed: this.speed
-		};
-
-		cb(null, obj);
+		cb(null, this.current_state);
 	},
 	exists: function(data, cb) {
 		cb(null, 'Ok');
 	},
 	save: function(data, cb) {
 		console.log("Sisbot Save", data);
-		var save_obj = {
-			id: this.id,
-			type: this.type,
-			pi_id: this.pi_id,
-			name: this.name,
-		  brightness: this.brightness,
-			speed: this.speed,
-			playlists: [],
-			currentPlaylist: this.playlist // TODO: switch all instances of this.playlist to this.playlists[this.currentPlaylist]
-		};
-		fs.writeFile(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.content+'/status.json', save_obj, function(err) { if (err) return console.log(err); });
+		fs.writeFile(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.content+'/'+config.sisbot_state, this.collection.toJSON(), function(err) { if (err) return console.log(err); });
 		cb(null, 'Saved');
 	},
 	play: function(data, cb) {
 		console.log("Sisbot Play", data);
 		if (this._validateConnection()) {
-			this._playing = true;
-			this._autoplay = true;
+			this._paused = false;
 			plotter.resume();
 			if (cb)	cb(null, 'play');
 		} else cb('No Connection', null);
@@ -201,8 +200,7 @@ var sisbot = {
 	pause: function(data, cb) {
 		console.log("Sisbot Pause", data);
 		if (this._validateConnection()) {
-			this._playing = false;
-			this._autoplay = false;
+			this._paused = true;
 			plotter.pause();
 			if (cb)	cb(null, 'pause');
 		} else cb('No Connection', null);
@@ -210,122 +208,104 @@ var sisbot = {
 	home: function(data, cb) {
 		console.log("Sisbot Home", data);
 		if (this._validateConnection()) {
-			this._playing = false;
 			plotter.home();
 			if (cb)	cb(null, 'homing');
 		} else cb('No Connection', null);
 	},
 	setPlaylist: function(data, cb) {
-		_.extend(data, {tracks: this.tracks}); // fix later,
+		if (data == undefined || data == null) return cb('No playlist', null);
 
 		console.log("Sisbot Set Playlist", data);
 
-		// load playlist
-		this.playlist.init(this.config, data);
-		this._homed = false;
-		if (this._playing) plotter.pause();
+		// save playlist
+		var playlist = this.collection.set(data);
+		if (data.is_shuffle) playlist.set_random(data.is_shuffle);
 
-		if (this.playlist.randomized) this.playlist.set_random(data.randomized);
-
-		if (!this._playing && this._autoplay) this.playNextTrack({}, null);
-		if (this._firstplay) this._autoplay = true;
-		this._firstplay = true;
+		// update current_state
+		this.current_state.set({is_homed: "false", playlist_id: data.id, is_shuffle: data.is_shuffle, is_loop: data.is_loop});
+		if (this.current_state.get('state') == "playing") {
+			plotter.pause();
+		} else if (this.current_state.get('state') == "waiting") {
+			this.playNextTrack({}, null);
+		}
 
 		if (cb)	cb(null, 'setPlaylist');
 	},
 	playTrack: function(data, cb) {
 		console.log("Sisbot Play Track", data);
+		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
 		if (this._validateConnection()) {
-			// this._playing = true;
-	    if (this._homed) {
-				var track_name = data.name;
+			// re-home if forced
+			if (data.home == "true") this.current_state.set("is_homed", "false");
 
-				// load track
-				if (track_name != null) {
-					var track = JSON.parse(fs.readFileSync(this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+track_name+'.json', 'utf8'));
+			var track = this.collection.get(data.id);
+			if (track != undefined) {
+				this.current_state.set('track_id', data.id);
 
-					this.plotter.playTrack(track);
-					// this._playing = true;
+		    if (this.current_state.get("is_homed") == "true") {
+					if (track.get('firstR') == this.current_state.get('_end_rho')) {
+						this._paused = false;
+						this.plotter.playTrack(track.get_verts());
+						this.current_state.set('_end_rho', track.get('lastR'));
+					} else if (track.get('lastR') == this.current_state.get('_end_rho') && track.get('reversible') == "true") {
+						this._paused = false;
+						this.plotter.playTrack(track.get_reverse_verts());
+						this.current_state.set('_end_rho', track.get('firstR'));
+					}
 
 					if (cb)	cb(null, 'next track '+track_name);
 				} else {
-					if (cb)	cb('no next track available', null);
+					this.home(null, cb);
 				}
 			} else {
-				this.home(null, cb);
+				if (cb)	cb('track not available', null);
 			}
 		} else cb('No Connection', null);
 	},
 	playNextTrack: function(data, cb) {
 		console.log("Sisbot Play Next Track", data);
-		if (this._validateConnection()) {
-			// this._playing = true;
-	    if (this._homed) {
-				var track = this.playlist.getNextTrack();
-
-				// load track
-				if (track != null) {
-					console.log("Sisbot play next track", track.name, track.verts[0], track.verts[track.verts.length-1]);
-					this.plotter.playTrack(track);
-					// this._playing = true;
-					this.playlist._rlast = track.lastR;
-
-					if (cb)	cb(null, 'next track '+track.name);
-				} else {
-					if (cb)	cb('no next track available', null);
-				}
-			} else {
-				this.home(null, cb);
-			}
-		} else cb('No Connection', null);
+		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
+		var playlist = this.collection.get(this.current_state.get('playlist_id'));
+		var track = playlist.get_next_track();
+		if (track != "false")	this.playTrack(track,cb);
 	},
   jogThetaLeft: function(data,cb) {
+		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
 		if (this._validateConnection()) {
-			// this._playing = false;
+			if (this.current_state.get('state') == "playing") this.pause();
 			plotter.jogThetaLeft();
 			if (cb)	cb(null, 'left');
 		} else cb('No Connection', null);
 	},
   jogThetaRight: function(data,cb) {
+		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
 		if (this._validateConnection()) {
-			// this._playing = false;
 			plotter.jogThetaRight();
 			if (cb)	cb(null, 'right');
 		} else cb('No Connection', null);
 	},
   jogRhoOutward: function(data,cb) {
+		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
 		if (this._validateConnection()) {
-			// this._playing = false;
 			plotter.jogRhoOutward();
 			if (cb)	cb(null, 'out');
 		} else cb('No Connection', null);
 	},
   jogRhoInward: function(data,cb) {
+		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
 		if (this._validateConnection()) {
-			// this._playing = false;
 			plotter.jogRhoInward();
 			if (cb)	cb(null, 'in');
 		} else cb('No Connection', null);
 	},
   get_state: function(data, cb) {
-		var state = plotter.getState();
-		var return_obj = {
-			is_playing: this._playing,
-			is_homing: this._homing,
-			is_shuffle: false,
-			is_loop: false,
-			brightness: this.brightness,
-			speed: this._speed,
-			active_playlist: 'false',
-			active_track: 'false',
-			current_time: 0 // seconds
-		};
-    cb(null, return_obj);
+    cb(null, this.current_state);
   },
   set_speed: function(data, cb) {
 		console.log("Set Speed", data.value);
-		// 0.0-1.0f
-    plotter.setSpeed(data.value);
+		var speed = _.clamp(data.value, 0.0, 1.0); // 0.0-1.0f
+    plotter.setSpeed(speed);
+		this.current_state.set('speed', speed);
     if (cb)	cb(null, plotter.getSpeed());
   },
 	set_brightness: function(data, cb) {
@@ -333,15 +313,12 @@ var sisbot = {
 
     // Don't continue if we're disconnected from the sisbot
     if (!this._validateConnection()) {
-			cb('No Connection', null);
-			return;
+			return cb('No Connection', null);
 		}
 
-		var value = data.value;
-		if (value < 0) value = 0;
-		if (value > 1) value = 1;
+		var value = _.clamp(data.value, 0.0, 1.0);
+		this.current_state.set('brightness', value);
 
-		this.brightness = value;
     // convert to an integer from 0 - 1023, parabolic scale.
     var pwm = Math.pow(2, value * 10) - 1;
     pwm = Math.floor(pwm);
@@ -356,10 +333,10 @@ var sisbot = {
 	},
 	// work out with travis
 	_validate_internet: function(data, cb) {
+		var self = this;
 		exec('ping -c 1 -W 2 google.com', (error, stdout, stderr) => {
 		  if (error) {
-		    console.error('exec error:',error);
-		    return;
+		    return console.error('exec error:',error);
 		  }
 
 			var returnValue = false;
@@ -367,19 +344,18 @@ var sisbot = {
 		  // console.log('stdout:', stdout);
 		  // console.log('stderr:', stderr);
 
+			self.current_state.set("is_internet_connected", returnValue);
+
 			if (cb) cb(null, returnValue);
 		});
 	},
 	_query_internet: function(time_to_check) {
-		if (!this._is_hotspot) { // only bother if you are not a hotspot
+		if (this.current_state.get("is_hotspot") == "false") { // only bother if you are not a hotspot
 			var self = this;
 			_internet_check = setTimeout(function() {
 				self._validate_internet(null, function(err, resp) {
 					if (err) return console.log("Internet check err", err);
 					if (resp) {
-						self._is_hotspot = false;
-						self._is_internet_connected = true;
-
 						console.log("Internet connected.");
 
 						// check again later
@@ -387,7 +363,6 @@ var sisbot = {
 					} else {
 						console.log("Internet not connected, reverting to hotspot.");
 
-						self._is_internet_connected = false;
 						if (!self._is_hotspot) self.reset_to_hotspot();
 					}
 				})
@@ -404,7 +379,8 @@ var sisbot = {
 			// no spaces in password
 			//var pwd_check =  data.psk.match(^([0-9A-Za-z@.]{1,255})$);
 			exec('sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "'+data.ssid+'" "'+data.psk+'"');
-			this._is_hotspot = false;
+			self.current_state.set("is_hotspot", "false");
+
 			this._query_internet(7000); // check again in 7 seconds
 			cb(null, data.ssid);
 		} else {
@@ -418,8 +394,7 @@ var sisbot = {
 		clearTimeout(this._internet_check);
 		exec('sudo /home/pi/sisbot-server/sisbot/start_hotspot.sh');
 
-		this._is_hotspot = true;
-		this._is_internet_connected = false;
+		self.current_state.set("is_hotspot", "true");
 		cb(null, 'reset to hotspot');
 	},
 	git_pull: function(data, cb) {
