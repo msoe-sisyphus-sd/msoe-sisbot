@@ -83,8 +83,8 @@ var sisbot = {
 				console.log("Load defaults");
 				objs = this.config.default_data;
 			}
-			console.log("Initial objects", objs);
 			_.each(objs, function(obj) {
+				console.log("Add:", obj);
 				switch (obj.type) {
 					case "track":
 						self.collection.add(new Track(obj));
