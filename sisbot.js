@@ -109,7 +109,7 @@ var sisbot = {
 				obj.collection = self.collection;
 				obj.config = self.config;
 			});
-			console.log("Collection", this.collection.toJSON());
+			// console.log("Collection", this.collection.toJSON());
 
 			// plotter
 	    this.plotter.setConfig(CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config));
@@ -233,6 +233,8 @@ var sisbot = {
 		// save playlist
 		var new_playlist = new Playlist(data);
 		var playlist = this.collection.set(new_playlist);
+		playlist.collection = this.collection;
+		playlist.config = this.config;
 		if (data.is_shuffle) playlist.set_random(data.is_shuffle);
 
 		// update current_state
