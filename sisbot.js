@@ -85,16 +85,16 @@ var sisbot = {
 			_.each(objs, function(obj) {
 				switch (obj.type) {
 					case "track":
-						this.collection.add(new Track(obj));
+						self.collection.add(new Track(obj));
 						break;
 					case "playlist":
-						this.collection.add(new Playlist(obj));
+						self.collection.add(new Playlist(obj));
 						break;
 					case "sisbot":
-						this.collection.add(new Sisbot(obj));
+						self.collection.add(new Sisbot(obj));
 						break;
 					default:
-						this.collection.add(obj);
+						self.collection.add(obj);
 				}
 			});
 			this.current_state = this.collection.findWhere({type: "sisbot"});
