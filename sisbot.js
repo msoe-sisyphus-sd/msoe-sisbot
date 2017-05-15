@@ -160,7 +160,7 @@ var sisbot = {
 
 				if (self.config.autoplay) {
 					console.log("Autoplay:", self.current_state.get("playlist_id"));
-					self.setPlaylist(self.collection.get(self.current_state.get("playlist_id")), null);
+					if (self.current_state.get("playlist_id") != "false") self.setPlaylist(self.collection.get(self.current_state.get("playlist_id")), null);
 				}
 			});
     } catch(err) {
