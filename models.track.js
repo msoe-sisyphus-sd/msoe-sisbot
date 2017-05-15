@@ -48,8 +48,8 @@ var track = Backbone.Model.extend({
 			});
 
 			// !! error check !!
-			if (return_value[0].r != this.get(firstR)) console.log("R[0] not matching", return_value[0].r, this.get(firstR));
-			if (return_value[return_value.length-1].r != this.get(lastR)) console.log("R[n] not matching", return_value[return_value.length-1].r, this.get(lastR));
+			if (return_value[0].r != this.get("firstR")) console.log("R[0] not matching", return_value[0].r, this.get("firstR"));
+			if (return_value[return_value.length-1].r != this.get("lastR")) console.log("R[n] not matching", return_value[return_value.length-1].r, this.get("lastR"));
 
 			//console.log("Track verts", return_value.length);
 		});
