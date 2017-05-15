@@ -243,6 +243,11 @@ var sisbot = {
 	},
 	playTrack: function(data, cb) {
 		console.log("Sisbot Play Track", data);
+		if (data == undefined || data == null) {
+			console.log("No Track given");
+			if (cb) cb("No track", null);
+			return;
+		}
 		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
 		if (this._validateConnection()) {
 			// re-home if forced
