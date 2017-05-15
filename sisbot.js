@@ -294,7 +294,6 @@ var sisbot = {
 		var playlist = this.collection.get(this.current_state.get('playlist_id'));
 		if (playlist != undefined) {
 			var track = playlist.get_next_track();
-			console.log("Track", track);
 			if (track != "false")	this.playTrack(track,cb);
 		} else {
 			if (cb) cb('No playlist', null);
