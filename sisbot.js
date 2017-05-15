@@ -22,7 +22,7 @@ var sisbot = {
 	serial: null,
 	plotter: plotter,
 
-	collection: new Backbone.collection(),
+	collection: new Backbone.Collection(),
 	current_state: null,
 
 	_paused: false,
@@ -86,7 +86,7 @@ var sisbot = {
 							this.collection.add(new Playlist(obj));
 							break;
 						case "sisbot":
-							this.collection.add(new Sisbot_state(obj));
+							this.collection.add(new Sisbot(obj));
 							break;
 						default:
 							this.collection.add(obj);
