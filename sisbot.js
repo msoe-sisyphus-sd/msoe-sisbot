@@ -217,7 +217,7 @@ var sisbot = {
 	home: function(data, cb) {
 		console.log("Sisbot Home", data);
 		if (this._validateConnection()) {
-			if (data.stop) this._autoplay = false; // home without playing anything afterward
+			if (data && data.stop) this._autoplay = false; // home without playing anything afterward
 			plotter.home();
 			if (cb)	cb(null, 'homing');
 		} else cb('No Connection', null);
