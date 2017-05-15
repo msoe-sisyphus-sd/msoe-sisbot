@@ -214,6 +214,7 @@ var sisbot = {
 	},
 	setPlaylist: function(data, cb) {
 		if (data == undefined || data == null) {
+			console.log("No Playlist given");
 			if (cb) cb('No playlist', null);
 			return;
 		}
