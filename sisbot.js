@@ -104,12 +104,12 @@ var sisbot = {
 			this.current_state.set("pi_id", 'pi_'+this.config.pi_serial);
 			// TODO: add ip address to current_state
 
-			console.log("Collection", this.collection.toJSON());
 			// assign collection and config to each track and playlist
 			this.collection.each(function (obj) {
 				obj.collection = self.collection;
 				obj.config = self.config;
 			});
+			console.log("Collection", this.collection.toJSON());
 
 			// plotter
 	    this.plotter.setConfig(CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config));
