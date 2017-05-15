@@ -213,13 +213,13 @@ var sisbot = {
 		} else cb('No Connection', null);
 	},
 	setPlaylist: function(data, cb) {
+		console.log("Sisbot Set Playlist", data);
+
 		if (data == undefined || data == null) {
 			console.log("No Playlist given");
 			if (cb) cb('No playlist', null);
 			return;
 		}
-
-		console.log("Sisbot Set Playlist", data);
 
 		// save playlist
 		var playlist = this.collection.set(data);
