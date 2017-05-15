@@ -180,7 +180,7 @@ var sisbot = {
   },
 	connect: function(data, cb) {
 		console.log("Sisbot Connect", data);
-		cb(null, this.current_state);
+		cb(null, this.collection.toJSON());
 	},
 	exists: function(data, cb) {
 		console.log("Sisbot Exists", data);
@@ -188,6 +188,7 @@ var sisbot = {
 	},
 	save: function(data, cb) {
 		console.log("Sisbot Save", data);
+		// TODO: merge the given data into collection and save
 		fs.writeFile(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.content+'/'+config.sisbot_state, this.collection.toJSON(), function(err) { if (err) return console.log(err); });
 		cb(null, 'Saved');
 	},
@@ -270,6 +271,11 @@ var sisbot = {
 	},
 	playNextTrack: function(data, cb) {
 		console.log("Sisbot Play Next Track", data);
+		if (this.current_state.get('playlist_id') == "false") {
+			console.log("No Playlist");
+			if (cb) cb('No playlist', null);
+			return;
+		}
 		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
 		var playlist = this.collection.get(this.current_state.get('playlist_id'));
 		var track = playlist.get_next_track();
