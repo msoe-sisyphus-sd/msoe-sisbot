@@ -434,7 +434,7 @@ var sisbot = {
 	git_pull: function(data, cb) {
 		console.log("Sisbot Git Pull", data);
 		this.pause(null, null);
-		exec('/home/pi/sisbot-server/sisbot/update.sh');
+		exec('sudo /home/pi/sisbot-server/sisbot/update.sh');
 		cb(null, 'installing updates');
 	},
 	download_playlist: function(data, cb) {
