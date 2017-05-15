@@ -86,15 +86,12 @@ var sisbot = {
 			_.each(objs, function(obj) {
 				switch (obj.type) {
 					case "track":
-						console.log("Add:", obj);
 						self.collection.add(new Track(obj));
 						break;
 					case "playlist":
-						console.log("Add:", obj);
 						self.collection.add(new Playlist(obj));
 						break;
 					case "sisbot":
-						console.log("Add:", obj);
 						self.collection.add(new Sisbot_state(obj));
 						break;
 					default:
@@ -107,6 +104,7 @@ var sisbot = {
 			this.current_state.set("pi_id", 'pi_'+this.config.pi_serial);
 			// TODO: add ip address to current_state
 
+			console.log("Collection", this.collection.toJSON());
 			// assign collection and config to each track and playlist
 			this.collection.each(function (obj) {
 				obj.collection = self.collection;
