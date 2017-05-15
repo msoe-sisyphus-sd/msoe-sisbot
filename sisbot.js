@@ -227,7 +227,8 @@ var sisbot = {
 		}
 
 		// save playlist
-		var playlist = this.collection.set(data);
+		var playlist = new Playlist(data);
+		this.collection.set(playlist);
 		if (data.is_shuffle) playlist.set_random(data.is_shuffle);
 
 		// update current_state
@@ -280,8 +281,12 @@ var sisbot = {
 		}
 		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
 		var playlist = this.collection.get(this.current_state.get('playlist_id'));
-		var track = playlist.get_next_track();
-		if (track != "false")	this.playTrack(track,cb);
+		if (playlist != undefined) {
+			var track = playlist.get_next_track();
+			if (track != "false")	this.playTrack(track,cb);
+		} else {
+			if (cb) cb('No playlist', null);
+		}
 	},
   jogThetaLeft: function(data,cb) {
 		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
