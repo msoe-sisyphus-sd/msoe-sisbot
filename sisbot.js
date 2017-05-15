@@ -293,8 +293,9 @@ var sisbot = {
 		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
 		var playlist = this.collection.get(this.current_state.get('playlist_id'));
 		if (playlist != undefined) {
-			var track = this.collection.get(playlist.get_next_track_id());
-			if (track != "false")	this.playTrack(track,cb);
+			var track_id = playlist.get_next_track_id();
+			var track = this.collection.get(track_id);
+			if (track != "false")	this.playTrack(track, cb);
 		} else {
 			if (cb) cb('No playlist', null);
 		}
