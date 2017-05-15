@@ -227,8 +227,8 @@ var sisbot = {
 		}
 
 		// save playlist
-		var playlist = new Playlist(data);
-		this.collection.set(playlist);
+		var new_playlist = new Playlist(data);
+		var playlist = this.collection.set(new_playlist);
 		if (data.is_shuffle) playlist.set_random(data.is_shuffle);
 
 		// update current_state
@@ -236,7 +236,7 @@ var sisbot = {
 		if (this.current_state.get('state') == "playing") {
 			plotter.pause();
 		} else if (this.current_state.get('state') == "waiting") {
-			this.playNextTrack({}, null);
+			this.playNextTrack(this.collection.get(playlist.get('active_track_id')), null);
 		}
 
 		if (cb)	cb(null, 'setPlaylist');

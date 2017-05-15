@@ -147,7 +147,11 @@ var playlist = Backbone.Model.extend({
 			}
 		}
 
-		this.set("sorted_tracks", _.pluck(randomized_tracks,'id'));
+		var final_order = _.pluck(randomized_tracks,'id');
+		
+		// update self with randomly ordered list
+		this.set({sorted_tracks: final_order, active_track_index: -1, active_track_id: "false"});
+
 		console.log("Randomized Tracks, retries:", retries, "best:", best_count, this.get("sorted_tracks"));
 	}
 });
