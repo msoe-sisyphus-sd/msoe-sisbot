@@ -80,6 +80,7 @@ var sisbot = {
 				console.log("Load saved state:", config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.content+'/'+config.sisbot_state);
 				objs = JSON.parse(fs.readFileSync(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.content+'/'+config.sisbot_state, 'utf8'));
 			} else {
+				console.log("Load defaults");
 				objs = this.config.default_data;
 			}
 			_.each(objs, function(obj) {
