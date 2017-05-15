@@ -38,7 +38,9 @@ var playlist = Backbone.Model.extend({
 		return tracks[track_index];
 	},
 	get_next_track: function() { // increments the active_track_index and returns the id
-		return this.collection.get(this.get_next_track_id());
+		var track_id = this.get_next_track_id();
+		console.log("Playlist get next track", track_id)
+		return this.collection.get(track_id);
 	},
 	set_random: function(value) {
 		var randomized = this.get('is_shuffle');
@@ -148,7 +150,7 @@ var playlist = Backbone.Model.extend({
 		}
 
 		var final_order = _.pluck(randomized_tracks,'id');
-		
+
 		// update self with randomly ordered list
 		this.set({sorted_tracks: final_order, active_track_index: -1, active_track_id: "false"});
 

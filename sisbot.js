@@ -236,7 +236,7 @@ var sisbot = {
 		if (this.current_state.get('state') == "playing") {
 			plotter.pause();
 		} else if (this.current_state.get('state') == "waiting") {
-			this.playNextTrack(this.collection.get(playlist.get('active_track_id')), null);
+			this.playNextTrack(null, null);
 		}
 
 		if (cb)	cb(null, 'setPlaylist');
