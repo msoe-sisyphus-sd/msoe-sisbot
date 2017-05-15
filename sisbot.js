@@ -97,7 +97,7 @@ var sisbot = {
 				this.current_state = new Sisbot_state();
 			}
 			// force update pi_id, hardware could have changed
-			current_state.set("pi_id", 'pi_'+this.config.pi_serial);
+			this.current_state.set("pi_id", 'pi_'+this.config.pi_serial);
 			// TODO: add ip address to current_state
 
 			// assign collection and config to each track and playlist
