@@ -1,4 +1,5 @@
 var _           = require('underscore');
+var uuid				= require('uuid');
 
 var config = {
 		base: {
