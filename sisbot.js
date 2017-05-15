@@ -76,6 +76,7 @@ var sisbot = {
 
 			// Load in the saved state
 			if (fs.existsSync(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.content+'/'+config.sisbot_state)) {
+				console.log("Load saved state:", config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.content+'/'+config.sisbot_state);
 				var objs = JSON.parse(fs.readFileSync(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.content+'/'+config.sisbot_state, 'utf8'));
 				_.each(objs, function(obj) {
 					switch (obj.type) {
@@ -95,6 +96,7 @@ var sisbot = {
 				this.current_state = this.collection.findWhere({type: "sisbot"});
 			} else {
 				this.current_state = new Sisbot_state();
+				this.collection.add(this.current_state);
 			}
 			// force update pi_id, hardware could have changed
 			this.current_state.set("pi_id", 'pi_'+this.config.pi_serial);
