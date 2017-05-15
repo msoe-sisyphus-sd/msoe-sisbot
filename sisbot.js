@@ -232,7 +232,7 @@ var sisbot = {
 
 		// save playlist
 		var new_playlist = new Playlist(data);
-		var playlist = this.collection.set(new_playlist);
+		var playlist = this.collection.add(new_playlist, {merge: true});
 		playlist.collection = this.collection;
 		playlist.config = this.config;
 		if (data.is_shuffle) playlist.set_random(data.is_shuffle);
@@ -293,9 +293,7 @@ var sisbot = {
 		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
 		var playlist = this.collection.get(this.current_state.get('playlist_id'));
 		if (playlist != undefined) {
-			var track_id = playlist.get_next_track_id();
-			console.log("Next Track", track_id, this.collection.toJSON());
-			var track = this.collection.get(track_id);
+			var track = playlist.get_next_track();
 			if (track != "false")	this.playTrack(track, cb);
 		} else {
 			if (cb) cb('No playlist', null);
