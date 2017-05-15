@@ -45,7 +45,7 @@ var playlist = Backbone.Model.extend({
 	},
 	get_next_track: function() { // increments the active_track_index and returns the id
 		var track_id = this.get_next_track_id();
-		console.log("Playlist get next track", this.collection, track_id, this.toJSON());
+		console.log("Playlist get next track", this.collection.toJSON(), "::", track_id, this.toJSON());
 		return this.collection.get(track_id);
 	},
 	set_random: function(value) {
