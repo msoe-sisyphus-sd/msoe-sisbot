@@ -14,7 +14,7 @@ var playlist = Backbone.Model.extend({
 		current_track: 	0,
 		track_ids: 			[],
 		sorted_tracks:	[]
-	}
+	},
 	collection: null,
 	get_current_track_id: function() {
 		var tracks = this.get("sorted_tracks");
