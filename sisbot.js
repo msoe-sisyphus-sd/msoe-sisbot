@@ -123,8 +123,7 @@ var sisbot = {
 				if (newState == 'waiting') self.current_state.set("state", "waiting");
 
 				if (oldState == 'homing') {
-					self.current_state.set("is_homed", "true");
-					self.playlist._rlast = 0; // reset
+					self.current_state.set({is_homed: "true", _end_rho: 0}); // reset
 
 					if (newState == 'waiting' && self._autoplay) {
 						self.playNextTrack(null, null); // autoplay after first home
@@ -272,6 +271,9 @@ var sisbot = {
 						this._paused = false;
 						this.plotter.playTrack(track.get_reverse_verts());
 						this.current_state.set('_end_rho', track.get('firstR'));
+					} else {
+						// TODO: get next track, this one doesn't match
+						console.log("Continuous play not possible, skip this", track.get("name"));
 					}
 
 					if (cb)	cb(null, 'next track '+track_name);
@@ -294,7 +296,7 @@ var sisbot = {
 		var playlist = this.collection.get(this.current_state.get('playlist_id'));
 		if (playlist != undefined) {
 			var track = playlist.get_next_track();
-			if (track != "false")	this.playTrack(track, cb);
+			if (track != "false")	this.playTrack(track.toJSON(), cb);
 		} else {
 			if (cb) cb('No playlist', null);
 		}
