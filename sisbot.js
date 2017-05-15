@@ -83,6 +83,7 @@ var sisbot = {
 				console.log("Load defaults");
 				objs = this.config.default_data;
 			}
+			console.log("Initial objects", objs);
 			_.each(objs, function(obj) {
 				switch (obj.type) {
 					case "track":
