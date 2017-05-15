@@ -159,8 +159,8 @@ var sisbot = {
 				self.set_brightness({value:self.current_state.get("brightness")}, null);
 
 				if (self.config.autoplay) {
-					console.log("Autoplay:", self.current_state.get("playlist_id"));
-					if (self.current_state.get("playlist_id") != "false") self.setPlaylist(self.collection.get(self.current_state.get("playlist_id")), null);
+					//console.log("Autoplay:", self.current_state.get("playlist_id"));
+					if (self.current_state.get("playlist_id") != "false") self.setPlaylist(self.collection.get(self.current_state.get("playlist_id")).toJSON(), null);
 				}
 			});
     } catch(err) {

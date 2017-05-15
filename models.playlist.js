@@ -11,12 +11,15 @@ var playlist = Backbone.Model.extend({
 		is_loop: 				"true",
 		is_shuffle: 		"true",
 
-		active_track_index: 	0,
+		active_track_index: 	-1,
 		active_track_id: "false",
 		track_ids: 			[],
 		sorted_tracks:	[]
 	},
 	collection: null,
+	init: function() {
+		this.set("sorted_tracks", this.get("track_ids").slice());
+	},
 	get_active_track: function() {
 		return this.collection.get(this.get("active_track_id"));
 	},
