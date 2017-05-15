@@ -11,20 +11,17 @@ var playlist = Backbone.Model.extend({
 		is_loop: 				"true",
 		is_shuffle: 		"true",
 
-		current_track: 	0,
+		active_track_index: 	0,
+		active_track_id: "false",
 		track_ids: 			[],
 		sorted_tracks:	[]
 	},
 	collection: null,
-	get_current_track_id: function() {
-		var tracks = this.get("sorted_tracks");
-		return tracks[this.get("current_track")];
-	},
-	get_current_track: function() {
-		return this.collection.get(this.get_current_track_id());
+	get_active_track: function() {
+		return this.collection.get(this.get("active_track_id"));
 	},
 	get_next_track_id: function() {
-		var track_index = this.get("current_track");
+		var track_index = this.get("active_track_index");
 		var tracks = this.get("sorted_tracks");
 
 		track_index++;
@@ -35,11 +32,12 @@ var playlist = Backbone.Model.extend({
 			}
 			track_index = 0;
 		}
-		this.set("current_track", track_index);
+		this.set("active_track_index", track_index);
+		this.set("active_track_id", tracks[track_index]);
 
 		return tracks[track_index];
 	},
-	get_next_track: function() { // increments the current_track and returns the id
+	get_next_track: function() { // increments the active_track_index and returns the id
 		return this.collection.get(this.get_next_track_id());
 	},
 	set_random: function(value) {
