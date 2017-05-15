@@ -244,7 +244,7 @@ var sisbot = {
 	},
 	playTrack: function(data, cb) {
 		console.log("Sisbot Play Track", data);
-		if (data == undefined || data == null) {
+		if (data == undefined || data == null || data == "false") {
 			console.log("No Track given");
 			if (cb) cb("No track", null);
 			return;
