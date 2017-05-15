@@ -91,7 +91,7 @@ var sisbot = {
 						self.collection.add(new Playlist(obj));
 						break;
 					case "sisbot":
-						self.collection.add(new Sisbot(obj));
+						self.collection.add(new Sisbot_state(obj));
 						break;
 					default:
 						self.collection.add(obj);
