@@ -301,9 +301,15 @@ var sisbot = {
   get_state: function(data, cb) {
     cb(null, this.current_state);
   },
+	_clamp: function(value, min, max) {
+		var return_value = value;
+		if (return_value < min) return_value = min;
+		if (return_value > max) return_value = max;
+		return return_value;
+	},
   set_speed: function(data, cb) {
 		console.log("Set Speed", data.value);
-		var speed = _.clamp(data.value, 0.0, 1.0); // 0.0-1.0f
+		var speed = this._clamp(data.value, 0.0, 1.0); // 0.0-1.0f
     plotter.setSpeed(speed);
 		this.current_state.set('speed', speed);
     if (cb)	cb(null, plotter.getSpeed());
@@ -316,7 +322,7 @@ var sisbot = {
 			return cb('No Connection', null);
 		}
 
-		var value = _.clamp(data.value, 0.0, 1.0);
+		var value = this._clamp(data.value, 0.0, 1.0);
 		this.current_state.set('brightness', value);
 
     // convert to an integer from 0 - 1023, parabolic scale.
