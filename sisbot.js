@@ -84,18 +84,21 @@ var sisbot = {
 				objs = this.config.default_data;
 			}
 			_.each(objs, function(obj) {
-				console.log("Add:", obj);
 				switch (obj.type) {
 					case "track":
+						console.log("Add:", obj);
 						self.collection.add(new Track(obj));
 						break;
 					case "playlist":
+						console.log("Add:", obj);
 						self.collection.add(new Playlist(obj));
 						break;
 					case "sisbot":
+						console.log("Add:", obj);
 						self.collection.add(new Sisbot_state(obj));
 						break;
 					default:
+						console.log("Unknown:", obj);
 						self.collection.add(obj);
 				}
 			});
