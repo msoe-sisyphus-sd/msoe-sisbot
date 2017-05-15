@@ -26,6 +26,7 @@ var sisbot = {
 	current_state: null,
 
 	_paused: false,
+	_autoplay: false,
 
 	// playlists: [
 	// 	{
@@ -216,6 +217,7 @@ var sisbot = {
 	home: function(data, cb) {
 		console.log("Sisbot Home", data);
 		if (this._validateConnection()) {
+			if (data.stop) this._autoplay = false; // home without playing anything afterward
 			plotter.home();
 			if (cb)	cb(null, 'homing');
 		} else cb('No Connection', null);
@@ -296,7 +298,10 @@ var sisbot = {
 		var playlist = this.collection.get(this.current_state.get('playlist_id'));
 		if (playlist != undefined) {
 			var track = playlist.get_next_track();
-			if (track != "false")	this.playTrack(track.toJSON(), cb);
+			if (track != "false")	{
+				this._autoplay = true; // make it play, even if a home is needed after homing
+				this.playTrack(track.toJSON(), cb);
+			}
 		} else {
 			if (cb) cb('No playlist', null);
 		}
