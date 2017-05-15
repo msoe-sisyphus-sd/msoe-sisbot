@@ -28,6 +28,7 @@ var track = Backbone.Model.extend({
 		return return_obj;
 	},
 	get_verts: function() {
+		var self = this;
 		var return_value = [];
 
 		fs.readFile(this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+this.get('id')+'.thr', function(err, data) {
@@ -48,8 +49,8 @@ var track = Backbone.Model.extend({
 			});
 
 			// !! error check !!
-			if (return_value[0].r != this.get("firstR")) console.log("R[0] not matching", return_value[0].r, this.get("firstR"));
-			if (return_value[return_value.length-1].r != this.get("lastR")) console.log("R[n] not matching", return_value[return_value.length-1].r, this.get("lastR"));
+			if (return_value[0].r != self.get("firstR")) console.log("R[0] not matching", return_value[0].r, self.get("firstR"));
+			if (return_value[return_value.length-1].r != self.get("lastR")) console.log("R[n] not matching", return_value[return_value.length-1].r, self.get("lastR"));
 
 			//console.log("Track verts", return_value.length);
 		});
