@@ -19,10 +19,11 @@ var track = Backbone.Model.extend({
 	},
 	collection: null,
 	get_plotter_obj: function(data) {
-		var return_obj = this.toJSON();
-		return_obj.verts = this.get_verts();
+		var return_obj = {verts: this.get_verts()};
+		_.extend(return_obj, this.toJSON());
 		if (data.start != return_obj.firstR) {
 			if (return_obj.reversible) {
+				console.log("Reverse track");
 				return_obj.verts.reverse();
 				var temp = return_obj.firstR;
 				return_obj.firstR = return_obj.lastR;
