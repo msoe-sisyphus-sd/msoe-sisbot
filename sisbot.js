@@ -212,7 +212,7 @@ var sisbot = {
 	save: function(data, cb) {
 		console.log("Sisbot Save", data);
 		// TODO: merge the given data into collection and save
-		fs.writeFile(this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.sisbot_state, this.collection.toJSON(), function(err) { if (err) return console.log(err); });
+		fs.writeFile(this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.sisbot_state, JSON.stringify(this.collection), function(err) { if (err) return console.log(err); });
 		cb(null, 'Saved');
 	},
 	play: function(data, cb) {
