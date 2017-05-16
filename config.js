@@ -49,9 +49,9 @@ var config = {
 					name        : 'Default Playlist',
 					description : 'Description of Default Playlist',
 					is_published: 'false',
-					track_ids   : [ '2CBDAE96-EC22-48B4-A369-BFC624463C5F',
-									'C3D8BC17-E2E1-4D6D-A91F-80FBB65620B8',
-									'93A90B6B-EAEE-48A3-9742-C688235D837D' ],
+					track_ids   : [ '01',
+									'10',
+									'2CBDAE96-EC22-48B4-A369-BFC624463C5F' ],
 				}, {
 					id          : '2CBDAE96-EC22-48B4-A369-BFC624463C5F',
 					type        : 'track',
@@ -88,6 +88,14 @@ var config = {
 					id          : '75518177-0D28-4B2A-9B73-29E4974FB702',
 					type        : 'track',
 					name        : 'Para 2B',
+				}, {
+					id          : '01',
+					type        : 'track',
+					name        : 'Zero One',
+				}, {
+					id          : '10',
+					type        : 'track',
+					name        : 'One Oh',
 				}
 			],
 		},
