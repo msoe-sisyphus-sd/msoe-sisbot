@@ -240,6 +240,31 @@ var sisbot = {
 			if (cb)	cb(null, 'homing');
 		} else cb('No Connection', null);
 	},
+	add_playlist: function(data, cb) {
+		console.log("Sisbot Add Playlist", data);
+
+		// save playlist
+		var new_playlist = new Playlist(data);
+		var playlist = this.collection.add(new_playlist, {merge: true});
+		playlist.collection = this.collection;
+		playlist.config = this.config;
+
+		// add to current_state
+		var playlists = this.current_state.get("playlist_ids");
+		if (playlists.indexOf(playlist.get("id")) < 0) {
+			playlists.push(playlist.get("id"));
+			this.current_state.set("playlist_ids", playlists);
+		}
+
+		cb(null, this.current_state.toJSON());
+	},
+	remove_playlist: function(data, cb) {
+		console.log("Sisbot Remove Playlist", data);
+
+		// remove from collection
+
+		// remove from current_state
+	},
 	set_playlist: function(data, cb) {
 		console.log("Sisbot Set Playlist", data);
 

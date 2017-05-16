@@ -23,7 +23,7 @@ var track = Backbone.Model.extend({
 		_.extend(return_obj, this.toJSON());
 		if (data.start != return_obj.firstR) {
 			console.log("Compare", data, return_obj.r_type);
-			if (return_obj.reversible) {
+			if (return_obj.reversible == "true") {
 				console.log("Reverse track");
 				return_obj.verts.reverse();
 				var temp = return_obj.firstR;
