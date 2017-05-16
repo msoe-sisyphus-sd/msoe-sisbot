@@ -52,7 +52,7 @@ var track = Backbone.Model.extend({
 			if (return_value[0].r != self.get("firstR")) console.log("R[0] not matching", return_value[0].r, self.get("firstR"));
 			if (return_value[return_value.length-1].r != self.get("lastR")) console.log("R[n] not matching", return_value[return_value.length-1].r, self.get("lastR"));
 
-			//console.log("Track verts", return_value.length);
+			console.log("Track verts", return_value.length);
 		});
 		return return_value;
 	},

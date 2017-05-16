@@ -90,6 +90,9 @@ var config = {
 					name        : 'Para 2B',
 				}
 			],
+		},
+		stopped: { // set NODE_ENV=sisbot_stopped to make it start without autoplaying
+			autoplay: false,
 		}
 };
 
