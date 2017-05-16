@@ -12,9 +12,9 @@ var track = Backbone.Model.extend({
 		accel:			0.5,
 		thvmax:			1,
 		reversed:		"false",
-		firstR:			0,
-		lastR:			1,
-		r_type:			"r01",
+		firstR:			-1, // so we can auto-collect from thr if not given
+		lastR:			-1, // so we can auto-collect from thr if not given
+		r_type:			"r", // so we can auto-collect from thr if not given
 		reversible:	"true"
 	},
 	collection: null,
@@ -70,7 +70,7 @@ var track = Backbone.Model.extend({
 		}
 		if (this.get('firstR') == this.get('lastR')) this.set('reversible', 'false');
 
-		console.log("Track verts", return_value.length);
+		//console.log("Track verts", return_value.length);
 
 		return return_value;
 	}

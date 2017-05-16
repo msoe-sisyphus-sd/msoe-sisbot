@@ -87,7 +87,10 @@ var sisbot = {
 			_.each(objs, function(obj) {
 				switch (obj.type) {
 					case "track":
-						self.collection.add(new Track(obj));
+						var track = self.collection.add(new Track(obj));
+
+						// load thr file to get the first/last rho values
+						if (track.get('firstR') < 0 || track.get('lastR') < 0) track.get_verts();
 						break;
 					case "playlist":
 						self.collection.add(new Playlist(obj));
