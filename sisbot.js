@@ -297,10 +297,14 @@ var sisbot = {
 		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
 		var playlist = this.collection.get(this.current_state.get('playlist_id'));
 		if (playlist != undefined) {
-			var track = playlist.get_next_track();
-			if (track != "false")	{
-				this._autoplay = true; // make it play, even if a home is needed after homing
-				this.playTrack(track.toJSON(), cb);
+			if (this.current_state.get("is_homed") == "true") {
+				var track = playlist.get_next_track();
+				if (track != "false")	{
+					this._autoplay = true; // make it play, even if a home is needed after homing
+					this.playTrack(track.toJSON(), cb);
+				}
+			} else {
+				this.home(null, cb);
 			}
 		} else {
 			if (cb) cb('No playlist', null);
