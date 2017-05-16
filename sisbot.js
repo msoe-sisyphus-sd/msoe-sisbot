@@ -146,10 +146,10 @@ var sisbot = {
 
 				// play next track after pausing (i.e. new playlist)
 				if (newState == 'waiting' && oldState == 'playing' && !self._paused) {
-					//console.log("Play new playlist!", self.playlist);
 					if (this._home_next) {
 						self.home(null, null);
-					} else {
+					} else if (self.current_state.get('active_playlist_id') != "false") {
+						console.log("Play next in playlist!");
 						self.play_next_track(null, null); // autoplay after first home
 					}
 				}
