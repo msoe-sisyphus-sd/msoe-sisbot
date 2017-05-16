@@ -274,12 +274,15 @@ var sisbot = {
 						this._paused = false;
 						this.plotter.playTrack(track_obj);
 						this.current_state.set('_end_rho', track.get('lastR'));
-					} else {
-						// TODO: get next track, this one doesn't match
-						console.log("Continuous play not possible, skip this", track.get("name"));
-					}
 
-					if (cb)	cb(null, 'next track '+track_name);
+						if (cb)	cb(null, 'next track '+track_obj.name);
+					} else {
+						console.log("Continuous play not possible, skip this", track_obj.name);
+
+						if (this.current_state.get("playlist_id") != "false") {
+							this.playNextTrack(null, cb);
+						} else if (cb) cb('Track not possible', null);
+					}
 				} else {
 					this.home(null, cb);
 				}
