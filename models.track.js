@@ -28,32 +28,32 @@ var track = Backbone.Model.extend({
 		return return_obj;
 	},
 	get_verts: function() {
+		//console.log("Get Verts",this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+this.get('id')+'.thr');
 		var self = this;
 		var return_value = [];
 
-		fs.readFile(this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+this.get('id')+'.thr', function(err, data) {
-			if (err) { console.error(err); }
+		var data = fs.readFileSync(this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+this.get('id')+'.thr', 'utf8');
 
-			// Step the file, line by line
-			var lines = data.toString().trim().split('\n');
-			var regex = /^\s*$/; // eliminate empty lines
+		// Step the file, line by line
+		var lines = data.toString().trim().split('\n');
+		var regex = /^\s*$/; // eliminate empty lines
 
-			_.map(lines, function(line) {
-				line.trim();
+		_.map(lines, function(line) {
+			line.trim();
 
-				if (line.length > 0 && line.substring(0,1) != '#' && !line.match(regex)) {
-					var values = line.split(/\s+/);
-					var entry = {th:parseFloat(values[0]),r:parseFloat(values[1])};
-					return_value.push(entry);
-				}
-			});
-
-			// !! error check !!
-			if (return_value[0].r != self.get("firstR")) console.log("R[0] not matching", return_value[0].r, self.get("firstR"));
-			if (return_value[return_value.length-1].r != self.get("lastR")) console.log("R[n] not matching", return_value[return_value.length-1].r, self.get("lastR"));
-
-			console.log("Track verts", return_value.length);
+			if (line.length > 0 && line.substring(0,1) != '#' && !line.match(regex)) {
+				var values = line.split(/\s+/);
+				var entry = {th:parseFloat(values[0]),r:parseFloat(values[1])};
+				return_value.push(entry);
+			}
 		});
+
+		// !! error check !!
+		if (return_value[0].r != self.get("firstR")) console.log("R[0] not matching", return_value[0].r, self.get("firstR"));
+		if (return_value[return_value.length-1].r != self.get("lastR")) console.log("R[n] not matching", return_value[return_value.length-1].r, self.get("lastR"));
+
+		console.log("Track verts", return_value.length);
+
 		return return_value;
 	},
 	get_reverse_verts: function() {
