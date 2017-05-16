@@ -250,7 +250,7 @@ var sisbot = {
 			this.playNextTrack(null, null);
 		}
 
-		if (cb)	cb(null, 'setPlaylist');
+		if (cb)	cb(null, playlist.toJSON());
 	},
 	playTrack: function(data, cb) {
 		console.log("Sisbot Play Track", data);
