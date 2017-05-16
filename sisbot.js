@@ -265,14 +265,11 @@ var sisbot = {
 				this.current_state.set('track_id', data.id);
 
 		    if (this.current_state.get("is_homed") == "true") {
-					if (track.get('firstR') == this.current_state.get('_end_rho')) {
+					var track_obj = track.get_plotter_obj({start:this.current_state.get('_end_rho')});
+					if (track_obj != "false") {
 						this._paused = false;
-						this.plotter.playTrack(track.get_plotter_obj({reversed:false}));
+						this.plotter.playTrack(track_obj);
 						this.current_state.set('_end_rho', track.get('lastR'));
-					} else if (track.get('lastR') == this.current_state.get('_end_rho') && track.get('reversible') == "true") {
-						this._paused = false;
-						this.plotter.playTrack(track.get_plotter_obj({reversed:true}));
-						this.current_state.set('_end_rho', track.get('firstR'));
 					} else {
 						// TODO: get next track, this one doesn't match
 						console.log("Continuous play not possible, skip this", track.get("name"));

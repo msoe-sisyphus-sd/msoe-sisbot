@@ -20,10 +20,19 @@ var track = Backbone.Model.extend({
 	collection: null,
 	get_plotter_obj: function(data) {
 		var return_obj = this.toJSON();
-		if (data.reversed) {
-			return_obj.verts = this.get_reverse_verts();
-		} else {
-			return_obj.verts = this.get_verts();
+		return_obj.verts = this.get_verts();
+		if (data.start != return_obj.firstR) {
+			if (return_obj.reversible) {
+				return_obj.verts.reverse();
+				var temp = return_obj.firstR;
+				return_obj.firstR = return_obj.lastR;
+				return_obj.lastR = temp;
+				return_obj.r_type = 'r'+return_obj.firstR+return_obj.lastR;
+				return_obj.reversed = "true";
+			} else {
+				console.log("Track cannot be cleanly started");
+				return "false";
+			}
 		}
 		return return_obj;
 	},
@@ -49,22 +58,17 @@ var track = Backbone.Model.extend({
 		});
 
 		// !! error check !!
-		if (return_value[0].r != self.get("firstR")) console.log("R[0] not matching", return_value[0].r, self.get("firstR"));
-		if (return_value[return_value.length-1].r != self.get("lastR")) console.log("R[n] not matching", return_value[return_value.length-1].r, self.get("lastR"));
+		if (return_value[0].r != self.get("firstR")) {
+			console.log("R[0] not matching", return_value[0].r, self.get("firstR"));
+			this.set({firstR: return_value[0].r, r_type:"r"+return_value[0].r+this.get("lastR")});
+		}
+		if (return_value[return_value.length-1].r != self.get("lastR")) {
+			console.log("R[n] not matching", return_value[return_value.length-1].r, self.get("lastR"));
+			this.set({firstR: return_value[return_value.length-1].r, r_type:"r"+this.get("firstR")+return_value[return_value.length-1].r});
+		}
+		if (this.get('firstR') == this.get('lastR')) this.set('reversible', 'false');
 
 		console.log("Track verts", return_value.length);
-
-		return return_value;
-	},
-	get_reverse_verts: function() {
-		var return_value = [];
-
-		if (this.get("reversible") == "true") {
-			return_value = this.get_verts();
-			return_value.reverse();
-
-			console.log("Reverse track", this.get("name"), this.get("r_type"), this.get("firstR"), this.get("lastR"));
-		}
 
 		return return_value;
 	}
