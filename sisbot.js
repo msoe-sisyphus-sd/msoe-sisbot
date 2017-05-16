@@ -273,7 +273,7 @@ var sisbot = {
 					var track_obj = track.get_plotter_obj({start:this.current_state.get('_end_rho')});
 					if (track_obj != "false") {
 						this._paused = false;
-						this.plotter.play_track(track_obj);
+						this.plotter.playTrack(track_obj);
 						this.current_state.set('_end_rho', track.get('lastR'));
 
 						if (cb)	cb(null, 'next track '+track_obj.name);
