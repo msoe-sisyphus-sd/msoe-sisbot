@@ -286,7 +286,7 @@ var sisbot = {
 			plotter.pause();
 			this._home_next = true;
 		} else if (this.current_state.get('state') == "waiting") {
-			this.play_track(track, null);
+			this._play_track(track, null);
 		}
 
 		if (cb)	cb(null, track.toJSON());
