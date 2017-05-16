@@ -166,8 +166,8 @@ var sisbot = {
 				self.set_brightness({value:self.current_state.get("brightness")}, null);
 
 				if (self.config.autoplay) {
-					//console.log("Autoplay:", self.current_state.get("playlist_id"));
-					if (self.current_state.get("playlist_id") != "false") self.setPlaylist(self.collection.get(self.current_state.get("playlist_id")).toJSON(), null);
+					//console.log("Autoplay:", self.current_state.get("active_playlist_id"));
+					if (self.current_state.get("active_playlist_id") != "false") self.setPlaylist(self.collection.get(self.current_state.get("active_playlist_id")).toJSON(), null);
 				}
 			});
     } catch(err) {
@@ -243,7 +243,7 @@ var sisbot = {
 		if (data.is_shuffle) playlist.set_shuffle(data.is_shuffle);
 
 		// update current_state
-		this.current_state.set({is_homed: "false", playlist_id: data.id, is_shuffle: data.is_shuffle, is_loop: data.is_loop});
+		this.current_state.set({is_homed: "false", active_playlist_id: data.id, is_shuffle: data.is_shuffle, is_loop: data.is_loop});
 		if (this.current_state.get('state') == "playing") {
 			plotter.pause();
 		} else if (this.current_state.get('state') == "waiting") {
@@ -279,7 +279,7 @@ var sisbot = {
 					} else {
 						console.log("Continuous play not possible, skip this", track_obj.name);
 
-						if (this.current_state.get("playlist_id") != "false") {
+						if (this.current_state.get("active_playlist_id") != "false") {
 							this.playNextTrack(null, cb);
 						} else if (cb) cb('Track not possible', null);
 					}
@@ -293,14 +293,14 @@ var sisbot = {
 	},
 	playNextTrack: function(data, cb) {
 		console.log("Sisbot Play Next Track", data);
-		if (this.current_state.get('playlist_id') == "false") {
+		if (this.current_state.get('active_playlist_id') == "false") {
 			console.log("No Playlist");
 			if (cb) cb('No playlist', null);
 			return;
 		}
 		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
-		if (this.current_state.get('playlist_id') == "false") console.log("There is no selected playlist");
-		var playlist = this.collection.get(this.current_state.get('playlist_id'));
+		if (this.current_state.get('active_playlist_id') == "false") console.log("There is no selected playlist");
+		var playlist = this.collection.get(this.current_state.get('active_playlist_id'));
 		if (playlist != undefined) {
 			this._autoplay = true; // make it play, even if a home is needed after homing
 			if (this.current_state.get("is_homed") == "true") {
@@ -357,9 +357,9 @@ var sisbot = {
 	set_loop: function(data, cb) {
 		console.log("Sisbot set loop", data);
 
-		var playlist_id = this.current_state.get('playlist_id');
-		if (playlist_id != "false") {
-			var playlist = this.collection.get(playlist_id);
+		var active_playlist_id = this.current_state.get('active_playlist_id');
+		if (active_playlist_id != "false") {
+			var playlist = this.collection.get(active_playlist_id);
 			playlist.set_loop(data.value);
 			this.current_state.set('is_loop', data.value);
 
@@ -370,9 +370,9 @@ var sisbot = {
 	},
 	set_shuffle: function(data, cb) {
 		console.log("Sisbot set shuffle", data);
-		var playlist_id = this.current_state.get('playlist_id');
-		if (playlist_id != "false") {
-			var playlist = this.collection.get(playlist_id);
+		var active_playlist_id = this.current_state.get('active_playlist_id');
+		if (active_playlist_id != "false") {
+			var playlist = this.collection.get(active_playlist_id);
 			playlist.set_shuffle(data.value);
 			this.current_state.set('is_shuffle', data.value);
 
