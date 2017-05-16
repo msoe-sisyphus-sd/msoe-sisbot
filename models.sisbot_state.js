@@ -15,8 +15,8 @@ var sisbot_state = Backbone.Model.extend({
 		speed: 0.5,
 		is_shuffle: "true",
 		is_loop: "true",
-		playlist_id: "false",
-		track_id: "false",
+		active_playlist_id: "false",
+		active_track_id: "false",
 		_end_rho: 0,
 
 		is_homed: "false",

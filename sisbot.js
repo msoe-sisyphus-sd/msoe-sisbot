@@ -266,7 +266,7 @@ var sisbot = {
 
 			var track = this.collection.get(data.id);
 			if (track != undefined) {
-				this.current_state.set('track_id', data.id);
+				this.current_state.set('active_track_id', data.id);
 
 		    if (this.current_state.get("is_homed") == "true") {
 					var track_obj = track.get_plotter_obj({start:this.current_state.get('_end_rho')});

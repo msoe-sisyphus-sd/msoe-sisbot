@@ -32,7 +32,7 @@ var config = {
 					id          : uuid(),
 					name		: 'Sisyphus',
 					type        : 'sisbot',
-					playlist_id: 'F42695C4-AE32-4956-8C7D-0FF6A7E9D492', // playlist to default start playing
+					active_playlist_id: 'F42695C4-AE32-4956-8C7D-0FF6A7E9D492', // playlist to default start playing
 					playlist_ids: [ 'F42695C4-AE32-4956-8C7D-0FF6A7E9D492' ],
 					track_ids   : [ '2CBDAE96-EC22-48B4-A369-BFC624463C5F',
 									'C3D8BC17-E2E1-4D6D-A91F-80FBB65620B8',
