@@ -51,9 +51,10 @@ var config = {
 					name        : 'Default Playlist',
 					description : 'Description of Default Playlist',
 					is_published: 'false',
+					is_loop			: 'true',
+					is_shuffle	: 'true',
 					track_ids   : [ '01',
-									'10',
-									'2CBDAE96-EC22-48B4-A369-BFC624463C5F' ],
+									'10' ],
 				}, {
 					id          : '2CBDAE96-EC22-48B4-A369-BFC624463C5F',
 					type        : 'track',

@@ -50,6 +50,7 @@ var playlist = {
 		this.currentTrack++;
 		if (this.currentTrack > this.sorted_tracks.length) {
 			if (!this.repeat) return null;
+			console.log("Loop playlist", this.get('name'));
 			this.currentTrack = 0;
 		}
 		var track = null;

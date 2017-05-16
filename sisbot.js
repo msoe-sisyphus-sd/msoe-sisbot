@@ -240,7 +240,7 @@ var sisbot = {
 		var playlist = this.collection.add(new_playlist, {merge: true});
 		playlist.collection = this.collection;
 		playlist.config = this.config;
-		if (data.is_shuffle) playlist.set_random(data.is_shuffle);
+		if (data.is_shuffle) playlist.set_shuffle(data.is_shuffle);
 
 		// update current_state
 		this.current_state.set({is_homed: "false", playlist_id: data.id, is_shuffle: data.is_shuffle, is_loop: data.is_loop});
@@ -299,12 +299,13 @@ var sisbot = {
 			return;
 		}
 		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
+		if (this.current_state.get('playlist_id') == "false") console.log("There is no selected playlist");
 		var playlist = this.collection.get(this.current_state.get('playlist_id'));
 		if (playlist != undefined) {
+			this._autoplay = true; // make it play, even if a home is needed after homing
 			if (this.current_state.get("is_homed") == "true") {
 				var track = playlist.get_next_track();
 				if (track != "false")	{
-					this._autoplay = true; // make it play, even if a home is needed after homing
 					this.playTrack(track.toJSON(), cb);
 				}
 			} else {
@@ -352,6 +353,33 @@ var sisbot = {
 		if (return_value < min) return_value = min;
 		if (return_value > max) return_value = max;
 		return return_value;
+	},
+	set_loop: function(data, cb) {
+		console.log("Sisbot set loop", data);
+
+		var playlist_id = this.current_state.get('playlist_id');
+		if (playlist_id != "false") {
+			var playlist = this.collection.get(playlist_id);
+			playlist.set_loop(data.value);
+			this.current_state.set('is_loop', data.value);
+
+			if (cb) cb(null, data.value);
+		} else {
+			if (cb) cb('No current playlist, no change', null);
+		}
+	},
+	set_shuffle: function(data, cb) {
+		console.log("Sisbot set shuffle", data);
+		var playlist_id = this.current_state.get('playlist_id');
+		if (playlist_id != "false") {
+			var playlist = this.collection.get(playlist_id);
+			playlist.set_shuffle(data.value);
+			this.current_state.set('is_shuffle', data.value);
+
+			if (cb) cb(null, playlist.toJSON());
+		} else {
+			if (cb) cb('No current playlist, no change', null);
+		}
 	},
   set_speed: function(data, cb) {
 		console.log("Sisbot Set Speed", data.value);
