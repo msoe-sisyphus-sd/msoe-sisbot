@@ -50,7 +50,7 @@ var playlist = Backbone.Model.extend({
 	set_shuffle: function(value) {
 		var randomized = this.get('is_shuffle');
 		if (value != randomized) {
-			this.set("randomized", String(Boolean(value))); // set to "true" or "false"
+			this.set("is_shuffle", String(Boolean(value))); // set to "true" or "false"
 
 			if (Boolean(value)) {
 				this._randomize();
@@ -66,7 +66,7 @@ var playlist = Backbone.Model.extend({
 		}
 	},
 	set_loop: function(value) {
-		this.set("is_looping", String(Boolean(value)));
+		this.set("is_loop", String(Boolean(value)));
 	},
 	_randomize: function() {
 		var self = this;
