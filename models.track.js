@@ -22,6 +22,7 @@ var track = Backbone.Model.extend({
 		var return_obj = {verts: this.get_verts()};
 		_.extend(return_obj, this.toJSON());
 		if (data.start != return_obj.firstR) {
+			console.log("Compare", data, return_obj.r_type);
 			if (return_obj.reversible) {
 				console.log("Reverse track");
 				return_obj.verts.reverse();
@@ -65,7 +66,7 @@ var track = Backbone.Model.extend({
 		}
 		if (return_value[return_value.length-1].r != self.get("lastR")) {
 			console.log("R[n] not matching", return_value[return_value.length-1].r, self.get("lastR"));
-			this.set({firstR: return_value[return_value.length-1].r, r_type:"r"+this.get("firstR")+return_value[return_value.length-1].r});
+			this.set({lastR: return_value[return_value.length-1].r, r_type:"r"+this.get("firstR")+return_value[return_value.length-1].r});
 		}
 		if (this.get('firstR') == this.get('lastR')) this.set('reversible', 'false');
 
