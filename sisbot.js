@@ -27,6 +27,7 @@ var sisbot = {
 
 	_paused: false,
 	_autoplay: false,
+	_home_next: false,
 
 	// playlists: [
 	// 	{
@@ -146,7 +147,11 @@ var sisbot = {
 				// play next track after pausing (i.e. new playlist)
 				if (newState == 'waiting' && oldState == 'playing' && !self._paused) {
 					//console.log("Play new playlist!", self.playlist);
-					self.play_next_track(null, null); // autoplay after first home
+					if (this._home_next) {
+						self.home(null, null);
+					} else {
+						self.play_next_track(null, null); // autoplay after first home
+					}
 				}
 			});
 
@@ -255,6 +260,7 @@ var sisbot = {
 		this.current_state.set({is_homed: "false", active_playlist_id: data.id, is_shuffle: data.is_shuffle, is_loop: data.is_loop});
 		if (this.current_state.get('state') == "playing") {
 			plotter.pause();
+			this._home_next = true;
 		} else if (this.current_state.get('state') == "waiting") {
 			this.play_next_track(null, null);
 		}
@@ -278,6 +284,7 @@ var sisbot = {
 		this.current_state.set({is_homed: "false", active_playlist_id: "false", active_track_id: track.get("id"), is_shuffle: "false", is_loop: "false"});
 		if (this.current_state.get('state') == "playing") {
 			plotter.pause();
+			this._home_next = true;
 		} else if (this.current_state.get('state') == "waiting") {
 			this.play_track(track, null);
 		}
@@ -519,7 +526,7 @@ var sisbot = {
 	git_pull: function(data, cb) {
 		console.log("Sisbot Git Pull", data);
 		this.pause(null, null);
-		exec('sudo /home/pi/sisbot-server/sisbot/update.sh');
+		exec('/home/pi/sisbot-server/sisbot/update.sh');
 		cb(null, 'installing updates');
 	},
 	download_playlist: function(data, cb) {
