@@ -139,7 +139,7 @@ var sisbot = {
 						if (self.current_state.get('active_playlist_id') != "false") {
 							self.play_next_track(null, null);
 						} else if (self.current_state.get('active_track_id') != "false") {
-							self.play_track(self.collection.get(self.current_state.get('active_track_id')), null);
+							self._play_track(self.collection.get(self.current_state.get('active_track_id')), null);
 						}
 					}
 				}
