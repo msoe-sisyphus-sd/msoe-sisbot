@@ -268,7 +268,7 @@ var sisbot = {
 		if (data.is_shuffle) playlist.set_shuffle(data.is_shuffle);
 
 		// update current_state
-		this.current_state.set({is_homed: "false", active_playlist_id: data.id, is_shuffle: data.is_shuffle, is_loop: data.is_loop});
+		this.current_state.set({is_homed: "false", active_playlist_id: data.id, active_track_id: data.active_track_id, is_shuffle: data.is_shuffle, is_loop: data.is_loop});
 		if (this.current_state.get('state') == "playing") {
 			plotter.pause();
 			this._home_next = true;
