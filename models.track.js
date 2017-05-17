@@ -39,7 +39,7 @@ var track = Backbone.Model.extend({
 		return return_obj;
 	},
 	get_verts: function() {
-		//console.log("Get Verts",this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+this.get('id')+'.thr');
+		console.log("Get Verts",this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+this.get('id')+'.thr');
 		var self = this;
 		var return_value = [];
 
