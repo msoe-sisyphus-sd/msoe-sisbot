@@ -11,7 +11,6 @@ var Backbone			= require('backbone');
 var SerialPort		= require('serialport').SerialPort;
 
 var plotter 			= require('./plotter');
-// var playlist 			= require('./playlist');
 var Sisbot_state 	= require ('./models.sisbot_state');
 var Playlist 			= require ('./models.playlist');
 var Track 				= require ('./models.track');
@@ -28,25 +27,6 @@ var sisbot = {
 	_paused: false,
 	_autoplay: false,
 	_home_next: false,
-
-	// playlists: [
-	// 	{
-	// 		name: 'default',
-	// 		repeat:true,
-	// 		randomized:true,
-	// 		track_ids:['2CBDAE96-EC22-48B4-A369-BFC624463C5F', 'C3D8BC17-E2E1-4D6D-A91F-80FBB65620B8', '2B34822B-0A27-4398-AE19-23A3C83F1220', '93A90B6B-EAEE-48A3-9742-C688235D837D','B7407A2F-04C3-4C92-B907-4C3869DA86D6','7C046710-9F19-4423-B291-7394996F0913','D14E0B41-E572-4B69-9827-4A07C503D031','26FBFB10-4BC7-46BF-8D55-85AA52C19ADF','75518177-0D28-4B2A-9B73-29E4974FB702'],
-	// 	}
-	// ],
-	// tracks: [
-	// 	{ id: '2CBDAE96-EC22-48B4-A369-BFC624463C5F', type:"r01", reversible:true },
-	// 	{ id: 'C3D8BC17-E2E1-4D6D-A91F-80FBB65620B8', type:"r01", reversible:true },
-	// 	{ id: '93A90B6B-EAEE-48A3-9742-C688235D837D', type:"r01", reversible:true },
-	// 	{ id: 'B7407A2F-04C3-4C92-B907-4C3869DA86D6', type:"r01", reversible:true },
-	// 	{ id: 'D14E0B41-E572-4B69-9827-4A07C503D031', type:"r01", reversible:true },
-	// 	{ id: '75518177-0D28-4B2A-9B73-29E4974FB702', type:"r01", reversible:true },
-	// 	{ id: '7C046710-9F19-4423-B291-7394996F0913', type:"r00", reversible:true },
-	// 	{ id: '26FBFB10-4BC7-46BF-8D55-85AA52C19ADF', type:"r11", reversible:true },
-	// ],
 
 	_internet_check: 0,
 
@@ -121,6 +101,8 @@ var sisbot = {
 	    this.plotter.setConfig(CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config));
 			plotter.onFinishTrack(function() {
 				console.log("Track Finished");
+				// TODO: update active_track_id to next
+
 			});
 	    plotter.onStateChanged(function(newState, oldState) {
 				console.log("State changed to", newState, oldState, self._autoplay);
@@ -264,6 +246,9 @@ var sisbot = {
 		// remove from collection
 
 		// remove from current_state
+
+
+		cb(null, this.current_state.toJSON());
 	},
 	set_playlist: function(data, cb) {
 		console.log("Sisbot Set Playlist", data);
@@ -287,7 +272,8 @@ var sisbot = {
 			plotter.pause();
 			this._home_next = true;
 		} else if (this.current_state.get('state') == "waiting") {
-			this.play_next_track(null, null);
+			var track = this.collection.get(playlist.get('active_track_id'));
+			if (track != undefined && track != "false")	this._play_track(track, null);
 		}
 
 		if (cb)	cb(null, playlist.toJSON());
@@ -304,6 +290,12 @@ var sisbot = {
 		var track = this.collection.add(new_track, {merge: true});
 		track.collection = this.collection;
 		track.config = this.config;
+
+		// re-home if forced
+		if (data.home == "true") this.current_state.set("is_homed", "false");
+
+		// don't change, this is already playing
+		if (track.get('id') == this.current_state.get("active_track_id") && this.current_state.get('state') == "playing") return cb('already playing', null);
 
 		// update current_state
 		this.current_state.set({is_homed: "false", active_playlist_id: "false", active_track_id: track.get("id"), is_shuffle: "false", is_loop: "false"});
@@ -325,15 +317,9 @@ var sisbot = {
 		}
 		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
 		if (this._validateConnection()) {
-			// re-home if forced
-			if (data.home == "true") this.current_state.set("is_homed", "false");
-
 			if (this.current_state.get("is_homed") == "true") {
 				var track = this.collection.get(data.id);
 				if (track != undefined) {
-					if (track.get('id') == this.current_state.get("active_track_id")) return cb('already playing', null);
-					this.current_state.set("active_track_id", data.id);
-
 			    if (this.current_state.get("is_homed") == "true") {
 						var track_obj = track.get_plotter_obj({start:this.current_state.get('_end_rho')});
 						if (track_obj != "false") {
@@ -561,6 +547,8 @@ var sisbot = {
 	},
 	download_track: function(data, cb) {
 		console.log("Sisbot Download Track", data);
+		// save track
+
 		cb(null, 'downloading tracks');
 	},
 	restart: function(data,cb) {

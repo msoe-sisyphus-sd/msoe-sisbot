@@ -53,6 +53,8 @@ var config = {
 					is_published: 'false',
 					is_loop			: 'true',
 					is_shuffle	: 'true',
+					active_track_id: '01',
+					active_track_index: 0,
 					track_ids   : [ '01',
 									'10' ],
 				}, {
