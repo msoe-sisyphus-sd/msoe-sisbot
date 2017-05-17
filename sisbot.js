@@ -84,7 +84,9 @@ var sisbot = {
 			this.current_state = this.collection.findWhere({type: "sisbot"});
 			// force update pi_id, hardware could have changed
 			this.current_state.set("pi_id", 'pi_'+this.config.pi_serial);
+			this.current_state.set("status", "waiting");
 			// TODO: add ip address to current_state
+			// TODO: add hostname to current_state
 
 			// assign collection and config to each track and playlist
 			this.collection.each(function (obj) {
