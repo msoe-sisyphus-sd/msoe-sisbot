@@ -339,10 +339,10 @@ var sisbot = {
 						this.home(null, cb);
 					}
 				} else {
-					this.home(null, cb);
+					if (cb)	cb('track not available', null);
 				}
 			} else {
-				if (cb)	cb('track not available', null);
+				this.home(null, cb);
 			}
 		} else cb('No Connection', null);
 	},
