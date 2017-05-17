@@ -101,8 +101,11 @@ var sisbot = {
 	    this.plotter.setConfig(CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config));
 			plotter.onFinishTrack(function() {
 				console.log("Track Finished");
-				// TODO: update active_track_id to next
-
+				if (self.current_state.get('active_playlist_id') != "false") {
+					self.play_next_track(null, null);
+				} else {
+					self.current_state.set('active_track_id', 'false');
+				}
 			});
 	    plotter.onStateChanged(function(newState, oldState) {
 				console.log("State changed to", newState, oldState, self._autoplay);
@@ -118,9 +121,7 @@ var sisbot = {
 
 					if (newState == 'waiting' && self._autoplay) {
 						 // autoplay after first home
-						if (self.current_state.get('active_playlist_id') != "false") {
-							self.play_next_track(null, null);
-						} else if (self.current_state.get('active_track_id') != "false") {
+						if (self.current_state.get('active_track_id') != "false") {
 							self._play_track(self.collection.get(self.current_state.get('active_track_id').toJSON()), null);
 						}
 					}
@@ -130,9 +131,9 @@ var sisbot = {
 				if (newState == 'waiting' && oldState == 'playing' && !self._paused) {
 					if (this._home_next) {
 						self.home(null, null);
-					} else if (self.current_state.get('active_playlist_id') != "false") {
-						console.log("Play next in playlist!");
-						self.play_next_track(null, null); // autoplay after first home
+					} else if (self.current_state.get('active_track_id') != "false") {
+						console.log("Play next track!");
+						self._play_track(self.collection.get(self.current_state.get('active_track_id').toJSON(), null); // autoplay after first home
 					}
 				}
 			});
