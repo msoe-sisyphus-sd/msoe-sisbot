@@ -101,8 +101,10 @@ var sisbot = {
 	    this.plotter.setConfig(CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config));
 			plotter.onFinishTrack(function() {
 				console.log("Track Finished");
-				if (self.current_state.get('active_playlist_id') != "false") {
-					self.play_next_track(null, null);
+				var playlist_id = self.current_state.get('active_playlist_id');
+				if (playlist_id != "false") {
+					var playlist = self.collection.get(playlist_id);
+					self.current_state.set('active_track_id', playlist.get_next_track_id());
 				} else if (self.current_state.get('is_loop') != "true") {
 					self.current_state.set('active_track_id', 'false');
 				}
@@ -257,6 +259,7 @@ var sisbot = {
 		// pull out coordinates
 		var verts = data.verts;
 		if (verts == undefined || verts == "") return cb("No verts given", null);
+		fs.writeFile(this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+data.id+'.thr', verts, function(err) { if (err) return cb(err, null); });
 		delete data.verts;
 
 		// save playlist
