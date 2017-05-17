@@ -245,6 +245,8 @@ var sisbot = {
 			this.current_state.set("playlist_ids", playlists);
 		}
 
+		this.save(null, null);
+
 		cb(null, this.current_state.toJSON());
 	},
 	remove_playlist: function(data, cb) {
@@ -260,6 +262,8 @@ var sisbot = {
 			if (playlist_id != data.id) clean_playlists.push(playlist_id);
 		});
 		this.current_state.set("track_ids", clean_playlists);
+
+		this.save(null, null);
 
 		cb(null, this.current_state.toJSON());
 	},
@@ -285,6 +289,8 @@ var sisbot = {
 			this.current_state.set("track_ids", tracks);
 		}
 
+		this.save(null, null);
+
 		cb(null, this.current_state.toJSON());
 	},
 	remove_track: function(data, cb) {
@@ -300,6 +306,8 @@ var sisbot = {
 			if (track_id != data.id) clean_tracks.push(track_id);
 		});
 		this.current_state.set("track_ids", clean_tracks);
+
+		this.save(null, null);
 
 		cb(null, this.current_state.toJSON());
 	},
@@ -332,6 +340,8 @@ var sisbot = {
 			}
 		}
 
+		this.save(null, null);
+
 		if (cb)	cb(null, playlist.toJSON());
 	},
 	set_track: function(data, cb) {
@@ -359,6 +369,8 @@ var sisbot = {
 			this._autoplay = true;
 			this._play_track(track.toJSON(), null);
 		}
+
+		this.save(null, null);
 
 		if (cb)	cb(null, track.toJSON());
 	},
@@ -466,16 +478,19 @@ var sisbot = {
 	set_loop: function(data, cb) {
 		console.log("Sisbot set loop", data);
 
+		this.current_state.set('is_loop', data.value);
+
 		var active_playlist_id = this.current_state.get('active_playlist_id');
 		if (active_playlist_id != "false") {
 			var playlist = this.collection.get(active_playlist_id);
 			playlist.set_loop(data.value);
-			this.current_state.set('is_loop', data.value);
 
 			if (cb) cb(null, data.value);
 		} else {
 			if (cb) cb('No current playlist, no change', null);
 		}
+
+		this.save(null, null);
 	},
 	set_shuffle: function(data, cb) {
 		console.log("Sisbot set shuffle", data);
@@ -484,6 +499,8 @@ var sisbot = {
 			var playlist = this.collection.get(active_playlist_id);
 			playlist.set_shuffle(data.value);
 			this.current_state.set('is_shuffle', data.value);
+
+			this.save(null, null);
 
 			if (cb) cb(null, playlist.toJSON());
 		} else {
@@ -495,6 +512,9 @@ var sisbot = {
 		var speed = this._clamp(data.value, 0.0, 1.0); // 0.0-1.0f
     plotter.setSpeed(speed);
 		this.current_state.set('speed', speed);
+
+		this.save(null, null);
+
     if (cb)	cb(null, plotter.getSpeed());
   },
 	set_brightness: function(data, cb) {
@@ -517,6 +537,8 @@ var sisbot = {
     } else {
       this._serialWrite('SE,1,'+pwm);
     }
+
+		this.save(null, null);
 
 		if (cb)	cb(null, value);
 	},
@@ -594,20 +616,21 @@ var sisbot = {
 		exec('/home/pi/sisbot-server/sisbot/update.sh');
 		cb(null, 'installing updates');
 	},
-	download_playlist: function(data, cb) {
-		console.log("Sisbot Download Playlist", data);
-		// save playlist
-		// download listed tracks
-	},
-	download_track: function(data, cb) {
-		console.log("Sisbot Download Track", data);
-		// save track
-
-		cb(null, 'downloading tracks');
-	},
+	// download_playlist: function(data, cb) {
+	// 	console.log("Sisbot Download Playlist", data);
+	// 	// save playlist
+	// 	// download listed tracks
+	// },
+	// download_track: function(data, cb) {
+	// 	console.log("Sisbot Download Track", data);
+	// 	// save track
+	//
+	// 	cb(null, 'downloading tracks');
+	// },
 	restart: function(data,cb) {
 		console.log("Sisbot Restart", data);
 		cb(null, 'restarting sisyphus');
+		exec('sudo reboot');
 	}
 };
 
