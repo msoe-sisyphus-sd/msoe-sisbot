@@ -86,7 +86,7 @@ var sisbot = {
 			this.current_state.set({
 				pi_id: 'pi_'+this.config.pi_serial,
 				is_homed: "false",
-				status:"waiting",
+				state: "waiting",
 				is_serial_open: "false"
 			});
 			// TODO: add ip address to current_state
