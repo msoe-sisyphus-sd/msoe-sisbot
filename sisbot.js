@@ -326,7 +326,10 @@ var sisbot = {
 			this._home_next = true;
 		} else if (this.current_state.get('state') == "waiting") {
 			var track = this.collection.get(playlist.get('active_track_id'));
-			if (track != undefined && track != "false")	this._play_track(track.toJSON(), null);
+			if (track != undefined && track != "false")	{
+				this._autoplay = true;
+				this._play_track(track.toJSON(), null);
+			}
 		}
 
 		if (cb)	cb(null, playlist.toJSON());
