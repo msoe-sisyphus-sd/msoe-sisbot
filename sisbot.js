@@ -121,7 +121,7 @@ var sisbot = {
 						if (self.current_state.get('active_playlist_id') != "false") {
 							self.play_next_track(null, null);
 						} else if (self.current_state.get('active_track_id') != "false") {
-							self._play_track(self.collection.get(self.current_state.get('active_track_id')), null);
+							self._play_track(self.collection.get(self.current_state.get('active_track_id').toJSON()), null);
 						}
 					}
 				}
@@ -273,7 +273,7 @@ var sisbot = {
 			this._home_next = true;
 		} else if (this.current_state.get('state') == "waiting") {
 			var track = this.collection.get(playlist.get('active_track_id'));
-			if (track != undefined && track != "false")	this._play_track(track, null);
+			if (track != undefined && track != "false")	this._play_track(track.toJSON(), null);
 		}
 
 		if (cb)	cb(null, playlist.toJSON());
@@ -303,7 +303,7 @@ var sisbot = {
 			plotter.pause();
 			this._home_next = true;
 		} else if (this.current_state.get('state') == "waiting") {
-			this._play_track(track, null);
+			this._play_track(track.toJSON(), null);
 		}
 
 		if (cb)	cb(null, track.toJSON());
