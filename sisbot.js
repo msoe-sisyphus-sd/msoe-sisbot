@@ -251,6 +251,38 @@ var sisbot = {
 
 		cb(null, this.current_state.toJSON());
 	},
+	add_track: function(data, cb) {
+		console.log("Sisbot Add Track", data);
+
+		// pull out coordinates
+		var verts = data.verts;
+		if (verts == undefined || verts == "") return cb("No verts given", null);
+
+		// save playlist
+		var new_track = new Track(data);
+		var track = this.collection.add(new_track, {merge: true});
+		track.collection = this.collection;
+		track.config = this.config;
+
+		// add to current_state
+		var tracks = this.current_state.get("track_ids");
+		if (tracks.indexOf(track.get("id")) < 0) {
+			tracks.push(track.get("id"));
+			this.current_state.set("track_ids", tracks);
+		}
+
+		cb(null, this.current_state.toJSON());
+	},
+	remove_track: function(data, cb) {
+		console.log("Sisbot Remove Track", data);
+
+		// remove from collection
+
+		// remove from current_state
+
+
+		cb(null, this.current_state.toJSON());
+	},
 	set_playlist: function(data, cb) {
 		console.log("Sisbot Set Playlist", data);
 
