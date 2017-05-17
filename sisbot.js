@@ -571,8 +571,8 @@ var sisbot = {
 		self.current_state.set("is_hotspot", "true");
 		cb(null, 'reset to hotspot');
 	},
-	git_pull: function(data, cb) {
-		console.log("Sisbot Git Pull", data);
+	install_updates: function(data, cb) {
+		console.log("Sisbot Install Updates", data);
 		this.pause(null, null);
 		exec('/home/pi/sisbot-server/sisbot/update.sh');
 		cb(null, 'installing updates');
