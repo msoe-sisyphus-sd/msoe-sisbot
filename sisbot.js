@@ -257,6 +257,7 @@ var sisbot = {
 		// pull out coordinates
 		var verts = data.verts;
 		if (verts == undefined || verts == "") return cb("No verts given", null);
+		delete data.verts;
 
 		// save playlist
 		var new_track = new Track(data);
