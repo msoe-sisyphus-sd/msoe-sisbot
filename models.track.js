@@ -20,7 +20,9 @@ var track = Backbone.Model.extend({
 	collection: null,
 	get_plotter_obj: function(data) {
 		var return_obj = {verts: this.get_verts()};
-		_.extend(return_obj, this.toJSON());
+		var this_json = this.toJSON();
+		delete this_json.verts;
+		_.extend(return_obj, this_json);
 		if (data.start != return_obj.firstR) {
 			console.log("Compare", data, return_obj.r_type);
 			if (return_obj.reversible == "true") {
@@ -70,7 +72,7 @@ var track = Backbone.Model.extend({
 		}
 		if (this.get('firstR') == this.get('lastR')) this.set('reversible', 'false');
 
-		//console.log("Track verts", return_value.length);
+		console.log("Track verts", return_value.length);
 
 		return return_value;
 	}

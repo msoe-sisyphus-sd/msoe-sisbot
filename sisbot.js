@@ -122,7 +122,8 @@ var sisbot = {
 					self.current_state.set({is_homed: "true", _end_rho: 0}); // reset
 
 					if (newState == 'waiting' && self._autoplay) {
-						 // autoplay after first home
+						// autoplay after first home
+						console.log("Play next ",self.current_state.get('active_track_id'));
 						if (self.current_state.get('active_track_id') != "false") {
 							self._play_track(self.collection.get(self.current_state.get('active_track_id')).toJSON(), null);
 						}
@@ -352,6 +353,7 @@ var sisbot = {
 			plotter.pause();
 			this._home_next = true;
 		} else if (this.current_state.get('state') == "waiting") {
+			this._autoplay = true;
 			this._play_track(track.toJSON(), null);
 		}
 
@@ -370,7 +372,6 @@ var sisbot = {
 				var track = this.collection.get(data.id);
 				if (track != undefined) {
 			    if (this.current_state.get("is_homed") == "true") {
-						console.log("Homed, play track", track.get("name"));
 						var track_obj = track.get_plotter_obj({start:this.current_state.get('_end_rho')});
 						if (track_obj != "false") {
 							this._paused = false;
