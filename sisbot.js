@@ -122,7 +122,7 @@ var sisbot = {
 					if (newState == 'waiting' && self._autoplay) {
 						 // autoplay after first home
 						if (self.current_state.get('active_track_id') != "false") {
-							self._play_track(self.collection.get(self.current_state.get('active_track_id').toJSON()), null);
+							self._play_track(self.collection.get(self.current_state.get('active_track_id')).toJSON(), null);
 						}
 					}
 				}
@@ -133,7 +133,7 @@ var sisbot = {
 						self.home(null, null);
 					} else if (self.current_state.get('active_track_id') != "false") {
 						console.log("Play next track!");
-						self._play_track(self.collection.get(self.current_state.get('active_track_id').toJSON(), null); // autoplay after first home
+						self._play_track(self.collection.get(self.current_state.get('active_track_id')).toJSON(), null); // autoplay after first home
 					}
 				}
 			});
