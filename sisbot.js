@@ -370,6 +370,7 @@ var sisbot = {
 				var track = this.collection.get(data.id);
 				if (track != undefined) {
 			    if (this.current_state.get("is_homed") == "true") {
+						console.log("Homed, play track", track.get("name"));
 						var track_obj = track.get_plotter_obj({start:this.current_state.get('_end_rho')});
 						if (track_obj != "false") {
 							this._paused = false;
