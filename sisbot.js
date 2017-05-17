@@ -103,7 +103,7 @@ var sisbot = {
 				console.log("Track Finished");
 				if (self.current_state.get('active_playlist_id') != "false") {
 					self.play_next_track(null, null);
-				} else {
+				} else if (self.current_state.get('is_loop') != "true") {
 					self.current_state.set('active_track_id', 'false');
 				}
 			});
