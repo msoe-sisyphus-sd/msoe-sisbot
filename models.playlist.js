@@ -52,7 +52,7 @@ var playlist = Backbone.Model.extend({
 		if (value != randomized) {
 			this.set("is_shuffle", String(Boolean(value))); // set to "true" or "false"
 
-			if (Boolean(value)) {
+			if (value == "true") {
 				this._randomize();
 			} else {
 				var tracks = this.get("track_ids");
