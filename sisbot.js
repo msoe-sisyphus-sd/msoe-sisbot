@@ -247,9 +247,15 @@ var sisbot = {
 		console.log("Sisbot Remove Playlist", data);
 
 		// remove from collection
+		this.collection.remove(data.id);
 
 		// remove from current_state
-
+		var playlists = this.current_state.get("playlist_ids");
+		var clean_playlists = [];
+		_.each(playlists, function(playlist_id) {
+			if (playlist_id != data.id) clean_playlists.push(playlist_id);
+		});
+		this.current_state.set("track_ids", clean_playlists);
 
 		cb(null, this.current_state.toJSON());
 	},
@@ -281,9 +287,15 @@ var sisbot = {
 		console.log("Sisbot Remove Track", data);
 
 		// remove from collection
+		this.collection.remove(data.id);
 
 		// remove from current_state
-
+		var tracks = this.current_state.get("track_ids");
+		var clean_tracks = [];
+		_.each(tracks, function(track_id) {
+			if (track_id != data.id) clean_tracks.push(track_id);
+		});
+		this.current_state.set("track_ids", clean_tracks);
 
 		cb(null, this.current_state.toJSON());
 	},
