@@ -82,9 +82,13 @@ var sisbot = {
 				}
 			});
 			this.current_state = this.collection.findWhere({type: "sisbot"});
-			// force update pi_id, hardware could have changed
-			this.current_state.set("pi_id", 'pi_'+this.config.pi_serial);
-			this.current_state.set("status", "waiting");
+			// force values on startup
+			this.current_state.set({
+				pi_id: 'pi_'+this.config.pi_serial,
+				is_homed: "false",
+				status:"waiting",
+				is_serial_open: "false"
+			});
 			// TODO: add ip address to current_state
 			// TODO: add hostname to current_state
 
