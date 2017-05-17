@@ -190,6 +190,9 @@ var sisbot = {
 		console.log("Sisbot Connect", data);
 		cb(null, this.collection.toJSON());
 	},
+	state: function(data, cb) {
+		cb(null, this.current_state.toJSON());
+	},
 	exists: function(data, cb) {
 		console.log("Sisbot Exists", data);
 		cb(null, 'Ok');
@@ -339,9 +342,6 @@ var sisbot = {
 		var track = this.collection.add(new_track, {merge: true});
 		track.collection = this.collection;
 		track.config = this.config;
-
-		// re-home if forced
-		if (data.home == "true") this.current_state.set("is_homed", "false");
 
 		// don't change, this is already playing
 		if (track.get('id') == this.current_state.get("active_track_id") && this.current_state.get('state') == "playing") return cb('already playing', null);
