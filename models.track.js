@@ -70,7 +70,11 @@ var track = Backbone.Model.extend({
 			console.log("R[n] not matching", return_value[return_value.length-1].r, self.get("lastR"));
 			this.set({lastR: return_value[return_value.length-1].r, r_type:"r"+this.get("firstR")+return_value[return_value.length-1].r});
 		}
-		if (this.get('firstR') == this.get('lastR')) this.set('reversible', 'false');
+		if (this.get('firstR') == this.get('lastR')) {
+			this.set('reversible', 'false');
+		} else {
+			this.set('reversible', 'true');
+		}
 
 		console.log("Track verts", return_value.length);
 
