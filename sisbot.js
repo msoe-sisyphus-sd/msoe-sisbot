@@ -290,6 +290,7 @@ var sisbot = {
 		var track = this.collection.add(new_track, {merge: true});
 		track.collection = this.collection;
 		track.config = this.config;
+		track.get_verts(); // so our first/last rho are forced correct
 
 		// add to current_state
 		var tracks = this.current_state.get("track_ids");
@@ -344,7 +345,7 @@ var sisbot = {
 
 		// update current_state
 		this.current_state.set({is_homed: "false", active_playlist_id: data.id, active_track_id: data.active_track_id, is_shuffle: data.is_shuffle, is_loop: data.is_loop});
-		console.log("Current playlist", this.current_state.get('state'));
+		//console.log("Current playlist", this.current_state.get('state'));
 		if (this.current_state.get('state') == "playing") {
 			plotter.pause();
 			this._home_next = true;
