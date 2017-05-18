@@ -64,6 +64,8 @@ var playlist = Backbone.Model.extend({
 			var sorted_tracks = this.get('sorted_tracks');
 			var firstIndex = sorted_tracks.indexOf(this.get('active_track_id'));
 			this.set("active_track_index", firstIndex);
+		} else {
+			console.log("Shuffle already matches", value, randomized);
 		}
 	},
 	set_loop: function(value) {
