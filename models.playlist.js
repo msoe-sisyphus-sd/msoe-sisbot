@@ -108,21 +108,21 @@ var playlist = Backbone.Model.extend({
 				var last_track = randomized_tracks[randomized_tracks.length-1];
 
 				// add to end or front
-				//console.log("Track comparison", randomized_tracks.length, track_obj, first_track, last_track);
+				console.log("Track comparison", randomized_tracks.length, track_obj, first_track, last_track);
 				if (last_track.lastR == track_obj.firstR && last_track.id != track_obj.id) {
 					randomized_tracks.push(track_obj);
 					success = true;
 				} else if (last_track.lastR == track_obj.lastR && track_obj.reversible && last_track.id != track_obj.id) {
-					randomized_tracks.push(this._reverseTrack(track_obj));
+					randomized_tracks.push(self._reverseTrack(track_obj));
 					success = true;
 				} else if (first_track.firstR == track_obj.lastR && first_track.id != track_obj.id) {
 					randomized_tracks.unshift(track_obj);
 					success = true;
 				} else if (first_track.firstR == track_obj.firstR && track_obj.reversible && first_track.id != track_obj.id) {
-					randomized_tracks.unshift(this._reverseTrack(track_obj));
+					randomized_tracks.unshift(self._reverseTrack(track_obj));
 					success = true;
 				} else {
-					//console.log("Track unable to fit", track_obj, first_track.firstR, last_track.lastR);
+					console.log("Track unable to fit", track_obj, first_track.firstR, last_track.lastR);
 				}
 			} else { // only track, just add
 				randomized_tracks.push(track_obj);
@@ -156,7 +156,8 @@ var playlist = Backbone.Model.extend({
 						best_count = randomized_tracks.length;
 						var append_list = [];
 						_.each(remaining_tracks, function(remaining_track) {
-							var track_obj = self.collection.get(remaining_track);
+							//var track_obj = self.collection.get(remaining_track);
+							var track_obj = track_objs[remaining_track];
 							append_list.push(track_obj);
 						});
 						best_matches = randomized_tracks.concat(append_list);
