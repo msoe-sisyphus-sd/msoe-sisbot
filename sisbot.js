@@ -119,8 +119,8 @@ var sisbot = {
 				if (newState == 'homing') self.current_state.set("state", "homing");
 				if (newState == 'playing') self.current_state.set("state", "playing");
 				if (newState == 'waiting') {
-					if (this._paused) self.current_state.set("state", "paused");
-					if (!this._paused) self.current_state.set("state", "waiting");
+					if (self._paused) self.current_state.set("state", "paused");
+					if (!self._paused) self.current_state.set("state", "waiting");
 				}
 				console.log("State changed to", self.current_state.get("state"), oldState, self._autoplay);
 
