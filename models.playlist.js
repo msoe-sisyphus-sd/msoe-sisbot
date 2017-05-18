@@ -69,6 +69,13 @@ var playlist = Backbone.Model.extend({
 	set_loop: function(value) {
 		this.set("is_loop", String(Boolean(value)));
 	},
+	_reverseTrack: function(track_obj) {
+		var tempR = track_obj.lastR;
+		track_obj.lastR = track_obj.firstR;
+		track_obj.firstR = tempR;
+		track_obj.reversed = "true";
+		return track_obj;
+	},
 	_randomize: function() {
 		var self = this;
 		console.log("Randomize Playlist");
@@ -82,13 +89,19 @@ var playlist = Backbone.Model.extend({
 		var best_count = 0;
 		var retries = 0;
 
+		var track_objs = {};
+		_.each(remaining_tracks, function(track_id) {
+			var track_obj = self.collection.get(track_id).toJSON();
+			track_objs[track_obj.id] = track_obj;
+		});
+
 		while (remaining_tracks.length > 0) {
 			var rand = Math.floor(Math.random()*remaining_tracks.length);
 			var next_track = remaining_tracks[rand];
 			var success = false;
 
 			//console.log("Place track", next_track, this.tracks[next_track]);
-			var track_obj = this.collection.get(next_track);
+			var track_obj = track_objs[next_track];
 
 			if (randomized_tracks.length > 0) {
 				var first_track = randomized_tracks[0];
@@ -124,7 +137,8 @@ var playlist = Backbone.Model.extend({
 				var no_win = true;
 				// check for no-win situation
 				_.each(remaining_tracks, function(track) {
-					var track_obj = self.collection.get(track);
+					//var track_obj = self.collection.get(track);
+					var track_obj = track_objs[track];
 
 					if (first_track.firstR == track_obj.firstR ||
 						first_track.firstR == track_obj.lastR ||
