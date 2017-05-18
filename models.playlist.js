@@ -105,7 +105,7 @@ var playlist = Backbone.Model.extend({
 				var last_track = randomized_tracks[randomized_tracks.length-1];
 
 				// add to end or front
-				console.log("Track comparison", randomized_tracks.length, track_obj, first_track, last_track);
+				//console.log("Track comparison", randomized_tracks.length, track_obj, first_track, last_track);
 				if (last_track.lastR == track_obj.firstR && last_track.id != track_obj.id) {
 					randomized_tracks.push(track_obj);
 					success = true;
@@ -175,7 +175,7 @@ var playlist = Backbone.Model.extend({
 		var final_order = _.pluck(randomized_tracks,'id');
 
 		// update self with randomly ordered list
-		this.set({sorted_tracks: final_order, active_track_index: -1, active_track_id: "false"});
+		this.set({sorted_tracks: final_order});
 
 		console.log("Randomized Tracks, retries:", retries, "best:", best_count, this.get("sorted_tracks"));
 	}
