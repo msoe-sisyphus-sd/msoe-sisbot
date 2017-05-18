@@ -82,7 +82,7 @@ var app = function(given_config,ansible) {
 		var data = (_.isString(req.body.data)) ? JSON.parse(req.body.data) : req.body.data;
 		data = data.data;
 
-		console.log("Post:",service, endpoint, data);
+		if (endpoint != "state") console.log("Post:",service, endpoint, data);
 
 		var cb		= function (err, resp) {
 			res.json({ err: err, resp: resp });
