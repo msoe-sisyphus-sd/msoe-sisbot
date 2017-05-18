@@ -172,7 +172,11 @@ var sisbot = {
 
 				if (self.config.autoplay) {
 					//console.log("Autoplay:", self.current_state.get("active_playlist_id"));
-					if (self.current_state.get("active_playlist_id") != "false") self.set_playlist(self.collection.get(self.current_state.get("active_playlist_id")).toJSON(), null);
+					if (self.current_state.get("active_playlist_id") != "false") {
+						var playlist = self.collection.get(self.current_state.get("active_playlist_id")).toJSON();
+						playlist.skip_save = true;
+						self.set_playlist(playlist, null);
+					}
 				}
 			});
     } catch(err) {
@@ -326,6 +330,12 @@ var sisbot = {
 			return;
 		}
 
+		var do_save = true;
+		if (data.skip_save) {
+			do_save = false;
+			delete data.skip_save;
+		}
+
 		// save playlist
 		var new_playlist = new Playlist(data);
 		var playlist = this.collection.add(new_playlist, {merge: true});
@@ -347,7 +357,7 @@ var sisbot = {
 			}
 		}
 
-		this.save(null, null);
+		if (do_save) this.save(null, null);
 
 		if (cb)	cb(null, playlist.toJSON());
 	},
