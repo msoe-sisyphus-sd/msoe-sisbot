@@ -49,24 +49,19 @@ var playlist = Backbone.Model.extend({
 	},
 	set_shuffle: function(value) {
 		console.log("Playlist set shuffle", value);
-		var randomized = this.get('is_shuffle');
-		if (String(value) != randomized) {
-			this.set("is_shuffle", String(value)); // set to "true" or "false"
+		this.set("is_shuffle", String(value)); // set to "true" or "false"
 
-			if (String(value) == "true") {
-				this._randomize();
-			} else {
-				var tracks = this.get("track_ids");
-				this.set("sorted_tracks", tracks.slice()); // ensure unlinked copy
-			}
-
-			// reassign current playing track index
-			var sorted_tracks = this.get('sorted_tracks');
-			var firstIndex = sorted_tracks.indexOf(this.get('active_track_id'));
-			this.set("active_track_index", firstIndex);
+		if (String(value) == "true") {
+			this._randomize();
 		} else {
-			console.log("Shuffle already matches", value, randomized);
+			var tracks = this.get("track_ids");
+			this.set("sorted_tracks", tracks.slice()); // ensure unlinked copy
 		}
+
+		// reassign current playing track index
+		var sorted_tracks = this.get('sorted_tracks');
+		var firstIndex = sorted_tracks.indexOf(this.get('active_track_id'));
+		this.set("active_track_index", firstIndex);
 	},
 	set_loop: function(value) {
 		this.set("is_loop", String(Boolean(value)));
