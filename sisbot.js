@@ -282,7 +282,6 @@ var sisbot = {
 		// pull out coordinates
 		var verts = data.verts;
 		if (verts == undefined || verts == "") return cb("No verts given", null);
-		fs.writeFile(this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+data.id+'.thr', verts, function(err) { if (err) return cb(err, null); });
 		delete data.verts;
 
 		// save playlist
@@ -290,7 +289,11 @@ var sisbot = {
 		var track = this.collection.add(new_track, {merge: true});
 		track.collection = this.collection;
 		track.config = this.config;
-		track.get_verts(); // so our first/last rho are forced correct
+		fs.writeFile(this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+data.id+'.thr', verts, function(err) {
+			if (err) return cb(err, null);
+			track.get_verts(); // so our first/last rho are forced correct
+		});
+
 
 		// add to current_state
 		var tracks = this.current_state.get("track_ids");
