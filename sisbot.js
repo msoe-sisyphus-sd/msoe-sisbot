@@ -291,7 +291,7 @@ var sisbot = {
 		track.config = this.config;
 		fs.writeFile(this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+data.id+'.thr', verts, function(err) {
 			if (err) return cb(err, null);
-			setTimeout(track.get_verts, 500);; // so our first/last rho are forced correct
+			track.get_verts(); // so our first/last rho are forced correct
 		});
 
 		// add to current_state
