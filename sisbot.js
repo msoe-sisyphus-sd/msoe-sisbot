@@ -27,6 +27,7 @@ var sisbot = {
 	_paused: false,
 	_autoplay: false,
 	_home_next: false,
+	_saving: false,
 
 	_internet_check: 0,
 
@@ -175,6 +176,12 @@ var sisbot = {
 						var playlist = self.collection.get(self.current_state.get("active_playlist_id")).toJSON();
 						playlist.skip_save = true;
 						self.set_playlist(playlist, null);
+					} else {
+						var playlist = self.collection.get("F42695C4-AE32-4956-8C7D-0FF6A7E9D492").toJSON();
+						if (playlist != undefined) {
+							playlist.skip_save = true;
+							self.set_playlist(playlist, null);
+						}
 					}
 				}
 			});
@@ -209,9 +216,18 @@ var sisbot = {
 	},
 	save: function(data, cb) {
 		console.log("Sisbot Save", data);
+		var self = this;
 		// TODO: merge the given data into collection and save
-		fs.writeFile(this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.sisbot_state, JSON.stringify(this.collection), function(err) { if (err) return console.log(err); });
-		if (cb) cb(null, 'Saved');
+		if (!this._saving) {
+		this._saving = true;
+			fs.writeFile(this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.sisbot_state, JSON.stringify(this.collection), function(err) {
+				self._saving = false;
+				if (err) return console.log(err);
+			});
+			if (cb) cb(null, 'Saved');
+		} else {
+			if (cb) cb('Another save in process, try again', null);
+		}
 	},
 	play: function(data, cb) {
 		console.log("Sisbot Play", data);
