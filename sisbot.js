@@ -417,7 +417,13 @@ var sisbot = {
 		if (track.get('id') == this.current_state.get("active_track_id") && this.current_state.get('state') == "playing") return cb('already playing', null);
 
 		// update current_state
-		this.current_state.set({is_homed: "false", active_playlist_id: "false", active_track_id: track.get("id"), is_shuffle: "false", is_loop: "false"});
+		this.current_state.set({
+			is_homed: "false",
+			active_playlist_id: "false",
+			active_track_id: track.get("id"),
+			is_shuffle: "false",
+			is_loop: "true"
+		});
 		if (this.current_state.get('state') == "playing") {
 			plotter.pause();
 			this._home_next = true;
