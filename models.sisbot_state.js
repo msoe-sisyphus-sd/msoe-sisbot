@@ -15,7 +15,7 @@ var sisbot_state = Backbone.Model.extend({
 
 		state: "waiting", // playing, homing, paused, waiting
 		brightness: 0.8,
-		speed: 0.5,
+		speed: 0.75,
 		is_shuffle: "true",
 		is_loop: "true",
 		active_playlist_id: "false",

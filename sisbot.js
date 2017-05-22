@@ -189,6 +189,7 @@ var sisbot = {
 
 				self.current_state.set("is_serial_open", "true");
 				self.set_brightness({value:self.current_state.get("brightness")}, null);
+				self.set_speed({value:self.current_state.get("speed")}, null);
 
 				if (self.config.autoplay) {
 					//console.log("Autoplay:", self.current_state.get("active_playlist_id"));
