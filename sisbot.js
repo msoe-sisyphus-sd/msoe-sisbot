@@ -380,7 +380,7 @@ var sisbot = {
 		var playlist = this.collection.add(new_playlist, {merge: true});
 		playlist.collection = this.collection;
 		playlist.config = this.config;
-		if (data.is_shuffle) playlist.set_shuffle(data.is_shuffle);
+		if (data.is_shuffle && !data.is_current) playlist.set_shuffle(data.is_shuffle);
 
 		// update current_state
 		this.current_state.set({is_homed: "false", active_playlist_id: data.id, active_track_id: data.active_track_id, is_shuffle: data.is_shuffle, is_loop: data.is_loop});
