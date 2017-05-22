@@ -71,7 +71,7 @@ var playlist = Backbone.Model.extend({
 	},
 	_update_reversed: function() {
 		// TODO: make list of true/false for sorted_tracks reversed values
-		
+
 	},
 	_reverseTrack: function(track_obj) {
 		var tempR = track_obj.lastR;

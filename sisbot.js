@@ -377,6 +377,7 @@ var sisbot = {
 
 		// save playlist
 		var new_playlist = new Playlist(data);
+		if (data.is_current) new_playlist.unset("sorted_tracks"); // so we don't overwrite the old random list
 		var playlist = this.collection.add(new_playlist, {merge: true});
 		playlist.collection = this.collection;
 		playlist.config = this.config;
