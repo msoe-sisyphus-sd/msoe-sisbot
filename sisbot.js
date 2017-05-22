@@ -90,8 +90,10 @@ var sisbot = {
 				state: "waiting",
 				is_serial_open: "false"
 			});
-			// TODO: add ip address to current_state
+			// TODO: add ip address "local_ip" to current_state
+			this.current_state.set("local_ip", this._getIPAddress());
 			// TODO: add hostname to current_state
+			this.current_state.set("hostname", os.hostname()+".local");
 
 			// assign collection and config to each track and playlist
 			this.collection.each(function (obj) {
@@ -155,6 +157,20 @@ var sisbot = {
 
 			return this;
   },
+	_getIPAddress() {
+	  var interfaces = os.networkInterfaces();
+	  for (var devName in interfaces) {
+	    var iface = interfaces[devName];
+
+	    for (var i = 0; i < iface.length; i++) {
+	      var alias = iface[i];
+	      if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal)
+	        return alias.address;
+	    }
+	  }
+
+	  return '0.0.0.0';
+	},
 	_connect() {
     if (this.serial && this.serial.isOpen()) return true;
 
@@ -635,7 +651,7 @@ var sisbot = {
 			cb('ssid or psk error', null);
 		}
 	},
-	is_network_connected: function(data, cb) {
+	is_internet_connected: function(data, cb) {
 		this._validate_internet(data, cb);
 	},
 	reset_to_hotspot: function(data, cb) {
@@ -650,6 +666,13 @@ var sisbot = {
 		this.pause(null, null);
 		exec('/home/pi/sisbot-server/sisbot/update.sh');
 		cb(null, 'installing updates');
+	},
+	local_sisbots: function(data, cb) {
+		var return_value = [];
+		// TODO: take local_ip, ping exists on 1-255 (except self)
+
+		// return array of IP addresses (not including self)
+		if (cb) cb(null, return_value);
 	},
 	// download_playlist: function(data, cb) {
 	// 	console.log("Sisbot Download Playlist", data);

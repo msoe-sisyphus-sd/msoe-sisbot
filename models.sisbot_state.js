@@ -10,7 +10,7 @@ var sisbot_state = Backbone.Model.extend({
 		firmware_version: "1.0",
 		software_version: "1.0",
 		hostname: "sisyphus.local",
-		ip_address: "",
+		local_ip: "",
 
 		state: "waiting", // playing, homing, paused, waiting
 		brightness: 0.8,
@@ -29,6 +29,9 @@ var sisbot_state = Backbone.Model.extend({
 
 		wifi_network: "",
 		wifi_password: ""
+	},
+	initialize: function() {
+		this.set("hostname", os.hostname()+".local");
 	}
 });
 
