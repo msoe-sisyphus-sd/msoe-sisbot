@@ -4,6 +4,7 @@
   "description": "Sisyphus sand plotter control server",
   "main": "src/server.js",
   "dependencies": {
+    "os": "^0.1.1",
     "body-parser": "^1.15.2",
     "cors": "^2.8.1",
     "express": "^4.14.0",

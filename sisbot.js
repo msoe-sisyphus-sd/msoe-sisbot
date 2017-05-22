@@ -1,3 +1,4 @@
+var os						= require('os');
 var _							= require('underscore');
 var exec 					= require('child_process').exec;
 var CSON					= require('cson');
