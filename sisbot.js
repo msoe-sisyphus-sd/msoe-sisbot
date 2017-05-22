@@ -449,6 +449,8 @@ var sisbot = {
 							this.plotter.playTrack(track_obj);
 							this.current_state.set('_end_rho', track_obj.lastR); // pull from track_obj
 
+							this.save(null, null);
+
 							if (cb)	cb(null, 'next track '+track_obj.name);
 						} else {
 							console.log("Continuous play not possible, skip this", track_obj.name);
