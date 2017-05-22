@@ -604,8 +604,8 @@ var sisbot = {
 		exec('ping -c 1 -W 2 google.com', (error, stdout, stderr) => {
 		  if (error) return console.error('exec error:',error);
 
-			var returnValue = false;
-			if (stdout.indexOf("1 packets transmitted") > -1) returnValue = true;
+			var returnValue = "false";
+			if (stdout.indexOf("1 packets transmitted") > -1) returnValue = "true";
 		  // console.log('stdout:', stdout);
 		  // console.log('stderr:', stderr);
 
@@ -620,7 +620,7 @@ var sisbot = {
 			_internet_check = setTimeout(function() {
 				self._validate_internet(null, function(err, resp) {
 					if (err) return console.log("Internet check err", err);
-					if (resp) {
+					if (resp == "true") {
 						console.log("Internet connected.");
 
 						// check again later
