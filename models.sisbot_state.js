@@ -1,5 +1,6 @@
 var uuid				= require('uuid');
 var Backbone		= require('backbone');
+var os					= require('os');
 
 var sisbot_state = Backbone.Model.extend({
 	defaults: {
