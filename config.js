@@ -25,6 +25,8 @@ var config = {
 			serial_path: '/dev/ttyACM0',
 			autoplay: true,
 			skip_incompatible: true,
+			min_speed: 0.5,
+			max_speed: 2.0,
 			max_rand_retries: 10,
 			check_internet_interval: 3600000, // once every hour, confirm an internet connection
 			default_data: [

@@ -560,14 +560,15 @@ var sisbot = {
 		}
 	},
   set_speed: function(data, cb) {
-		console.log("Sisbot Set Speed", data.value);
-		var speed = this._clamp(data.value, 0.0, 1.0); // 0.0-1.0f
+		var percent = this._clamp(data.value, 0.0, 1.0); // 0.0-1.0f
+		var speed = this.config.min_speed + percent * (this.config.max_speed - this.config.min_speed);
+		console.log("Sisbot Set Speed", speed);
     plotter.setSpeed(speed);
-		this.current_state.set('speed', speed);
+		this.current_state.set('speed', percent);
 
 		this.save(null, null);
 
-    if (cb)	cb(null, plotter.getSpeed());
+    if (cb)	cb(null, percent);
   },
 	set_brightness: function(data, cb) {
 		console.log('Sisbot set brightness', data);
