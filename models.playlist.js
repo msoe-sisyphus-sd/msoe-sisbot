@@ -31,7 +31,7 @@ var playlist = Backbone.Model.extend({
 
 		track_index++;
 		if (track_index >= tracks.length) {
-			if (!this.get("is_loop")) {
+			if (this.get("is_loop") == "false") {
 				track_index = -1; // value before first index (if we call get next track again, it will be zero)
 			}
 			track_index = 0;

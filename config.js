@@ -44,9 +44,7 @@ var config = {
 									'7C046710-9F19-4423-B291-7394996F0913',
 									'D14E0B41-E572-4B69-9827-4A07C503D031',
 									'26FBFB10-4BC7-46BF-8D55-85AA52C19ADF',
-									'75518177-0D28-4B2A-9B73-29E4974FB702',
-								 	'01',
-									'10' ]
+									'75518177-0D28-4B2A-9B73-29E4974FB702' ]
 				}, {
 					id          : 'F42695C4-AE32-4956-8C7D-0FF6A7E9D492',
 					type        : 'playlist',
@@ -55,10 +53,11 @@ var config = {
 					is_published: 'false',
 					is_loop			: 'true',
 					is_shuffle	: 'true',
-					active_track_id: '01',
+					active_track_id: 'C3D8BC17-E2E1-4D6D-A91F-80FBB65620B8',
 					active_track_index: 0,
-					track_ids   : [ '01',
-									'10' ],
+					track_ids   : [ 'C3D8BC17-E2E1-4D6D-A91F-80FBB65620B8',
+									'2B34822B-0A27-4398-AE19-23A3C83F1220',
+									'93A90B6B-EAEE-48A3-9742-C688235D837D' ],
 				}, {
 					id          : '2CBDAE96-EC22-48B4-A369-BFC624463C5F',
 					type        : 'track',
@@ -95,14 +94,6 @@ var config = {
 					id          : '75518177-0D28-4B2A-9B73-29E4974FB702',
 					type        : 'track',
 					name        : 'Para 2B',
-				}, {
-					id          : '01',
-					type        : 'track',
-					name        : 'Zero One',
-				}, {
-					id          : '10',
-					type        : 'track',
-					name        : 'One Oh',
 				}
 			],
 		},
