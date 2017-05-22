@@ -91,9 +91,12 @@ var sisbot = {
 				state: "waiting",
 				is_serial_open: "false"
 			});
-			// TODO: add ip address "local_ip" to current_state
 			this.current_state.set("local_ip", this._getIPAddress());
-			// TODO: add hostname to current_state
+			if (this.current_state.get("local_ip") == "192.168.42.1") {
+				this.current_state.set("is_hotspot", "true");
+			} else {
+				this.current_state.set("is_hotspot", "false");
+			}
 			this.current_state.set("hostname", os.hostname()+".local");
 
 			// assign collection and config to each track and playlist
@@ -599,9 +602,7 @@ var sisbot = {
 	_validate_internet: function(data, cb) {
 		var self = this;
 		exec('ping -c 1 -W 2 google.com', (error, stdout, stderr) => {
-		  if (error) {
-		    return console.error('exec error:',error);
-		  }
+		  if (error) return console.error('exec error:',error);
 
 			var returnValue = false;
 			if (stdout.indexOf("1 packets transmitted") > -1) returnValue = true;
