@@ -14,7 +14,8 @@ var playlist = Backbone.Model.extend({
 		active_track_index: 	0,
 		active_track_id: "false",
 		track_ids: 			[],
-		sorted_tracks:	[]
+		sorted_tracks:	[],
+		_reversed_tracks: []
 	},
 	collection: null,
 	initialize: function() {
@@ -31,10 +32,10 @@ var playlist = Backbone.Model.extend({
 
 		track_index++;
 		if (track_index >= tracks.length) {
+			track_index = 0;
 			if (this.get("is_loop") == "false") {
 				track_index = -1; // value before first index (if we call get next track again, it will be zero)
 			}
-			track_index = 0;
 		}
 		if (track_index >= 0) return_value = tracks[track_index];
 
@@ -62,9 +63,15 @@ var playlist = Backbone.Model.extend({
 		var sorted_tracks = this.get('sorted_tracks');
 		var firstIndex = sorted_tracks.indexOf(this.get('active_track_id'));
 		this.set("active_track_index", firstIndex);
+
+		// update reversed list
 	},
 	set_loop: function(value) {
-		this.set("is_loop", String(Boolean(value)));
+		this.set("is_loop", String(value));
+	},
+	_update_reversed: function() {
+		// TODO: make list of true/false for sorted_tracks reversed values
+		
 	},
 	_reverseTrack: function(track_obj) {
 		var tempR = track_obj.lastR;
