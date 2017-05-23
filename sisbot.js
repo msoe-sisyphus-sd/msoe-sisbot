@@ -418,7 +418,7 @@ var sisbot = {
 		if (this.current_state.get('state') == "playing") {
 			plotter.pause();
 			this._home_next = true;
-		} else if (this.current_state.get('state') == "waiting") {
+		} else if (this.current_state.get('state') == "waiting" || this.current_state.get('state') == "paused") {
 			var track = this.collection.get(playlist.get('active_track_id'));
 			if (track != undefined && track != "false")	{
 				this._autoplay = true;
@@ -457,7 +457,7 @@ var sisbot = {
 		if (this.current_state.get('state') == "playing") {
 			plotter.pause();
 			this._home_next = true;
-		} else if (this.current_state.get('state') == "waiting") {
+		} else if (this.current_state.get('state') == "waiting" || this.current_state.get('state') == "paused") {
 			this._autoplay = true;
 			this._play_track(track.toJSON(), null);
 		}
@@ -534,7 +534,7 @@ var sisbot = {
 		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
 		if (this._validateConnection()) {
 			if (this.current_state.get('state') == "playing") this.pause();
-			this._paused = false;
+			this.current_state.set("is_homed", "false"); // we don't keep track of where we are at anymore
 			plotter.jogThetaLeft();
 			if (cb)	cb(null, 'left');
 		} else cb('No Connection', null);
@@ -543,7 +543,7 @@ var sisbot = {
 		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
 		if (this._validateConnection()) {
 			if (this.current_state.get('state') == "playing") this.pause();
-			this._paused = false;
+			this.current_state.set("is_homed", "false"); // we don't keep track of where we are at anymore
 			plotter.jogThetaRight();
 			if (cb)	cb(null, 'right');
 		} else cb('No Connection', null);
@@ -552,7 +552,7 @@ var sisbot = {
 		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
 		if (this._validateConnection()) {
 			if (this.current_state.get('state') == "playing") this.pause();
-			this._paused = false;
+			this.current_state.set("is_homed", "false"); // we don't keep track of where we are at anymore
 			plotter.jogRhoOutward();
 			if (cb)	cb(null, 'out');
 		} else cb('No Connection', null);
@@ -561,7 +561,7 @@ var sisbot = {
 		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
 		if (this._validateConnection()) {
 			if (this.current_state.get('state') == "playing") this.pause();
-			this._paused = false;
+			this.current_state.set("is_homed", "false"); // we don't keep track of where we are at anymore
 			plotter.jogRhoInward();
 			if (cb)	cb(null, 'in');
 		} else cb('No Connection', null);
