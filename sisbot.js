@@ -5,7 +5,6 @@ var CSON					= require('cson');
 var fs 						= require('fs');
 var iwconfig			= require('wireless-tools/iwconfig');
 var iwlist				= require('wireless-tools/iwlist');
-var exec 					= require('child_process').exec;
 var uuid					= require('uuid');
 var Backbone			= require('backbone');
 
@@ -691,7 +690,9 @@ var sisbot = {
 			// regex, remove or error on double quotes
 			// no spaces in password
 			//var pwd_check =  data.psk.match(^([0-9A-Za-z@.]{1,255})$);
-			exec('sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "'+data.ssid+'" "'+data.psk+'"');
+			exec('sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "'+data.ssid+'" "'+data.psk+'"', (error, stdout, stderr) => {
+			  if (error) return console.error('exec error:',error);
+			});
 			self.current_state.set("is_hotspot", "false");
 
 			this._query_internet(7000); // check again in 7 seconds
@@ -704,16 +705,22 @@ var sisbot = {
 		this._validate_internet(data, cb);
 	},
 	reset_to_hotspot: function(data, cb) {
+		console.log("Sisbot Reset to Hotspot", data);
 		clearTimeout(this._internet_check);
-		exec('sudo /home/pi/sisbot-server/sisbot/start_hotspot.sh');
 
 		self.current_state.set("is_hotspot", "true");
-		cb(null, 'reset to hotspot');
+		cb(null, this.current_state.toJSON());
+
+		exec('sudo /home/pi/sisbot-server/sisbot/start_hotspot.sh', (error, stdout, stderr) => {
+			if (error) return console.error('exec error:',error);
+		});
 	},
 	install_updates: function(data, cb) {
 		console.log("Sisbot Install Updates", data);
 		this.pause(null, null);
-		exec('/home/pi/sisbot-server/sisbot/update.sh');
+		exec('/home/pi/sisbot-server/sisbot/update.sh', (error, stdout, stderr) => {
+		  if (error) return console.error('exec error:',error);
+		});
 		cb(null, 'installing updates');
 	},
 	local_sisbots: function(data, cb) {
@@ -737,7 +744,9 @@ var sisbot = {
 	restart: function(data,cb) {
 		console.log("Sisbot Restart", data);
 		cb(null, 'restarting sisyphus');
-		exec('sudo reboot');
+		exec('sudo reboot', (error, stdout, stderr) => {
+		  if (error) return console.error('exec error:',error);
+		});
 	}
 };
 
