@@ -93,7 +93,7 @@ var sisbot = {
 			});
 			this.current_state.set("local_ip", this._getIPAddress());
 			if (this.current_state.get("local_ip") == "192.168.42.1") {
-				this.current_state.set("is_hotspot", "true");
+				this.current_state.set({is_hotspot: "true", is_internet_connected: "false"});
 			} else {
 				this.current_state.set("is_hotspot", "false");
 			}
@@ -662,7 +662,7 @@ var sisbot = {
 	_query_internet: function(time_to_check) {
 		if (this.current_state.get("is_hotspot") == "false") { // only bother if you are not a hotspot
 			var self = this;
-			_internet_check = setTimeout(function() {
+			this._internet_check = setTimeout(function() {
 				self._validate_internet(null, function(err, resp) {
 					if (err) return console.log("Internet check err", err);
 					if (resp == "true") {
@@ -708,7 +708,7 @@ var sisbot = {
 		console.log("Sisbot Reset to Hotspot", data);
 		clearTimeout(this._internet_check);
 
-		this.current_state.set("is_hotspot", "true");
+		this.current_state.set({is_hotspot: "true", is_internet_connected: "false" });
 		cb(null, this.current_state.toJSON());
 
 		exec('sudo /home/pi/sisbot-server/sisbot/start_hotspot.sh', (error, stdout, stderr) => {
