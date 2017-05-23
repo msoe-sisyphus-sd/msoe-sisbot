@@ -27,6 +27,7 @@ var config = {
 			skip_incompatible: true,
 			min_speed: 0.5,
 			max_speed: 2.0,
+			auto_th: 1.570796,
 			max_rand_retries: 10,
 			check_internet_interval: 3600000, // once every hour, confirm an internet connection
 			default_data: [

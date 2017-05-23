@@ -28,6 +28,7 @@ var sisbot = {
 	_paused: false,
 	_autoplay: false,
 	_home_next: false,
+	_move_to_rho: 0,
 	_saving: false,
 
 	_internet_check: 0,
@@ -136,7 +137,18 @@ var sisbot = {
 					if (newState == 'waiting' && self._autoplay) {
 						// autoplay after first home
 						console.log("Play next ",self.current_state.get('active_track_id'));
-						if (self.current_state.get('active_track_id') != "false") {
+						if (self._move_to_rho != 0) {
+							var track_obj = {
+								verts: [{th:0,r:0},{th:self.config.auto_th,r:self._move_to_rho}],
+								vel: 1,
+								accel: 0.5,
+								thvmax: 0.5
+							};
+							self._paused = false;
+							self.plotter.playTrack(track_obj);
+							self.current_state.set('_end_rho', self._move_to_rho); // pull from track_obj
+							self._move_to_rho = 0;
+						} else if (self.current_state.get('active_track_id') != "false") {
 							self._play_track(self.collection.get(self.current_state.get('active_track_id')).toJSON(), null);
 						}
 					}
@@ -255,15 +267,16 @@ var sisbot = {
 		if (this._validateConnection()) {
 			this._paused = false;
 			plotter.resume();
-			if (cb)	cb(null, 'play');
+			if (cb)	cb(null, this.current_state.toJSON());
 		} else cb('No Connection', null);
 	},
 	pause: function(data, cb) {
 		console.log("Sisbot Pause", data);
 		if (this._validateConnection()) {
 			this._paused = true;
+			this.current_state.set("state", "paused");
 			plotter.pause();
-			if (cb)	cb(null, 'pause');
+			if (cb)	cb(null, this.current_state.toJSON());
 		} else cb('No Connection', null);
 	},
 	home: function(data, cb) {
@@ -271,8 +284,9 @@ var sisbot = {
 		if (this._validateConnection()) {
 			if (data && data.stop) this._autoplay = false; // home without playing anything afterward
 			this._paused = false;
+			this.current_state.set("state", "homing");
 			plotter.home();
-			if (cb)	cb(null, 'homing');
+			if (cb)	cb(null, this.current_state.toJSON());
 		} else cb('No Connection', null);
 	},
 	add_playlist: function(data, cb) {
@@ -384,7 +398,13 @@ var sisbot = {
 		if (data.is_shuffle && !data.is_current) playlist.set_shuffle(data.is_shuffle);
 
 		// update current_state
-		this.current_state.set({is_homed: "false", active_playlist_id: data.id, active_track_id: data.active_track_id, is_shuffle: data.is_shuffle, is_loop: data.is_loop});
+		this.current_state.set({
+			is_homed: "false",
+			active_playlist_id: data.id,
+			active_track_id: data.active_track_id,
+			is_shuffle: data.is_shuffle,
+			is_loop: data.is_loop
+		});
 		//console.log("Current playlist", this.current_state.get('state'));
 		if (this.current_state.get('state') == "playing") {
 			plotter.pause();
@@ -467,6 +487,10 @@ var sisbot = {
 							} else if (cb) cb('Track not possible', null);
 						}
 					} else {
+						// TODO: check if we need to play another track after home, i.e. out to r1
+						if (this.current_state.get("active_playlist_id") == "false") {
+							if (track.get('firstR') != 0) this._move_to_rho = track.get('firstR');
+						}
 						this.home(null, cb);
 					}
 				} else {
