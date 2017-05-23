@@ -693,7 +693,7 @@ var sisbot = {
 			exec('sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "'+data.ssid+'" "'+data.psk+'"', (error, stdout, stderr) => {
 			  if (error) return console.error('exec error:',error);
 			});
-			self.current_state.set("is_hotspot", "false");
+			this.current_state.set("is_hotspot", "false");
 
 			this._query_internet(7000); // check again in 7 seconds
 			cb(null, data.ssid);
@@ -708,7 +708,7 @@ var sisbot = {
 		console.log("Sisbot Reset to Hotspot", data);
 		clearTimeout(this._internet_check);
 
-		self.current_state.set("is_hotspot", "true");
+		this.current_state.set("is_hotspot", "true");
 		cb(null, this.current_state.toJSON());
 
 		exec('sudo /home/pi/sisbot-server/sisbot/start_hotspot.sh', (error, stdout, stderr) => {
