@@ -534,6 +534,7 @@ var sisbot = {
 		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
 		if (this._validateConnection()) {
 			if (this.current_state.get('state') == "playing") this.pause();
+			this._paused = false;
 			plotter.jogThetaLeft();
 			if (cb)	cb(null, 'left');
 		} else cb('No Connection', null);
@@ -541,6 +542,8 @@ var sisbot = {
   jogThetaRight: function(data,cb) {
 		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
 		if (this._validateConnection()) {
+			if (this.current_state.get('state') == "playing") this.pause();
+			this._paused = false;
 			plotter.jogThetaRight();
 			if (cb)	cb(null, 'right');
 		} else cb('No Connection', null);
@@ -548,6 +551,8 @@ var sisbot = {
   jogRhoOutward: function(data,cb) {
 		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
 		if (this._validateConnection()) {
+			if (this.current_state.get('state') == "playing") this.pause();
+			this._paused = false;
 			plotter.jogRhoOutward();
 			if (cb)	cb(null, 'out');
 		} else cb('No Connection', null);
@@ -555,6 +560,8 @@ var sisbot = {
   jogRhoInward: function(data,cb) {
 		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
 		if (this._validateConnection()) {
+			if (this.current_state.get('state') == "playing") this.pause();
+			this._paused = false;
 			plotter.jogRhoInward();
 			if (cb)	cb(null, 'in');
 		} else cb('No Connection', null);
