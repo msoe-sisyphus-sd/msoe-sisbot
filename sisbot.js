@@ -137,19 +137,27 @@ var sisbot = {
 					if (newState == 'waiting' && self._autoplay) {
 						// autoplay after first home
 						console.log("Play next ",self.current_state.get('active_track_id'));
-						if (self._move_to_rho != 0) {
-							var track_obj = {
-								verts: [{th:0,r:0},{th:self.config.auto_th,r:self._move_to_rho}],
-								vel: 1,
-								accel: 0.5,
-								thvmax: 0.5
-							};
-							self._paused = false;
-							self.plotter.playTrack(track_obj);
-							self.current_state.set('_end_rho', self._move_to_rho); // pull from track_obj
-							self._move_to_rho = 0;
-						} else if (self.current_state.get('active_track_id') != "false") {
-							self._play_track(self.collection.get(self.current_state.get('active_track_id')).toJSON(), null);
+						if (self.current_state.get('active_track_id') != "false") {
+							var track = self.collection.get(self.current_state.get('active_track_id'));
+							// TODO: check if we need to play another track after home, i.e. out to r1
+							if (self.current_state.get("active_playlist_id") == "false") {
+								if (track.get('firstR') != 0) self._move_to_rho = track.get('firstR');
+							}
+							// move to start rho
+							if (self._move_to_rho != 0) {
+								var track_obj = {
+									verts: [{th:0,r:0},{th:self.config.auto_th,r:self._move_to_rho}],
+									vel: 1,
+									accel: 0.5,
+									thvmax: 0.5
+								};
+								self._paused = false;
+								self.plotter.playTrack(track_obj);
+								self.current_state.set('_end_rho', self._move_to_rho); // pull from track_obj
+								self._move_to_rho = 0;
+							} else {
+								self._play_track(track.toJSON(), null);
+							}
 						}
 					}
 				}
@@ -265,6 +273,7 @@ var sisbot = {
 	play: function(data, cb) {
 		console.log("Sisbot Play", data);
 		if (this._validateConnection()) {
+			if (this._paused) this.current_state.set("state", "playing");
 			this._paused = false;
 			plotter.resume();
 			if (cb)	cb(null, this.current_state.toJSON());
@@ -487,10 +496,6 @@ var sisbot = {
 							} else if (cb) cb('Track not possible', null);
 						}
 					} else {
-						// TODO: check if we need to play another track after home, i.e. out to r1
-						if (this.current_state.get("active_playlist_id") == "false") {
-							if (track.get('firstR') != 0) this._move_to_rho = track.get('firstR');
-						}
 						this.home(null, cb);
 					}
 				} else {
