@@ -2,9 +2,9 @@
 
 cd /home/pi/sisbot-server/
 mkdir backup.0
-cp -rf sisbot backup/
-cp -rf siscloud backup/
-cp -rf sisproxy backup/
+cp -rf sisbot/ backup/
+cp -rf siscloud/ backup/
+cp -rf sisproxy/ backup/
 mv backup.0 backup
 
 cd /home/pi/sisbot-server/sisbot
