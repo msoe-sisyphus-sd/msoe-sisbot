@@ -716,10 +716,10 @@ var sisbot = {
 			if (error) return console.error('exec error:',error);
 		});
 	},
-	install_updates: function(data, cb) {
+	updates: function(data, cb) {
 		console.log("Sisbot Install Updates", data);
 		this.pause(null, null);
-		exec('/home/pi/sisbot-server/sisbot/update.sh', (error, stdout, stderr) => {
+		exec('/home/pi/sisbot-server/sisbot/update.sh > update.log', (error, stdout, stderr) => {
 		  if (error) return console.error('exec error:',error);
 		});
 		cb(null, 'installing updates');
