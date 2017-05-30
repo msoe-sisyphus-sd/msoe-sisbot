@@ -720,6 +720,11 @@ var sisbot = {
 	install_updates: function(data, cb) {
 		var self = this;
 		console.log("Sisbot Install Updates", data);
+		if (this.current_state.get("is_internet_connected")!="true") {
+			if (cb) cb("Not connected to internet", null);
+			return console.log("Install error: not connected to internet");
+		}
+
 		this.pause(null, null);
 		exec('/home/pi/sisbot-server/sisbot/update.sh > update.log', (error, stdout, stderr) => {
 		  if (error) {
