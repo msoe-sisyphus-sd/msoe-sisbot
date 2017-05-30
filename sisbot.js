@@ -252,7 +252,7 @@ var sisbot = {
 	},
 	exists: function(data, cb) {
 		console.log("Sisbot Exists", data);
-		cb(null, 'Ok');
+		cb(null, this.current_state.toJSON());
 	},
 	save: function(data, cb) {
 		console.log("Sisbot Save", data);
