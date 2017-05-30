@@ -15,5 +15,7 @@ git reset --hard
 git pull origin master
 npm install
 
-sudo killall node
-cd /home/pi/sisbot-server/sisproxy && sudo NODE_ENV=sisbot node server.js &
+echo "Upgrade completed"
+
+# sudo killall node
+# cd /home/pi/sisbot-server/sisproxy && sudo NODE_ENV=sisbot node server.js &

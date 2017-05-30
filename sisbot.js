@@ -718,12 +718,17 @@ var sisbot = {
 		});
 	},
 	updates: function(data, cb) {
+		var self = this;
 		console.log("Sisbot Install Updates", data);
 		this.pause(null, null);
 		exec('/home/pi/sisbot-server/sisbot/update.sh > update.log', (error, stdout, stderr) => {
-		  if (error) return console.error('exec error:',error);
+		  if (error) {
+				if (cb) cb(error, null);
+				return console.log('exec error:',error);
+			}
+			if (cb) cb(null, 'installing updates');
+			self.restart(null,null);
 		});
-		if (cb) cb(null, 'installing updates');
 	},
 	local_sisbots: function(data, cb) {
 		var return_value = [];
@@ -770,6 +775,13 @@ var sisbot = {
 	},
 	restart: function(data,cb) {
 		console.log("Sisbot Restart", data);
+		if (cb) cb(null, 'restarting sisyphus');
+		exec('sudo ./restart.sh', (error, stdout, stderr) => {
+		  if (error) return console.error('exec error:',error);
+		});
+	},
+	reboot: function(data,cb) {
+		console.log("Sisbot Reboot", data);
 		cb(null, 'restarting sisyphus');
 		exec('sudo reboot', (error, stdout, stderr) => {
 		  if (error) return console.error('exec error:',error);
