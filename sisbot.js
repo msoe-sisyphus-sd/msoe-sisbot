@@ -731,6 +731,7 @@ var sisbot = {
 				if (cb) cb(error, null);
 				return console.log('exec error:',error);
 			}
+			console.log("Install complete");
 			if (cb) cb(null, 'installing updates');
 			self.restart(null,null);
 		});
