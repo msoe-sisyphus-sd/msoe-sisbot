@@ -7,6 +7,7 @@ var iwconfig			= require('wireless-tools/iwconfig');
 var iwlist				= require('wireless-tools/iwlist');
 var uuid					= require('uuid');
 var Backbone			= require('backbone');
+//var request 			= require('request');
 
 var SerialPort		= require('serialport').SerialPort;
 
@@ -726,21 +727,46 @@ var sisbot = {
 	local_sisbots: function(data, cb) {
 		var return_value = [];
 		// TODO: take local_ip, ping exists on 1-255 (except self)
+		var ip = this.current_state.get("local_ip");
+		var local = ip.substr(0,ip.lastIndexOf("."));
+		console.log("Local address", local);
+
+		/*var sisbots = [];
+		var i=1;
+		function loop_cb(err,resp) {
+
+		}
+		this._check_sisbot({local:local, i:i}, function(err, resp) {
+			if (err) console.log("Err,",err);
+			if (resp) sisbots.push(resp);
+			i++;
+		});*/
 
 		// return array of IP addresses (not including self)
 		if (cb) cb(null, return_value);
 	},
-	// download_playlist: function(data, cb) {
-	// 	console.log("Sisbot Download Playlist", data);
-	// 	// save playlist
-	// 	// download listed tracks
-	// },
-	// download_track: function(data, cb) {
-	// 	console.log("Sisbot Download Track", data);
-	// 	// save track
-	//
-	// 	cb(null, 'downloading tracks');
-	// },
+	_check_sisbot: function(data,cb) {
+		var self = this;
+
+		var address = data.local+"."+data.i;
+
+		request.post(
+		    'http://'+address+'/sisbot/exists',
+		    { },
+		    function (error, response, body) {
+	        if (!error && response.statusCode == 200) {
+						console.log("Exist Resp:", response, body);
+            cb(null, body);
+	        } else {
+						cb("Not found", null);
+					}
+		    }
+		);
+	},
+	factory_reset: function(data, cb) {
+		console.log("Sisbot Factory Reset", data);
+
+	},
 	restart: function(data,cb) {
 		console.log("Sisbot Restart", data);
 		cb(null, 'restarting sisyphus');
