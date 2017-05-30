@@ -693,11 +693,11 @@ var sisbot = {
 			//var pwd_check =  data.psk.match(^([0-9A-Za-z@.]{1,255})$);
 			exec('sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "'+data.ssid+'" "'+data.psk+'"', (error, stdout, stderr) => {
 			  if (error) return console.error('exec error:',error);
+				this.current_state.set({wifi_network: data.ssid,wifi_password:data.psk,is_hotspot: "false"});
 			});
-			this.current_state.set("is_hotspot", "false");
 
 			this._query_internet(7000); // check again in 7 seconds
-			cb(null, data.ssid);
+			cb(null, this.current_state.toJSON());
 		} else {
 			cb('ssid or psk error', null);
 		}
@@ -714,6 +714,7 @@ var sisbot = {
 
 		exec('sudo /home/pi/sisbot-server/sisbot/start_hotspot.sh', (error, stdout, stderr) => {
 			if (error) return console.error('exec error:',error);
+			console.log("start_hotspot", stdout);
 		});
 	},
 	updates: function(data, cb) {
@@ -722,7 +723,7 @@ var sisbot = {
 		exec('/home/pi/sisbot-server/sisbot/update.sh > update.log', (error, stdout, stderr) => {
 		  if (error) return console.error('exec error:',error);
 		});
-		cb(null, 'installing updates');
+		if (cb) cb(null, 'installing updates');
 	},
 	local_sisbots: function(data, cb) {
 		var return_value = [];
