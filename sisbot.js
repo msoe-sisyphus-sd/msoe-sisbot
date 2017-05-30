@@ -782,14 +782,14 @@ var sisbot = {
 		console.log("Sisbot Restart", data);
 		if (cb) cb(null, 'restarting sisyphus');
 		exec('/home/pi/sisbot-server/sisbot/restart.sh', (error, stdout, stderr) => {
-		  if (error) return console.error('exec error:',error);
+		  if (error) return console.log('exec error:',error);
 		});
 	},
 	reboot: function(data,cb) {
 		console.log("Sisbot Reboot", data);
 		cb(null, 'restarting sisyphus');
 		exec('sudo reboot', (error, stdout, stderr) => {
-		  if (error) return console.error('exec error:',error);
+		  if (error) return console.log('exec error:',error);
 		});
 	}
 };
