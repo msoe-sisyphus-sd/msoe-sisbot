@@ -6,3 +6,5 @@ sudo ifup wlan0
 
 sudo service hostapd start
 sudo service isc-dhcp-server start
+
+echo "Hotspot enabled"

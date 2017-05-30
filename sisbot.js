@@ -709,7 +709,7 @@ var sisbot = {
 		console.log("Sisbot Reset to Hotspot", data);
 		clearTimeout(this._internet_check);
 
-		this.current_state.set({is_hotspot: "true", is_internet_connected: "false" });
+		this.current_state.set({is_hotspot: "true", is_internet_connected: "false", wifi_network: "", wifi_password: "" });
 		cb(null, this.current_state.toJSON());
 
 		exec('sudo /home/pi/sisbot-server/sisbot/start_hotspot.sh', (error, stdout, stderr) => {
