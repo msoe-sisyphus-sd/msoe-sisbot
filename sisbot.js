@@ -717,7 +717,7 @@ var sisbot = {
 			console.log("start_hotspot", stdout);
 		});
 	},
-	updates: function(data, cb) {
+	install_updates: function(data, cb) {
 		var self = this;
 		console.log("Sisbot Install Updates", data);
 		this.pause(null, null);
