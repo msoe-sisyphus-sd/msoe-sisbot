@@ -776,7 +776,7 @@ var sisbot = {
 	restart: function(data,cb) {
 		console.log("Sisbot Restart", data);
 		if (cb) cb(null, 'restarting sisyphus');
-		exec('sudo ./restart.sh', (error, stdout, stderr) => {
+		exec('/home/pi/sisbot-server/sisbot/restart.sh', (error, stdout, stderr) => {
 		  if (error) return console.error('exec error:',error);
 		});
 	},
