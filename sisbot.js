@@ -789,7 +789,10 @@ var sisbot = {
 	restart: function(data,cb) {
 		console.log("Sisbot Restart", data);
 		if (cb) cb(null, 'restarting sisyphus');
-		var ls = spawn('restart.sh',[],{cwd:"/home/pi/sisbot-server/sisbot/",detached:true});
+		var ls = spawn('restart.sh',[],{cwd:"/home/pi/sisbot-server/sisbot/",detached:true,shell:true});
+		ls.on('error', (err) => {
+		  console.log('Failed to start child process.');
+		});
 		ls.stdout.on('data', (data) => {
 		  console.log("stdout:",data);
 		});
