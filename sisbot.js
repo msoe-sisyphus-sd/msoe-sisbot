@@ -7,7 +7,7 @@ var iwconfig			= require('wireless-tools/iwconfig');
 var iwlist				= require('wireless-tools/iwlist');
 var uuid					= require('uuid');
 var Backbone			= require('backbone');
-//var request 			= require('request');
+var request 			= require('request');
 
 var SerialPort		= require('serialport').SerialPort;
 
@@ -743,24 +743,29 @@ var sisbot = {
 		var local = ip.substr(0,ip.lastIndexOf("."));
 		console.log("Local address", local);
 
-		/*var sisbots = [];
+		// return array of IP addresses (not including self)
+		var sisbots = [];
 		var i=1;
 		function loop_cb(err,resp) {
-
+				if (err) console.log("Err,",err);
+				if (resp) {
+					console.log("Sisbot found:", resp);
+					sisbots.push(resp);
+				}
+				i++;
+				if (i<255) {
+					this._check_sisbot({local:local, i:i}, loop_cb);
+				} else {
+					if (cb) cb(null, sisbots);
+				}
 		}
-		this._check_sisbot({local:local, i:i}, function(err, resp) {
-			if (err) console.log("Err,",err);
-			if (resp) sisbots.push(resp);
-			i++;
-		});*/
-
-		// return array of IP addresses (not including self)
-		if (cb) cb(null, return_value);
+		this._check_sisbot({local:local, i:i}, loop_cb);
 	},
 	_check_sisbot: function(data,cb) {
 		var self = this;
 
 		var address = data.local+"."+data.i;
+		if (address == this.current_state.get('local_ip')) return cb("Skip, self", null);
 
 		request.post(
 		    'http://'+address+'/sisbot/exists',
