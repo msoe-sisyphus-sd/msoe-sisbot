@@ -1,6 +1,7 @@
 var os						= require('os');
 var _							= require('underscore');
 var exec 					= require('child_process').exec;
+var spawn 				= require('child_process').spawn;
 var CSON					= require('cson');
 var fs 						= require('fs');
 var iwconfig			= require('wireless-tools/iwconfig');
@@ -782,12 +783,12 @@ var sisbot = {
 	},
 	factory_reset: function(data, cb) {
 		console.log("Sisbot Factory Reset", data);
-
+		// TODO: make shell script to copy from backup folder
 	},
 	restart: function(data,cb) {
 		console.log("Sisbot Restart", data);
 		if (cb) cb(null, 'restarting sisyphus');
-		exec('/home/pi/sisbot-server/sisbot/restart.sh', (error, stdout, stderr) => {
+		spawn('/home/pi/sisbot-server/sisbot/restart.sh', (error, stdout, stderr) => {
 		  if (error) return console.log('exec error:',error);
 		});
 	},
