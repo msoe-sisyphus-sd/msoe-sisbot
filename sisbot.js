@@ -140,10 +140,9 @@ var sisbot = {
 						console.log("Play next ",self.current_state.get('active_track_id'));
 						if (self.current_state.get('active_track_id') != "false") {
 							var track = self.collection.get(self.current_state.get('active_track_id'));
-							// TODO: check if we need to play another track after home, i.e. out to r1
-							if (self.current_state.get("active_playlist_id") == "false") {
+							// if (self.current_state.get("active_playlist_id") == "false") {
 								if (track.get('firstR') != 0) self._move_to_rho = track.get('firstR');
-							}
+							// }
 							// move to start rho
 							if (self._move_to_rho != 0) {
 								var track_obj = {
