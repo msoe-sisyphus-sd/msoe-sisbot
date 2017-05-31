@@ -213,7 +213,7 @@ var sisbot = {
 
 				if (self.config.autoplay) {
 					//console.log("Autoplay:", self.current_state.get("default_playlist_id"));
-					if (self.current_state.get("default_playlist_id") != "false" && self.collection.exists(self.current_state.get("default_playlist_id"))) {
+					if (self.current_state.get("default_playlist_id") != "false" && self.collection.get(self.current_state.get("default_playlist_id"))!=undefined) {
 						var playlist = self.collection.get(self.current_state.get("default_playlist_id")).toJSON();
 						playlist.skip_save = true;
 						self.set_playlist(playlist, null);
