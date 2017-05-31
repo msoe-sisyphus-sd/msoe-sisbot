@@ -784,7 +784,8 @@ var sisbot = {
 	factory_reset: function(data, cb) {
 		console.log("Sisbot Factory Reset", data);
 		// TODO: make shell script to copy from backup folder
-		if (cb) cb(null, "Resetting...");
+		//if (cb) cb(null, "Resetting...");
+		this.restart(data,cb);
 	},
 	restart: function(data,cb) {
 		console.log("Sisbot Restart", data);
@@ -793,12 +794,12 @@ var sisbot = {
 		ls.on('error', (err) => {
 		  console.log('Failed to start child process.');
 		});
-		ls.stdout.on('data', (data) => {
-		  console.log("stdout:",data);
-		});
-		ls.stderr.on('data', (data) => {
-		  console.log("Err:",data);
-		});
+		// ls.stdout.on('data', (data) => {
+		//   console.log("stdout:",data);
+		// });
+		// ls.stderr.on('data', (data) => {
+		//   console.log("Err:",data);
+		// });
 		ls.on('close', (code) => {
 		  console.log("child process exited with code",code);
 		});
