@@ -212,18 +212,19 @@ var sisbot = {
 				self.set_speed({value:self.current_state.get("speed")}, null);
 
 				if (self.config.autoplay) {
-					//console.log("Autoplay:", self.current_state.get("active_playlist_id"));
-					if (self.current_state.get("active_playlist_id") != "false") {
-						var playlist = self.collection.get(self.current_state.get("active_playlist_id")).toJSON();
+					//console.log("Autoplay:", self.current_state.get("default_playlist_id"));
+					if (self.current_state.get("default_playlist_id") != "false" && self.collection.exists(self.current_state.get("default_playlist_id"))) {
+						var playlist = self.collection.get(self.current_state.get("default_playlist_id")).toJSON();
 						playlist.skip_save = true;
 						self.set_playlist(playlist, null);
-					} else {
-						var playlist = self.collection.get("F42695C4-AE32-4956-8C7D-0FF6A7E9D492").toJSON();
-						if (playlist != undefined) {
-							playlist.skip_save = true;
-							self.set_playlist(playlist, null);
-						}
 					}
+					// else {
+					// 	var playlist = self.collection.get("F42695C4-AE32-4956-8C7D-0FF6A7E9D492").toJSON();
+					// 	if (playlist != undefined) {
+					// 		playlist.skip_save = true;
+					// 		self.set_playlist(playlist, null);
+					// 	}
+					// }
 				}
 			});
     } catch(err) {

@@ -18,6 +18,7 @@ var sisbot_state = Backbone.Model.extend({
 		speed: 0.35,
 		is_shuffle: "true",
 		is_loop: "true",
+		default_playlist_id: "F42695C4-AE32-4956-8C7D-0FF6A7E9D492", // default
 		active_playlist_id: "false",
 		active_track_id: "false",
 		_end_rho: 0,
