@@ -795,7 +795,7 @@ var sisbot = {
 	reboot: function(data,cb) {
 		console.log("Sisbot Reboot", data);
 		cb(null, 'rebooting sisyphus');
-		exec('sudo reboot', (error, stdout, stderr) => {
+		spawn('sudo reboot', (error, stdout, stderr) => {
 		  if (error) return console.log('exec error:',error);
 		});
 	}
