@@ -783,21 +783,19 @@ var sisbot = {
 	},
 	factory_reset: function(data, cb) {
 		console.log("Sisbot Factory Reset", data);
-
-		exec('/home/pi/sisbot-server/sisbot/factory_reset.sh', (error, stdout, stderr) => {
-		  if (error) {
-				if (cb) cb(error, null);
-				return console.log('exec error:',error);
-			}
-			console.log("Factory Reset complete");
-			if (cb) cb(null, this.current_state.toJSON());
-			self.restart(null,null);
+		if (cb) cb(null, 'factory reset, restarting');
+		var ls = spawn('./factory_reset.sh',[],{cwd:"/home/pi/sisbot-server/sisbot/",detached:true,stdio:'ignore'});
+		ls.on('error', (err) => {
+			console.log('Failed to start child process.');
+		});
+		ls.on('close', (code) => {
+			console.log("child process exited with code",code);
 		});
 	},
 	restart: function(data,cb) {
 		console.log("Sisbot Restart", data);
 		if (cb) cb(null, 'restarting sisyphus');
-		var ls = spawn('./restart.sh',[],{cwd:"/home/pi/sisbot-server/sisbot/",detached:true,shell:true,stdio:'ignore'});
+		var ls = spawn('./restart.sh',[],{cwd:"/home/pi/sisbot-server/sisbot/",detached:true,stdio:'ignore'});
 		ls.on('error', (err) => {
 		  console.log('Failed to start child process.');
 		});
