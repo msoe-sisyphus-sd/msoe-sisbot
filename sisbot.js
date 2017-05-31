@@ -789,14 +789,21 @@ var sisbot = {
 	restart: function(data,cb) {
 		console.log("Sisbot Restart", data);
 		if (cb) cb(null, 'restarting sisyphus');
-		spawn('/home/pi/sisbot-server/sisbot/restart.sh', (error, stdout, stderr) => {
-		  if (error) return console.log('exec error:',error);
+		var ls = spawn('restart.sh',[],{cwd:"/home/pi/sisbot-server/sisbot/",detached:true});
+		ls.stdout.on('data', (data) => {
+		  console.log("stdout:",data);
+		});
+		ls.stderr.on('data', (data) => {
+		  console.log("Err:",data);
+		});
+		ls.on('close', (code) => {
+		  console.log("child process exited with code",code);
 		});
 	},
 	reboot: function(data,cb) {
 		console.log("Sisbot Reboot", data);
 		cb(null, 'rebooting sisyphus');
-		spawn('sudo reboot', (error, stdout, stderr) => {
+		exec('sudo reboot', (error, stdout, stderr) => {
 		  if (error) return console.log('exec error:',error);
 		});
 	}
