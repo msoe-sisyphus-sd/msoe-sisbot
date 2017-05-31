@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 
 cd /home/pi/sisbot-server/
-mkdir backup.0
-cp -rf sisbot/ backup/
-cp -rf siscloud/ backup/
-cp -rf sisproxy/ backup/
-mv backup.0 backup
+mkdir -p backup.0
+sudo cp -rf sisbot/ backup.0/
+sudo cp -rf siscloud/ backup.0/
+sudo cp -rf sisproxy/ backup.0/
+sudo rm -rf /home/pi/sisbot-server/backup
+sudo mv -f /home/pi/sisbot-server/backup.0/ /home/pi/sisbot-server/backup
 
 cd /home/pi/sisbot-server/sisbot
 git reset --hard
