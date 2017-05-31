@@ -783,7 +783,7 @@ var sisbot = {
 	},
 	factory_reset: function(data, cb) {
 		console.log("Sisbot Factory Reset", data);
-		if (cb) cb(null, 'factory reset, restarting');
+		if (cb) cb(null, this.current_state.toJSON());
 		var ls = spawn('./factory_reset.sh',[],{cwd:"/home/pi/sisbot-server/sisbot/",detached:true,stdio:'ignore'});
 		ls.on('error', (err) => {
 			console.log('Failed to start child process.');
@@ -794,7 +794,7 @@ var sisbot = {
 	},
 	restart: function(data,cb) {
 		console.log("Sisbot Restart", data);
-		if (cb) cb(null, 'restarting sisyphus');
+		if (cb) cb(null, this.current_state.toJSON());
 		var ls = spawn('./restart.sh',[],{cwd:"/home/pi/sisbot-server/sisbot/",detached:true,stdio:'ignore'});
 		ls.on('error', (err) => {
 		  console.log('Failed to start child process.');
@@ -805,7 +805,7 @@ var sisbot = {
 	},
 	reboot: function(data,cb) {
 		console.log("Sisbot Reboot", data);
-		cb(null, 'rebooting sisyphus');
+		cb(null, this.current_state.toJSON());
 		exec('sudo reboot', (error, stdout, stderr) => {
 		  if (error) return console.log('exec error:',error);
 		});
