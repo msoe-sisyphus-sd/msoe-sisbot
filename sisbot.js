@@ -784,6 +784,7 @@ var sisbot = {
 	factory_reset: function(data, cb) {
 		console.log("Sisbot Factory Reset", data);
 		// TODO: make shell script to copy from backup folder
+		if (cb) cb(null, "Resetting...");
 	},
 	restart: function(data,cb) {
 		console.log("Sisbot Restart", data);
