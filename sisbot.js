@@ -256,6 +256,13 @@ var sisbot = {
 		console.log("Sisbot Exists", data);
 		cb(null, this.current_state.toJSON());
 	},
+	set_default_playlist: function(data, cb) {
+		console.log("Sisbot Set Default Playlist", data);
+		
+		this.current_state.set("default_playlist_id", data.default_playlist_id);
+
+		cb(null, this.current_state.toJSON());
+	},
 	save: function(data, cb) {
 		console.log("Sisbot Save", data);
 		var self = this;
