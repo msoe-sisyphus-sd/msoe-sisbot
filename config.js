@@ -105,7 +105,7 @@ var config = {
 		},
 		testing: {
 			testing: true,
-		}
+		},
 		dummy: {
 			serial_path: "false",
 		}
