@@ -745,15 +745,19 @@ var sisbot = {
 		});
 	},
 	local_sisbots: function(data, cb) {
-		var return_value = [];
 		var self = this;
+		var sisbots = [];
 		// TODO: take local_ip, ping exists on 1-255 (except self)
+		this.current_state.set("local_ip", this._getIPAddress());
+		if (this.current_state.get("local_ip") == "192.168.42.1") {
+			this.current_state.set({is_hotspot: "true"});
+			if (cb) return cb(null, sisbots); // return empty list, this is a hotspot
+		}
 		var ip = this.current_state.get("local_ip");
 		var local = ip.substr(0,ip.lastIndexOf("."));
 		console.log("Local address", local);
 
 		// return array of IP addresses (not including self)
-		var sisbots = [];
 		var i=1;
 		function loop_cb(err,resp) {
 				if (err && err != "Not found") console.log("Err,",err);
@@ -765,6 +769,7 @@ var sisbot = {
 				if (i<255) {
 					self._check_sisbot({local:local, i:i}, loop_cb);
 				} else {
+					console.log("Other sisbots found:", _.pluck(sisbots,"local_ip"));
 					if (cb) cb(null, sisbots);
 				}
 		}
