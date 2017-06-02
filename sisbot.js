@@ -750,6 +750,10 @@ var sisbot = {
 	local_sisbots: function(data, cb) {
 		var self = this;
 		var sisbots = [];
+		
+		// TODO: remove next line to do actual scan
+		if (!this.config.testing) return cb(null, sisbots);
+
 		// TODO: take local_ip, ping exists on 1-255 (except self)
 		this.current_state.set("local_ip", this._getIPAddress());
 		if (this.current_state.get("local_ip") == "192.168.42.1") {
@@ -761,7 +765,7 @@ var sisbot = {
 		console.log("Local address", local);
 
 		// return array of IP addresses (not including self)
-		var i=1;
+		var i=2;
 		function loop_cb(err,resp) {
 				if (err && err != "Not found") console.log("Err,",err);
 				if (resp) {
@@ -790,7 +794,7 @@ var sisbot = {
 			cb("Not found", null);
 		});
 		ping.on('result', function(err, ms) {
-		  console.log(this._host+' responded in '+ms+'ms.');
+		  console.log(this._host+' responded.');
 			request.post(
 			    'http://'+address+'/sisbot/exists',
 			    { },
@@ -799,7 +803,7 @@ var sisbot = {
 							console.log("Request Exists:", response, body);
 	            cb(null, body);
 		        } else {
-							console.log("Request Not found:", error, response, body);
+							if (response) console.log("Request Not found:", response.statusCode);
 							cb("Not found", null);
 						}
 			    }

@@ -103,8 +103,11 @@ var config = {
 		stopped: { // set NODE_ENV=sisbot_stopped to make it start without autoplaying
 			autoplay: false,
 		},
+		testing: {
+			testing: true,
+		}
 		dummy: {
-			serial_path: "false"
+			serial_path: "false",
 		}
 };
 
