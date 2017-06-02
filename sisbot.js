@@ -788,9 +788,10 @@ var sisbot = {
 		    { },
 		    function (error, response, body) {
 	        if (!error && response.statusCode == 200) {
-						console.log("Exist Resp:", response, body);
+						console.log("Request Exists:", response, body);
             cb(null, body);
 	        } else {
+						console.log("Request Not found:", error, response, body);
 						cb("Not found", null);
 					}
 		    }
