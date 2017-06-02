@@ -8,7 +8,7 @@ var iwconfig			= require('wireless-tools/iwconfig');
 var iwlist				= require('wireless-tools/iwlist');
 var uuid					= require('uuid');
 var Backbone			= require('backbone');
-var ping					= require('ping-lite');
+var Ping					= require('ping-lite');
 var request 			= require('request');
 
 var SerialPort		= require('serialport').SerialPort;
