@@ -8,6 +8,7 @@ var iwconfig			= require('wireless-tools/iwconfig');
 var iwlist				= require('wireless-tools/iwlist');
 var uuid					= require('uuid');
 var Backbone			= require('backbone');
+var ping					= require('ping-lite');
 var request 			= require('request');
 
 var SerialPort		= require('serialport').SerialPort;
@@ -783,19 +784,28 @@ var sisbot = {
 		var address = data.local+"."+data.i;
 		if (address == this.current_state.get('local_ip')) return cb("Skip, self", null);
 
-		request.post(
-		    'http://'+address+'/sisbot/exists',
-		    { },
-		    function (error, response, body) {
-	        if (!error && response.statusCode == 200) {
-						console.log("Request Exists:", response, body);
-            cb(null, body);
-	        } else {
-						console.log("Request Not found:", error, response, body);
-						cb("Not found", null);
-					}
-		    }
-		);
+		var ping = new Ping(address);
+		ping.on('error', function(err) {
+		  // nothing, continue on our way
+			cb("Not found", null);
+		});
+		ping.on('result', function(err, ms) {
+		  console.log(this._host+' responded in '+ms+'ms.');
+			request.post(
+			    'http://'+address+'/sisbot/exists',
+			    { },
+			    function (error, response, body) {
+		        if (!error && response.statusCode == 200) {
+							console.log("Request Exists:", response, body);
+	            cb(null, body);
+		        } else {
+							console.log("Request Not found:", error, response, body);
+							cb("Not found", null);
+						}
+			    }
+			);
+		});
+		ping.send(); // or ping.start();
 	},
 	factory_reset: function(data, cb) {
 		console.log("Sisbot Factory Reset", data);
