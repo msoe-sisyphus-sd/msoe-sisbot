@@ -258,7 +258,7 @@ var sisbot = {
 	},
 	set_default_playlist: function(data, cb) {
 		console.log("Sisbot Set Default Playlist", data);
-		
+
 		this.current_state.set("default_playlist_id", data.default_playlist_id);
 
 		cb(null, this.current_state.toJSON());
@@ -746,6 +746,7 @@ var sisbot = {
 	},
 	local_sisbots: function(data, cb) {
 		var return_value = [];
+		var self = this;
 		// TODO: take local_ip, ping exists on 1-255 (except self)
 		var ip = this.current_state.get("local_ip");
 		var local = ip.substr(0,ip.lastIndexOf("."));
@@ -755,14 +756,14 @@ var sisbot = {
 		var sisbots = [];
 		var i=1;
 		function loop_cb(err,resp) {
-				if (err) console.log("Err,",err);
+				if (err && err != "Not found") console.log("Err,",err);
 				if (resp) {
 					console.log("Sisbot found:", resp);
 					sisbots.push(resp);
 				}
 				i++;
 				if (i<255) {
-					this._check_sisbot({local:local, i:i}, loop_cb);
+					self._check_sisbot({local:local, i:i}, loop_cb);
 				} else {
 					if (cb) cb(null, sisbots);
 				}
