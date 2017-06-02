@@ -200,6 +200,8 @@ var sisbot = {
 
 		var self = this;
 		//console.log("Serial Connect", this.config.serial_path);
+		if (this.config.serial_path == "false") return;
+
  		this.serial = new SerialPort(this.config.serial_path, {}, false);
 
 		try {
