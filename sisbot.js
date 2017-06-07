@@ -275,7 +275,9 @@ var sisbot = {
 			self.current_state.set({hostname: data.hostname});
 
 			// restart wifi/hotspot?
-			if (self.current_state.get('is_hotspot')) self.reset_to_hotspot(null,cb);
+			if (self.current_state.get('is_hotspot')) self.reset_to_hotspot(null,function(err,resp) {
+				self.reboot(null, cb);
+			});
 		});
 
 	},
