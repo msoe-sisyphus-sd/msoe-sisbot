@@ -718,6 +718,7 @@ var sisbot = {
 		iwlist.scan(data, cb);
 	},
 	change_to_wifi: function(data, cb) {
+		var self = this;
 		console.log("Sisbot change to wifi", data);
 		if (data.ssid && data.psk && data.ssid != 'false' && data.psk != "") {
 			clearTimeout(this._internet_check);
@@ -726,7 +727,7 @@ var sisbot = {
 			//var pwd_check =  data.psk.match(^([0-9A-Za-z@.]{1,255})$);
 			exec('sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "'+data.ssid+'" "'+data.psk+'"', (error, stdout, stderr) => {
 			  if (error) return console.error('exec error:',error);
-				this.current_state.set({wifi_network: data.ssid,wifi_password:data.psk,is_hotspot: "false"});
+				self.current_state.set({wifi_network: data.ssid,wifi_password:data.psk,is_hotspot: "false"});
 			});
 
 			this._query_internet(7000); // check again in 7 seconds
