@@ -15,6 +15,9 @@ for line in file:lines() do
   end
   print(line)
 end
+if made_change==false then
+	print(line)
+end
 EOF
 sudo mv "$3.bak" "$3"
 }
@@ -23,7 +26,6 @@ OLDHOST=$(hostname -f)
 
 # change hostname
 if [ -n "$1" ]; then
-	hostname "$1"
 	find_replace "127.0.0.1%s*$OLDHOST.local" "127.0.0.1	$1.local" /etc/hosts
 	find_replace "127.0.1.1%s*$OLDHOST" "127.0.1.1	$1" /etc/hosts
 
@@ -33,6 +35,7 @@ if [ -n "$1" ]; then
 	# update hostname last
 	sudo echo "$1" > /home/pi/hostname
 	sudo mv /home/pi/hostname /etc/hostname
+	hostname "$1"
 fi
 
 # reboot?
