@@ -266,6 +266,19 @@ var sisbot = {
 
 		cb(null, this.current_state.toJSON());
 	},
+	set_hostname: function(data,cb) {
+		var self = this;
+		console.log("Sisbot Set Hostname", data);
+
+		exec('sudo /home/pi/sisbot-server/sisbot/set_hostname.sh "'+data.hostname+'"', (error, stdout, stderr) => {
+			if (error) return console.error('exec error:',error);
+			self.current_state.set({hostname: data.hostname});
+
+			// restart wifi/hotspot?
+			if (self.current_state.get('is_hotspot')) self.reset_to_hotspot(null,cb);
+		});
+
+	},
 	save: function(data, cb) {
 		console.log("Sisbot Save", data);
 		var self = this;
@@ -750,7 +763,7 @@ var sisbot = {
 	local_sisbots: function(data, cb) {
 		var self = this;
 		var sisbots = [];
-		
+
 		// TODO: remove next line to do actual scan
 		if (!this.config.testing) return cb(null, sisbots);
 
