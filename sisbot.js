@@ -270,11 +270,11 @@ var sisbot = {
 	},
 	set_hostname: function(data,cb) {
 		var self = this;
-		
+
 		console.log("Sisbot Set Hostname", data);
 		ValidHostnameRegex = new RegExp("^[a-zA-Z][a-zA-Z0-9\-]*$");
 
-		if (str.search(ValidHostnameRegex) == 0) {
+		if (data.hostname.search(ValidHostnameRegex) == 0) {
 			exec('sudo /home/pi/sisbot-server/sisbot/set_hostname.sh "'+data.hostname+'"', (error, stdout, stderr) => {
 				if (error) return console.error('exec error:',error);
 				self.current_state.set({hostname: data.hostname});
@@ -765,8 +765,7 @@ var sisbot = {
 				return console.log('exec error:',error);
 			}
 			console.log("Install complete");
-			if (cb) cb(null, this.current_state.toJSON());
-			self.restart(null,null);
+			self.restart(null,cb);
 		});
 	},
 	local_sisbots: function(data, cb) {
