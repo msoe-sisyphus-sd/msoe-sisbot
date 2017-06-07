@@ -22,7 +22,7 @@ sudo mv "$3.bak" "$3"
 OLDHOST=$(hostname -f)
 
 # change hostname
-if [-n "$1"]; then
+if [ -n "$1" ]; then
 	hostname "$1"
 	sudo echo "$1" > /home/pi/hostname
 	sudo mv /home/pi/hostname /etc/hostname

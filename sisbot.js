@@ -277,7 +277,7 @@ var sisbot = {
 		if (data.hostname.search(ValidHostnameRegex) == 0) {
 			exec('sudo /home/pi/sisbot-server/sisbot/set_hostname.sh "'+data.hostname+'"', (error, stdout, stderr) => {
 				if (error) return console.error('exec error:',error);
-				self.current_state.set({hostname: data.hostname});
+				self.current_state.set({hostname: data.hostname+'.local'});
 
 				// restart wifi/hotspot?
 				if (self.current_state.get('is_hotspot')) self.reset_to_hotspot(null,function(err,resp) {
