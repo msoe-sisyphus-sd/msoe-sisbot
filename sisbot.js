@@ -92,7 +92,9 @@ var sisbot = {
 				pi_id: 'pi_'+this.config.pi_serial,
 				is_homed: "false",
 				state: "waiting",
-				is_serial_open: "false"
+				is_serial_open: "false",
+				installing_updates: "false",
+				factory_resetting: "false",
 			});
 			this.current_state.set("local_ip", this._getIPAddress());
 			if (this.current_state.get("local_ip") == "192.168.42.1") {
