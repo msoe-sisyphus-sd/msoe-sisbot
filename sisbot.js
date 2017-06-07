@@ -270,18 +270,23 @@ var sisbot = {
 	},
 	set_hostname: function(data,cb) {
 		var self = this;
+		
 		console.log("Sisbot Set Hostname", data);
+		ValidHostnameRegex = new RegExp("^[a-zA-Z][a-zA-Z0-9\-]*$");
 
-		exec('sudo /home/pi/sisbot-server/sisbot/set_hostname.sh "'+data.hostname+'"', (error, stdout, stderr) => {
-			if (error) return console.error('exec error:',error);
-			self.current_state.set({hostname: data.hostname});
+		if (str.search(ValidHostnameRegex) == 0) {
+			exec('sudo /home/pi/sisbot-server/sisbot/set_hostname.sh "'+data.hostname+'"', (error, stdout, stderr) => {
+				if (error) return console.error('exec error:',error);
+				self.current_state.set({hostname: data.hostname});
 
-			// restart wifi/hotspot?
-			if (self.current_state.get('is_hotspot')) self.reset_to_hotspot(null,function(err,resp) {
-				self.reboot(null, cb);
+				// restart wifi/hotspot?
+				if (self.current_state.get('is_hotspot')) self.reset_to_hotspot(null,function(err,resp) {
+					self.reboot(null, cb);
+				});
 			});
-		});
-
+		} else {
+			cb('Invalid hostname characters',null);
+		}
 	},
 	save: function(data, cb) {
 		console.log("Sisbot Save", data);
