@@ -27,7 +27,7 @@ if [-n "$1"]; then
 	sudo echo "$1" > /home/pi/hostname
 	sudo mv /home/pi/hostname /etc/hostname
 	find_replace "127.0.1.1%s*$OLDHOST" "127.0.1.1	$1" /etc/hosts
-	find_replace "127.0.1.1%s*$OLDHOST.local" "127.0.1.1	$1.local" /etc/hosts
+	find_replace "127.0.0.1%s*$OLDHOST.local" "127.0.0.1	$1.local" /etc/hosts
 
 	# match the wifi network name too
 	find_replace "ssid=[a-zA-Z0-9]" "ssid=$1" /etc/hostapd/hostapd.conf
