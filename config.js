@@ -29,7 +29,9 @@ var config = {
 			max_speed: 2.0,
 			auto_th: 1.570796,
 			max_rand_retries: 10,
-			check_internet_interval: 3600000, // once every hour, confirm an internet connection
+			check_internet_interval: 1800000, //3600000, // once every hour, confirm an internet connection
+			internet_retries: 5, // retry # of times before resetting to hotspot
+			retry_internet_interval: 3000, //3600000, // once every hour, confirm an internet connection
 			default_data: [
 				{
 					id          : uuid(),

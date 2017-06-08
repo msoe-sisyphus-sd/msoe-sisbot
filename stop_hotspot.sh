@@ -13,19 +13,3 @@ sudo echo "network={
 sudo ifup wlan0
 
 echo "Restarting wlan0..."
-# RETRIES=0
-# FAILED=false
-# while ! ping -c 1 -W 2 google.com ; do
-#     sleep 1
-# 		RETRIES=RETRIES+1
-# if [ "$RETRIES" > "100" ] ; then
-# 	FAILED=true
-# fi
-# done
-#
-# if [ "$FAILED" = false ] ; then
-# echo "Failure! Network not found."
-# sudo ./start_hostspot.sh
-# else
-# echo "Success! Network found."
-# fi

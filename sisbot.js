@@ -34,6 +34,7 @@ var sisbot = {
 	_saving: false,
 
 	_internet_check: 0,
+	_internet_retries: 0,
 
   init: function(config, session_manager) {
       var self = this;
@@ -65,7 +66,13 @@ var sisbot = {
 			var objs = [];
 			if (fs.existsSync(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.content+'/'+config.sisbot_state)) {
 				console.log("Load saved state:", config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.content+'/'+config.sisbot_state);
-				objs = JSON.parse(fs.readFileSync(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.content+'/'+config.sisbot_state, 'utf8'));
+				var saved_state = fs.readFileSync(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.content+'/'+config.sisbot_state, 'utf8');
+				try {
+					objs = JSON.parse(saved_state);
+				} catch (err) {
+					console.log("!!Blank save state, use defaults", err);
+					objs = this.config.default_data;
+				}
 			} else {
 				console.log("Load defaults");
 				objs = this.config.default_data;
@@ -679,15 +686,17 @@ var sisbot = {
 	},
 	// work out with travis
 	_validate_internet: function(data, cb) {
+		//console.log("Sisbot validate internet");
 		var self = this;
 		exec('ping -c 1 -W 2 google.com', (error, stdout, stderr) => {
-		  if (error) return console.error('exec error:',error);
+		  //if (error) return console.error('exec error:',error);
 
 			var returnValue = "false";
 			if (stdout.indexOf("1 packets transmitted") > -1) returnValue = "true";
 		  // console.log('stdout:', stdout);
 		  // console.log('stderr:', stderr);
 
+			//console.log("Internet Connected Check", returnValue);
 			self.current_state.set("is_internet_connected", returnValue);
 
 			if (cb) cb(null, returnValue);
@@ -700,14 +709,20 @@ var sisbot = {
 				self._validate_internet(null, function(err, resp) {
 					if (err) return console.log("Internet check err", err);
 					if (resp == "true") {
-						console.log("Internet connected.");
+						console.log("Internet connected.",self.current_state.get("is_internet_connected"));
+
+						self._internet_retries = 0; // successful, reset
 
 						// check again later
 						self._query_internet(self.config.check_internet_interval);
 					} else {
-						console.log("Internet not connected, reverting to hotspot.");
-
-						if (!self._is_hotspot) self.reset_to_hotspot();
+						self._internet_retries++;
+						if (self._internet_retries < self.config.internet_retries) {
+							self._query_internet(self.config.retry_internet_interval);
+						} else {
+							console.log("Internet not connected, reverting to hotspot.");
+							if (!self._is_hotspot) self.reset_to_hotspot(null,null);
+						}
 					}
 				})
 			}, time_to_check);
@@ -722,16 +737,19 @@ var sisbot = {
 		console.log("Sisbot change to wifi", data);
 		if (data.ssid && data.psk && data.ssid != 'false' && data.psk != "") {
 			clearTimeout(this._internet_check);
+			this._internet_retries = 0; // clear retry count
 			// regex, remove or error on double quotes
 			// no spaces in password
 			//var pwd_check =  data.psk.match(^([0-9A-Za-z@.]{1,255})$);
 			exec('sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "'+data.ssid+'" "'+data.psk+'"', (error, stdout, stderr) => {
 			  if (error) return console.error('exec error:',error);
 				self.current_state.set({wifi_network: data.ssid,wifi_password:data.psk,is_hotspot: "false"});
+
+				self._query_internet(5000); // check again in 5 seconds
+
+				cb(null, self.current_state.toJSON());
 			});
 
-			this._query_internet(7000); // check again in 7 seconds
-			cb(null, this.current_state.toJSON());
 		} else {
 			cb('ssid or psk error', null);
 		}
@@ -742,6 +760,7 @@ var sisbot = {
 	reset_to_hotspot: function(data, cb) {
 		console.log("Sisbot Reset to Hotspot", data);
 		clearTimeout(this._internet_check);
+		this._internet_retries = 0; // clear retry count
 
 		this.current_state.set({is_hotspot: "true", is_internet_connected: "false", wifi_network: "", wifi_password: "" });
 		cb(null, this.current_state.toJSON());
