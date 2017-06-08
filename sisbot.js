@@ -743,7 +743,7 @@ var sisbot = {
 			//var pwd_check =  data.psk.match(^([0-9A-Za-z@.]{1,255})$);
 
 			self.current_state.set({wifi_network: data.ssid,wifi_password:data.psk,is_hotspot: "false"});
-			cb(null, self.current_state.toJSON());
+			if (cb) cb(null, self.current_state.toJSON());
 
 			exec('sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "'+data.ssid+'" "'+data.psk+'"', (error, stdout, stderr) => {
 			  if (error) return console.error('exec error:',error);
@@ -752,7 +752,7 @@ var sisbot = {
 			});
 
 		} else {
-			cb('ssid or psk error', null);
+			if (cb) cb('ssid or psk error', null);
 		}
 	},
 	is_internet_connected: function(data, cb) {
@@ -764,7 +764,7 @@ var sisbot = {
 		this._internet_retries = 0; // clear retry count
 
 		this.current_state.set({is_hotspot: "true", is_internet_connected: "false", wifi_network: "", wifi_password: "" });
-		cb(null, this.current_state.toJSON());
+		if (cb) cb(null, this.current_state.toJSON());
 
 		exec('sudo /home/pi/sisbot-server/sisbot/start_hotspot.sh', (error, stdout, stderr) => {
 			if (error) return console.error('exec error:',error);
@@ -835,7 +835,7 @@ var sisbot = {
 		var ping = new Ping(address);
 		ping.on('error', function(err) {
 		  // nothing, continue on our way
-			cb("Not found", null);
+			if (cb) cb("Not found", null);
 		});
 		ping.on('result', function(err, ms) {
 		  console.log(this._host+' responded.');
@@ -845,10 +845,10 @@ var sisbot = {
 			    function (error, response, body) {
 		        if (!error && response.statusCode == 200) {
 							console.log("Request Exists:", response, body);
-	            cb(null, body);
+	            if (cb) cb(null, body);
 		        } else {
 							if (response) console.log("Request Not found:", response.statusCode);
-							cb("Not found", null);
+							if (cb) cb("Not found", null);
 						}
 			    }
 			);
@@ -879,7 +879,7 @@ var sisbot = {
 	},
 	reboot: function(data,cb) {
 		console.log("Sisbot Reboot", data);
-		cb(null, this.current_state.toJSON());
+		if (cb) cb(null, this.current_state.toJSON());
 		exec('sudo reboot', (error, stdout, stderr) => {
 		  if (error) return console.log('exec error:',error);
 		});
