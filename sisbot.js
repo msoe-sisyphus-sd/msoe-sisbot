@@ -779,8 +779,10 @@ var sisbot = {
 			return console.log("Install error: not connected to internet");
 		}
 
+		this.current_state.set('installing_updates','true');
 		this.pause(null, null);
 		exec('/home/pi/sisbot-server/sisbot/update.sh > update.log', (error, stdout, stderr) => {
+			self.current_state.set('installing_updates','false');
 		  if (error) {
 				if (cb) cb(error, null);
 				return console.log('exec error:',error);
