@@ -738,16 +738,17 @@ var sisbot = {
 		if (data.ssid && data.psk && data.ssid != 'false' && data.psk != "") {
 			clearTimeout(this._internet_check);
 			this._internet_retries = 0; // clear retry count
-			// regex, remove or error on double quotes
+			// TODO: regex, remove or error on double quotes
 			// no spaces in password
 			//var pwd_check =  data.psk.match(^([0-9A-Za-z@.]{1,255})$);
+
+			self.current_state.set({wifi_network: data.ssid,wifi_password:data.psk,is_hotspot: "false"});
+			cb(null, self.current_state.toJSON());
+
 			exec('sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "'+data.ssid+'" "'+data.psk+'"', (error, stdout, stderr) => {
 			  if (error) return console.error('exec error:',error);
-				self.current_state.set({wifi_network: data.ssid,wifi_password:data.psk,is_hotspot: "false"});
 
 				self._query_internet(5000); // check again in 5 seconds
-
-				cb(null, self.current_state.toJSON());
 			});
 
 		} else {
