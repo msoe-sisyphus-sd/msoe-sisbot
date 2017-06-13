@@ -96,6 +96,7 @@ var sisbot = {
 			this.current_state = this.collection.findWhere({type: "sisbot"});
 			// force values on startup
 			this.current_state.set({
+				id: 'pi_'+this.config.pi_serial,
 				pi_id: 'pi_'+this.config.pi_serial,
 				is_homed: "false",
 				state: "waiting",
