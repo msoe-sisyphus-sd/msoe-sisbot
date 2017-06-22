@@ -26,7 +26,7 @@ sudo mv "$3.bak" "$3"
 
 comment 'wpa=2' true /etc/hostapd/hostapd.conf
 comment 'wpa_passphrase=sisyphus' true /etc/hostapd/hostapd.conf
-comment 'wpa_key_mgmt=WPA-PSK' true /etc/hostapd/hostapd.conf
+comment 'wpa_key_mgmt=WPA' true /etc/hostapd/hostapd.conf
 comment 'wpa_pairwise=CCMP' true /etc/hostapd/hostapd.conf
 comment 'wpa_group_rekey=86400' true /etc/hostapd/hostapd.conf
 
