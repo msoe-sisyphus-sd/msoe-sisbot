@@ -707,6 +707,12 @@ var sisbot = {
 			//console.log("Internet Connected Check", returnValue);
 			if (self.current_state.get("is_internet_connected") != returnValue) {
 				self.current_state.set({is_internet_connected: returnValue, local_ip: self._getIPAddress()});
+
+				if (self.current_state.get("local_ip") == "192.168.42.1") {
+					self.current_state.set("is_hotspot", "true");
+				} else {
+					self.current_state.set("is_hotspot", "false");
+				}
 			}
 
 			if (cb) cb(null, returnValue);
