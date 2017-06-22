@@ -1,6 +1,6 @@
 var uuid				= require('uuid');
 var Backbone		= require('backbone');
-var os					= require('os');
+//var os					= require('os');
 
 var sisbot_state = Backbone.Model.extend({
 	defaults: {
@@ -13,8 +13,11 @@ var sisbot_state = Backbone.Model.extend({
 		hostname: "sisyphus.local",
 		local_ip: "",
 
+		is_available: "true",
 		installing_updates: "false",
+		installing_updates_error: "",
 		factory_resetting: "false",
+		factory_resetting_error: "",
 		do_not_remind: "false",
 
 		state: "waiting", // playing, homing, paused, waiting
@@ -37,7 +40,7 @@ var sisbot_state = Backbone.Model.extend({
 		wifi_password: ""
 	},
 	initialize: function() {
-		this.set("hostname", os.hostname()+".local");
+		//this.set({hostname: os.hostname()+".local", is_available: true});
 	}
 });
 

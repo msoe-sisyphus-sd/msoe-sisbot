@@ -100,9 +100,15 @@ var sisbot = {
 				pi_id: 'pi_'+this.config.pi_serial,
 				is_homed: "false",
 				state: "waiting",
+				is_available: "true",
+				reason_unavailable: "",
 				is_serial_open: "false",
 				installing_updates: "false",
+				installing_updates_error: "",
 				factory_resetting: "false",
+				factory_resetting_error: "",
+				brightness: 0.8,
+				speed: 0.35
 			});
 			this.current_state.set("local_ip", this._getIPAddress());
 			if (this.current_state.get("local_ip") == "192.168.42.1") {
@@ -698,7 +704,9 @@ var sisbot = {
 		  // console.log('stderr:', stderr);
 
 			//console.log("Internet Connected Check", returnValue);
-			self.current_state.set("is_internet_connected", returnValue);
+			if (self.current_state.get("is_internet_connected") != returnValue) {
+				self.current_state.set({is_internet_connected: returnValue, local_ip: self._getIPAddress()});
+			}
 
 			if (cb) cb(null, returnValue);
 		});
@@ -711,6 +719,7 @@ var sisbot = {
 					if (err) return console.log("Internet check err", err);
 					if (resp == "true") {
 						console.log("Internet connected.",self.current_state.get("is_internet_connected"));
+						self.current_state.set({is_available: "true", reason_unavailable: ""});
 
 						self._internet_retries = 0; // successful, reset
 
@@ -736,14 +745,14 @@ var sisbot = {
 	change_to_wifi: function(data, cb) {
 		var self = this;
 		console.log("Sisbot change to wifi", data);
-		if (data.ssid && data.psk && data.ssid != 'false' && data.psk != "") {
+		if (data.ssid && data.ssid != 'false' && ( data.psk && (data.psk == "" || data.psk.length >= 8))) {
 			clearTimeout(this._internet_check);
 			this._internet_retries = 0; // clear retry count
 			// TODO: regex, remove or error on double quotes
 			// no spaces in password
 			//var pwd_check =  data.psk.match(^([0-9A-Za-z@.]{1,255})$);
 
-			self.current_state.set({wifi_network: data.ssid,wifi_password:data.psk,is_hotspot: "false"});
+			self.current_state.set({is_available: "false", reason_unavailable: "connect_to_wifi", wifi_network: data.ssid,wifi_password:data.psk,is_hotspot: "false"});
 			if (cb) cb(null, self.current_state.toJSON());
 
 			exec('sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "'+data.ssid+'" "'+data.psk+'"', (error, stdout, stderr) => {
@@ -765,16 +774,18 @@ var sisbot = {
 		if (cb) cb(null, this.current_state.toJSON());
 	},
 	reset_to_hotspot: function(data, cb) {
+		var self = this;
 		console.log("Sisbot Reset to Hotspot", data);
 		clearTimeout(this._internet_check);
 		this._internet_retries = 0; // clear retry count
 
-		this.current_state.set({is_hotspot: "true", is_internet_connected: "false", wifi_network: "", wifi_password: "" });
+		this.current_state.set({is_available: "false", reason_unavailable: "reset_to_hotspot", is_hotspot: "true", is_internet_connected: "false", wifi_network: "", wifi_password: "" });
 		if (cb) cb(null, this.current_state.toJSON());
 
 		exec('sudo /home/pi/sisbot-server/sisbot/start_hotspot.sh', (error, stdout, stderr) => {
 			if (error) return console.error('exec error:',error);
 			console.log("start_hotspot", stdout);
+			self.current_state.set({is_available: "true", reason_unavailable: "", local_ip: self._getIPAddress()});
 		});
 	},
 	install_updates: function(data, cb) {
@@ -863,6 +874,7 @@ var sisbot = {
 	},
 	factory_reset: function(data, cb) {
 		console.log("Sisbot Factory Reset", data);
+		this.current_state.set({is_available: "false", reason_unavailable: "restarting"});
 		if (cb) cb(null, this.current_state.toJSON());
 		var ls = spawn('./factory_reset.sh',[],{cwd:"/home/pi/sisbot-server/sisbot/",detached:true,stdio:'ignore'});
 		ls.on('error', (err) => {
@@ -874,6 +886,7 @@ var sisbot = {
 	},
 	restart: function(data,cb) {
 		console.log("Sisbot Restart", data);
+		this.current_state.set({is_available: "false", reason_unavailable: "restarting"});
 		if (cb) cb(null, this.current_state.toJSON());
 		var ls = spawn('./restart.sh',[],{cwd:"/home/pi/sisbot-server/sisbot/",detached:true,stdio:'ignore'});
 		ls.on('error', (err) => {
@@ -885,6 +898,7 @@ var sisbot = {
 	},
 	reboot: function(data,cb) {
 		console.log("Sisbot Reboot", data);
+		this.current_state.set({is_available: "false", reason_unavailable: "rebooting"});
 		if (cb) cb(null, this.current_state.toJSON());
 		exec('sudo reboot', (error, stdout, stderr) => {
 		  if (error) return console.log('exec error:',error);
