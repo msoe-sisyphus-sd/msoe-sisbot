@@ -107,6 +107,7 @@ var sisbot = {
 				installing_updates_error: "",
 				factory_resetting: "false",
 				factory_resetting_error: "",
+				installed_updates: "false",
 				brightness: 0.8,
 				speed: 0.35
 			});
@@ -799,12 +800,13 @@ var sisbot = {
 		this.current_state.set('installing_updates','true');
 		this.pause(null, null);
 		exec('/home/pi/sisbot-server/sisbot/update.sh > update.log', (error, stdout, stderr) => {
-			self.current_state.set('installing_updates','false');
+			self.current_state.set({installing_updates: 'false'});
 		  if (error) {
 				if (cb) cb(error, null);
 				return console.log('exec error:',error);
 			}
 			console.log("Install complete");
+			self.current_state.set({installed_updates: 'true'}); // makes page reload
 			self.restart(null,cb);
 		});
 	},
@@ -874,7 +876,7 @@ var sisbot = {
 	},
 	factory_reset: function(data, cb) {
 		console.log("Sisbot Factory Reset", data);
-		this.current_state.set({is_available: "false", reason_unavailable: "restarting"});
+		this.current_state.set({is_available: "false", reason_unavailable: "resetting"});
 		if (cb) cb(null, this.current_state.toJSON());
 		var ls = spawn('./factory_reset.sh',[],{cwd:"/home/pi/sisbot-server/sisbot/",detached:true,stdio:'ignore'});
 		ls.on('error', (err) => {
