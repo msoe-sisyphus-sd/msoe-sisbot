@@ -23,6 +23,8 @@ git reset --hard
 git pull origin master
 npm install
 
+sudo /home/pi/sisbot-server/sisbot/update_finish.sh
+
 echo "Upgrade completed"
 
 # sudo killall node
