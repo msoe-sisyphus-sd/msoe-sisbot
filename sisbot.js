@@ -759,6 +759,11 @@ var sisbot = {
 	is_internet_connected: function(data, cb) {
 		this._validate_internet(data, cb);
 	},
+	stop_wifi_reminder: function(data, cb) {
+		console.log("Sisbot Stop Wifi Reminder", data);
+		this.current_state.set("do_not_remind", "true");
+		if (cb) cb(null, this.current_state.toJSON());
+	},
 	reset_to_hotspot: function(data, cb) {
 		console.log("Sisbot Reset to Hotspot", data);
 		clearTimeout(this._internet_check);

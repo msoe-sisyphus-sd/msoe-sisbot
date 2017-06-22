@@ -15,6 +15,7 @@ var sisbot_state = Backbone.Model.extend({
 
 		installing_updates: "false",
 		factory_resetting: "false",
+		do_not_remind: "false",
 
 		state: "waiting", // playing, homing, paused, waiting
 		brightness: 0.8,
