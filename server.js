@@ -30,7 +30,7 @@ var app = function(given_config,ansible) {
 	   var serial = serial_line.split(":");
 	   return serial[1].slice(1);
 	}
-	config.pi_serial = getserial();
+	if (config.pi_serial == undefined) config.pi_serial = getserial();
 
 	/**************************** PROXY *******************************************/
 

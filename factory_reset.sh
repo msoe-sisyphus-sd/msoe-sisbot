@@ -15,6 +15,8 @@ cp -rf siscloud ../
 cp -rf sisbot ../
 cp -rf sisproxy ../
 
+rm -f /home/pi/sisbot-server/sisbot/content/status.json
+
 cd /home/pi/sisbot-server/sisproxy
 sudo NODE_ENV=sisbot node server.js &
 echo "Factory Reset complete"

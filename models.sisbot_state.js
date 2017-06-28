@@ -19,6 +19,7 @@ var sisbot_state = Backbone.Model.extend({
 		factory_resetting: "false",
 		factory_resetting_error: "",
 		do_not_remind: "false",
+		hostname_prompt: "false",
 
 		state: "waiting", // playing, homing, paused, waiting
 		brightness: 0.8,
@@ -27,7 +28,7 @@ var sisbot_state = Backbone.Model.extend({
 		is_loop: "true",
 		default_playlist_id: "F42695C4-AE32-4956-8C7D-0FF6A7E9D492", // default
 		active_playlist_id: "false",
-		active_track_id: "false",
+		active_track: { id: "false" }, // { id, vel, accel, thmax, reversed }
 		_end_rho: 0,
 
 		is_homed: "false",

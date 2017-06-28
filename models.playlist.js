@@ -13,21 +13,60 @@ var playlist = Backbone.Model.extend({
 
 		active_track_index: 	0,
 		active_track_id: "false",
-		track_ids: 			[],
-		sorted_tracks:	[],
-		_reversed_tracks: []
+		tracks: 			[], // list of objects { id, vel, accel, thvmax, reversed, firstR, lastR, reversible }
+		sorted_tracks:	[] // list of index in tracks
 	},
 	collection: null,
 	initialize: function() {
-		this.set("sorted_tracks", this.get("track_ids").slice());
+		var sorted_tracks = [];
+		_.each(this.get('tracks'), function(obj,index) {
+			sorted_tracks.push(index);
+		});
+
+		this.set("sorted_tracks", sorted_tracks);
+
+		console.log("Tracks:", this.get('tracks'));
+		console.log("Sorted Tracks:", this.get('sorted_tracks'));
+	},
+	_update_tracks: function() {
+		var self = this;
+		_.each(this.get('tracks'), function(obj) {
+			var track_model = self.collection.get(obj.id);
+			obj.firstR = track_model.get('firstR');
+			obj.lastR = track_model.get('lastR');
+			obj.reversed = "false";
+		});
+
+		var sorted_list = this.get('sorted_tracks');
+		for(var i=0; i<this.get('tracks').length-1; i++) {
+			var track0 = this.get('tracks')[sorted_list[i]];
+			var track1 = this.get('tracks')[sorted_list[i+1]];
+
+			if (track0.lastR != track1.firstR) {
+				if (track1.lastR != track1.firstR) { // reversible
+					this._reverseTrack(track1);
+				} else {
+					console.log("Unable to transition between", track0._index, track0.lastR, track1._index, track1.firstR);
+				}
+			}
+		}
+	},
+	_reverseTrack: function(track_obj) {
+		var tempR = track_obj.lastR;
+		track_obj.lastR = track_obj.firstR;
+		track_obj.firstR = tempR;
+		track_obj.reversed = "true";
+		return track_obj;
 	},
 	get_active_track: function() {
-		return this.collection.get(this.get("active_track_id"));
+		return this.get("tracks")[this.get("active_track_index")];
+		//return this.collection.get(this.get("active_track_id"));
 	},
 	get_next_track_id: function() {
 		var return_value = "false";
 		var track_index = this.get("active_track_index");
-		var tracks = this.get("sorted_tracks");
+		var sorted_tracks = this.get("sorted_tracks");
+		var tracks = this.get("tracks");
 		if (tracks.length <= 0) return return_value;
 
 		track_index++;
@@ -37,96 +76,97 @@ var playlist = Backbone.Model.extend({
 				track_index = -1; // value before first index (if we call get next track again, it will be zero)
 			}
 		}
-		if (track_index >= 0) return_value = tracks[track_index];
+		if (track_index >= 0) return_value = tracks[sorted_tracks[track_index]].id;
 
 		this.set("active_track_index", track_index);
 		this.set("active_track_id", return_value);
 
 		return return_value;
 	},
+	get_current_track: function() {
+		return this.get("tracks")[this.get("sorted_tracks")[this.get("active_track_index")]];
+	},
 	get_next_track: function() { // increments the active_track_index and returns the id
 		var track_id = this.get_next_track_id();
-		return this.collection.get(track_id);
+		if (track_id != "false") return this.get("tracks")[this.get("sorted_tracks")[this.get("active_track_index")]];
+
+		// return false if no next track available
+		return { id: "false" };
 	},
 	set_shuffle: function(value) {
+		var self = this;
 		console.log("Playlist set shuffle", value);
 		this.set("is_shuffle", String(value)); // set to "true" or "false"
+
+		this._update_tracks();
 
 		if (String(value) == "true") {
 			this._randomize();
 		} else {
-			var tracks = this.get("track_ids");
-			this.set("sorted_tracks", tracks.slice()); // ensure unlinked copy
+			var sorted_tracks = [];
+			_.each(this.get('tracks'), function(obj,index) {
+				sorted_tracks.push(index);
+			});
+			this.set("sorted_tracks", sorted_tracks);
 		}
 
 		// reassign current playing track index
-		var sorted_tracks = this.get('sorted_tracks');
-		var firstIndex = sorted_tracks.indexOf(this.get('active_track_id'));
-		this.set("active_track_index", firstIndex);
+		var playing_index = _.findIndex(this.get('tracks'), {id:self.get('active_track_id')});
+		if (playing_index >= 0) this.set("active_track_index", playing_index);
 
-		// update reversed list
+		this._update_tracks();
 	},
 	set_loop: function(value) {
 		this.set("is_loop", String(value));
 	},
-	_update_reversed: function() {
-		// TODO: make list of true/false for sorted_tracks reversed values
-
-	},
-	_reverseTrack: function(track_obj) {
-		var tempR = track_obj.lastR;
-		track_obj.lastR = track_obj.firstR;
-		track_obj.firstR = tempR;
-		track_obj.reversed = "true";
-		return track_obj;
-	},
 	_randomize: function() {
 		var self = this;
-		console.log("Randomize Playlist");
+		console.log("Randomize Playlist", this.get("active_track_index"));
 
 		// insert random value to end (if it verifies),
-		// else put in front (if it verifies),
 		// else next, or if end and doesn't fit either, start over
-		var remaining_tracks = this.get("track_ids").slice();
+		var remaining_tracks = this.get("tracks").slice();
 		var randomized_tracks = [];
 		var best_matches = [];
 		var best_count = 0;
 		var retries = 0;
 
-		var track_objs = {};
-		_.each(remaining_tracks, function(track_id) {
-			var track_obj = self.collection.get(track_id).toJSON();
-			track_objs[track_obj.id] = track_obj;
-		});
+		_.each(remaining_tracks, function(track, index) {
+			track._index = index;
+			if (track.firstR != track.lastR) track.reversible = "true";
+		}); // */
+		//console.log("Remaining Tracks", remaining_tracks.length);
+
+		var current_track = this.get_current_track();
+		randomized_tracks.push(current_track);
+		remaining_tracks.splice(this.get("active_track_index"),1);
 
 		while (remaining_tracks.length > 0) {
+			//console.log("Remaining Tracks", remaining_tracks.length);
 			var rand = Math.floor(Math.random()*remaining_tracks.length);
-			var next_track = remaining_tracks[rand];
+			var track_obj = remaining_tracks[rand];
 			var success = false;
 
-			//console.log("Place track", next_track, this.tracks[next_track]);
-			var track_obj = track_objs[next_track];
+			//console.log("Place track", track_obj);
 
 			if (randomized_tracks.length > 0) {
-				var first_track = randomized_tracks[0];
 				var last_track = randomized_tracks[randomized_tracks.length-1];
 
 				// add to end or front
-				//console.log("Track comparison", randomized_tracks.length, track_obj, first_track, last_track);
-				if (last_track.lastR == track_obj.firstR && last_track.id != track_obj.id) {
+				//console.log("Track comparison", randomized_tracks.length, track_obj, last_track);
+				if (last_track.id == track_obj.id) {
+					console.log("Skip same track", last_track);
+				} else if (last_track.lastR == track_obj.firstR) {
+					console.log("Track success L/F", last_track._index, last_track.lastR, track_obj._index, track_obj.firstR);
 					randomized_tracks.push(track_obj);
 					success = true;
-				} else if (last_track.lastR == track_obj.lastR && track_obj.reversible && last_track.id != track_obj.id) {
-					randomized_tracks.push(self._reverseTrack(track_obj));
-					success = true;
-				} else if (first_track.firstR == track_obj.lastR && first_track.id != track_obj.id) {
-					randomized_tracks.unshift(track_obj);
-					success = true;
-				} else if (first_track.firstR == track_obj.firstR && track_obj.reversible && first_track.id != track_obj.id) {
-					randomized_tracks.unshift(self._reverseTrack(track_obj));
+				} else if (last_track.lastR == track_obj.lastR && track_obj.reversible != undefined && track_obj.reversible == "true") {
+					var reversed_track = self._reverseTrack(track_obj);
+					console.log("Track success Rev", last_track._index, last_track.lastR, reversed_track._index, reversed_track.firstR);
+					randomized_tracks.push(reversed_track);
 					success = true;
 				} else {
-					//console.log("Track unable to fit", track_obj, first_track.firstR, last_track.lastR);
+					console.log("Track unable to fit", last_track._index, last_track.lastR, track_obj);
 				}
 			} else { // only track, just add
 				randomized_tracks.push(track_obj);
@@ -136,19 +176,12 @@ var playlist = Backbone.Model.extend({
 			if (success) {
 				remaining_tracks.splice(rand,1);
 			} else {
-				var first_track = randomized_tracks[0];
 				var last_track = randomized_tracks[randomized_tracks.length-1];
 				var no_win = true;
 				// check for no-win situation
-				_.each(remaining_tracks, function(track) {
-					//var track_obj = self.collection.get(track);
-					var track_obj = track_objs[track];
-
-					if (first_track.firstR == track_obj.firstR ||
-						first_track.firstR == track_obj.lastR ||
-						last_track.lastR == track_obj.firstR ||
-						last_track.lastR == track_obj.lastR) {
-							no_win = false;
+				_.each(remaining_tracks, function(track_obj) {
+					if (last_track.lastR == track_obj.firstR || last_track.lastR == track_obj.lastR) {
+						no_win = false;
 					}
 				});
 
@@ -159,9 +192,7 @@ var playlist = Backbone.Model.extend({
 						//console.log("Merge", randomized_tracks, remaining_tracks);
 						best_count = randomized_tracks.length;
 						var append_list = [];
-						_.each(remaining_tracks, function(remaining_track) {
-							//var track_obj = self.collection.get(remaining_track);
-							var track_obj = track_objs[remaining_track];
+						_.each(remaining_tracks, function(track_obj) {
 							append_list.push(track_obj);
 						});
 						best_matches = randomized_tracks.concat(append_list);
@@ -171,18 +202,29 @@ var playlist = Backbone.Model.extend({
 						randomized_tracks = best_matches.slice();
 						remaining_tracks = [];
 					} else {
-						remaining_tracks = self.get("track_ids").slice();
+						remaining_tracks = self.get("tracks").slice();
 						randomized_tracks = [];
+
+						_.each(remaining_tracks, function(track, index) {
+							track._index = index;
+							if (track.firstR != track.lastR) track.reversible = "true";
+						});
+
+						var current_track = this.get_current_track();
+						randomized_tracks.push(current_track);
+						remaining_tracks.splice(this.get("active_track_index"),1);
+
+						console.log("Retry", randomized_tracks);
 						retries++;
 					}
 				}
 			}
 		}
 
-		var final_order = _.pluck(randomized_tracks,'id');
+		var final_order = _.pluck(randomized_tracks,'_index');
 
 		// update self with randomly ordered list
-		this.set({sorted_tracks: final_order});
+		this.set({sorted_tracks: final_order, active_track_index: 0});
 
 		console.log("Randomized Tracks, retries:", retries, "best:", best_count, this.get("sorted_tracks"));
 	}

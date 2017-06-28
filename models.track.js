@@ -8,10 +8,10 @@ var track = Backbone.Model.extend({
 		id: 				uuid(),
 		type: 			'track',
 		name: 			'',
-		vel:				1,
-		accel:			0.5,
-		thvmax:			1,
-		reversed:		"false",
+		default_vel:				1,
+		default_accel:			0.5,
+		default_thvmax:			1,
+		//reversed:		"false", // moved to playlist
 		firstR:			-1, // so we can auto-collect from thr if not given
 		lastR:			-1, // so we can auto-collect from thr if not given
 		r_type:			"r", // so we can auto-collect from thr if not given
@@ -19,12 +19,14 @@ var track = Backbone.Model.extend({
 	},
 	collection: null,
 	get_plotter_obj: function(data) {
-		var return_obj = {verts: this.get_verts()};
+		var return_obj = {};
 		var this_json = this.toJSON();
 		delete this_json.verts;
+		_.extend(return_obj, data);
+		return_obj.verts = this.get_verts(); // make sure verts are in the object to send to plotter
 		_.extend(return_obj, this_json);
-		if (data.start != return_obj.firstR) {
-			console.log("Compare", data, return_obj.r_type);
+		//console.log("Get Plotter Obj", data, return_obj);
+		if (data.start != return_obj.firstR || (data.reversed != undefined && data.reversed == "true")) {
 			if (return_obj.reversible == "true") {
 				console.log("Reverse track");
 				return_obj.verts.reverse();
