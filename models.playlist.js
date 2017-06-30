@@ -115,13 +115,14 @@ var playlist = Backbone.Model.extend({
 		console.log("Playlist set shuffle", value);
 		this.set("is_shuffle", String(value)); // set to "true" or "false"
 
-		this._update_tracks();
+		//this._update_tracks();
 
 		if (String(value) == "true") {
 			this._randomize();
 		} else {
 			var sorted_tracks = [];
 			_.each(this.get('tracks'), function(obj,index) {
+				obj._index = index;
 				sorted_tracks.push(index);
 			});
 			this.set("sorted_tracks", sorted_tracks);
