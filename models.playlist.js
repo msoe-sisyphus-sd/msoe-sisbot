@@ -31,11 +31,12 @@ var playlist = Backbone.Model.extend({
 	_update_tracks: function() {
 		var self = this;
 
-		_.each(this.get('tracks'), function(obj) {
+		_.each(this.get('tracks'), function(obj, index) {
 			var track_model = self.collection.get(obj.id);
 			obj.firstR = track_model.get('firstR');
 			obj.lastR = track_model.get('lastR');
 			obj.reversed = "false";
+			obj._index = index;
 		});
 
 		if (this.get("is_shuffle") == "false") {
