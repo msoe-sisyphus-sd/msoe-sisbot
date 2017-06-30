@@ -471,7 +471,7 @@ var sisbot = {
 			is_shuffle: data.is_shuffle,
 			is_loop: data.is_loop
 		});
-		//console.log("Current playlist", this.current_state.get('state'));
+		console.log("Current track", this.current_state.get('active_track'));
 		if (this.current_state.get('state') == "playing") {
 			plotter.pause();
 			this._home_next = true;

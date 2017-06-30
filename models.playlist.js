@@ -25,17 +25,28 @@ var playlist = Backbone.Model.extend({
 
 		this.set("sorted_tracks", sorted_tracks);
 
-		console.log("Tracks:", this.get('tracks'));
-		console.log("Sorted Tracks:", this.get('sorted_tracks'));
+		//console.log("Tracks:", this.get('tracks'));
+		//console.log("Sorted Tracks:", this.get('sorted_tracks'));
 	},
 	_update_tracks: function() {
 		var self = this;
+
 		_.each(this.get('tracks'), function(obj) {
 			var track_model = self.collection.get(obj.id);
 			obj.firstR = track_model.get('firstR');
 			obj.lastR = track_model.get('lastR');
 			obj.reversed = "false";
 		});
+
+		if (this.get("is_shuffle") == "false") {
+			var start_pos = 0; // homed
+			var track0 = this.get('tracks')[sorted_list[0]];
+			if (track0.firstR != start_pos) {
+				if (track0.lastR != track0.firstR) { // reversible
+					this._reverseTrack(track0);
+				}
+			}
+		}
 
 		var sorted_list = this.get('sorted_tracks');
 		for(var i=0; i<this.get('tracks').length-1; i++) {
@@ -70,16 +81,21 @@ var playlist = Backbone.Model.extend({
 		if (tracks.length <= 0) return return_value;
 
 		track_index++;
+		var did_loop = false;
 		if (track_index >= tracks.length) {
 			track_index = 0;
 			if (this.get("is_loop") == "false") {
 				track_index = -1; // value before first index (if we call get next track again, it will be zero)
+			} else { // make sure they flow together again
+				did_loop = true;
 			}
 		}
 		if (track_index >= 0) return_value = tracks[sorted_tracks[track_index]].id;
 
 		this.set("active_track_index", track_index);
 		this.set("active_track_id", return_value);
+
+		if (did_loop) this._update_tracks(); // make sure to recalculate reverse values
 
 		return return_value;
 	},

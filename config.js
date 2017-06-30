@@ -26,7 +26,7 @@ var config = {
 			autoplay: true,
 			skip_incompatible: true,
 			min_speed: 0.5,
-			max_speed: 2.0,
+			max_speed: 1.75,
 			auto_th: 1.570796,
 			max_rand_retries: 10,
 			check_internet_interval: 1800000, //3600000, // once every hour, confirm an internet connection
