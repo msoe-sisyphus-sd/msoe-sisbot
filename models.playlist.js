@@ -28,8 +28,13 @@ var playlist = Backbone.Model.extend({
 		//console.log("Tracks:", this.get('tracks'));
 		//console.log("Sorted Tracks:", this.get('sorted_tracks'));
 	},
-	_update_tracks: function() {
+	_update_tracks: function(data) {
 		var self = this;
+		var sorted_list = this.get('sorted_tracks');
+		var start_rho = 0; // homed
+		if (data != undefined && data.start_rho) start_rho = data.start_rho;
+
+		console.log("Playlist: _update_tracks", data);
 
 		_.each(this.get('tracks'), function(obj, index) {
 			var track_model = self.collection.get(obj.id);
@@ -40,16 +45,14 @@ var playlist = Backbone.Model.extend({
 		});
 
 		if (this.get("is_shuffle") == "false") {
-			var start_pos = 0; // homed
 			var track0 = this.get('tracks')[sorted_list[0]];
-			if (track0.firstR != start_pos) {
+			if (track0.firstR != start_rho) {
 				if (track0.lastR != track0.firstR) { // reversible
 					this._reverseTrack(track0);
 				}
 			}
 		}
 
-		var sorted_list = this.get('sorted_tracks');
 		for(var i=0; i<this.get('tracks').length-1; i++) {
 			var track0 = this.get('tracks')[sorted_list[i]];
 			var track1 = this.get('tracks')[sorted_list[i+1]];
@@ -74,7 +77,7 @@ var playlist = Backbone.Model.extend({
 		return this.get("tracks")[this.get("active_track_index")];
 		//return this.collection.get(this.get("active_track_id"));
 	},
-	get_next_track_id: function() {
+	get_next_track_id: function(data) {
 		var return_value = "false";
 		var track_index = this.get("active_track_index");
 		var sorted_tracks = this.get("sorted_tracks");
@@ -96,15 +99,15 @@ var playlist = Backbone.Model.extend({
 		this.set("active_track_index", track_index);
 		this.set("active_track_id", return_value);
 
-		if (did_loop) this._update_tracks(); // make sure to recalculate reverse values
+		if (did_loop) this._update_tracks(data); // make sure to recalculate reverse values
 
 		return return_value;
 	},
 	get_current_track: function() {
 		return this.get("tracks")[this.get("sorted_tracks")[this.get("active_track_index")]];
 	},
-	get_next_track: function() { // increments the active_track_index and returns the id
-		var track_id = this.get_next_track_id();
+	get_next_track: function(data) { // increments the active_track_index and returns the id
+		var track_id = this.get_next_track_id(data);
 		if (track_id != "false") return this.get("tracks")[this.get("sorted_tracks")[this.get("active_track_index")]];
 
 		// return false if no next track available
@@ -114,8 +117,6 @@ var playlist = Backbone.Model.extend({
 		var self = this;
 		console.log("Playlist set shuffle", value);
 		this.set("is_shuffle", String(value)); // set to "true" or "false"
-
-		//this._update_tracks();
 
 		if (String(value) == "true") {
 			this._randomize();
@@ -129,8 +130,10 @@ var playlist = Backbone.Model.extend({
 		}
 
 		// reassign current playing track index
-		var playing_index = _.findIndex(this.get('tracks'), {id:self.get('active_track_id')});
-		if (playing_index >= 0) this.set("active_track_index", playing_index);
+		if (this.get('active_track_id') != "false") {
+			var playing_index = _.findIndex(this.get('tracks'), {id:self.get('active_track_id')});
+			if (playing_index >= 0) this.set("active_track_index", playing_index);
+		}
 
 		this._update_tracks();
 	},

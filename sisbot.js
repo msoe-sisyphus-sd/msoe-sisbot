@@ -125,8 +125,16 @@ var sisbot = {
 				obj.collection = self.collection;
 				obj.config = self.config;
 
-				if (obj.get('type') == 'track') {
-					if (obj.get('firstR') < 0 || obj.get('lastR') < 0) obj.get_verts(); // load thr file to get the first/last rho values
+				switch (obj.get('type')) {
+					case 'track':
+						if (obj.get('firstR') < 0 || obj.get('lastR') < 0) obj.get_verts(); // load thr file to get the first/last rho values
+						break;
+					case 'playlist':
+						obj.set_shuffle(obj.get('is_shuffle')); // update order, active tracks indexing
+						break;
+					default:
+						// nothing
+						break;
 				}
 			});
 
@@ -137,7 +145,7 @@ var sisbot = {
 				var playlist_id = self.current_state.get('active_playlist_id');
 				if (playlist_id != "false") {
 					var playlist = self.collection.get(playlist_id);
-					self.current_state.set('active_track', playlist.get_next_track());
+					self.current_state.set('active_track', playlist.get_next_track({ start_rho: self.current_state.get('_end_rho') }));
 				} else if (self.current_state.get('is_loop') != "true") {
 					self.current_state.set('active_track', {id: 'false'});
 				}
@@ -186,7 +194,7 @@ var sisbot = {
 					if (this._home_next) {
 						self.home(null, null);
 					} else if (self.current_state.get('active_track').id != "false") {
-						console.log("Play next track!");
+						console.log("Play next track! Rho: ", self.current_state.get('_end_rho'));
 						self._play_track(self.current_state.get('active_track'), null); // autoplay after first home
 					} else {
 						console.log("No Next Track", self.current_state.get('active_track'));
@@ -363,6 +371,7 @@ var sisbot = {
 		var playlist = this.collection.add(new_playlist, {merge: true});
 		playlist.collection = this.collection;
 		playlist.config = this.config;
+		playlist.set_shuffle(playlist.get('is_shuffle')); // update sorted list, tracks objects
 
 		// add to current_state
 		var playlists = this.current_state.get("playlist_ids");
@@ -373,7 +382,7 @@ var sisbot = {
 
 		this.save(null, null);
 
-		cb(null, this.current_state.toJSON());
+		cb(null, [this.current_state.toJSON(), playlist.toJSON()]); // send back current_state and the playlist
 	},
 	remove_playlist: function(data, cb) {
 		console.log("Sisbot Remove Playlist", data);
@@ -394,6 +403,7 @@ var sisbot = {
 		cb(null, this.current_state.toJSON());
 	},
 	add_track: function(data, cb) {
+		var self = this;
 		console.log("Sisbot Add Track", data);
 
 		// pull out coordinates
@@ -406,10 +416,6 @@ var sisbot = {
 		var track = this.collection.add(new_track, {merge: true});
 		track.collection = this.collection;
 		track.config = this.config;
-		fs.writeFile(this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+data.id+'.thr', verts, function(err) {
-			if (err) return cb(err, null);
-			track.get_verts(); // so our first/last rho are forced correct
-		});
 
 		// add to current_state
 		var tracks = this.current_state.get("track_ids");
@@ -418,9 +424,15 @@ var sisbot = {
 			this.current_state.set("track_ids", tracks);
 		}
 
-		this.save(null, null);
+		// save verts, then callback
+		fs.writeFile(this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+data.id+'.thr', verts, function(err) {
+			if (err) return cb(err, null);
+			track.get_verts(); // so our first/last rho are forced correct
 
-		cb(null, this.current_state.toJSON());
+			self.save(null, null);
+
+			cb(null, [this.current_state.toJSON(), track.toJSON()]); // send back current_state and the track
+		});
 	},
 	remove_track: function(data, cb) {
 		console.log("Sisbot Remove Track", data);
@@ -578,7 +590,7 @@ var sisbot = {
 		if (playlist != undefined) {
 			this._autoplay = true; // make it play, even if a home is needed after homing
 			if (this.current_state.get("is_homed") == "true") {
-				var track = playlist.get_next_track();
+				var track = playlist.get_next_track({ start_rho: this.current_state.get('_end_rho') });
 				if (track != "false")	{
 					this._play_track(track, cb);
 				}
