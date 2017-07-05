@@ -118,7 +118,7 @@ var playlist = Backbone.Model.extend({
 		console.log("Playlist set shuffle", value);
 		this.set("is_shuffle", String(value)); // set to "true" or "false"
 
-		if (String(value) == "true") {
+		if (String(value) == "true" && this.get('tracks').length > 0) {
 			this._randomize();
 		} else {
 			var sorted_tracks = [];
