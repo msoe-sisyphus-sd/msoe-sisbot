@@ -88,7 +88,7 @@ var track = Backbone.Model.extend({
 			this.set('reversible', 'true');
 		}
 
-		console.log("Track verts", return_value.length);
+		console.log("Track verts", return_value.length, self.get("r_type"));
 
 		return return_value;
 	}
