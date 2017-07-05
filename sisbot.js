@@ -431,7 +431,7 @@ var sisbot = {
 
 			self.save(null, null);
 
-			cb(null, [this.current_state.toJSON(), track.toJSON()]); // send back current_state and the track
+			cb(null, [self.current_state.toJSON(), track.toJSON()]); // send back current_state and the track
 		});
 	},
 	remove_track: function(data, cb) {
