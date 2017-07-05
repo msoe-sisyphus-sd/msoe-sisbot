@@ -201,7 +201,7 @@ var playlist = Backbone.Model.extend({
 				var no_win = true;
 				// check for no-win situation
 				_.each(remaining_tracks, function(track_obj) {
-					if (last_track.lastR == track_obj.firstR || last_track.lastR == track_obj.lastR) {
+					if ((last_track.lastR == track_obj.firstR || last_track.lastR == track_obj.lastR) && last_track.id != track_obj.id) {
 						no_win = false;
 					}
 				});
