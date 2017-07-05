@@ -63,6 +63,16 @@ var track = Backbone.Model.extend({
 			}
 		});
 
+		// make sure first/last rho is 0 or 1
+		if (return_value[0].r != 0 && return_value[0].r != 1) {
+			console.log("Invalid track start", return_value[0].r);
+			return_value[0].r = Math.round(return_value[0].r);
+		}
+		if (return_value[return_value.length-1].r != 0 && return_value[return_value.length-1].r != 1) {
+			console.log("Invalid track end", return_value[return_value.length-1].r);
+			return_value[return_value.length-1].r = Math.round(return_value[return_value.length-1].r);
+		}
+
 		// !! error check !!
 		if (return_value[0].r != self.get("firstR")) {
 			console.log("R[0] not matching", return_value[0].r, self.get("firstR"));
