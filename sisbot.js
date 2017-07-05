@@ -500,12 +500,12 @@ var sisbot = {
 		if (cb)	cb(null, playlist.toJSON());
 	},
 	set_track: function(data, cb) {
-		console.log("Sisbot Set Track", data);
 		if (data == undefined || data == null) {
-			console.log("No Track given");
+			console.log("Sisbot Set Track: No Track given");
 			if (cb) cb('No track', null);
 			return;
 		}
+		console.log("Sisbot Set Track", data.name, data.firstR, data.lastR);
 
 		var new_track = new Track(data);
 		var track = this.collection.add(new_track, {merge: true});
