@@ -162,7 +162,7 @@ var sisbot = {
 				if (oldState == 'homing') {
 					self.current_state.set({is_homed: "true", _end_rho: 0}); // reset
 
-					if (newState == 'waiting' && self._autoplay) {
+					if (newState == 'waiting' && self._autoplay && self.current_state.get('installing_updates') == "false") {
 						// autoplay after first home
 						console.log("Play next ",self.current_state.get('active_track'));
 						if (self.current_state.get('active_track').id != "false") {
