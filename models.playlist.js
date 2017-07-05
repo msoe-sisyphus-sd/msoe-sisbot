@@ -34,7 +34,7 @@ var playlist = Backbone.Model.extend({
 		var start_rho = 0; // homed
 		if (data != undefined && data.start_rho) start_rho = data.start_rho;
 
-		console.log("Playlist: _update_tracks", data);
+		console.log("Playlist: _update_tracks", start_rho);
 
 		_.each(this.get('tracks'), function(obj, index) {
 			var track_model = self.collection.get(obj.id);
@@ -176,14 +176,14 @@ var playlist = Backbone.Model.extend({
 				// add to end or front
 				//console.log("Track comparison", randomized_tracks.length, track_obj, last_track);
 				if (last_track.id == track_obj.id) {
-					console.log("Skip same track", last_track);
+					//console.log("Skip same track", last_track);
 				} else if (last_track.lastR == track_obj.firstR) {
-					console.log("Track success L/F", last_track._index, last_track.lastR, track_obj._index, track_obj.firstR);
+					//console.log("Track success L/F", last_track._index, last_track.lastR, track_obj._index, track_obj.firstR);
 					randomized_tracks.push(track_obj);
 					success = true;
 				} else if (last_track.lastR == track_obj.lastR && track_obj.reversible != undefined && track_obj.reversible == "true") {
 					var reversed_track = self._reverseTrack(track_obj);
-					console.log("Track success Rev", last_track._index, last_track.lastR, reversed_track._index, reversed_track.firstR);
+					//console.log("Track success Rev", last_track._index, last_track.lastR, reversed_track._index, reversed_track.firstR);
 					randomized_tracks.push(reversed_track);
 					success = true;
 				} else {
