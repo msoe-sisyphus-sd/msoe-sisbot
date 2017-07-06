@@ -58,11 +58,11 @@ var config = {
 					is_published: 'false',
 					is_loop			: 'true',
 					is_shuffle	: 'true',
-					active_track_id: 'C3D8BC17-E2E1-4D6D-A91F-80FBB65620B8',
+					active_track_id: '2CBDAE96-EC22-48B4-A369-BFC624463C5F',
 					active_track_index: 0,
 					tracks   : [ {
 						id:'2CBDAE96-EC22-48B4-A369-BFC624463C5F',
-						vel: 1,
+						vel: 7,
 						accel: 0.5,
 						thvmax: 1
 					}, {
@@ -110,38 +110,66 @@ var config = {
 					id          : '2CBDAE96-EC22-48B4-A369-BFC624463C5F',
 					type        : 'track',
 					name        : 'Erase',
+					default_vel	: 7,
+					firstR			: 0,
+					lastR 			: 1,
+					r_type			: 'r01'
 				}, {
 					id          : 'C3D8BC17-E2E1-4D6D-A91F-80FBB65620B8',
 					type        : 'track',
 					name        : 'Tensig 1',
+					firstR			: 0,
+					lastR 			: 1,
+					r_type			: 'r01'
 				}, {
 					id          : '2B34822B-0A27-4398-AE19-23A3C83F1220',
 					type        : 'track',
 					name        : 'Sine',
+					firstR			: 0,
+					lastR 			: 0,
+					r_type			: 'r00'
 				}, {
 					id          : '93A90B6B-EAEE-48A3-9742-C688235D837D',
 					type        : 'track',
 					name        : 'Circam 2S',
+					firstR			: 0,
+					lastR 			: 1,
+					r_type			: 'r01'
 				}, {
 					id          : 'B7407A2F-04C3-4C92-B907-4C3869DA86D6',
 					type        : 'track',
 					name        : 'C Warp 3B',
+					firstR			: 0,
+					lastR 			: 1,
+					r_type			: 'r01'
 				}, {
 					id          : '7C046710-9F19-4423-B291-7394996F0913',
 					type        : 'track',
 					name        : 'D Ces 4P',
+					firstR			: 1,
+					lastR 			: 1,
+					r_type			: 'r11'
 				}, {
 					id          : 'D14E0B41-E572-4B69-9827-4A07C503D031',
 					type        : 'track',
 					name        : 'Hep',
+					firstR			: 0,
+					lastR 			: 1,
+					r_type			: 'r01'
 				}, {
 					id          : '26FBFB10-4BC7-46BF-8D55-85AA52C19ADF',
 					type        : 'track',
 					name        : 'India 1P',
+					firstR			: 1,
+					lastR 			: 1,
+					r_type			: 'r11'
 				}, {
 					id          : '75518177-0D28-4B2A-9B73-29E4974FB702',
 					type        : 'track',
 					name        : 'Para 2B',
+					firstR			: 0,
+					lastR 			: 1,
+					r_type			: 'r01'
 				}
 			],
 		},

@@ -25,6 +25,12 @@ var track = Backbone.Model.extend({
 		_.extend(return_obj, data);
 		return_obj.verts = this.get_verts(); // make sure verts are in the object to send to plotter
 		_.extend(return_obj, this_json);
+
+		// make sure vel, accel, thvmax are set
+		if (return_obj.vel == undefined) return_obj.vel = this.get('default_vel');
+		if (return_obj.accel == undefined) return_obj.accel = this.get('default_accel');
+		if (return_obj.thvmax == undefined) return_obj.thvmax = this.get('default_thvmax');
+
 		//console.log("Get Plotter Obj", data, return_obj);
 		if (data.start != return_obj.firstR || (data.reversed != undefined && data.reversed == "true")) {
 			if (return_obj.reversible == "true") {

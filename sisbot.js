@@ -130,7 +130,7 @@ var sisbot = {
 						if (obj.get('firstR') < 0 || obj.get('lastR') < 0) obj.get_verts(); // load thr file to get the first/last rho values
 						break;
 					case 'playlist':
-						obj.set_shuffle(obj.get('is_shuffle')); // update order, active tracks indexing
+						//obj.set_shuffle(obj.get('is_shuffle')); // update order, active tracks indexing
 						break;
 					default:
 						// nothing
@@ -245,9 +245,11 @@ var sisbot = {
 				if (self.config.autoplay) {
 					//console.log("Autoplay:", self.current_state.get("default_playlist_id"));
 					if (self.current_state.get("default_playlist_id") != "false" && self.collection.get(self.current_state.get("default_playlist_id"))!=undefined) {
-						var playlist = self.collection.get(self.current_state.get("default_playlist_id")).toJSON();
-						playlist.skip_save = true;
-						self.set_playlist(playlist, null);
+						var playlist = self.collection.get(self.current_state.get("default_playlist_id"));
+						playlist.set_shuffle(playlist.get('is_shuffle')); // update order, active tracks indexing
+						var playlist_obj = playlist.toJSON();
+						playlist_obj.skip_save = true;
+						self.set_playlist(playlist_obj, null);
 					}
 					// else {
 					// 	var playlist = self.collection.get("F42695C4-AE32-4956-8C7D-0FF6A7E9D492").toJSON();
