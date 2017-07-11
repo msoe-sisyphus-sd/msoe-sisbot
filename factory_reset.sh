@@ -17,6 +17,10 @@ cp -rf sisproxy ../
 
 rm -f /home/pi/sisbot-server/sisbot/content/status.json
 
+# make sure pi user owns everything in the sisbot-server folder
+cd /home/pi/
+sudo chown -R pi sisbot-server
+
 cd /home/pi/sisbot-server/sisproxy
 sudo NODE_ENV=sisbot node server.js &
 echo "Factory Reset complete"

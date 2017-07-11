@@ -142,6 +142,7 @@ var sisbot = {
 	    this.plotter.setConfig(CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config));
 			plotter.onFinishTrack(function() {
 				console.log("Track Finished");
+				if (self._home_next == true) return console.log("Home Next, skip playing next");
 				var playlist_id = self.current_state.get('active_playlist_id');
 				if (playlist_id != "false") {
 					var playlist = self.collection.get(playlist_id);
@@ -157,9 +158,29 @@ var sisbot = {
 					if (self._paused) self.current_state.set("state", "paused");
 					if (!self._paused) self.current_state.set("state", "waiting");
 				}
-				console.log("State changed to", self.current_state.get("state"), oldState, self._autoplay);
+				console.log("State changed to", newState, "("+self.current_state.get("state")+")", oldState, self._autoplay);
 
 				if (oldState == 'homing') {
+					if (newState == 'home_th_failed') {
+						// TODO: something, never run into this before
+						return;
+					}
+					if (newState == 'home_rho_failed') {
+							// move ball out and around a bit, and try again
+							console.log("Fix failed home");
+							var track_obj = {
+								verts: [{th:0,r:0},{th:self.config.failed_home_th,r:self.config.failed_home_rho}],
+								vel: 1,
+								accel: 0.5,
+								thvmax: 0.5
+							};
+							self._paused = false;
+							self.plotter.playTrack(track_obj);
+							self._home_next = true; // home after this outward movement
+							return;
+					}
+
+					self._home_next = false;
 					self.current_state.set({is_homed: "true", _end_rho: 0}); // reset
 
 					if (newState == 'waiting' && self._autoplay && self.current_state.get('installing_updates') == "false") {
@@ -191,8 +212,11 @@ var sisbot = {
 
 				// play next track after pausing (i.e. new playlist)
 				if (newState == 'waiting' && oldState == 'playing' && !self._paused) {
-					if (this._home_next) {
-						self.home(null, null);
+					if (self._home_next) {
+						console.log("Home Next");
+						setTimeout(function() {
+							self.home(null, null);
+						}, 1000);
 					} else if (self.current_state.get('active_track').id != "false") {
 						console.log("Play next track! Rho: ", self.current_state.get('_end_rho'));
 						self._play_track(self.current_state.get('active_track'), null); // autoplay after first home
@@ -607,36 +631,36 @@ var sisbot = {
 		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
 		if (this._validateConnection()) {
 			if (this.current_state.get('state') == "playing") this.pause();
-			this.current_state.set("is_homed", "false"); // we don't keep track of where we are at anymore
+			this.current_state.set({is_homed: "false", active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
 			plotter.jogThetaLeft();
-			if (cb)	cb(null, 'left');
+			if (cb)	cb(null, this.current_state.toJSON());
 		} else cb('No Connection', null);
 	},
   jogThetaRight: function(data,cb) {
 		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
 		if (this._validateConnection()) {
 			if (this.current_state.get('state') == "playing") this.pause();
-			this.current_state.set("is_homed", "false"); // we don't keep track of where we are at anymore
+			this.current_state.set({is_homed: "false", active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
 			plotter.jogThetaRight();
-			if (cb)	cb(null, 'right');
+			if (cb)	cb(null, this.current_state.toJSON());
 		} else cb('No Connection', null);
 	},
   jogRhoOutward: function(data,cb) {
 		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
 		if (this._validateConnection()) {
 			if (this.current_state.get('state') == "playing") this.pause();
-			this.current_state.set("is_homed", "false"); // we don't keep track of where we are at anymore
+			this.current_state.set({is_homed: "false", active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
 			plotter.jogRhoOutward();
-			if (cb)	cb(null, 'out');
+			if (cb)	cb(null, this.current_state.toJSON());
 		} else cb('No Connection', null);
 	},
   jogRhoInward: function(data,cb) {
 		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
 		if (this._validateConnection()) {
 			if (this.current_state.get('state') == "playing") this.pause();
-			this.current_state.set("is_homed", "false"); // we don't keep track of where we are at anymore
+			this.current_state.set({is_homed: "false", active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
 			plotter.jogRhoInward();
-			if (cb)	cb(null, 'in');
+			if (cb)	cb(null, this.current_state.toJSON());
 		} else cb('No Connection', null);
 	},
   get_state: function(data, cb) {

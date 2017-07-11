@@ -385,8 +385,10 @@ function goThetaHome() {
   if (THETA_HOME_COUNTER == THETA_HOME_MAX) {
     console.log('Failed to find Theta home!');
     logEvent('Th homing failure ');
-    //handle error condition here
-    setStatus('waiting');
+    //setStatus('waiting');
+		thAccum = 0;
+		WAITING_THETA_HOMED = false;
+		setStatus('home_th_failed');
     return;
   }
 
@@ -471,7 +473,10 @@ function goRhoHome() {
   if (RHO_HOME_COUNTER == RHO_HOME_MAX) {
     console.log('Failed to find Rho home!');
     logEvent('R homing failure ');
-    setStatus('waiting');
+    //setStatus('waiting');
+    rAccum = 0;
+    WAITING_RHO_HOMED = false; // stop trying to home
+		setStatus('home_rho_failed');
     return;
   }
 
@@ -506,6 +511,7 @@ function goRhoHome() {
     }
     return;
   }
+
   // not at rho home yet, so:
   sp.write(rhoHomeQueryStr); //EBB inputs query command
 
@@ -514,8 +520,7 @@ function goRhoHome() {
   WAITING_RHO_HOMED = true;
   // console.log('homing rho...');
   RHO_HOME_COUNTER++;
-
-  }
+}
 
 //////      JOG     ///////////////////////////////////
 function jog(axis, direction) {

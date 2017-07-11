@@ -28,10 +28,12 @@ var config = {
 			min_speed: 0.5,
 			max_speed: 1.75,
 			auto_th: 1.570796,
+			failed_home_rho: 0.2,
+			failed_home_th: 1.570796,
 			max_rand_retries: 10,
 			check_internet_interval: 1800000, //3600000, // once every hour, confirm an internet connection
 			internet_retries: 5, // retry # of times before resetting to hotspot
-			retry_internet_interval: 3000, //3600000, // once every hour, confirm an internet connection
+			retry_internet_interval: 3000, // three seconds later
 			default_data: [
 				{
 					id          : uuid(),
@@ -62,7 +64,7 @@ var config = {
 					active_track_index: 0,
 					tracks   : [ {
 						id:'2CBDAE96-EC22-48B4-A369-BFC624463C5F',
-						vel: 7,
+						vel: 8,
 						accel: 0.5,
 						thvmax: 1
 					}, {
@@ -110,7 +112,7 @@ var config = {
 					id          : '2CBDAE96-EC22-48B4-A369-BFC624463C5F',
 					type        : 'track',
 					name        : 'Erase',
-					default_vel	: 7,
+					default_vel	: 8,
 					firstR			: 0,
 					lastR 			: 1,
 					r_type			: 'r01'
