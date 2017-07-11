@@ -288,6 +288,10 @@ var sisbot = {
       console.error('Connect err', err);
     }
 	},
+    // VERSIONS OF CODE
+    latest_software_version: function (data, cb) {
+        cb(null, this.config.service_versions);
+    },
   // Execute a serial command, and log it to the console.
   _serialWrite(command) {
     console.log('SERIAL:',command);
