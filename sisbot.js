@@ -180,7 +180,7 @@ var sisbot = {
 							return;
 					}
 
-					self._home_next = false;
+					self._home_next = false; // clear home next
 					self.current_state.set({is_homed: "true", _end_rho: 0}); // reset
 
 					if (newState == 'waiting' && self._autoplay && self.current_state.get('installing_updates') == "false") {
