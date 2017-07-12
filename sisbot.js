@@ -288,10 +288,10 @@ var sisbot = {
       console.error('Connect err', err);
     }
 	},
-    // VERSIONS OF CODE
-    latest_software_version: function (data, cb) {
-        cb(null, this.config.service_versions);
-    },
+  // VERSIONS OF CODE
+  latest_software_version: function (data, cb) {
+      cb(null, this.config.service_versions);
+  },
   // Execute a serial command, and log it to the console.
   _serialWrite(command) {
     console.log('SERIAL:',command);
@@ -858,7 +858,7 @@ var sisbot = {
 
 		this.current_state.set('installing_updates','true');
 		this.pause(null, null);
-		exec('/home/pi/sisbot-server/sisbot/update.sh > update.log', (error, stdout, stderr) => {
+		exec('/home/pi/sisbot-server/sisbot/update.sh > /home/pi/sisbot-server/update.log', (error, stdout, stderr) => {
 			self.current_state.set({installing_updates: 'false'});
 		  if (error) {
 				if (cb) cb(error, null);
