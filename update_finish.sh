@@ -24,10 +24,9 @@ EOF
 sudo mv "$3.bak" "$3"
 }
 
-comment 'wpa=2' true /etc/hostapd/hostapd.conf
-comment 'wpa_passphrase=sisyphus' true /etc/hostapd/hostapd.conf
-comment 'wpa_key_mgmt=WPA' true /etc/hostapd/hostapd.conf
-comment 'wpa_pairwise=CCMP' true /etc/hostapd/hostapd.conf
-comment 'wpa_group_rekey=86400' true /etc/hostapd/hostapd.conf
+# fix unknown hosts issue
+sudo echo "Host *\nStrictHostKeyChecking no\nUserKnownHostsFile=/dev/null" > /home/pi/.ssh/config
+sudo echo "Host *\nStrictHostKeyChecking no\nUserKnownHostsFile=/dev/null" > /root/.ssh/config
+sudo /etc/init.d/ssh restart
 
 echo "Upgrade_Finish completed"
