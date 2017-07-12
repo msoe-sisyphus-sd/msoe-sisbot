@@ -25,8 +25,8 @@ sudo mv "$3.bak" "$3"
 }
 
 # fix unknown hosts issue
-sudo echo "Host *\nStrictHostKeyChecking no\nUserKnownHostsFile=/dev/null" > /home/pi/.ssh/config
-sudo echo "Host *\nStrictHostKeyChecking no\nUserKnownHostsFile=/dev/null" > /root/.ssh/config
+sudo echo "Host * StrictHostKeyChecking no UserKnownHostsFile=/dev/null" > /home/pi/.ssh/config
+sudo cp /home/pi/.ssh/config /root/.ssh/config
 sudo /etc/init.d/ssh restart
 
 echo "Upgrade_Finish completed"
