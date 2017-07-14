@@ -34,7 +34,7 @@ var track = Backbone.Model.extend({
 		//console.log("Get Plotter Obj", data, return_obj);
 		if (data.start != return_obj.firstR || (data.reversed != undefined && data.reversed == "true")) {
 			if (return_obj.reversible == "true") {
-				console.log("Reverse track");
+				//console.log("Reverse track");
 				return_obj.verts.reverse();
 				var temp = return_obj.firstR;
 				return_obj.firstR = return_obj.lastR;
@@ -42,14 +42,14 @@ var track = Backbone.Model.extend({
 				return_obj.r_type = 'r'+return_obj.firstR+return_obj.lastR;
 				return_obj.reversed = "true";
 			} else {
-				console.log("Track cannot be cleanly started");
+				console.log(this.get("name"), "Track cannot be cleanly started");
 				return "false";
 			}
 		}
 		return return_obj;
 	},
 	get_verts: function() {
-		console.log("Get Verts",this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+this.get('id')+'.thr');
+		//console.log("Get Verts",this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+this.get('id')+'.thr');
 		var self = this;
 		var return_value = [];
 
@@ -94,7 +94,7 @@ var track = Backbone.Model.extend({
 			this.set('reversible', 'true');
 		}
 
-		console.log("Track verts", return_value.length, self.get("r_type"));
+		//console.log("Track verts", return_value.length, self.get("r_type"));
 
 		return return_value;
 	}

@@ -55,7 +55,7 @@ var sisbot = {
 	      this.ansible.setHandler(this);
 	      this.ansible.init(config.services.sisbot.address, config.services.sisbot.ansible_port, config.receiver);
 	      _.each(config.services.sisbot.connect, function(obj) {
-					console.log('obj', obj);
+					//console.log('obj', obj);
 					self.ansible.connect(obj, config.services[obj].address, config.services[obj].ansible_port, function(err, resp) {
 						if (resp == true) console.log("Sisbot Connected to " + obj);
 						else console.log(obj + " Sisbot Connect Error", err);
@@ -66,7 +66,7 @@ var sisbot = {
 			// Load in the saved state
 			var objs = [];
 			if (fs.existsSync(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.content+'/'+config.sisbot_state)) {
-				console.log("Load saved state:", config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.content+'/'+config.sisbot_state);
+				//console.log("Load saved state:", config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.content+'/'+config.sisbot_state);
 				var saved_state = fs.readFileSync(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.content+'/'+config.sisbot_state, 'utf8');
 				try {
 					objs = JSON.parse(saved_state);
@@ -185,7 +185,7 @@ var sisbot = {
 
 					if (newState == 'waiting' && self._autoplay && self.current_state.get('installing_updates') == "false") {
 						// autoplay after first home
-						console.log("Play next ",self.current_state.get('active_track'));
+						console.log("Play next ",self.current_state.get('active_track').name);
 						if (self.current_state.get('active_track').id != "false") {
 							var track = self.current_state.get('active_track');
 							// if (self.current_state.get("active_playlist_id") == "false") {
@@ -270,9 +270,38 @@ var sisbot = {
 					//console.log("Autoplay:", self.current_state.get("default_playlist_id"));
 					if (self.current_state.get("default_playlist_id") != "false" && self.collection.get(self.current_state.get("default_playlist_id"))!=undefined) {
 						var playlist = self.collection.get(self.current_state.get("default_playlist_id"));
+						playlist.set({active_track_id: "false", active_track_index: -1});
+						playlist.reset_tracks(); // start with non-reversed list
 						playlist.set_shuffle(playlist.get('is_shuffle')); // update order, active tracks indexing
+						playlist.set({active_track_index: 0});
+
+						// error check, we don't want r11
+						var start_index = playlist.get("active_track_index");
+						var track_obj = playlist.get("tracks")[playlist.get('sorted_tracks')[start_index]];
+						if (track_obj.firstR == 1) {
+							console.log("R1 start detected", track_obj);
+							// find the first track to start at r0
+							var searching = true;
+							_.each(playlist.get("sorted_tracks"), function(track_index, index) {
+								if (searching) {
+									var new_obj = playlist.get("tracks")[track_index];
+									if (new_obj.firstR == 0 || new_obj.lastR == 0) {
+										playlist.reset_tracks(); // reset their reversed state
+										playlist.set({active_track_index: index});
+										playlist.set_shuffle(playlist.get('is_shuffle')); // shuffle with active track as first
+										searching = false;
+									}
+								}
+							});
+						}
+						//console.log("Model Playlist Tracks", playlist.get("tracks"));
+
 						var playlist_obj = playlist.toJSON();
 						playlist_obj.skip_save = true;
+						playlist_obj.is_current = true; // we already set the randomized pattern
+						playlist_obj.active_track_index = playlist_obj.sorted_tracks[0]; // make it start on the first of randomized list
+						//console.log("Send Playlist Tracks", playlist_obj.tracks);
+
 						self.set_playlist(playlist_obj, null);
 					}
 					// else {
@@ -337,14 +366,14 @@ var sisbot = {
 					self.current_state.set({hostname: data.hostname+'.local',hostname_prompt: "true"});
 					self.save(null, null);
 
-					// restart wifi/hotspot?
-					if (self.current_state.get('is_hotspot') == "true") self.reset_to_hotspot(null,function(err,resp) {
-						self.reboot(null, cb);
-					});
+					// restart
+					self.reboot(null, cb);
 				});
 			} else { // don't prompt for hostname again
 				self.current_state.set({hostname_prompt: "true"});
 				self.save(null, null);
+
+				if (cb)	cb(null, this.current_state.toJSON());
 			}
 		} else {
 			cb('Invalid hostname characters',null);
@@ -499,7 +528,7 @@ var sisbot = {
 
 		// save playlist
 		var new_playlist = new Playlist(data);
-		if (data.is_current) new_playlist.unset("sorted_tracks"); // so we don't overwrite the old random list
+		//if (data.is_current) new_playlist.unset("sorted_tracks"); // so we don't overwrite the old random list
 		var playlist = this.collection.add(new_playlist, {merge: true});
 		playlist.collection = this.collection;
 		playlist.config = this.config;
@@ -567,7 +596,7 @@ var sisbot = {
 	},
 	_play_track: function(data, cb) {
 		var self = this;
-		console.log("Sisbot Play Track", data);
+		console.log("Sisbot Play Track", data.name, "r:"+data.firstR+data.lastR, "reversed:", data.reversed);
 		if (data == undefined || data == null || data == "false") {
 			console.log("No Track given");
 			if (cb) cb("No track", null);
@@ -635,7 +664,7 @@ var sisbot = {
 		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
 		if (this._validateConnection()) {
 			if (this.current_state.get('state') == "playing") this.pause();
-			this.current_state.set({is_homed: "false", active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
+			this.current_state.set({state: "waiting", is_homed: "false", active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
 			plotter.jogThetaLeft();
 			if (cb)	cb(null, this.current_state.toJSON());
 		} else cb('No Connection', null);
@@ -644,7 +673,7 @@ var sisbot = {
 		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
 		if (this._validateConnection()) {
 			if (this.current_state.get('state') == "playing") this.pause();
-			this.current_state.set({is_homed: "false", active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
+			this.current_state.set({state: "waiting", is_homed: "false", active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
 			plotter.jogThetaRight();
 			if (cb)	cb(null, this.current_state.toJSON());
 		} else cb('No Connection', null);
@@ -653,7 +682,7 @@ var sisbot = {
 		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
 		if (this._validateConnection()) {
 			if (this.current_state.get('state') == "playing") this.pause();
-			this.current_state.set({is_homed: "false", active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
+			this.current_state.set({state: "waiting", is_homed: "false", active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
 			plotter.jogRhoOutward();
 			if (cb)	cb(null, this.current_state.toJSON());
 		} else cb('No Connection', null);
@@ -662,7 +691,7 @@ var sisbot = {
 		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
 		if (this._validateConnection()) {
 			if (this.current_state.get('state') == "playing") this.pause();
-			this.current_state.set({is_homed: "false", active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
+			this.current_state.set({state: "waiting", is_homed: "false", active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
 			plotter.jogRhoInward();
 			if (cb)	cb(null, this.current_state.toJSON());
 		} else cb('No Connection', null);
