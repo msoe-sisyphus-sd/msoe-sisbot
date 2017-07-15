@@ -185,7 +185,8 @@ var sisbot = {
 
 					if (newState == 'waiting' && self._autoplay && self.current_state.get('installing_updates') == "false") {
 						// autoplay after first home
-						console.log("Play next ",self.current_state.get('active_track').name);
+						console.log("Play next ",self.current_state.get('active_track').name, self.current_state.get('active_track').firstR, "Rho:", self.current_state.get('_end_rho'));
+
 						if (self.current_state.get('active_track').id != "false") {
 							var track = self.current_state.get('active_track');
 							// if (self.current_state.get("active_playlist_id") == "false") {
@@ -286,6 +287,7 @@ var sisbot = {
 								if (searching) {
 									var new_obj = playlist.get("tracks")[track_index];
 									if (new_obj.firstR == 0 || new_obj.lastR == 0) {
+										playlist.set({active_track_index: -1}); // so this track is allowed to reverse
 										playlist.reset_tracks(); // reset their reversed state
 										playlist.set({active_track_index: index});
 										playlist.set_shuffle(playlist.get('is_shuffle')); // shuffle with active track as first
@@ -297,6 +299,7 @@ var sisbot = {
 						//console.log("Model Playlist Tracks", playlist.get("tracks"));
 
 						var playlist_obj = playlist.toJSON();
+						console.log("Playlist Active Index:", playlist_obj.active_track_index);
 						playlist_obj.skip_save = true;
 						playlist_obj.is_current = true; // we already set the randomized pattern
 						playlist_obj.active_track_index = playlist_obj.sorted_tracks[0]; // make it start on the first of randomized list
@@ -596,7 +599,7 @@ var sisbot = {
 	},
 	_play_track: function(data, cb) {
 		var self = this;
-		console.log("Sisbot Play Track", data.name, "r:"+data.firstR+data.lastR, "reversed:", data.reversed);
+		console.log("Sisbot Play Track", data.name, "r:"+data.firstR+data.lastR, "reversed:", data.reversed, "Table R:", self.current_state.get('_end_rho'));
 		if (data == undefined || data == null || data == "false") {
 			console.log("No Track given");
 			if (cb) cb("No track", null);

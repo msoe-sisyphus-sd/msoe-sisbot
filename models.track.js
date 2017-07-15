@@ -19,6 +19,7 @@ var track = Backbone.Model.extend({
 	},
 	collection: null,
 	get_plotter_obj: function(data) {
+		console.log("Get Plotter Obj", this.get("name"), data);
 		var return_obj = {};
 		var this_json = this.toJSON();
 		delete this_json.verts;
