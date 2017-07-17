@@ -49,9 +49,9 @@ var playlist = Backbone.Model.extend({
 		});
 	},
 	_update_tracks: function(data) { // fix reversed state for non-randomized list
-		var self = this;
+		var self		= this;
 		var sorted_list = this.get('sorted_tracks');
-		var start_rho = 0; // homed
+		var start_rho	= 0; // homed
 		if (data != undefined && data.start_rho) start_rho = data.start_rho;
 
 		// make sure current track does not change current first/lastR values
@@ -127,6 +127,7 @@ var playlist = Backbone.Model.extend({
 	},
 	get_current_track: function() {
 		var track_index = this.get("active_track_index");
+		if (!_.isNumber(track_index)) track_index = -1;
 		if (track_index < 0) return { id: "false" };
 
 		return this.get("tracks")[this.get("sorted_tracks")[track_index]];
