@@ -36,6 +36,7 @@ var sisbot = {
 
 	_internet_check: 0,
 	_internet_retries: 0,
+    _changing_to_wifi: false,
 
   init: function(config, session_manager) {
       var self = this;
@@ -811,8 +812,9 @@ var sisbot = {
 					if (err) return console.log("Internet check err", err);
 					if (resp == "true") {
 						console.log("Internet connected.",self.current_state.get("is_internet_connected"));
-						self.current_state.set({is_available: "true", reason_unavailable: ""});
 
+                        self._changing_to_wifi = false;
+						self.current_state.set({is_available: "true", reason_unavailable: "", failed_to_connect_to_wifi: "false" });
 						self._internet_retries = 0; // successful, reset
 
 						// check again later
@@ -839,6 +841,7 @@ var sisbot = {
 		console.log("Sisbot change to wifi", data);
 		if (data.ssid && data.ssid != 'false' && ( data.psk && (data.psk == "" || data.psk.length >= 8))) {
 			clearTimeout(this._internet_check);
+            this._changing_to_wifi = true;
 			this._internet_retries = 0; // clear retry count
 			// TODO: regex, remove or error on double quotes
 			// no spaces in password
@@ -877,7 +880,14 @@ var sisbot = {
 		exec('sudo /home/pi/sisbot-server/sisbot/start_hotspot.sh', (error, stdout, stderr) => {
 			if (error) return console.error('exec error:',error);
 			console.log("start_hotspot", stdout);
-			self.current_state.set({is_available: "true", reason_unavailable: "", local_ip: self._getIPAddress()});
+            var new_state = {
+                is_available: "true",
+                reason_unavailable: "",
+                local_ip: self._getIPAddress(),
+                failed_to_connect_to_wifi: (self._changing_to_wifi == true) ? 'true' : 'false'
+            };
+            self._changing_to_wifi = false;
+			self.current_state.set(new_state);
 		});
 	},
 	install_updates: function(data, cb) {
