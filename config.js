@@ -3,7 +3,7 @@ var uuid				= require('uuid');
 
 var config = {
 		base: {
-			version	: '0.5.11',
+			version	: '0.5.12',
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

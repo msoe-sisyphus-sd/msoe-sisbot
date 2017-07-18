@@ -819,6 +819,7 @@ var sisbot = {
 
 						// check again later
 						self._query_internet(self.config.check_internet_interval);
+                        self._post_state_to_cloud();
 					} else {
 						self._internet_retries++;
 						if (self._internet_retries < self.config.internet_retries) {
@@ -832,6 +833,23 @@ var sisbot = {
 			}, time_to_check);
 		}
 	},
+    _post_state_to_cloud: function () {
+        // THIS IS HELPFUL FOR ANDROID DEVICES
+        var self = this;
+
+        console.log('LETS TRY AND GET TO CLOUD', this.current_state.toJSON());
+
+        request.post('https://api.sisyphus.withease.io/sisbot_state/' + this.current_state.id,
+            { form: { data: this.current_state.toJSON() } },
+            function on_resp(error, response, body) {
+                if (!error && response.statusCode == 200) {
+                    console.log("Post to cloud", body);
+                } else {
+                    if (response) console.log("Request Not found:", response.statusCode);
+                }
+            }
+        );
+    },
 	get_wifi: function(data, cb) {
 		console.log("Sisbot get wifi", data);
 		iwlist.scan(data, cb);
