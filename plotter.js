@@ -140,7 +140,6 @@ function nextMove(mi) {
 	*/
 
   if (mi >= miMax){
-    console.log();
     console.log('all moves done');
     console.log('thAccum = ' + thAccum);
     console.log('rAccum = ' + rAccum);

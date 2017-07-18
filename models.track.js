@@ -18,12 +18,12 @@ var track = Backbone.Model.extend({
 		reversible:	"true"
 	},
 	collection: null,
-	get_plotter_obj: function(data) {
-		console.log("Get Plotter Obj", this.get("name"), data);
+	get_plotter_obj: function(plotter_data) {
+		//console.log("Get Plotter Obj", this.get("name"), plotter_data);
 		var return_obj = {};
 		var this_json = this.toJSON();
 		delete this_json.verts;
-		_.extend(return_obj, data);
+		_.extend(return_obj, plotter_data);
 		return_obj.verts = this.get_verts(); // make sure verts are in the object to send to plotter
 		_.extend(return_obj, this_json);
 
@@ -32,21 +32,28 @@ var track = Backbone.Model.extend({
 		if (return_obj.accel == undefined) return_obj.accel = this.get('default_accel');
 		if (return_obj.thvmax == undefined) return_obj.thvmax = this.get('default_thvmax');
 
-		//console.log("Get Plotter Obj", data, return_obj);
-		if (data.start != return_obj.firstR || (data.reversed != undefined && data.reversed == "true")) {
-			if (return_obj.reversible == "true") {
-				//console.log("Reverse track");
-				return_obj.verts.reverse();
-				var temp = return_obj.firstR;
-				return_obj.firstR = return_obj.lastR;
-				return_obj.lastR = temp;
-				return_obj.r_type = 'r'+return_obj.firstR+return_obj.lastR;
-				return_obj.reversed = "true";
-			} else {
-				console.log(this.get("name"), "Track cannot be cleanly started");
-				return "false";
-			}
+		//console.log("#### PLOTTER OBJ", plotter_data);
+		//console.log('#### THIS OBJ', this_json);
+		//console.log('#### RETURN OBJ', return_obj);
+		//console.log('#### ERROR CHECKING', plotter_data.start, return_obj.firstR, plotter_data.reversed, return_obj.reversible);
+
+		if (plotter_data.start != this_json.firstR && this_json.reversible == 'true') {
+			// WE NEED TO REVERSE THE TRACK
+			console.log("Reverse track");
+			return_obj.verts.reverse();
+			return_obj.firstR	= this_json.lastR;
+			return_obj.lastR	= this_json.firstR;
+			return_obj.r_type	= 'r' + return_obj.firstR + return_obj.lastR;
+			return_obj.reversed = "true";
 		}
+
+		if (plotter_data.start !== return_obj.firstR) {
+			console.log(this.get("name"), "Track cannot be cleanly started");
+			return "false";
+		}
+
+		//console.log("#### SUCCESSFUL STATE OF SAME R VALUE", plotter_data.start, return_obj.firstR);
+
 		return return_obj;
 	},
 	get_verts: function() {
