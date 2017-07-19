@@ -801,6 +801,10 @@ var sisbot = {
 				}
 			}
 
+            setTimeout(function () {
+    			self.current_state.set({is_internet_connected: returnValue, local_ip: self._getIPAddress()});
+            }, 10000);
+
 			if (cb) cb(null, returnValue);
 		});
 	},
