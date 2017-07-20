@@ -158,6 +158,16 @@ console.log("SE,1," + Math.round(photoAvg))
 	}
 }
 
+function setStatus(newStatus) {
+
+  // Callback when the state changes, only if the state changes.
+  if (STATUS != newStatus) {
+    var oldStatus = STATUS;
+    setTimeout(function() {
+      onStateChanged(newStatus, oldStatus);
+    }, 0);
+  }
+
   // Set the new status.
   STATUS = newStatus;
 
