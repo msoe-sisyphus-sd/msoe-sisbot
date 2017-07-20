@@ -753,6 +753,15 @@ var sisbot = {
 
     if (cb)	cb(null, percent);
   },
+	set_autodim: function(data, cb) {
+		console.log('Sisbot set autodim', data);
+
+		this.current_state.set('is_autodim', data.value);
+
+		this.save(null, null);
+
+		if (cb)	cb(null, percent);
+	},
 	set_brightness: function(data, cb) {
 		console.log('Sisbot set brightness', data);
 
@@ -764,20 +773,19 @@ var sisbot = {
 		var value = this._clamp(data.value, 0.0, 1.0);
 		this.current_state.set('brightness', value);
 
-    plotter.setBrightness(value);// for autodim
+		if (this.current_state.get('is_autodim') == "true") {
+	    plotter.setBrightness(value);// for autodim
+		} else {
+	    // convert to an integer from 0 - 1023, parabolic scale.
+	    var pwm = Math.pow(2, value * 10) - 1;
+	    pwm = Math.floor(pwm);
 
-    // convert to an integer from 0 - 1023, parabolic scale.
-    var pwm = Math.pow(2, value * 10) - 1;
-    pwm = Math.floor(pwm);
-
-
-/* not for autodim:
-    if (pwm == 0) {
-      this._serialWrite('SE,0');
-    } else {
-      this._serialWrite('SE,1,'+pwm);
-    }
-*/
+	    if (pwm == 0) {
+	      this._serialWrite('SE,0');
+	    } else {
+	      this._serialWrite('SE,1,'+pwm);
+	    }
+		}
 
 		this.save(null, null);
 

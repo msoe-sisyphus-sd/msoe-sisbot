@@ -854,7 +854,7 @@ function parseReceivedSerialData(data) {
 
 
 			num = parseInt(parts[3],10);
-			console.log("R home pin = " + (num & 64));
+			// console.log("R home pin = " + (num & 64));
 			if ((num & 64) > 0) {rHomeState = 1;} else {rHomeState = 0;}
 			if (rHomeState == homingRHitState) {console.log("Rho at home");}
 

@@ -3,7 +3,7 @@ var uuid				= require('uuid');
 
 var config = {
 		base: {
-			version	: '0.5.13',
+			version	: '0.5.14',
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -37,14 +37,14 @@ var config = {
 			retry_internet_interval: 3000, // three seconds later
 			default_data: [
 				{
-					id          : uuid(),
-					name		: 'Sisyphus',
-					type        : 'sisbot',
-					hostname 	: 'sisyphus.local',
-					ip_address : '',
-					active_playlist_id: 'F42695C4-AE32-4956-8C7D-0FF6A7E9D492', // playlist to default start playing
-					playlist_ids: [ 'F42695C4-AE32-4956-8C7D-0FF6A7E9D492' ],
-					track_ids   : [ '2CBDAE96-EC22-48B4-A369-BFC624463C5F',
+					id          				: uuid(),
+					name								: 'Sisyphus',
+					type        				: 'sisbot',
+					hostname 						: 'sisyphus.local',
+					ip_address 					: '',
+					active_playlist_id	: 'F42695C4-AE32-4956-8C7D-0FF6A7E9D492', // playlist to default start playing
+					playlist_ids				: [ 'F42695C4-AE32-4956-8C7D-0FF6A7E9D492' ],
+					track_ids   				: [ '2CBDAE96-EC22-48B4-A369-BFC624463C5F',
 							'C3D8BC17-E2E1-4D6D-A91F-80FBB65620B8',
 							'2B34822B-0A27-4398-AE19-23A3C83F1220',
 							'93A90B6B-EAEE-48A3-9742-C688235D837D',
@@ -54,60 +54,60 @@ var config = {
 							'26FBFB10-4BC7-46BF-8D55-85AA52C19ADF',
 							'75518177-0D28-4B2A-9B73-29E4974FB702', ]
 				}, {
-					id          : 'F42695C4-AE32-4956-8C7D-0FF6A7E9D492',
-					type        : 'playlist',
-					name        : 'Default Playlist',
-					description : 'Description of Default Playlist',
-					is_published: 'false',
-					is_loop			: 'true',
-					is_shuffle	: 'true',
-					active_track_id: '2CBDAE96-EC22-48B4-A369-BFC624463C5F',
-					active_track_index: 0,
-					tracks   : [ {
-						id:'2CBDAE96-EC22-48B4-A369-BFC624463C5F',
-						vel: 8,
-						accel: 0.5,
-						thvmax: 1
+					id          				: 'F42695C4-AE32-4956-8C7D-0FF6A7E9D492',
+					type        				: 'playlist',
+					name        				: 'Default Playlist',
+					description 				: 'Description of Default Playlist',
+					is_published				: 'false',
+					is_loop							: 'true',
+					is_shuffle					: 'true',
+					active_track_id			: '2CBDAE96-EC22-48B4-A369-BFC624463C5F',
+					active_track_index	: 0,
+					tracks   						: [ {
+						id			:'2CBDAE96-EC22-48B4-A369-BFC624463C5F',
+						vel			: 8,
+						accel		: 0.5,
+						thvmax	: 1
 					}, {
-						id: 'C3D8BC17-E2E1-4D6D-A91F-80FBB65620B8',
-						vel: 1,
-						accel: 0.5,
-						thvmax: 1
+						id			: 'C3D8BC17-E2E1-4D6D-A91F-80FBB65620B8',
+						vel			: 1,
+						accel		: 0.5,
+						thvmax	: 1
 					}, {
-						id: '2B34822B-0A27-4398-AE19-23A3C83F1220',
-						vel: 1,
-						accel: 0.5,
-						thvmax: 1
+						id			: '2B34822B-0A27-4398-AE19-23A3C83F1220',
+						vel			: 1,
+						accel		: 0.5,
+						thvmax	: 1
 					}, {
-						id: '93A90B6B-EAEE-48A3-9742-C688235D837D',
-						vel: 1,
-						accel: 0.5,
-						thvmax: 1
+						id			: '93A90B6B-EAEE-48A3-9742-C688235D837D',
+						vel			: 1,
+						accel		: 0.5,
+						thvmax	: 1
 					}, {
-						id: 'B7407A2F-04C3-4C92-B907-4C3869DA86D6',
-						vel: 1,
-						accel: 0.5,
-						thvmax: 1
+						id			: 'B7407A2F-04C3-4C92-B907-4C3869DA86D6',
+						vel			: 1,
+						accel		: 0.5,
+						thvmax	: 1
 					}, {
-						id: '7C046710-9F19-4423-B291-7394996F0913',
-						vel: 1,
-						accel: 0.5,
-						thvmax: 1
+						id			: '7C046710-9F19-4423-B291-7394996F0913',
+						vel			: 1,
+						accel		: 0.5,
+						thvmax	: 1
 					}, {
-						id: 'D14E0B41-E572-4B69-9827-4A07C503D031',
-						vel: 1,
-						accel: 0.5,
-						thvmax: 1
+						id			: 'D14E0B41-E572-4B69-9827-4A07C503D031',
+						vel			: 1,
+						accel		: 0.5,
+						thvmax	: 1
 					}, {
-						id: '26FBFB10-4BC7-46BF-8D55-85AA52C19ADF',
-						vel: 1,
-						accel: 0.5,
-						thvmax: 1
+						id			: '26FBFB10-4BC7-46BF-8D55-85AA52C19ADF',
+						vel			: 1,
+						accel		: 0.5,
+						thvmax	: 1
 					}, {
-						id: '75518177-0D28-4B2A-9B73-29E4974FB702',
-						vel: 1,
-						accel: 0.5,
-						thvmax: 1
+						id			: '75518177-0D28-4B2A-9B73-29E4974FB702',
+						vel			: 1,
+						accel		: 0.5,
+						thvmax	: 1
 					} ],
 				}, {
 					id          : '2CBDAE96-EC22-48B4-A369-BFC624463C5F',
