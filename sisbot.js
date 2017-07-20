@@ -764,15 +764,20 @@ var sisbot = {
 		var value = this._clamp(data.value, 0.0, 1.0);
 		this.current_state.set('brightness', value);
 
+    plotter.setBrightness(value);// for autodim
+
     // convert to an integer from 0 - 1023, parabolic scale.
     var pwm = Math.pow(2, value * 10) - 1;
     pwm = Math.floor(pwm);
 
+
+/* not for autodim:
     if (pwm == 0) {
       this._serialWrite('SE,0');
     } else {
       this._serialWrite('SE,1,'+pwm);
     }
+*/
 
 		this.save(null, null);
 
