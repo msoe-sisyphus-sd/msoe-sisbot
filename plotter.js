@@ -838,9 +838,9 @@ function parseReceivedSerialData(data) {
 			var num = parseInt(parts[4],10);
 
 			//console.log(num);
-			console.log("Theta fault pin = " + (num & 2));
-			console.log("Rho fault pin = " + (num & 1));
-			console.log("Th home pin = " + (num & 4));
+			// console.log("Theta fault pin = " + (num & 2));
+			// console.log("Rho fault pin = " + (num & 1));
+			// console.log("Th home pin = " + (num & 4));
 
 			var thFaultState, rFaultState;
 			var thHomeState, rHomeState;
