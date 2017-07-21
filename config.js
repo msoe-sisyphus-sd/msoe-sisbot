@@ -1,9 +1,17 @@
+var fs			= require('fs');
 var _           = require('underscore');
-var uuid				= require('uuid');
+var uuid		= require('uuid');
+var which_cson  = require('/home/pi/sisbot-server/sisbot/configs/whichcson.js');
+
+// PROVE CSON FILE EXISTS
+if (!fs.existsSync('/home/pi/sisbot-server/sisbot/configs/' + which_cson)) {
+        console.log('!!!!! MISSING CSON FILE !!!!!');
+        which_cson = 'default.cson';
+}
 
 var config = {
 		base: {
-			version	: '0.5.14',
+			version	: '0.5.15',
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -21,7 +29,7 @@ var config = {
 				api: 'sisapi'
 			},
 			receiver : true, // receive messages from cloud
-			sisbot_config : 'default.cson',
+			sisbot_config : which_cson,
 			sisbot_state : 'status.json',
 			serial_path: '/dev/ttyACM0',
 			autoplay: true,

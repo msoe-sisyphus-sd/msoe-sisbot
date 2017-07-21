@@ -497,6 +497,12 @@ var sisbot = {
 			cb(null, [self.current_state.toJSON(), track.toJSON()]); // send back current_state and the track
 		});
 	},
+    get_track_verts: function(data, cb) {
+        console.log('track verts', data, cb);
+        fs.readFile(this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+data.id+'.thr', 'utf-8', function(err, data) {
+            cb(err, data); // send back track verts
+        });
+    },
 	remove_track: function(data, cb) {
 		console.log("Sisbot Remove Track", data);
 
