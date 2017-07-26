@@ -77,7 +77,7 @@ var config = {
 					active_track_index	: 0,
 					tracks   						: [ {
 						id			:'2CBDAE96-EC22-48B4-A369-BFC624463C5F',
-						vel			: 8,
+						vel			: 3,
 						accel		: 0.5,
 						thvmax	: 1
 					}, {
@@ -125,7 +125,7 @@ var config = {
 					id          : '2CBDAE96-EC22-48B4-A369-BFC624463C5F',
 					type        : 'track',
 					name        : 'Erase',
-					default_vel	: 8,
+					default_vel	: 3,
 					firstR			: 0,
 					lastR 			: 1,
 					r_type			: 'r01'
