@@ -11,7 +11,7 @@ if (!fs.existsSync('/home/pi/sisbot-server/sisbot/configs/' + which_cson)) {
 
 var config = {
 		base: {
-			version	: '0.5.15',
+			version	: '0.5.16',
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -192,6 +192,9 @@ var config = {
 		},
 		dummy: {
 			serial_path: "false",
+		},
+		debug: {
+			debug: true
 		}
 };
 

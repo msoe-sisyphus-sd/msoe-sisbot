@@ -36,7 +36,7 @@ var sisbot = {
 
 	_internet_check: 0,
 	_internet_retries: 0,
-    _changing_to_wifi: false,
+  _changing_to_wifi: false,
 
   init: function(config, session_manager) {
       var self = this;
@@ -417,13 +417,26 @@ var sisbot = {
 		} else cb('No Connection', null);
 	},
 	home: function(data, cb) {
+		var self = this;
 		console.log("Sisbot Home", data);
 		if (this._validateConnection()) {
-			if (data && data.stop) this._autoplay = false; // home without playing anything afterward
-			this._paused = false;
-			this.current_state.set("state", "homing");
-			plotter.home();
-			if (cb)	cb(null, this.current_state.toJSON());
+			if (data) { // special instructions?
+				if (data.stop) this._autoplay = false; // home without playing anything afterward
+				if (data.clear_tracks) this.current_state.set({active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
+			}
+
+			if (this.current_state.get("state") == "playing") {
+				this._home_next = true;
+				this.pause(null, function(err, resp) {
+					self._paused = false;
+					if (cb)	cb(err, resp);
+				});
+			} else {
+				this._paused = false;
+				this.current_state.set("state", "homing");
+				plotter.home();
+				if (cb)	cb(null, this.current_state.toJSON());
+			}
 		} else cb('No Connection', null);
 	},
 	add_playlist: function(data, cb) {

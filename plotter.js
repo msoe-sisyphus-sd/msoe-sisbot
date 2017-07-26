@@ -113,7 +113,7 @@ function checkPhoto() { //autodimming functionality:
 		photo = rawPhoto;//(1023 - rawPhoto);
 		if (photo > 1023) {photo = 1023;}
 		if (photo < 1) {photo = 1;}
-		console.log("raw photo = " + photo)
+		// console.log("raw photo = " + photo)
 
 		photoSum -= photoArray.shift(); //delete first val in array and subtract from sum
 		photoSum += photoArray[photoArray.push(photo) - 1]; //add val to end and add it
@@ -144,11 +144,11 @@ function checkPhoto() { //autodimming functionality:
 			if (Math.round(photoAvg) != Math.round(photoAvgOld)) {
 					if (Math.round(photoAvg) != 0) {
 					sp.write("SE,1," + Math.round(photoAvg) +"\r");
-console.log("SE,1," + Math.round(photoAvg))
+					// console.log("SE,1," + Math.round(photoAvg))
 
 				}
 				else {sp.write("SE,0\r")}
-				console.log("SE,1," + Math.round(photoAvg))
+				// console.log("SE,1," + Math.round(photoAvg))
 				photoAvgOld = photoAvg;
 			}
 		}
@@ -538,7 +538,7 @@ function goThetaHome() {
 			WAITING_THETA_HOMED = false;
 			//WAITING_RHO_HOMED = true;
 
-console.log('finding R home...');
+			console.log('finding R home...');
 
 			setTimeout(goRhoHome, 150);
 
@@ -741,7 +741,7 @@ function correctGap() {
       if (err) {console.log(err, result);}
       else {
         console.log ('gap steps ' + steps);
-          rAccum += steps;
+        rAccum += steps;
       }
     });
   });
