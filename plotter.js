@@ -76,6 +76,7 @@ var ABLETOPLAY = true;
 var moment = require("moment");
 
 //globals for autodimming:
+var autodim = "true";
 var rawPhoto = 1;  //raw photosensor 10-bit analog value
 var rawPhotoLast = 1;
 var photoArraySize = 16; //higher-->slower change
@@ -104,16 +105,14 @@ function checkPhoto() { //autodimming functionality:
 
 	}
 
-
-
-
 	sp.write("A\r"); //SBB command to check analog inputs
 
+ if (autodim == "true") {	
 	if (rawPhoto > 0)  { //skip very low as spurious vals
 		photo = rawPhoto;//(1023 - rawPhoto);
 		if (photo > 1023) {photo = 1023;}
 		if (photo < 1) {photo = 1;}
-		// console.log("raw photo = " + photo)
+		 //console.log("raw photo = " + photo)
 
 		photoSum -= photoArray.shift(); //delete first val in array and subtract from sum
 		photoSum += photoArray[photoArray.push(photo) - 1]; //add val to end and add it
@@ -153,6 +152,7 @@ function checkPhoto() { //autodimming functionality:
 			}
 		}
 	}
+ }
 	if (STATUS != 'homing'){ //stop photosensing if homing
 	setTimeout(checkPhoto, photoMsec);
 	}
@@ -1011,10 +1011,17 @@ module.exports = {
     setStatus('playing');
     nextMove(Rmi);
   },
+	
+	// get the brightness slider value
+  setAutodim: function(value) {
+    autodim = value;
+		//console.log ("autodim = " + autodim);
+  },
 
 	// get the brightness slider value
   setBrightness: function(value) {
     sliderBrightness = value;
+		//console.log ("sb: " + sliderBrightness);
   },
 
   // Set a speed scalar where 1 is normal, 2 is double
