@@ -776,6 +776,8 @@ var sisbot = {
 		console.log('Sisbot set autodim', data);
 
 		this.current_state.set('is_autodim', data.value);
+				
+	  plotter.setAutodim(data.value);// notify plotter of autodim setting
 
 		this.save(null, null);
 
