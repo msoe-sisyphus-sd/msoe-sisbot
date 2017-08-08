@@ -10,6 +10,7 @@ var uuid					= require('uuid');
 var Backbone			= require('backbone');
 var Ping					= require('ping-lite');
 var request 			= require('request');
+var webshot             = require('webshot');
 
 var SerialPort;
 if (process.env.NODE_ENV.indexOf("dummy") < 0) SerialPort	= require('serialport').SerialPort;
@@ -507,9 +508,16 @@ var sisbot = {
 
 			self.save(null, null);
 
+            self.thumbnail_generate({ id: data.id }, function(err, resp) {
+                // do nothing. this generates the thumbnails in the app folder
+            });
+
 			cb(null, [self.current_state.toJSON(), track.toJSON()]); // send back current_state and the track
 		});
+
+        /*********************** UPLOAD TRACK TO CLOUD ************************/
 	},
+
     get_track_verts: function(data, cb) {
         console.log('track verts', data, cb);
         fs.readFile(this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+data.id+'.thr', 'utf-8', function(err, data) {
@@ -534,6 +542,90 @@ var sisbot = {
 
 		cb(null, this.current_state.toJSON());
 	},
+    /*********************** GENERATE THUMBNAILS ******************************/
+    thumbnail_generate: function (data, cb) {
+        // @id
+        var self        = this;
+        var track_dir   = this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.folders.tracks;
+
+        fs.readFile(track_dir + '/' + data.id + '.thr', 'utf-8', function(err, raw_coors) {
+            if (err) {
+                return cb('Could not generate thumbnails. No track file.', null);
+            }
+
+            data.dimensions = 400;
+            data.raw_coors  = raw_coors;
+            var num_resp    = 2;
+            var cb_err              = null;
+
+            self._thumbnails_generate(data, function(err, resp) {
+                if (err)        cb_err = err;
+                check_cb();
+            });
+
+            data.dimensions = 50;
+            data.raw_coors  = raw_coors;
+
+            self._thumbnails_generate(data, function(err, resp) {
+                if (err)        cb_err = err;
+                check_cb();
+            });
+
+            function check_cb() {
+                if (--num_resp == 0)
+                    cb(cb_err, null);
+            }
+        });
+    },
+    _thumbnails_generate: function(data, cb) {
+        // id, host_url, raw_coors, dimensions
+
+        var thumbs_dir  = this.config.base_dir + '/' + this.config.folders.cloud + '/img/tracks';
+        var thumbs_file = thumbs_dir + '/' + data.id + '_' + data.dimensions + '.png';
+
+        var opts = {
+            siteType        : 'html',
+            renderDelay     : 2500,
+            captureSelector : '.print',
+            screenSize: {
+                width       : data.dimensions + 16,
+                height      : data.dimensions
+            },
+            userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_4) AppleWebKit/600.7.12 (KHTML, like Gecko) Version/8.0.7 Safari/600.7.12',
+            shotSize: {
+                width       : 'window',
+                height      : 'window'
+            }
+        };
+
+        var base_url = 'http://' + this.current_state.get('local_ip') + ':' + this.config.servers.app.port + '/';
+        var html = '<html><!DOCTYPE html>\
+        <head>\
+            <meta charset="utf-8" />\
+            <meta name="format-detection" content="telephone=no" />\
+            <meta name="msapplication-tap-highlight" content="no" />\
+            <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1" />\
+            <meta charset="utf-8">\
+            <meta http-equiv="X-UA-Compatible" content="IE=edge">\
+            <meta name="viewport" content="width=device-width, initial-scale=1">\
+            <meta name="google" value="notranslate">\
+            <title>Ease</title>\
+            <base href="' + base_url + '" />\
+            <script src="js/libs/lib.jquery.min.js"></script>\
+            <script src="js/libs/lib.underscore.min.js"></script>\
+            <script src="js/libs/lib.d3.min.js"></script>\
+            <script src="js/libs/lib.gen_thumbnails.js"></script>\
+        </head><body><div class="print">\
+                        <div class="d3" data-coors="' + data.raw_coors + '" data-dimensions="' + data.dimensions + '"></div>\
+                </div></body></html>';
+
+        console.log('#### MAKE WEBSHOT', thumbs_file, base_url);
+
+        webshot(html, thumbs_file, opts, function(err) {
+            cb(err, null);
+        });
+    },
+    /*********************** PLAYLIST *****************************************/
 	set_playlist: function(data, cb) {
 		console.log("Sisbot Set Playlist", data);
 
