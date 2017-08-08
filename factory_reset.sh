@@ -10,7 +10,7 @@ echo "Stopping PID :"$nodepid >> restart.log
 sudo kill -9 $nodepid
 done
 
-cd /home/pi/sisbot-server/backup/
+cd /home/pi/sisbot-server/factory/
 cp -rf siscloud ../
 cp -rf sisbot ../
 cp -rf sisproxy ../

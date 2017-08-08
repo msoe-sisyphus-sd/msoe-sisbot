@@ -507,15 +507,13 @@ var sisbot = {
 			track.get_verts(); // so our first/last rho are forced correct
 
 			self.save(null, null);
-
-            self.thumbnail_generate({ id: data.id }, function(err, resp) {
-                // do nothing. this generates the thumbnails in the app folder
-            });
-
-			cb(null, [self.current_state.toJSON(), track.toJSON()]); // send back current_state and the track
+	      self.thumbnail_generate({ id: data.id }, function(err, resp) {
+          // do nothing. this generates the thumbnails in the app folder
+					cb(null, [self.current_state.toJSON(), track.toJSON()]); // send back current_state and the track
+	      });
 		});
 
-        /*********************** UPLOAD TRACK TO CLOUD ************************/
+    /*********************** UPLOAD TRACK TO CLOUD ************************/
 	},
 
     get_track_verts: function(data, cb) {
@@ -868,7 +866,7 @@ var sisbot = {
 		console.log('Sisbot set autodim', data);
 
 		this.current_state.set('is_autodim', data.value);
-				
+
 	  plotter.setAutodim(data.value);// notify plotter of autodim setting
 
 		this.save(null, null);
@@ -917,9 +915,12 @@ var sisbot = {
 		  // console.log('stderr:', stderr);
 
 			//console.log("Internet Connected Check", returnValue);
-			if (self.current_state.get("is_internet_connected") != returnValue) {
-				self.current_state.set({is_internet_connected: returnValue, local_ip: self._getIPAddress()});
 
+			// update values
+			self.current_state.set({is_internet_connected: returnValue, local_ip: self._getIPAddress()});
+
+			if (self.current_state.get("is_internet_connected") != returnValue) {
+				// change hotspot status
 				if (self.current_state.get("local_ip") == "192.168.42.1") {
 					self.current_state.set("is_hotspot", "true");
 				} else {
