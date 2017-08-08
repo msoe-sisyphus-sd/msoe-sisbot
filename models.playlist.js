@@ -120,7 +120,7 @@ var playlist = Backbone.Model.extend({
 
  		// check for last track & looping so we can reshuffle if needed
 		if (track_index >= tracks.length-1 && this.get("is_loop") == "true") {
-			if (this.get("is_shuffle")) {
+			if (this.get("is_shuffle") == "true") {
 				// reset randomized tracks
 				this.set_shuffle(true);
 			}
