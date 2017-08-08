@@ -255,7 +255,7 @@ var sisbot = {
 
 		var self = this;
 		//console.log("Serial Connect", this.config.serial_path);
-		if (this.config.serial_path == "false") return;
+		if (this.config.serial_path == "false") return this.current_state.set("is_serial_open","true");
 
  		this.serial = new SerialPort(this.config.serial_path, {}, false);
 

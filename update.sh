@@ -23,6 +23,11 @@ git reset --hard
 git pull origin master
 npm install
 
+cd /home/pi/sisbot-server/
+sudo chown -R pi sisbot
+sudo chown -R pi siscloud
+sudo chown -R pi sisproxy
+
 sudo /home/pi/sisbot-server/sisbot/update_finish.sh
 
 echo "Upgrade completed"
