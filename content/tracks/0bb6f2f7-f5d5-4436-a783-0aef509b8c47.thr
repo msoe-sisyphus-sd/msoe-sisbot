@@ -1,18 +1,4 @@
 # lasso 4 a.thr, 6000 total verts
-# tackdown length=0.2 
-# lasso 4 a.thr, 5996 verts
-#Alg Type: Th=Thfn(t),  R=Rfn(t) 
-#t domain: 80 to 180, verts: 6000 
-#RFn: pow(t,a)+c*(sin(t*b)+d) 
-#Rpar a: 0.89 
-#Rpar b (lobes): 3.99 
-#Rpar c: 50 
-#Rpar d: 0 
-#ThFn: t+a*sin(b*t) 
-#Thpar a: 1.1 
-#Thpar b (lobes): 4.003 
-#Thpar c: 0 
-#Thpar d: 0 
 0 0
 0.08899 0.02149
 0.17865 0.03066
