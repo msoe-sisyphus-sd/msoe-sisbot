@@ -1,11 +1,4 @@
 # sola3.thr, 7435 verts
-#Alg Type:  R=fn(x), "x" is Theta
-#Function: x+a*pow(x,.88)*sin((b+c*sin(d*x))*x)  
-#Theta domain: 0 to 1000, verts: 7473 
-#par a: 0.3 
-#par b (lobes): 28.02 
-#par c: 0 
-#par d: 0.002 
 0 0
 0.13382 0.00009
 0.26763 0.00032
