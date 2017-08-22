@@ -1,11 +1,4 @@
 # peoni1.thr, 9990 verts
-#Alg Type:  R=fn(x), "x" is Theta
-#Function: x+a*pow(x,.88)*sin((b+c*sin(d*x))*x)  
-#Theta domain: 0 to 662.1, verts: 9994 
-#par a: 0.3 
-#par b (lobes): 27.01 
-#par c: 0.05 
-#par d: 0.004 
 0 0
 0.06625 0.00012
 0.1325 0.00015
