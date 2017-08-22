@@ -1,18 +1,4 @@
 # yinyangspiderman1.thr, 6050 total verts
-# tackdown length=0.2 
-# yinyangspiderman1.thr, 5985 verts
-#Alg Type: Th=Thfn(t),  R=Rfn(t) 
-#t domain: 80 to 300, verts: 6050 
-#RFn: pow(t,a)+c*(sin(t*b)+0) 
-#Rpar a: 0.89 
-#Rpar b (lobes): 1.99 
-#Rpar c: 50 
-#Rpar d: 0 
-#ThFn: t+a*sin(b*t) 
-#Thpar a: 0.416 
-#Thpar b (lobes): 2 
-#Thpar c: 0.4 
-#Thpar d: 0 
 0.93589 0
 0.99522 0.00155
 1.05593 0.00374
