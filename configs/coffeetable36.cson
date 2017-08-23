@@ -1,10 +1,10 @@
-# Sisbot config fir 36"Coffee Table
+# Sisbot config for 36"Coffee Table
 
 serialPath: "/dev/ttyACM0"
 
 # Plot size and gearing:
 radius: 13.5 # inches
-stepsPerThetaRevolution: 22080 # (after gearing)
+stepsPerThetaRevolution: 24888.8888888888889 #280 / 36 * 3200
 stepsPerRadiusRevolution: 3200
 stepsPerRadiusInch: 2573.2841325173814
 
