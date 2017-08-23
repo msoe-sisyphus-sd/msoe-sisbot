@@ -7,13 +7,13 @@ var config = require('./config');
 var Vball=2,  Accel = 2, MTV=0.5, Vmin = 0.1, Voverride = 1;
 var balls  = 1; //sis vs tant mode
 //machine constants:
-var plotRadius = 13.5, segRate=20;
-var thSPRev = 40888.88888888888889, rSPRev = 3200, rSPInch = 2573.2841325173814;
+var plotRadius, segRate = 20;
+var thSPRev, rSPRev , rSPInch;
 var nestedAxisSign = 1, thDirSign = 1, rDirSign = -1;
 
 var rthAsp = rSPRev / thSPRev; //r-th aspect ratio
 var rCrit = Vball / MTV;
-var thSPRad = thSPRev / (2* Math.PI);
+var thSPRad //= thSPRev / (2* Math.PI);
 var accelSegs = Vball * segRate /(2 * Accel);  //console.log('accelSegs: '+accelSegs );
 var VminSegs =  Vmin * segRate /(2 * Accel); // console.log('VminSegs:'+VminSegs);
 var ASfin = accelSegs;
@@ -83,13 +83,17 @@ var photoArraySize = 16; //higher-->slower change
 var photoArray = [];
 photoArray.length = photoArraySize;
 photoArray.fill(0);
-var BR = 1; // user brightness scalar 0-1
+//var BR = 1; // user brightness scalar 0-1
 var BRamp = 2; //BR multiplier
-var photoAvgOld = 0;
 var photoSum = 0;
 var photoMin = 5; //minimum non-off LED brightness
+photoArray.fill(photoMin);
+var photoAvgOld = photoMin;
 var photoMsec = 250; // -sample potosensor every.  higher-->slower change
 var sliderBrightness;
+var lastPhotoOut = photoMin;
+var ctr = 0;
+var certain = 4;
 
 var maTheta; //Theta current
 var maR;     //R current
@@ -98,61 +102,85 @@ var Vm;      //motor voltage
 }
 
 function checkPhoto() { //autodimming functionality:
-	var photo, photoAvg = 0, delta;
+	var photo, photoAvg = 0, photoOut = 0, delta;
+	if (plotRadius > 10) BRamp = 4; //temp fix for less light under 36 than 22
 
 	if (useFaultSensors){
 		checkFault();
-
 	}
 
 	sp.write("A\r"); //SBB command to check analog inputs
 
- if (autodim == "true") {	
-	if (rawPhoto > 0)  { //skip very low as spurious vals
-		photo = rawPhoto;//(1023 - rawPhoto);
+ if (autodim == "true") {	//need to check autodim toggle fn'ing
+ 		photo = rawPhoto;
 		if (photo > 1023) {photo = 1023;}
-		if (photo < 1) {photo = 1;}
-		 //console.log("raw photo = " + photo)
+		if (photo < 0) {photo = 0;} //photomin?
+		//console.log("raw photo = " + photo)
 
 		photoSum -= photoArray.shift(); //delete first val in array and subtract from sum
 		photoSum += photoArray[photoArray.push(photo) - 1]; //add val to end and add it
-		photoAvg = Math.round(photoSum * BR * BRamp/ photoArraySize);
-
-		delta = photoAvg - photoAvgOld;
-
-		if (Math.abs(delta) / photoAvgOld > 0.01) {
-			if (delta > 0) {
-				photoAvg *= 1.01;
-			}
-
-			else {photoAvg /= 1.01;}
-
+		photoAvg = Math.round(photoSum / photoArraySize);
+		photoOut = photoAvg;
+		
+		//console.log("photoAvg = " + photoAvg);
+		
+		
 		if (sliderBrightness > 0.5){
-			photoAvg *= Math.pow(5,sliderBrightness * 2) - 4;
+			photoOut *= BRamp * (Math.pow(5,sliderBrightness * 2) - 4);
 		}
 		else {
-			photoAvg *= sliderBrightness * 2;
+			photoOut *= sliderBrightness * BRamp * 2;
 		};
+	
+		photoOut = Math.round(photoOut);
+		if ((photoOut> 0) && (photoOut <= photoMin)) {photoAOut= photoMin;}
+		if (photoOut > 1023) {photoOut = 1023};
 
-
-			if ((photoAvg > 0) && (photoAvg <= photoMin)) {photoAvg = photoMin;}
-			if (photoAvg > 1023) {photoAvg = 1023};
-
-			//console.log("photoAvg = " + photoAvg);
-
-			if (Math.round(photoAvg) != Math.round(photoAvgOld)) {
-					if (Math.round(photoAvg) != 0) {
-					sp.write("SE,1," + Math.round(photoAvg) +"\r");
-					// console.log("SE,1," + Math.round(photoAvg))
-
-				}
-				else {sp.write("SE,0\r")}
-				// console.log("SE,1," + Math.round(photoAvg))
-				photoAvgOld = photoAvg;
+		//console.log("photoOut = " + photoOut);
+		
+		delta = Math.abs(photoOut - lastPhotoOut);
+		if (lastPhotoOut > 0) {delta /= lastPhotoOut}
+		
+		//console.log("delta = " + delta);
+		
+		if ( delta > .2 ) {
+			
+			if (photoOut != 0) {
+				sp.write("SE,1," + photoOut +"\r");
+				console.log("SE,1," + photoOut);
 			}
+			else {
+				sp.write("SE,0\r");
+			  console.log("SE,0,");
+			}
+			photoAvgOld = photoAvg;
+			lastPhotoOut = photoOut;
+		}		
+		
+		
+		if ( (delta > .1) && (delta < .2)) {
+			ctr++;
+			//console.log("ctr = " + ctr);
+			if (ctr > certain){
+		
+				if (photoOut != 0) {
+					sp.write("SE,1," + photoOut +"\r");
+					console.log("SE,1," + photoOut);
+				}
+				else {
+					sp.write("SE,0\r");
+			    console.log("SE,0,");
+				}
+				ctr = 0;
+				photoAvgOld = photoAvg;
+				lastPhotoOut = photoOut;
+			}		
+		} 
+		else{
+			ctr = 0;
 		}
-	}
- }
+  }	
+	
 	if (STATUS != 'homing'){ //stop photosensing if homing
 	setTimeout(checkPhoto, photoMsec);
 	}
@@ -925,6 +953,8 @@ module.exports = {
 		sp.write('AC,1,1\r'); // turn on analog channel 1 for current reading R
 		sp.write('PD,B,3,1\r'); //set analog pin to input
 		sp.write('AC,9,1\r'); // turn on analog channel 9 for reading photosensor
+		sp.write("SE,1,100\r"); //turn on low lighting
+
 
 		checkPhoto(); //start ambient light sensing
 
@@ -1012,10 +1042,10 @@ module.exports = {
     nextMove(Rmi);
   },
 	
-	// get the brightness slider value
+	// get the autodim toggle value
   setAutodim: function(value) {
     autodim = value;
-		//console.log ("autodim = " + autodim);
+		console.log ("autodim = " + autodim);
   },
 
 	// get the brightness slider value
