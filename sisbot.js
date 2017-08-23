@@ -111,7 +111,7 @@ var sisbot = {
 				factory_resetting: "false",
 				factory_resetting_error: "",
 				installed_updates: "false",
-				brightness: 0.5,
+				brightness: 0.7,
 				speed: 0.35
 			});
 			this.current_state.set("local_ip", this._getIPAddress());
