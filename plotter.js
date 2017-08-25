@@ -79,7 +79,7 @@ var moment = require("moment");
 var autodim = "true";
 var rawPhoto = 1;  //raw photosensor 10-bit analog value
 var rawPhotoLast = 1;
-var photoArraySize = 16; //higher-->slower change
+var photoArraySize = 32; //higher-->slower change
 var photoArray = [];
 photoArray.length = photoArraySize;
 photoArray.fill(0);
@@ -114,12 +114,15 @@ function checkPhoto() { //autodimming functionality:
  if (autodim == "true") {	//need to check autodim toggle fn'ing
  		photo = rawPhoto;
 		if (photo > 1023) {photo = 1023;}
-		if (photo < 0) {photo = 0;} //photomin?
+		if (photo < photoMin) {photo = photoMin;} //photomin?
 		//console.log("raw photo = " + photo)
+		
+		photoSum = photoArray.reduce(add, 0);
+        //console.log("photoSum = " + photoSum)
 
 		photoSum -= photoArray.shift(); //delete first val in array and subtract from sum
 		photoSum += photoArray[photoArray.push(photo) - 1]; //add val to end and add it
-		photoAvg = Math.round(photoSum / photoArraySize);
+		photoAvg = photoSum / photoArraySize;
 		photoOut = photoAvg;
 		
 		//console.log("photoAvg = " + photoAvg);
@@ -133,7 +136,7 @@ function checkPhoto() { //autodimming functionality:
 		};
 	
 		photoOut = Math.round(photoOut);
-		if ((photoOut> 0) && (photoOut <= photoMin)) {photoAOut= photoMin;}
+		if ((photoOut> 0) && (photoOut < photoMin)) {photoOut = photoMin;}
 		if (photoOut > 1023) {photoOut = 1023};
 
 		//console.log("photoOut = " + photoOut);
@@ -143,7 +146,7 @@ function checkPhoto() { //autodimming functionality:
 		
 		//console.log("delta = " + delta);
 		
-		if ( delta > .2 ) {
+		if ( delta > .3 ) {
 			
 			if (photoOut != 0) {
 				sp.write("SE,1," + photoOut +"\r");
@@ -151,14 +154,14 @@ function checkPhoto() { //autodimming functionality:
 			}
 			else {
 				sp.write("SE,0\r");
-			  console.log("SE,0,");
+			  console.log("SE,0");
 			}
 			photoAvgOld = photoAvg;
 			lastPhotoOut = photoOut;
 		}		
 		
 		
-		if ( (delta > .1) && (delta < .2)) {
+		if ( (delta > .1) && (delta < .3)) {
 			ctr++;
 			//console.log("ctr = " + ctr);
 			if (ctr > certain){
@@ -169,7 +172,7 @@ function checkPhoto() { //autodimming functionality:
 				}
 				else {
 					sp.write("SE,0\r");
-			    console.log("SE,0,");
+			    console.log("SE,0");
 				}
 				ctr = 0;
 				photoAvgOld = photoAvg;
@@ -184,6 +187,10 @@ function checkPhoto() { //autodimming functionality:
 	if (STATUS != 'homing'){ //stop photosensing if homing
 	setTimeout(checkPhoto, photoMsec);
 	}
+}
+
+function add(a, b) {
+    return a + b;
 }
 
 function setStatus(newStatus) {
