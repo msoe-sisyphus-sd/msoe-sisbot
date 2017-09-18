@@ -383,6 +383,9 @@ var sisbot = {
   latest_software_version: function (data, cb) {
       cb(null, this.config.service_versions);
   },
+  software_branch: function (data, cb) {
+      cb(null, this.config.service_branches);
+  },
   // Execute a serial command, and log it to the console.
   _serialWrite(command) {
     console.log('SERIAL:',command);
