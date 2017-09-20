@@ -10,17 +10,17 @@ sudo mv -f /home/pi/sisbot-server/backup.0/ /home/pi/sisbot-server/backup
 
 cd /home/pi/sisbot-server/sisbot
 git reset --hard
-git pull origin master
+git pull
 npm install
 
 cd /home/pi/sisbot-server/siscloud
 git reset --hard
-git pull origin master
+git pull
 npm install
 
 cd /home/pi/sisbot-server/sisproxy
 git reset --hard
-git pull origin master
+git pull
 npm install
 
 cd /home/pi/sisbot-server/
