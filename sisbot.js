@@ -1109,7 +1109,7 @@ var sisbot = {
 
 		this.current_state.set('installing_updates','true');
 		this.pause(null, null);
-		exec('/home/pi/sisbot-server/sisbot/update.sh > /home/pi/sisbot-server/update.log', (error, stdout, stderr) => {
+		exec('/home/pi/sisbot-server/sisbot/update.sh '+this.config.service_branches.sisbot+' '+this.config.service_branches.app+' '+this.config.service_branches.proxy+' > /home/pi/sisbot-server/update.log', (error, stdout, stderr) => {
 			self.current_state.set({installing_updates: 'false'});
 		  if (error) {
 				if (cb) cb(error, null);
