@@ -21,6 +21,14 @@ rm -f /home/pi/sisbot-server/sisbot/content/status.json
 cd /home/pi/
 sudo chown -R pi sisbot-server
 
+# fix untracked files
+cd /home/pi/sisbot-server/sisbot
+sudo git add .
+cd /home/pi/sisbot-server/siscloud
+sudo git add .
 cd /home/pi/sisbot-server/sisproxy
+sudo git add .
+
+# cd /home/pi/sisbot-server/sisproxy
 sudo NODE_ENV=sisbot node server.js &
 echo "Factory Reset complete"

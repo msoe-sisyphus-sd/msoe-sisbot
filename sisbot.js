@@ -381,10 +381,10 @@ var sisbot = {
 	},
   // VERSIONS OF CODE
   latest_software_version: function (data, cb) {
-      cb(null, this.config.service_versions);
+      if (cb) cb(null, this.config.service_versions);
   },
   software_branch: function (data, cb) {
-      cb(null, this.config.service_branches);
+      if (cb) cb(null, this.config.service_branches);
   },
   // Execute a serial command, and log it to the console.
   _serialWrite(command) {
@@ -402,21 +402,21 @@ var sisbot = {
   },
 	connect: function(data, cb) {
 		console.log("Sisbot Connect", data);
-		cb(null, this.collection.toJSON());
+		if (cb) cb(null, this.collection.toJSON());
 	},
 	state: function(data, cb) {
-		cb(null, this.current_state.toJSON());
+		if (cb) cb(null, this.current_state.toJSON());
 	},
 	exists: function(data, cb) {
 		console.log("Sisbot Exists", data);
-		cb(null, this.current_state.toJSON());
+		if (cb) cb(null, this.current_state.toJSON());
 	},
 	set_default_playlist: function(data, cb) {
 		console.log("Sisbot Set Default Playlist", data);
 
 		this.current_state.set("default_playlist_id", data.default_playlist_id);
 
-		cb(null, this.current_state.toJSON());
+		if (cb) cb(null, this.current_state.toJSON());
 	},
 	set_hostname: function(data,cb) {
 		var self = this;
@@ -440,7 +440,7 @@ var sisbot = {
 
 				if (cb)	cb(null, this.current_state.toJSON());
 			}
-		} else {
+		} else if (cb) {
 			cb('Invalid hostname characters',null);
 		}
 	},
@@ -466,7 +466,7 @@ var sisbot = {
 			this._paused = false;
 			plotter.resume();
 			if (cb)	cb(null, this.current_state.toJSON());
-		} else cb('No Connection', null);
+		} else if (cb) cb('No Connection', null);
 	},
 	pause: function(data, cb) {
 		console.log("Sisbot Pause", data);
@@ -475,7 +475,7 @@ var sisbot = {
 			this.current_state.set("state", "paused");
 			plotter.pause();
 			if (cb)	cb(null, this.current_state.toJSON());
-		} else cb('No Connection', null);
+		} else if (cb) cb('No Connection', null);
 	},
 	home: function(data, cb) {
 		var self = this;
@@ -498,7 +498,7 @@ var sisbot = {
 				plotter.home();
 				if (cb)	cb(null, this.current_state.toJSON());
 			}
-		} else cb('No Connection', null);
+		} else if (cb) cb('No Connection', null);
 	},
 	add_playlist: function(data, cb) {
 		console.log("Sisbot Add Playlist", data);
@@ -519,7 +519,7 @@ var sisbot = {
 
 		this.save(null, null);
 
-		cb(null, [this.current_state.toJSON(), playlist.toJSON()]); // send back current_state and the playlist
+		if (cb) cb(null, [this.current_state.toJSON(), playlist.toJSON()]); // send back current_state and the playlist
 	},
 	remove_playlist: function(data, cb) {
 		console.log("Sisbot Remove Playlist", data);
@@ -537,7 +537,7 @@ var sisbot = {
 
 		this.save(null, null);
 
-		cb(null, this.current_state.toJSON());
+		if (cb) cb(null, this.current_state.toJSON());
 	},
 	add_track: function(data, cb) {
 		var self = this;
@@ -545,7 +545,10 @@ var sisbot = {
 
 		// pull out coordinates
 		var verts = data.verts;
-		if (verts == undefined || verts == "") return cb("No verts given", null);
+		if (verts == undefined || verts == "") {
+			if (cb) return cb("No verts given", null);
+			else return;
+		}
 		delete data.verts;
 
 		// save playlist
@@ -563,13 +566,16 @@ var sisbot = {
 
 		// save verts, then callback
 		fs.writeFile(this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+data.id+'.thr', verts, function(err) {
-			if (err) return cb(err, null);
+			if (err) {
+				if (cb) return cb(err, null);
+				else return;
+			}
 			track.get_verts(); // so our first/last rho are forced correct
 
 			self.save(null, null);
 	      self.thumbnail_generate({ id: data.id }, function(err, resp) {
           // do nothing. this generates the thumbnails in the app folder
-					cb(null, [self.current_state.toJSON(), track.toJSON()]); // send back current_state and the track
+					if (cb) cb(null, [self.current_state.toJSON(), track.toJSON()]); // send back current_state and the track
 	      });
 		});
 
@@ -579,7 +585,7 @@ var sisbot = {
     get_track_verts: function(data, cb) {
         console.log('track verts', data, cb);
         fs.readFile(this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+data.id+'.thr', 'utf-8', function(err, data) {
-            cb(err, data); // send back track verts
+            if (cb) cb(err, data); // send back track verts
         });
     },
 	remove_track: function(data, cb) {
@@ -598,7 +604,7 @@ var sisbot = {
 
 		this.save(null, null);
 
-		cb(null, this.current_state.toJSON());
+		if (cb) cb(null, this.current_state.toJSON());
 	},
     /*********************** GENERATE THUMBNAILS ******************************/
     thumbnail_generate: function (data, cb) {
@@ -608,7 +614,8 @@ var sisbot = {
 
         fs.readFile(track_dir + '/' + data.id + '.thr', 'utf-8', function(err, raw_coors) {
             if (err) {
-                return cb('Could not generate thumbnails. No track file.', null);
+                if (cb) return cb('Could not generate thumbnails. No track file.', null);
+								else return;
             }
 
             data.dimensions = 400;
@@ -631,7 +638,7 @@ var sisbot = {
 
             function check_cb() {
                 if (--num_resp == 0)
-                    cb(cb_err, null);
+                    if (cb) cb(cb_err, null);
             }
         });
     },
@@ -680,7 +687,7 @@ var sisbot = {
         console.log('#### MAKE WEBSHOT', thumbs_file, base_url);
 
         webshot(html, thumbs_file, opts, function(err) {
-            cb(err, null);
+            if (cb) cb(err, null);
         });
     },
     /*********************** PLAYLIST *****************************************/
@@ -745,7 +752,10 @@ var sisbot = {
 		track.config = this.config;
 
 		// don't change, this is already playing
-		if (track.get('id') == this.current_state.get("active_track").id && this.current_state.get('state') == "playing") return cb('already playing', null);
+		if (track.get('id') == this.current_state.get("active_track").id && this.current_state.get('state') == "playing") {
+			if (cb) return cb('already playing', null);
+			else return;
+		}
 
 		// update current_state
 		this.current_state.set({
@@ -775,7 +785,10 @@ var sisbot = {
 			if (cb) cb("No track", null);
 			return;
 		}
-		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
+		if (this.current_state.get('state') == "homing") {
+			if (cb) return cb('Currently homing...', null);
+			else return;
+		}
 		if (this._validateConnection()) {
 			if (this.current_state.get("is_homed") == "true") {
 				var track = this.collection.get(data.id);
@@ -807,7 +820,7 @@ var sisbot = {
 			} else {
 				this.home(null, cb);
 			}
-		} else cb('No Connection', null);
+		} else if (cb) cb('No Connection', null);
 	},
 	play_next_track: function(data, cb) {
 		console.log("Sisbot Play Next Track", data);
@@ -816,7 +829,10 @@ var sisbot = {
 			if (cb) cb('No playlist', null);
 			return;
 		}
-		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
+		if (this.current_state.get('state') == "homing") {
+			if (cb) return cb('Currently homing...', null);
+			else return;
+		}
 		if (this.current_state.get('active_playlist_id') == "false") console.log("There is no selected playlist");
 		var playlist = this.collection.get(this.current_state.get('active_playlist_id'));
 		if (playlist != undefined) {
@@ -834,44 +850,56 @@ var sisbot = {
 		}
 	},
   jogThetaLeft: function(data,cb) {
-		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
+		if (this.current_state.get('state') == "homing") {
+			if (cb) return cb('Currently homing...', null);
+			else return;
+		}
 		if (this._validateConnection()) {
 			if (this.current_state.get('state') == "playing") this.pause();
 			this.current_state.set({state: "waiting", is_homed: "false", active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
 			plotter.jogThetaLeft();
 			if (cb)	cb(null, this.current_state.toJSON());
-		} else cb('No Connection', null);
+		} else if (cb) cb('No Connection', null);
 	},
   jogThetaRight: function(data,cb) {
-		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
+		if (this.current_state.get('state') == "homing") {
+			if (cb) return cb('Currently homing...', null);
+			else return;
+		}
 		if (this._validateConnection()) {
 			if (this.current_state.get('state') == "playing") this.pause();
 			this.current_state.set({state: "waiting", is_homed: "false", active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
 			plotter.jogThetaRight();
 			if (cb)	cb(null, this.current_state.toJSON());
-		} else cb('No Connection', null);
+		} else if (cb) cb('No Connection', null);
 	},
   jogRhoOutward: function(data,cb) {
-		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
+		if (this.current_state.get('state') == "homing") {
+			if (cb) return cb('Currently homing...', null);
+			else return;
+		}
 		if (this._validateConnection()) {
 			if (this.current_state.get('state') == "playing") this.pause();
 			this.current_state.set({state: "waiting", is_homed: "false", active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
 			plotter.jogRhoOutward();
 			if (cb)	cb(null, this.current_state.toJSON());
-		} else cb('No Connection', null);
+		} else if (cb) cb('No Connection', null);
 	},
   jogRhoInward: function(data,cb) {
-		if (this.current_state.get('state') == "homing") return cb('Currently homing...', null);
+		if (this.current_state.get('state') == "homing") {
+			if (cb) return cb('Currently homing...', null);
+			else return;
+		}
 		if (this._validateConnection()) {
 			if (this.current_state.get('state') == "playing") this.pause();
 			this.current_state.set({state: "waiting", is_homed: "false", active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
 			plotter.jogRhoInward();
 			if (cb)	cb(null, this.current_state.toJSON());
-		} else cb('No Connection', null);
+		} else if (cb) cb('No Connection', null);
 	},
   get_state: function(data, cb) {
 		console.log("Sisbot get state", data);
-    cb(null, this.current_state);
+    if (cb) cb(null, this.current_state);
   },
 	_clamp: function(value, min, max) {
 		var return_value = value;
@@ -938,7 +966,8 @@ var sisbot = {
 
     // Don't continue if we're disconnected from the sisbot
     if (!this._validateConnection()) {
-			return cb('No Connection', null);
+			if (cb) return cb('No Connection', null);
+			else return;
 		}
 
 		var value = this._clamp(data.value, 0.0, 1.0);
@@ -1004,7 +1033,7 @@ var sisbot = {
 					if (resp == "true") {
 						console.log("Internet connected.",self.current_state.get("is_internet_connected"));
 
-                        self._changing_to_wifi = false;
+            self._changing_to_wifi = false;
 						self.current_state.set({is_available: "true", reason_unavailable: "", failed_to_connect_to_wifi: "false" });
 						self._internet_retries = 0; // successful, reset
 
@@ -1050,20 +1079,24 @@ var sisbot = {
 		console.log("Sisbot change to wifi", data);
 		if (data.ssid && data.ssid != 'false' && ( data.psk && (data.psk == "" || data.psk.length >= 8))) {
 			clearTimeout(this._internet_check);
-            this._changing_to_wifi = true;
+      this._changing_to_wifi = true;
 			this._internet_retries = 0; // clear retry count
-			// TODO: regex, remove or error on double quotes
-			// no spaces in password
-			//var pwd_check =  data.psk.match(^([0-9A-Za-z@.]{1,255})$);
 
-			self.current_state.set({is_available: "false", reason_unavailable: "connect_to_wifi", wifi_network: data.ssid,wifi_password:data.psk,is_hotspot: "false"});
-			if (cb) cb(null, self.current_state.toJSON());
+			// Make sure password is valid
+			ValidPasswordRegex = new RegExp("^([a-zA-Z0-9@*#]{8,64})$");
+			if (data.psk.search(ValidPasswordRegex) == 0) {
+				self.current_state.set({is_available: "false", reason_unavailable: "connect_to_wifi", wifi_network: data.ssid,wifi_password:data.psk,is_hotspot: "false"});
+				if (cb) cb(null, self.current_state.toJSON());
 
-			exec('sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "'+data.ssid+'" "'+data.psk+'"', (error, stdout, stderr) => {
-			  if (error) return console.error('exec error:',error);
+				exec('sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "'+data.ssid+'" "'+data.psk+'"', (error, stdout, stderr) => {
+				  if (error) return console.error('exec error:',error);
 
-				self._query_internet(5000); // check again in 5 seconds
-			});
+					self._query_internet(5000); // check again in 5 seconds
+				});
+			} else if (cb) {
+				console.log("Invalid Password", data.psk);
+				cb("Invalid password", null);
+			}
 
 		} else {
 			if (cb) cb('ssid or psk error', null);
@@ -1125,13 +1158,17 @@ var sisbot = {
 		var sisbots = [];
 
 		// TODO: remove next line to do actual scan
-		if (!this.config.testing) return cb(null, sisbots);
+		if (!this.config.testing) {
+			if (cb) return cb(null, sisbots);
+			else return;
+		}
 
 		// TODO: take local_ip, ping exists on 1-255 (except self)
 		this.current_state.set("local_ip", this._getIPAddress());
 		if (this.current_state.get("local_ip") == "192.168.42.1") {
 			this.current_state.set({is_hotspot: "true"});
 			if (cb) return cb(null, sisbots); // return empty list, this is a hotspot
+			else return;
 		}
 		var ip = this.current_state.get("local_ip");
 		var local = ip.substr(0,ip.lastIndexOf("."));
@@ -1159,7 +1196,10 @@ var sisbot = {
 		var self = this;
 
 		var address = data.local+"."+data.i;
-		if (address == this.current_state.get('local_ip')) return cb("Skip, self", null);
+		if (address == this.current_state.get('local_ip')) {
+			if (cb) return cb("Skip, self", null);
+			else return;
+		}
 
 		var ping = new Ping(address);
 		ping.on('error', function(err) {

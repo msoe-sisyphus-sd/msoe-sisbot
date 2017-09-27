@@ -25,8 +25,16 @@ sudo mv "$3.bak" "$3"
 }
 
 # fix unknown hosts issue
-sudo echo -e "Host *\n\tStrictHostKeyChecking no\n\tUserKnownHostsFile=/dev/null" > /home/pi/.ssh/config
-sudo cp /home/pi/.ssh/config /root/.ssh/config
-sudo /etc/init.d/ssh restart
+config0="/home/pi/.ssh/config"
+if [ -e "$config0" ]; then
+  echo "$config0 exists. Great!"
+else
+	sudo echo -e "Host *\n\tStrictHostKeyChecking no\n\tUserKnownHostsFile=/dev/null" > /home/pi/.ssh/config
+	sudo cp /home/pi/.ssh/config /root/.ssh/config
+	sudo /etc/init.d/ssh restart
+fi
+
+# fix factory reset issue
+cp /home/pi/sisbot-server/sisbot/factory_reset.sh /home/pi/sisbot-server/factory/sisbot
 
 echo "Upgrade_Finish completed"
