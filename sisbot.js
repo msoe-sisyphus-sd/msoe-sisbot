@@ -1,22 +1,73 @@
-var os						= require('os');
-var _							= require('underscore');
-var exec 					= require('child_process').exec;
+var os					= require('os');
+var _					= require('underscore');
+var exec 				= require('child_process').exec;
 var spawn 				= require('child_process').spawn;
-var CSON					= require('cson');
-var fs 						= require('fs');
+var CSON				= require('cson');
+var fs 					= require('fs');
 var iwconfig			= require('wireless-tools/iwconfig');
 var iwlist				= require('wireless-tools/iwlist');
-var uuid					= require('uuid');
+var uuid				= require('uuid');
 var Backbone			= require('backbone');
-var Ping					= require('ping-lite');
+var Ping				= require('ping-lite');
 var request 			= require('request');
 var webshot             = require('webshot');
+var util                = require('util');
+var bleno               = require('bleno');
+
+/**************************** BLE *********************************************/
+
+var ble_obj = {
+    initialize: function () {
+        bleno.on('stateChange', this.on_state_change);
+        bleno.on('advertisingStart', this.on_advertising_start);
+    },
+    char            : false,
+    ip_address      : new Buffer([0, 0, 0, 0]),
+    update_ip_address: function (ip_address_str) {
+        console.log('Updated IP ADDRESS', ip_address_str, ip_address_str.split('.').map(function(i) { return +i; }));
+        this.ip_address = new Buffer(ip_address_str.split('.').map(function(i) { return +i; }));
+    },
+    on_state_change: function(state) {
+        if (state === 'poweredOn')      bleno.startAdvertising('sisyphus', ['ec00']);
+        else                            bleno.stopAdvertising();
+    },
+    on_advertising_start: function(error) {
+        if (error)
+            return console.log('### WE HAD ISSUE STARTING BLUETOOTH');
+
+        bleno.setServices([
+            new bleno.PrimaryService({
+                uuid            : 'ec00',
+                characteristics : [ new Sisyphus_Characteristic() ]
+            })
+        ]);
+    }
+};
+
+var Sisyphus_Characteristic = function() {
+    Sisyphus_Characteristic.super_.call(this, {
+        uuid        : 'ec0e',
+        properties  : ['read'],
+        value       : null
+    });
+};
+
+util.inherits(Sisyphus_Characteristic, bleno.Characteristic);
+
+Sisyphus_Characteristic.prototype.onReadRequest = function(offset, callback) {
+    console.log('Sisyphus_Characteristic - onReadRequest: value = ' + ble_obj.ip_address.toString('hex'));
+    callback(this.RESULT_SUCCESS, ble_obj.ip_address);
+};
+
+ble_obj.initialize();
+
+/**************************** BLE *********************************************/
 
 var SerialPort;
 if (process.env.NODE_ENV.indexOf("dummy") < 0) SerialPort	= require('serialport').SerialPort;
 
 var plotter 			= require('./plotter');
-var Sisbot_state 	= require ('./models.sisbot_state');
+var Sisbot_state        = require ('./models.sisbot_state');
 var Playlist 			= require ('./models.playlist');
 var Track 				= require ('./models.track');
 
@@ -238,18 +289,24 @@ var sisbot = {
 			return this;
   },
 	_getIPAddress() {
+	  var ip_address = '0.0.0.0';
 	  var interfaces = os.networkInterfaces();
+
+
 	  for (var devName in interfaces) {
 	    var iface = interfaces[devName];
 
 	    for (var i = 0; i < iface.length; i++) {
 	      var alias = iface[i];
 	      if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal)
-	        return alias.address;
+	        ip_address = alias.address;
 	    }
 	  }
 
-	  return '0.0.0.0';
+      // WE ADD BLUETOOTH HOOK HERE
+      ble_obj.update_ip_address(ip_address);
+
+	  return ip_address;
 	},
 	_connect() {
     if (this.serial && this.serial.isOpen()) return true;
@@ -1157,5 +1214,6 @@ var sisbot = {
 		});
 	}
 };
+
 
 module.exports = sisbot;
