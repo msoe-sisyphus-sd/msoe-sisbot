@@ -1,19 +1,16 @@
-var http					= require("http");
-var tls						= require("tls");
-var fs          	= require('fs');
-var cors					= require("cors");
-var express     	= require('express');
+var http			= require("http");
+var tls				= require("tls");
+var fs		  	= require('fs');
+var cors			= require("cors");
+var express	 	= require('express');
 var bodyParser		= require('body-parser');
-var iwconfig			= require('wireless-tools/iwconfig');
-// var iwlist			= require('wireless-tools/iwlist');
-var _							= require('underscore');
-var exec 					= require('child_process').exec;
-// var httpProxy   = require('http-proxy');
+var iwconfig		= require('wireless-tools/iwconfig');
+var _				= require('underscore');
+var exec 			= require('child_process').exec;
+var io			  = require("socket.io");
 
-var local_config 				= require('./config.js');
-var sisbot_obj					= require('./sisbot.js');
-// var ansible 		= require('./ansible.js');
-// var api 					= require('./api/server.js')(config, null);
+var local_config 	= require('./config.js');
+var sisbot_obj		= require('./sisbot.js');
 
 var config = {};
 
@@ -32,29 +29,14 @@ var app = function(given_config,ansible) {
 	}
 	if (config.pi_serial == undefined) config.pi_serial = getserial();
 
-	/**************************** PROXY *******************************************/
-
-	// var proxy       = httpProxy.createServer();
-
 	/**************************** SERVICES ****************************************/
 
-	// var used_ports = [];
-	var services = {};
-	services.sisbot = sisbot_obj.init(config,ansible);
-	// console.log("Services:", config.services);
-	// _.each(config.services, function (service, key) {
-	//   if (service.address !== 'localhost') return this;
-	//
-	// 	console.log("Create Service", key, service);
-	//   var service_obj = require(service.dir + '/'+key+'.js');
-	// 	var local_config = require(service.dir + '/config.js');
-	// 	local_config = _.extend(config, local_config);
-	//
-	// });
+	var services	= {};
+	services.sisbot	= sisbot_obj.init(config, ansible);
 
 	/**************************** SERVER *******************************************/
 
-	var static             = new express();
+	var static			 = new express();
 
 	static.use(cors());
 	static.use(bodyParser.json());
@@ -86,6 +68,7 @@ var app = function(given_config,ansible) {
 
 		var cb		= function (err, resp) {
 			res.json({ err: err, resp: resp });
+			if (!err)	socket_update(resp);
 		};
 		try {
 			services[service][endpoint](data,cb);
@@ -94,7 +77,28 @@ var app = function(given_config,ansible) {
 		}
 	});
 
-	http.createServer(static).listen(config.servers.sisbot.port);
+	var server = http.createServer(static).listen(config.servers.sisbot.port);
+
+	/**************************** SOCKET.IO ***************************************/
+
+	var sockets			= { /* id: socket */	};
+	var socket_server	= io.listen(server);
+
+	socket_server.origins('*:*');
+
+	socket_server.on('connection', function(socket) {
+		if (!sockets[socket.id])	sockets[socket.id] = socket;
+
+		socket.on('disconnect', function(data) {
+			delete sockets[data.id];
+		});
+	});
+
+	function socket_update(data) {
+		_.each(sockets, function(socket, id) {
+			socket.emit('set', data);
+		});
+	}
 
 	console.log("Sisbot Server created");
 }
