@@ -39,7 +39,9 @@ var sisbot_state = Backbone.Model.extend({
 		is_internet_connected: "false",
 
 		wifi_network: "",
-		wifi_password: ""
+		wifi_password: "",
+		wifi_forget: "false", // forget wifi credentials on fail to connect (from cloud)
+		wifi_error: "false" // flag to know if should be trying to reconnect to wifi
 	},
 	initialize: function() {
 		//this.set({hostname: os.hostname()+".local", is_available: true});
