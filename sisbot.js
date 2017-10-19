@@ -939,7 +939,7 @@ var sisbot = {
 			var playlist = this.collection.get(active_playlist_id);
 			playlist.set_loop(data.value);
 
-			if (cb) cb(null, data.value);
+			if (cb) cb(null, [this.current_state.toJSON(), playlist.toJSON()]);
 		} else {
 			if (cb) cb('No current playlist, no change', null);
 		}
@@ -956,7 +956,7 @@ var sisbot = {
 
 			this.save(null, null);
 
-			if (cb) cb(null, playlist.toJSON());
+			if (cb) cb(null, [this.current_state.toJSON(), playlist.toJSON()]);
 		} else {
 			if (cb) cb('No current playlist, no change', null);
 		}
@@ -970,7 +970,7 @@ var sisbot = {
 
 		this.save(null, null);
 
-		if (cb)	cb(null, percent);
+		if (cb)	cb(null, this.current_state.toJSON());
 	},
 	set_autodim: function(data, cb) {
 		console.log('Sisbot set autodim', data);
@@ -981,7 +981,7 @@ var sisbot = {
 
 		this.save(null, null);
 
-		if (cb)	cb(null, percent);
+		if (cb)	cb(null, this.current_state.toJSON());
 	},
 	set_brightness: function(data, cb) {
 		console.log('Sisbot set brightness', data);
@@ -1011,7 +1011,7 @@ var sisbot = {
 
 		this.save(null, null);
 
-		if (cb)	cb(null, value);
+		if (cb)	cb(null, this.current_state.toJSON());
 	},
 	_validate_internet: function(data, cb) {
 		//console.log("Sisbot validate internet");
