@@ -81,6 +81,7 @@ var sisbot = {
 	ansible: null,
 	serial: null,
 	plotter: plotter,
+	socket_update: null,
 
 	collection: new Backbone.Collection(),
 	current_state: null,
@@ -95,9 +96,11 @@ var sisbot = {
 	_internet_retries: 0,
 	_changing_to_wifi: false,
 
-	init: function(config, session_manager) {
+	init: function(config, session_manager, socket_update) {
       var self = this;
       console.log("Init Sisbot");
+
+	  this.socket_update = socket_update;
 
       this.config = config;
 		if (this.config.autoplay) this._autoplay = this.config.autoplay;
@@ -205,8 +208,14 @@ var sisbot = {
 			if (playlist_id != "false") {
 				var playlist = self.collection.get(playlist_id);
 				self.current_state.set('active_track', playlist.get_next_track({ start_rho: self.current_state.get('_end_rho') }));
+
+				// update UI
+				self.socket_update(self.current_state.toJSON());
 			} else if (self.current_state.get('is_loop') != "true") {
 				self.current_state.set('active_track', {id: 'false'});
+
+				// update UI
+				self.socket_update(self.current_state.toJSON());
 			}
 		});
     	plotter.onStateChanged(function(newState, oldState) {
@@ -283,6 +292,9 @@ var sisbot = {
 					console.log("No Next Track", self.current_state.get('active_track'));
 				}
 			}
+
+			// update UI
+			self.socket_update(self.current_state.toJSON());
 		});
 
 		// connect

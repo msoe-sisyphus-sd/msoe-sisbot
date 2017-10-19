@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.2.0b',
+			version	: '1.2.1b',
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -45,7 +45,7 @@ var config = {
 			failed_home_rho: 0.2,
 			failed_home_th: 1.570796,
 			max_rand_retries: 10,
-			check_internet_interval: 300000, // every five minutes, // 1800000 once every half hour, confirm an internet connection
+			check_internet_interval: 300000, // every thirty minutes, // 1800000 once every half hour, confirm an internet connection
 			internet_retries: 5, // retry # of times before resetting to hotspot
 			retry_internet_interval: 3000, // three seconds later
 			wifi_error_retry_interval: 60000, // one minute

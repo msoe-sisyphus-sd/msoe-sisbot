@@ -32,7 +32,6 @@ var app = function(given_config,ansible) {
 	/**************************** SERVICES ****************************************/
 
 	var services	= {};
-	services.sisbot	= sisbot_obj.init(config, ansible);
 
 	/**************************** SERVER *******************************************/
 
@@ -95,10 +94,16 @@ var app = function(given_config,ansible) {
 	});
 
 	function socket_update(data) {
-		_.each(sockets, function(socket, id) {
-			socket.emit('set', data);
-		});
+		if (data != null) {
+			_.each(sockets, function(socket, id) {
+				socket.emit('set', data);
+			});
+		}
 	}
+
+	/**************************** SISBOT SERVICE ****************************************/
+
+	services.sisbot	= sisbot_obj.init(config, ansible, socket_update);
 
 	console.log("Sisbot Server created");
 }
