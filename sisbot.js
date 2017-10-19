@@ -1045,7 +1045,17 @@ var sisbot = {
     			self.current_state.set({is_internet_connected: returnValue, local_ip: self._getIPAddress()});
             }, 10000);
 
-        if (do_save) this.save(null, null);
+			if (cb) cb(null, returnValue);
+		});
+	},
+	_query_internet: function(time_to_check) {
+		if (this.current_state.get("is_hotspot") == "false") { // only bother if you are not a hotspot
+			var self = this;
+			this._internet_check = setTimeout(function() {
+				self._validate_internet(null, function(err, resp) {
+					if (err) return console.log("Internet check err", err);
+					if (resp == "true") {
+						console.log("Internet connected.",self.current_state.get("is_internet_connected"));
 
             			self._changing_to_wifi = false;
 						self.current_state.set({
