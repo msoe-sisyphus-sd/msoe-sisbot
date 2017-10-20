@@ -543,7 +543,7 @@ var sisbot = {
 
 		this.save(null, null);
 
-		if (cb) cb(null, [this.current_state.toJSON(), playlist.toJSON()]); // send back current_state and the playlist
+		if (cb) cb(null, [playlist.toJSON(), this.current_state.toJSON()]); // send back current_state and the playlist
 	},
 	remove_playlist: function(data, cb) {
 		console.log("Sisbot Remove Playlist", data);
@@ -599,7 +599,7 @@ var sisbot = {
 			self.save(null, null);
 			self.thumbnail_generate({ id: data.id }, function(err, resp) {
 				// do nothing. this generates the thumbnails in the app folder
-				if (cb) cb(null, [self.current_state.toJSON(), track.toJSON()]); // send back current_state and the track
+				if (cb) cb(null, [track.toJSON(), self.current_state.toJSON()]); // send back current_state and the track
 			});
 		});
     },
@@ -939,7 +939,7 @@ var sisbot = {
 			var playlist = this.collection.get(active_playlist_id);
 			playlist.set_loop(data.value);
 
-			if (cb) cb(null, [this.current_state.toJSON(), playlist.toJSON()]);
+			if (cb) cb(null, [playlist.toJSON(), this.current_state.toJSON()]);
 		} else {
 			if (cb) cb('No current playlist, no change', null);
 		}
@@ -956,7 +956,7 @@ var sisbot = {
 
 			this.save(null, null);
 
-			if (cb) cb(null, [this.current_state.toJSON(), playlist.toJSON()]);
+			if (cb) cb(null, [playlist.toJSON(), this.current_state.toJSON()]);
 		} else {
 			if (cb) cb('No current playlist, no change', null);
 		}

@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.2.1b',
+			version	: '1.2.2b',
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
