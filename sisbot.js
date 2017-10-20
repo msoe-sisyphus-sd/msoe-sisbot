@@ -388,7 +388,10 @@ var sisbot = {
 					playlist_obj.active_track_index = playlist_obj.sorted_tracks[0]; // make it start on the first of randomized list
 					//console.log("Send Playlist Tracks", playlist_obj.tracks);
 
-					self.set_playlist(playlist_obj, null);
+					self.set_playlist(playlist_obj, function(err, resp) {
+						if (err) return console.log("Set initial playlist", err);
+						self.socket_update(resp);
+					});
 				}
 				// else {
 				// 	var playlist = self.collection.get("F42695C4-AE32-4956-8C7D-0FF6A7E9D492").toJSON();
@@ -756,6 +759,8 @@ var sisbot = {
 			}
 		}
 
+		// tell sockets
+		this.socket_update(this.current_state.toJSON());
 		if (do_save) this.save(null, null);
 
 		if (cb)	cb(null, playlist.toJSON());
@@ -795,6 +800,7 @@ var sisbot = {
 			this._play_track(track.toJSON(), null);
 		}
 
+		this.socket_update(this.current_state.toJSON());
 		this.save(null, null);
 
 		if (cb)	cb(null, track.toJSON());
@@ -825,7 +831,7 @@ var sisbot = {
 
 							this.save(null, null);
 
-							if (cb)	cb(null, 'next track '+track_obj.name);
+							if (cb)	cb(null, [track.toJSON(),self.current_state.toJSON()]);
 						} else {
 							console.log("Continuous play not possible, skip this", track_obj.name);
 
