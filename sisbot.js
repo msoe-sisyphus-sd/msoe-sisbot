@@ -472,11 +472,25 @@ var sisbot = {
 		}
 	},
 	save: function(data, cb) {
-		console.log("Sisbot Save", data);
 		var self = this;
-		// TODO: merge the given data into collection and save
+		console.log("Sisbot Save", data);
 		if (!this._saving) {
-		this._saving = true;
+			this._saving = true;
+
+			// TODO: merge the given data into collection and save
+			if (data != null) {
+				if (!_.isArray(data)) data = [data];
+				_.each(data, function(obj) {
+					// extra checks if passing sisbot changes
+					if (obj.id == self.current_state.id) {
+						if (obj.state) delete obj.state; // don't listen to updates to this, plotter is in control of this
+						if (obj.is_autodim != self.current_state.get('is_autodim')) self.set_autodim({value: "true"}, null);
+						if (obj.brightness != self.current_state.get('brightness')) self.set_brightness({value: obj.brightness}, null);
+					}
+					self.collection.add(obj, {merge:true});
+				});
+			}
+
 			fs.writeFile(this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.sisbot_state, JSON.stringify(this.collection), function(err) {
 				self._saving = false;
 				if (err) return console.log(err);
@@ -1019,6 +1033,7 @@ var sisbot = {
 
 		if (cb)	cb(null, this.current_state.toJSON());
 	},
+	/* --------------- WIFI ---------------------*/
 	_validate_internet: function(data, cb) {
 		//console.log("Sisbot validate internet");
 		var self = this;
@@ -1262,6 +1277,7 @@ var sisbot = {
 			}
 		});
 	},
+	/* ------------------------------------------ */
 	install_updates: function(data, cb) {
 		var self = this;
 		console.log("Sisbot Install Updates", data);
