@@ -814,10 +814,10 @@ var sisbot = {
 			this._play_track(track.toJSON(), null);
 		}
 
-		this.socket_update(this.current_state.toJSON());
+		// this.socket_update(this.current_state.toJSON());
 		this.save(null, null);
 
-		if (cb)	cb(null, track.toJSON());
+		if (cb)	cb(null, [this.current_state.toJSON(), track.toJSON()]);
 	},
 	_play_track: function(data, cb) {
 		var self = this;
@@ -1157,11 +1157,15 @@ var sisbot = {
 					is_hotspot: "false"
 				});
 
-				console.log("New State:", self.current_state.toJSON());
+				// console.log("New State:", self.current_state.toJSON());
 				self.save(null, null);
 
 				if (cb) cb(null, self.current_state.toJSON());
 
+				// disconnect all socket connections first
+				this.socket_update("disconnect");
+
+				console.log("Connect To Wifi", data.ssid);
 				exec('sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "'+data.ssid+'" "'+data.psk+'"', (error, stdout, stderr) => {
 					if (error) return console.error('exec error:',error);
 
@@ -1187,6 +1191,8 @@ var sisbot = {
 		// This will remove old network/password
 		this.current_state.set({ wifi_network: "", wifi_password: "", wifi_error: "false" });
 
+		this.save(null, null);
+
 		this.reset_to_hotspot(data, cb);
 	},
 	reset_to_hotspot: function(data, cb) {
@@ -1205,6 +1211,10 @@ var sisbot = {
 		});
 		if (cb) cb(null, this.current_state.toJSON());
 
+		// disconnect all socket connections first
+		this.socket_update("disconnect");
+
+		console.log("Start_hotspot");
 		exec('sudo /home/pi/sisbot-server/sisbot/start_hotspot.sh', (error, stdout, stderr) => {
 			if (error) return console.error('exec error:',error);
 			console.log("start_hotspot", stdout);

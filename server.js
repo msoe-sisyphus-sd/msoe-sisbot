@@ -86,9 +86,13 @@ var app = function(given_config,ansible) {
 	socket_server.origins('*:*');
 
 	socket_server.on('connection', function(socket) {
-		if (!sockets[socket.id])	sockets[socket.id] = socket;
+		if (!sockets[socket.id]) {
+			console.log("Socket connect: "+socket.id);
+			sockets[socket.id] = socket;
+		}
 
 		socket.on('disconnect', function(data) {
+			console.log("Socket disconnect: ", data);
 			delete sockets[data.id];
 		});
 	});
@@ -96,7 +100,11 @@ var app = function(given_config,ansible) {
 	function socket_update(data) {
 		if (data != null) {
 			_.each(sockets, function(socket, id) {
-				socket.emit('set', data);
+				if (data == "disconnect") {
+					socket.disconnect(true);
+				} else {
+					socket.emit('set', data);
+				}
 			});
 		}
 	}

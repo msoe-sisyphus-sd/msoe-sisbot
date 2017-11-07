@@ -150,11 +150,11 @@ function checkPhoto() { //autodimming functionality:
 
 			if (photoOut != 0) {
 				sp.write("SE,1," + photoOut +"\r");
-				console.log("SE,1," + photoOut);
+				// console.log("SE,1," + photoOut);
 			}
 			else {
 				sp.write("SE,0\r");
-			  console.log("SE,0");
+			//   console.log("SE,0");
 			}
 			photoAvgOld = photoAvg;
 			lastPhotoOut = photoOut;
@@ -168,11 +168,11 @@ function checkPhoto() { //autodimming functionality:
 
 				if (photoOut != 0) {
 					sp.write("SE,1," + photoOut +"\r");
-					console.log("SE,1," + photoOut);
+					// console.log("SE,1," + photoOut);
 				}
 				else {
 					sp.write("SE,0\r");
-			    console.log("SE,0");
+			    // console.log("SE,0");
 				}
 				ctr = 0;
 				photoAvgOld = photoAvg;
@@ -528,13 +528,13 @@ function goThetaHome() {
 		thetaHomingStr = "SM,"+ baseMS + "," + HOMETHSTEPS * thDirSign+ "," + rCompSteps + "\r";
 
 		THETA_HOME_COUNTER++;
-		if (config.debug) console.log (THETA_HOME_COUNTER);
+		// if (config.debug) console.log (THETA_HOME_COUNTER);
 
 		sp.write(thetaHomingStr, function(err, res) {
 			sp.drain(function(err, result) {
 				if (err) {console.log(err, result);}
 				else {
-					if (config.debug) console.log (thetaHomingStr);
+					// if (config.debug) console.log (thetaHomingStr);
 					WAITING_THETA_HOMED = true;
 
 					goThetaHome();
@@ -548,12 +548,12 @@ function goThetaHome() {
 
 		if (RETESTCOUNTER < RETESTNUM) {//not fully confirmed yet:
 			RETESTCOUNTER++;
-			if (config.debug) console.log("RETESTCOUNTER: " + RETESTCOUNTER);
+			// if (config.debug) console.log("RETESTCOUNTER: " + RETESTCOUNTER);
 			sp.write(thetaHomeQueryStr, function(err, res) {
 				sp.drain(function(err, result) {
 					if (err) {console.log(err, result);}
 					else {
-						if (config.debug) console.log (thetaHomeQueryStr);
+						// if (config.debug) console.log (thetaHomeQueryStr);
 						WAITING_THETA_HOMED = true;
 						//allow time for return of sensor state:
 						setTimeout(goThetaHome, 15);
@@ -568,12 +568,12 @@ function goThetaHome() {
 		else { //passed retesting so truly home:
 			thAccum = 0;
 			THETA_HOME_COUNTER = 0;
-			console.log('THETA AT HOME!');
+			// console.log('THETA AT HOME!');
 			RETESTCOUNTER = 0;
 			WAITING_THETA_HOMED = false;
 			//WAITING_RHO_HOMED = true;
 
-			console.log('finding R home...');
+			//console.log('finding R home...');
 
 			setTimeout(goRhoHome, 150);
 
@@ -616,13 +616,13 @@ function goRhoHome() {
 		rhoHomingStr = "SM,"+ baseMS + "," + 0 + "," + -HOMERSTEPS * rDirSign + "\r";
 
 		RHO_HOME_COUNTER++;
-		console.log (RHO_HOME_COUNTER);
+		// console.log (RHO_HOME_COUNTER);
 
 		sp.write(rhoHomingStr, function(err, res) {
 			sp.drain(function(err, result) {
 				if (err) {console.log(err, result);}
 				else {
-					console.log (rhoHomingStr);
+					// console.log (rhoHomingStr);
 					WAITING_RHO_HOMED = true;
 
 					goRhoHome();
@@ -636,7 +636,7 @@ function goRhoHome() {
 
 		if (RETESTCOUNTER < RETESTNUM) {//not fully confirmed yet:
 			RETESTCOUNTER++;
-			console.log("RETESTCOUNTER: " + RETESTCOUNTER);
+			// console.log("RETESTCOUNTER: " + RETESTCOUNTER);
 			sp.write(rhoHomeQueryStr, function(err, res) {
 				sp.drain(function(err, result) {
 					if (err) {console.log(err, result);}
@@ -654,13 +654,13 @@ function goRhoHome() {
 		else { //passed retesting so truly home:
 			thAccum = 0;
 			THETA_HOME_COUNTER = 0;
-			console.log('THETA AT HOME!');
+			// console.log('THETA AT HOME!');
 			RETESTCOUNTER = 0;
 			WAITING_THETA_HOMED = false;
 
 			rAccum = 0;
 			RHO_HOME_COUNTER = 0;
-			console.log('RHO AT HOME!');
+			// console.log('RHO AT HOME!');
 			RETESTCOUNTER = 0;
 			WAITING_RHO_HOMED = false;
 
@@ -757,7 +757,7 @@ function reportRgap() {
   Rinfile = verts[0].r * plotRadius;
   //console.log('Ractual: ' + Ractual);
   //console.log('Rinfile: ' + Rinfile);
-  console.log('Rgap: ' + (Ractual - Rinfile));
+  // console.log('Rgap: ' + (Ractual - Rinfile));
   logEvent('Rgap: ' + (Ractual - Rinfile));
   logEvent('thAccum: ' + thAccum + '  rAccum: ' + rAccum);
 }
@@ -805,7 +805,7 @@ function parseReceivedSerialData(data) {
 	//remove any line breaks in string:
 	data = String(data).replace(/(\r\n|\n|\r)/gm,"");
 
-  if (config.debug) console.log("in " + data);
+  // if (config.debug) console.log("in " + data);
   parts = String(data).split(',');
 
   if (parts[0] == '!')  {console.log("EBB error: " + data);}
@@ -942,7 +942,7 @@ module.exports = {
     thSPRad = thSPRev / (2* Math.PI);
 
     THETA_HOME_MAX =  Math.round(thSPRev * 1.03 / HOMETHSTEPS);//3% extra
-		console.log('T H MAX= '+THETA_HOME_MAX);
+		// console.log('T H MAX= '+THETA_HOME_MAX);
     RHO_HOME_MAX =  Math.round(rSPInch * (plotRadius + 0.25) / HOMERSTEPS);// 1/4" extra
   },
 
