@@ -1109,7 +1109,7 @@ var sisbot = {
 
 			// Make sure password is valid
 			//ValidPasswordRegex = new RegExp("^([a-zA-Z0-9\d$@$!%*?&]{8,64})$");
-			if (/^([^\s"]{8,64})$/g.test(data.psk)) {
+			if (/^([^\n\r"]{8,64})$/g.test(data.psk)) {
 				self.current_state.set({
 					is_available: "false",
 					reason_unavailable: "connect_to_wifi",
@@ -1321,13 +1321,13 @@ var sisbot = {
 			    'http://'+address+'/sisbot/exists',
 			    { },
 			    function (error, response, body) {
-		        if (!error && response.statusCode == 200) {
-							console.log("Request Exists:", response, body);
-	            if (cb) cb(null, body);
-		        } else {
-							if (response) console.log("Request Not found:", response.statusCode);
-							if (cb) cb("Not found", null);
-						}
+			        if (!error && response.statusCode == 200) {
+						console.log("Request Exists:", response, body);
+		            if (cb) cb(null, body);
+			        } else {
+						if (response) console.log("Request Not found:", response.statusCode);
+						if (cb) cb("Not found", null);
+					}
 			    }
 			);
 		});

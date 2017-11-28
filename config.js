@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.0.7', // fix wifi password check
+			version	: '1.0.8', // fix wifi password check
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
