@@ -38,6 +38,10 @@ var sisbot_state = Backbone.Model.extend({
 		is_hotspot: "true",
 		is_internet_connected: "false",
 
+		is_sleeping: "false",
+		sleep_time: "false", // time to start sleep: { minute: ##, hour: ## }
+		wake_time: "false", // time to wake up: { minute: ##, hour: ## }
+
 		wifi_network: "",
 		wifi_password: "",
 		wifi_forget: "false", // forget wifi credentials on fail to connect (from cloud)

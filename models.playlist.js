@@ -118,6 +118,9 @@ var playlist = Backbone.Model.extend({
 		}
 		if (track_index >= 0) return_value = tracks[sorted_tracks[track_index]].id;
 
+		this.set("active_track_index", track_index);
+		this.set("active_track_id", return_value);
+
  		// check for last track & looping so we can reshuffle if needed
 		if (track_index >= tracks.length-1 && this.get("is_loop") == "true") {
 			if (this.get("is_shuffle") == "true") {
@@ -127,9 +130,6 @@ var playlist = Backbone.Model.extend({
 
 			this._update_tracks(data); // make sure to recalculate reverse values
 		}
-
-		this.set("active_track_index", track_index);
-		this.set("active_track_id", return_value);
 
 		return return_value;
 	},

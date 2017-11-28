@@ -1,19 +1,21 @@
-var os = require('os');
-var _ = require('underscore');
-var exec = require('child_process').exec;
-var spawn = require('child_process').spawn;
-var CSON = require('cson');
-var fs = require('fs');
-var iwconfig = require('wireless-tools/iwconfig');
-var iwlist = require('wireless-tools/iwlist');
-var uuid = require('uuid');
-var Backbone = require('backbone');
-var Ping = require('ping-lite');
-var request = require('request');
-var webshot = require('webshot');
-var util = require('util');
-var bleno = require('bleno');
-var io = require("socket.io");
+var os 			= require('os');
+var _ 			= require('underscore');
+var exec 		= require('child_process').exec;
+var spawn 		= require('child_process').spawn;
+var CSON 		= require('cson');
+var fs 			= require('fs');
+var iwconfig 	= require('wireless-tools/iwconfig');
+var iwlist 		= require('wireless-tools/iwlist');
+var uuid 		= require('uuid');
+var Backbone 	= require('backbone');
+var Ping 		= require('ping-lite');
+var request 	= require('request');
+var webshot 	= require('webshot');
+var util 		= require('util');
+var scheduler 	= require('node-schedule');
+var bleno 		= require('bleno');
+var io 			= require('socket.io');
+var moment 		= require('moment');
 
 /**************************** BLE *********************************************/
 
@@ -82,6 +84,9 @@ var sisbot = {
 	serial: null,
 	plotter: plotter,
 	socket_update: null,
+
+	sleep_timer: null,
+	wake_timer: null,
 
 	collection: new Backbone.Collection(),
 	current_state: null,
@@ -210,7 +215,7 @@ var sisbot = {
 				self.current_state.set('active_track', playlist.get_next_track({ start_rho: self.current_state.get('_end_rho') }));
 
 				// update UI
-				self.socket_update(self.current_state.toJSON());
+				self.socket_update([self.current_state.toJSON(), playlist.toJSON()]);
 			} else if (self.current_state.get('is_loop') != "true") {
 				self.current_state.set('active_track', {id: 'false'});
 
@@ -309,6 +314,12 @@ var sisbot = {
 				this.change_to_wifi({ ssid: self.current_state.get("wifi_network"), psk: self.current_state.get("wifi_password") }, null);
 			}
 		}
+
+		// sleep/wake timers
+		this.set_sleep_time({
+			sleep_time: this.current_state.get('sleep_time'),
+			wake_time: this.current_state.get('wake_time')
+		}, null);
 
 		return this;
   	},
@@ -628,24 +639,67 @@ var sisbot = {
         });
     },
     remove_track: function(data, cb) {
+		var self = this;
         console.log("Sisbot Remove Track", data);
 
         // remove from collection
         this.collection.remove(data.id);
 
         // remove from current_state
-        var tracks = this.current_state.get("track_ids");
+        var all_tracks = this.current_state.get("track_ids");
         var clean_tracks = [];
-        _.each(tracks, function(track_id) {
+        _.each(all_tracks, function(track_id) {
             if (track_id != data.id) clean_tracks.push(track_id);
         });
         this.current_state.set("track_ids", clean_tracks);
 
+		// remove from playlists
+		var playlists = this.current_state.get("playlist_ids");
+		var return_objs = [];
+		_.each(playlists, function(playlist_id) {
+			var playlist = self.collection.get(playlist_id);
+			var did_remove = false;
+
+			var tracks = playlist.get("tracks");
+	        var clean_tracks = [];
+			// remove all instances of the track_id
+			_.each(tracks, function(track_obj) {
+				if (track_obj.id != data.id) clean_tracks.push(track_obj);
+				else did_remove = true;
+			});
+
+			if (did_remove) {
+		        playlist.set("tracks", clean_tracks);
+
+				// fix the sorted order, or just reshuffle
+				playlist.set_shuffle(playlist.get('is_shuffle'));
+
+				return_objs.push(playlist.toJSON());
+			}
+		});
+
+		// add sisbot_state
+		return_objs.push(this.current_state.toJSON());
+
         this.save(null, null);
 
-        if (cb) cb(null, this.current_state.toJSON());
+        if (cb) cb(null, return_objs);
     },
     /*********************** GENERATE THUMBNAILS ******************************/
+	_regenerate_thumbnails: function(data, cb) {
+		var self = this;
+
+		function gen_next_track() {
+			if (all_tracks.length > 0)
+				self.thumbnail_generate({id: all_tracks.pop()}, gen_next_track);
+			else
+				if (cb) cb(null, "Complete");
+		}
+
+		var all_tracks = this.current_state.get("track_ids");
+		if (all_tracks.length > 0)
+			self.thumbnail_generate({id: all_tracks.pop()}, gen_next_track);
+	},
     thumbnail_generate: function(data, cb) {
         // @id
         var self = this;
@@ -657,11 +711,18 @@ var sisbot = {
                 else return;
             }
 
-            data.dimensions = 400;
-            data.raw_coors = raw_coors;
-            var num_resp = 2;
+            var num_resp = 3; // number of thumnails to generate before sending resp
             var cb_err = null;
 
+            data.dimensions = 400;
+            data.raw_coors = raw_coors;
+            self._thumbnails_generate(data, function(err, resp) {
+                if (err) cb_err = err;
+                check_cb();
+            });
+
+            data.dimensions = 100;
+            data.raw_coors = raw_coors;
             self._thumbnails_generate(data, function(err, resp) {
                 if (err) cb_err = err;
                 check_cb();
@@ -669,7 +730,6 @@ var sisbot = {
 
             data.dimensions = 50;
             data.raw_coors = raw_coors;
-
             self._thumbnails_generate(data, function(err, resp) {
                 if (err) cb_err = err;
                 check_cb();
@@ -1111,7 +1171,7 @@ var sisbot = {
         // THIS IS HELPFUL FOR ANDROID DEVICES
         var self = this;
 
-        console.log('LETS TRY AND GET TO CLOUD', this.current_state.toJSON());
+        // console.log('LETS TRY AND GET TO CLOUD', this.current_state.toJSON());
 
         request.post('https://api.sisyphus.withease.io/sisbot_state/' + this.current_state.id, {
                 form: {
@@ -1147,8 +1207,8 @@ var sisbot = {
 			this._internet_retries = 0; // clear retry count
 
 			// Make sure password is valid
-			ValidPasswordRegex = new RegExp("^([a-zA-Z0-9\d$@$!%*?&]{8,64})$");
-			if (data.psk.search(ValidPasswordRegex) == 0) {
+			// ValidPasswordRegex = new RegExp("^([^\s\"]{8,64})$");
+			if (/^([^\s"]{8,64})$/g.test(data.psk)) {
 				self.current_state.set({
 					is_available: "false",
 					reason_unavailable: "connect_to_wifi",
@@ -1286,6 +1346,85 @@ var sisbot = {
 				}, self.config.wifi_error_retry_interval);
 			}
 		});
+	},
+	/* ------------- Sleep Timer ---------------- */
+	test_time: function(data, cb) {
+		console.log("Test Time:", data);
+		var time = moment(data.time);
+		if (cb) cb(null, { time: moment().format(), hour: time.hour(), minute: time.minute() });
+	},
+	set_sleep_time: function(data, cb) {
+		var self = this;
+		var now_date = new Date(Date.now());
+		console.log("Set Sleep Time:", data, this.current_state.get('is_sleeping'));
+
+		// cancel old timers
+		if (this.sleep_timer != null) {
+			this.sleep_timer.cancel();
+			this.sleep_timer = null;
+		}
+		if (this.wake_timer != null) {
+			this.wake_timer.cancel();
+			this.wake_timer = null;
+		}
+
+		// set timer
+		if (data.sleep_time != "false") {
+			var sleep = moment(data.sleep_time);
+			var cron = sleep.minute()+" "+sleep.hour()+" * * *";
+			console.log("Sleep", cron);
+
+			this.sleep_timer = scheduler.scheduleJob(cron, function(){
+				self.sleep_sisbot(null, null);
+			});
+		}
+		if (data.wake_time != "false") {
+			var wake = moment(data.wake_time);
+			var cron = wake.minute()+" "+wake.hour()+" * * *";
+			console.log("Wake", cron);
+
+			this.wake_timer = scheduler.scheduleJob(cron, function(){
+				self.wake_sisbot(null, null);
+			});
+		}
+
+		// save to state
+		this.current_state.set({ sleep_time: data.sleep_time, wake_time: data.wake_time });
+
+		this.save(null, null);
+
+		if (cb) cb(null, this.current_state.toJSON());
+	},
+	wake_sisbot: function(data, cb) {
+		console.log("Wake Sisbot", this.current_state.get('is_sleeping'));
+		if (this.current_state.get('is_sleeping') != 'false') {
+			// turn lights back on
+			this.set_brightness({value: this.current_state.get('_brightness')}, null); // reset to remembered value
+
+			// play track
+			this.play(null, null);
+
+			this.current_state.set('is_sleeping', 'false');
+
+			this.socket_update(this.current_state.toJSON());
+		}
+		if (cb) cb(null, this.current_state.toJSON());
+	},
+	sleep_sisbot: function(data, cb) {
+		console.log("Sleep Sisbot", this.current_state.get('is_sleeping'));
+		if (this.current_state.get('is_sleeping') == 'false') {
+			// fade lights out
+			this.current_state.set('_brightness', this.current_state.get('brightness')); // remember, so wake resets it
+			this.set_brightness({value: 0}, null);
+
+			// pause track
+			this.pause(null, null);
+
+			this.current_state.set('is_sleeping', 'true');
+
+			this.socket_update(this.current_state.toJSON());
+		}
+		if (cb) cb(null, this.current_state.toJSON());
 	},
 	/* ------------------------------------------ */
 	install_updates: function(data, cb) {
