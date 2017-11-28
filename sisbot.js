@@ -1108,8 +1108,8 @@ var sisbot = {
 			this._internet_retries = 0; // clear retry count
 
 			// Make sure password is valid
-			ValidPasswordRegex = new RegExp("^([a-zA-Z0-9\d$@$!%*?&]{8,64})$");
-			if (data.psk.search(ValidPasswordRegex) == 0) {
+			//ValidPasswordRegex = new RegExp("^([a-zA-Z0-9\d$@$!%*?&]{8,64})$");
+			if (/^([^\s"]{8,64})$/g.test(data.psk)) {
 				self.current_state.set({
 					is_available: "false",
 					reason_unavailable: "connect_to_wifi",
