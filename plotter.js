@@ -1,7 +1,9 @@
-var util = require('util');
-var path = require('path');
-var fs = require('fs');// for file reading
-var config = require('./config');
+var util 	= require('util');
+var path 	= require('path');
+var fs 		= require('fs');// for file reading
+var _ 		= require('underscore');
+var moment 	= require('moment');
+var config 	= require('./config');
 
 {//globals:
 var Vball=2,  Accel = 2, MTV=0.5, Vmin = 0.1, Voverride = 1;
@@ -14,8 +16,8 @@ var nestedAxisSign = 1, thDirSign = 1, rDirSign = -1;
 var rthAsp = rSPRev / thSPRev; //r-th aspect ratio
 var rCrit = Vball / MTV;
 var thSPRad //= thSPRev / (2* Math.PI);
-var accelSegs = Vball * segRate /(2 * Accel);  //console.log('accelSegs: '+accelSegs );
-var VminSegs =  Vmin * segRate /(2 * Accel); // console.log('VminSegs:'+VminSegs);
+var accelSegs = Vball * segRate /(2 * Accel);  //logEvent(1, 'accelSegs: '+accelSegs );
+var VminSegs =  Vmin * segRate /(2 * Accel); // logEvent(1, 'VminSegs:'+VminSegs);
 var ASfin = accelSegs;
 var ASindex = VminSegs; //accelSegs index
 var baseMS = 1000/segRate; //msec per segment, no V adjustment
@@ -115,17 +117,17 @@ function checkPhoto() { //autodimming functionality:
  		photo = rawPhoto;
 		if (photo > 1023) {photo = 1023;}
 		if (photo < photoMin) {photo = photoMin;} //photomin?
-		//console.log("raw photo = " + photo)
+		//logEvent(1, "raw photo = " + photo)
 
 		photoSum = photoArray.reduce(add, 0);
-        //console.log("photoSum = " + photoSum)
+        //logEvent(1, "photoSum = " + photoSum)
 
 		photoSum -= photoArray.shift(); //delete first val in array and subtract from sum
 		photoSum += photoArray[photoArray.push(photo) - 1]; //add val to end and add it
 		photoAvg = photoSum / photoArraySize;
 		photoOut = photoAvg;
 
-		//console.log("photoAvg = " + photoAvg);
+		//logEvent(1, "photoAvg = " + photoAvg);
 
 
 		if (sliderBrightness > 0.5){
@@ -139,40 +141,40 @@ function checkPhoto() { //autodimming functionality:
 		if ((photoOut> 0) && (photoOut < photoMin)) {photoOut = photoMin;}
 		if (photoOut > 1023) {photoOut = 1023};
 
-		//console.log("photoOut = " + photoOut);
+		//logEvent(1, "photoOut = " + photoOut);
 
 		delta = Math.abs(photoOut - lastPhotoOut);
 		if (lastPhotoOut > 0) {delta /= lastPhotoOut}
 
-		//console.log("delta = " + delta);
+		//logEvent(1, "delta = " + delta);
 
-		if ( delta > .3 ) {
+		if ( delta >= .5 ) {
 
 			if (photoOut != 0) {
 				sp.write("SE,1," + photoOut +"\r");
-				// console.log("SE,1," + photoOut);
+				//console.log("SE,1," + photoOut);
 			}
 			else {
 				sp.write("SE,0\r");
-			//   console.log("SE,0");
+			  	//console.log("SE,0");
 			}
 			photoAvgOld = photoAvg;
 			lastPhotoOut = photoOut;
 		}
 
-
+		/*
 		if ( (delta > .1) && (delta < .3)) {
 			ctr++;
-			//console.log("ctr = " + ctr);
+			//logEvent(1, "ctr = " + ctr);
 			if (ctr > certain){
 
 				if (photoOut != 0) {
 					sp.write("SE,1," + photoOut +"\r");
-					// console.log("SE,1," + photoOut);
+					// logEvent(1, "SE,1," + photoOut);
 				}
 				else {
 					sp.write("SE,0\r");
-			    // console.log("SE,0");
+			    // logEvent(1, "SE,0");
 				}
 				ctr = 0;
 				photoAvgOld = photoAvg;
@@ -182,6 +184,7 @@ function checkPhoto() { //autodimming functionality:
 		else{
 			ctr = 0;
 		}
+		*/
   }
 
 	if (STATUS != 'homing'){ //stop photosensing if homing
@@ -251,7 +254,7 @@ function nextMove(mi) {
   var rStepsOld, rStepsNew, rStepsMove, rStepsComp, rStepsSeg, rLOsteps;
   var thOld, rOld, thNew, rNew;
   var headingNow;
-  // console.log(util.inspect(process.memoryUsage()));
+  // logEvent(1, util.inspect(process.memoryUsage()));
 
   // if `mi` isn't set, we're starting a new track, so start at zero.
   mi = mi || 0;
@@ -264,9 +267,9 @@ function nextMove(mi) {
 	*/
 
   if (mi >= miMax){
-    console.log('all moves done');
-    console.log('thAccum = ' + thAccum);
-    console.log('rAccum = ' + rAccum);
+    logEvent(1, 'all moves done');
+    logEvent(1, 'thAccum = ' + thAccum);
+    logEvent(1, 'rAccum = ' + rAccum);
     verts = []; //clear verts array
 
     onFinishTrack();
@@ -277,7 +280,7 @@ function nextMove(mi) {
   thOld = verts[mi].th; rOld = verts[mi].r;
 
   if (mi == 0) {
-    console.log('COUNTER:', ++COUNTER);
+    logEvent(1, 'COUNTER:', ++COUNTER);
     correctGap();
   }
 
@@ -305,7 +308,7 @@ function nextMove(mi) {
   if (segs == 0) {
     segs = 1;
     fracSeg = segsReal;
-    //console.log('TINY MOVE, frac= '+segsReal)
+    //logEvent(1, 'TINY MOVE, frac= '+segsReal)
   }
   else fracSeg=1;
 
@@ -323,15 +326,15 @@ function nextMove(mi) {
 
   //rStepsComp =  Math.floor(thNew / (2 * Math.PI) * rSPRev ) -
               //      Math.floor(thOld / (2 * Math.PI) * rSPRev )  * nestedAxisSign;
-//  console.log(rStepsComp + '*');
+//  logEvent(1, rStepsComp + '*');
 
   rStepsComp = Math.floor(thStepsNew * rthAsp * nestedAxisSign) -
                     Math.floor(thStepsOld * rthAsp * nestedAxisSign);
 
-  //console.log(rStepsComp + '');
+  //logEvent(1, rStepsComp + '');
 
   //rStepsComp = Math.floor(thStepsMove * rthAsp )* nestedAxisSign;
-  //console.log(rStepsComp + '*');
+  //logEvent(1, rStepsComp + '*');
 
 
   rStepsMove += rStepsComp;
@@ -342,7 +345,7 @@ function nextMove(mi) {
   rStepsSeg = Math.floor(rStepsMove / segs);
   rLOsteps = rStepsMove - rStepsSeg * segs; //r Left Over steps
 
-  //console.log('move ' + mi + ' of ' + miMax);
+  //logEvent(1, 'move ' + mi + ' of ' + miMax);
 
   nextSeg(mi, miMax,0,segs, thStepsSeg, rStepsSeg,
         thLOsteps, rLOsteps, 0, 0, fracSeg);
@@ -358,14 +361,14 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg,
   var rSeg, rEffect, rFactor1, rFactor2;
 
   if (si==siMax){
-    //console.log('move '+mi+' done, ' + counter + ' segs');
+    //logEvent(1, 'move '+mi+' done, ' + counter + ' segs');
     mi++;
     nextMove(mi);
     return;
   }
   //ACCEL/DECEL ---------------------------
   if (!pauseRequest){
-    //console.log(ASindex);
+    //logEvent(1, ASindex);
     if ((ASindex > ASfin) && (ASindex - ASfin > siMax-si)) ASindex--;//decel;
     else {
       if (ASindex < accelSegs) ASindex++; //accel
@@ -373,11 +376,11 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg,
     }
   }
   else {  //pause requested:
-    console.log('decelerating...');
-    //console.log(ASindex);
+    logEvent(1, 'decelerating...');
+    //logEvent(1, ASindex);
     if (ASindex <= VminSegs) {
       ASindex = VminSegs;
-      console.log('PAUSED, waiting...');
+      logEvent(1, 'PAUSED, waiting...');
       paused = true;
       pauseRequest = false;
       setStatus('waiting');
@@ -397,19 +400,19 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg,
   msec *= Math.sqrt(accelSegs / ASindex);
   msec /= Voverride;
   msec *= fracSeg;
-  //console.log(fracSeg);
+  //logEvent(1, fracSeg);
   //------------------------------------
 
   rSeg = (rAccum - thAccum * rthAsp * nestedAxisSign) * rDirSign/ rSPInch;
   RSEG = rSeg;
-  //console.log('rSeg: ' + Math.floor(rSeg*1000)/1000);
+  //logEvent(1, 'rSeg: ' + Math.floor(rSeg*1000)/1000);
   if (balls == 1) rEffect = rSeg; //sis
   else rEffect = plotRadius/2 + Math.abs(Radius/2 - rSeg); //tant
 
   if (rEffect > rCrit) { //ball is outside rCrit:
       rFactor1 = Math.sqrt((RDIST * RDIST +
                   THRAD * THRAD * rEffect * rEffect)) / MOVEDIST;
-      //console.log('rFactor1: ' + rFactor1);
+      //logEvent(1, 'rFactor1: ' + rFactor1);
       msec *= rFactor1;
   }
   else { //ball is inside rCrit-- this is shaky at best...
@@ -420,7 +423,7 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg,
       rFactor2 = Math.abs((RDIST / MOVEDIST) * (rCrit / RF2MIN));
     }
     rFactor2 *= 0.7; //just empirical tweak downward
-    //console.log('rFactor2: ' + rFactor2);
+    //logEvent(1, 'rFactor2: ' + rFactor2);
     if (rFactor2 < 1) rFactor2 = 1;
     msec *= rFactor2;
   }
@@ -451,9 +454,9 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg,
 
   sp.write(cmd, function(err, res) {
     sp.drain(function(err, result) {
-      if (err) {console.log(err, result);}
+      if (err) {logEvent(2, err, result);}
       else {
-        //console.log (cmd);
+        //logEvent(1, cmd);
         si++;
         thAccum += thStepsOut;
         rAccum += rStepsOut;
@@ -470,18 +473,18 @@ function lookAhead(mi, heading) {
     var LAthDist = (verts[mi+2].th - verts[mi+1].th) * rCrit;
     var LArDist = (verts[mi+2].r - verts[mi+1].r) * plotRadius;
 
-    //console.log('current heading: '+ heading);
+    //logEvent(1, 'current heading: '+ heading);
 
     var LAheading = Math.atan2(LArDist, LAthDist)
-    //console.log('LA heading: '+ LAheading)
+    //logEvent(1, 'LA heading: '+ LAheading)
 
     var dHeading = LAheading - heading;
     dHeading = Math.abs(dHeading);
 
     var inertiaFactor = Math.sin(dHeading/2);
-    //console.log('inertiaFactor: '+ inertiaFactor);
+    //logEvent(1, 'inertiaFactor: '+ inertiaFactor);
     ASfin = accelSegs*(1-inertiaFactor);//+1?
-    //console.log('ASfin: '+ ASfin);
+    //logEvent(1, 'ASfin: '+ ASfin);
 }
 
 function go() {
@@ -501,7 +504,7 @@ function goThetaHome() {
   if (pauseRequest) {
     pauseRequest = false;
     setStatus('waiting');
-    console.log('theta homing aborted');
+    logEvent(1, 'theta homing aborted');
 
 		setTimeout(checkPhoto, photoMsec); //restart photosensing for autodim
 
@@ -509,8 +512,7 @@ function goThetaHome() {
   }
 
   if (THETA_HOME_COUNTER == THETA_HOME_MAX) {
-    console.log('Failed to find Theta home!');
-    logEvent('Th homing failure ');
+    logEvent(2, 'Failed to find Theta home!');
     //setStatus('waiting');
 		thAccum = 0;
 		WAITING_THETA_HOMED = false;
@@ -528,13 +530,13 @@ function goThetaHome() {
 		thetaHomingStr = "SM,"+ baseMS + "," + HOMETHSTEPS * thDirSign+ "," + rCompSteps + "\r";
 
 		THETA_HOME_COUNTER++;
-		// if (config.debug) console.log (THETA_HOME_COUNTER);
+		// if (config.debug) logEvent(1, THETA_HOME_COUNTER);
 
 		sp.write(thetaHomingStr, function(err, res) {
 			sp.drain(function(err, result) {
-				if (err) {console.log(err, result);}
+				if (err) {logEvent(2, err, result);}
 				else {
-					// if (config.debug) console.log (thetaHomingStr);
+					// if (config.debug) logEvent(1, thetaHomingStr);
 					WAITING_THETA_HOMED = true;
 
 					goThetaHome();
@@ -548,12 +550,12 @@ function goThetaHome() {
 
 		if (RETESTCOUNTER < RETESTNUM) {//not fully confirmed yet:
 			RETESTCOUNTER++;
-			// if (config.debug) console.log("RETESTCOUNTER: " + RETESTCOUNTER);
+			// if (config.debug) logEvent(1, "RETESTCOUNTER: " + RETESTCOUNTER);
 			sp.write(thetaHomeQueryStr, function(err, res) {
 				sp.drain(function(err, result) {
-					if (err) {console.log(err, result);}
+					if (err) {logEvent(2, err, result);}
 					else {
-						// if (config.debug) console.log (thetaHomeQueryStr);
+						// if (config.debug) logEvent(1, thetaHomeQueryStr);
 						WAITING_THETA_HOMED = true;
 						//allow time for return of sensor state:
 						setTimeout(goThetaHome, 15);
@@ -568,12 +570,12 @@ function goThetaHome() {
 		else { //passed retesting so truly home:
 			thAccum = 0;
 			THETA_HOME_COUNTER = 0;
-			// console.log('THETA AT HOME!');
+			// logEvent(1, 'THETA AT HOME!');
 			RETESTCOUNTER = 0;
 			WAITING_THETA_HOMED = false;
 			//WAITING_RHO_HOMED = true;
 
-			//console.log('finding R home...');
+			//logEvent(1, 'finding R home...');
 
 			setTimeout(goRhoHome, 150);
 
@@ -594,14 +596,13 @@ function goRhoHome() {
   if (pauseRequest) {
     pauseRequest = false;
     setStatus('waiting');
-    console.log('theta homing aborted');
+    logEvent(1, 'theta homing aborted');
   setTimeout(checkPhoto, photoMsec); //restart photosensing for autodim
     return;
   }
 
   if (RHO_HOME_COUNTER == RHO_HOME_MAX) {
-    console.log('Failed to find Rho home!');
-    logEvent('R homing failure ');
+    logEvent(2, 'Failed to find Rho home!');
     //setStatus('waiting');
     rAccum = 0;
     WAITING_RHO_HOMED = false; // stop trying to home
@@ -616,13 +617,13 @@ function goRhoHome() {
 		rhoHomingStr = "SM,"+ baseMS + "," + 0 + "," + -HOMERSTEPS * rDirSign + "\r";
 
 		RHO_HOME_COUNTER++;
-		// console.log (RHO_HOME_COUNTER);
+		// logEvent(1, RHO_HOME_COUNTER);
 
 		sp.write(rhoHomingStr, function(err, res) {
 			sp.drain(function(err, result) {
-				if (err) {console.log(err, result);}
+				if (err) {logEvent(2, err, result);}
 				else {
-					// console.log (rhoHomingStr);
+					// logEvent(1, rhoHomingStr);
 					WAITING_RHO_HOMED = true;
 
 					goRhoHome();
@@ -636,12 +637,12 @@ function goRhoHome() {
 
 		if (RETESTCOUNTER < RETESTNUM) {//not fully confirmed yet:
 			RETESTCOUNTER++;
-			// console.log("RETESTCOUNTER: " + RETESTCOUNTER);
+			// logEvent(1, "RETESTCOUNTER: " + RETESTCOUNTER);
 			sp.write(rhoHomeQueryStr, function(err, res) {
 				sp.drain(function(err, result) {
-					if (err) {console.log(err, result);}
+					if (err) {logEvent(2, err, result);}
 					else {
-						console.log (rhoHomeQueryStr);
+						logEvent(1, rhoHomeQueryStr);
 						WAITING_RHO_HOMED = true;
 						//allow time for return of sensor state:
 						setTimeout(goRhoHome, 15);
@@ -654,23 +655,23 @@ function goRhoHome() {
 		else { //passed retesting so truly home:
 			thAccum = 0;
 			THETA_HOME_COUNTER = 0;
-			// console.log('THETA AT HOME!');
+			// logEvent(1, 'THETA AT HOME!');
 			RETESTCOUNTER = 0;
 			WAITING_THETA_HOMED = false;
 
 			rAccum = 0;
 			RHO_HOME_COUNTER = 0;
-			// console.log('RHO AT HOME!');
+			// logEvent(1, 'RHO AT HOME!');
 			RETESTCOUNTER = 0;
 			WAITING_RHO_HOMED = false;
 
-			logEvent('homed');
+			logEvent(1, 'homed');
 
 			if (PLHOMED) { //homed from playlist
 				setStatus('playing');
 				if (PLAYTYPE == 'shuffle') { //relevant only for homes in shuffleplay
 					plistLines.splice(PLINDEX,1); //pluck out plLines[PLINDEX]
-					//console.log(plistLines);
+					//logEvent(1, plistLines);
 					REMAINING--;
 				}
 				nextPlaylistLine(PLINDEX, plLinesMax);
@@ -694,12 +695,12 @@ function checkFault() {
 	//Theta fault pin = D,1 / R fault pin = D,0
 
 	sp.write("I\r");
-	//console.log(thetaFaultQueryStr);
+	//logEvent(1, thetaFaultQueryStr);
 	//if (THETA_FAULTED){
 	//	if (RETESTCOUNTER < RETESTNUM) //not fully confirmed yet:
 		//	RETESTCOUNTER++;
 	  //else{
-		//	console.log("THETA AXIS FAULTED!")
+		//	logEvent(1, "THETA AXIS FAULTED!")
 		//	RETESTCOUNTER = 0;
 			//stop program and alert user here
 		//}
@@ -713,12 +714,12 @@ function checkRhoFault() {
 	//Rho fault pin = D,0
 	var rhoFaultQueryStr = "PI," + faultRPin + "\r";
 	sp.write(rhoFaultQueryStr);
-	console.log(rhoFaultQueryStr);
+	logEvent(1, rhoFaultQueryStr);
 	if (R_FAULTED){
 		if (RETESTCOUNTER < RETESTNUM) //not fully confirmed yet:
 			RETESTCOUNTER++;
 	  else{
-			console.log("R AXIS FAULTED!")
+			logEvent(1, "R AXIS FAULTED!")
 			RETESTCOUNTER = 0;
 			//stop program and alert user here
 		}
@@ -755,11 +756,11 @@ function reportRgap() {
 
   Ractual = (rAccum - thAccum * rthAsp * nestedAxisSign) * rDirSign / rSPInch;
   Rinfile = verts[0].r * plotRadius;
-  //console.log('Ractual: ' + Ractual);
-  //console.log('Rinfile: ' + Rinfile);
-  // console.log('Rgap: ' + (Ractual - Rinfile));
-  logEvent('Rgap: ' + (Ractual - Rinfile));
-  logEvent('thAccum: ' + thAccum + '  rAccum: ' + rAccum);
+  //logEvent(1, 'Ractual: ' + Ractual);
+  //logEvent(1, 'Rinfile: ' + Rinfile);
+  // logEvent(1, 'Rgap: ' + (Ractual - Rinfile));
+  logEvent(1, 'Rgap: ' + (Ractual - Rinfile));
+  logEvent(1, 'thAccum: ' + thAccum + '  rAccum: ' + rAccum);
 }
 
 function correctGap() {
@@ -773,29 +774,31 @@ function correctGap() {
 
   sp.write("SM,1,0,"+ steps + "\r", function(err, res) {
     sp.drain(function(err, result){
-      if (err) {console.log(err, result);}
+      if (err) {logEvent(2, err, result);}
       else {
-        console.log ('gap steps ' + steps);
+        logEvent(1, 'gap steps ' + steps);
         rAccum += steps;
       }
     });
   });
 }
 
-function logEvent(event) {
-  // console.trace();
-  // var eventText = event;
-  // var now = moment(new Date());
-  // var date = now.format("D MMM YYYY");
-  // var time = now.format("HH:mm");
-  //
-  // eventText += ' -- ' + date + ' ' + time + '\r\n';
-  //
-  // fs.appendFile('sis.log' , eventText, function (err) {
-  //   if (err) throw err;
-  // });
-}
+var logEvent = function() {
+	// save to the log file for plotter
+	if (config.folders.logs) {
+		var filename = config.folders.logs + '/' + moment().format('YYYYMMDD') + '_plotter.log';
 
+		var line = Date.now();
+		_.each(arguments, function(obj, index) {
+			if (_.isObject(obj)) line += "\t"+JSON.stringify(obj);
+			else line += "\t"+obj;
+		});
+
+		fs.appendFile(filename, line + '\n', function(err, resp) {
+		  if (err) console.log("Log err", err);
+		});
+	} else console.log(arguments);
+}
 
 {////////Serial Port events--//////////////////////////////////////////
 
@@ -805,34 +808,34 @@ function parseReceivedSerialData(data) {
 	//remove any line breaks in string:
 	data = String(data).replace(/(\r\n|\n|\r)/gm,"");
 
-  // if (config.debug) console.log("in " + data);
+  // if (config.debug) logEvent(1, "in " + data);
   parts = String(data).split(',');
 
-  if (parts[0] == '!')  {console.log("EBB error: " + data);}
+  if (parts[0] == '!')  {logEvent(2, "EBB error: " + data);}
 	else {
 
 		if (parts[0] == 'A'){ //analog pin states
-				//console.log(parts)
+				//logEvent(1, parts)
 
 			if (data.length == 33){ //analog report came back complete
 				if (parts[1]) {
 					maTheta = Number(parts[1].slice(3,7)) * 707 * 3.3 / 1023 ;
-					//console.log('Theta current = ' + Math.round(maTheta) + 'mA') ;
+					//logEvent(1, 'Theta current = ' + Math.round(maTheta) + 'mA') ;
 				}
 
 				if (parts[1]) {
 					maR = Number(parts[2].slice(3,7)) * 707 * 3.3 / 1023;
-					//console.log('R current = ' + Math.round(maR) + 'mA') ;
+					//logEvent(1, 'R current = ' + Math.round(maR) + 'mA') ;
 				}
 
 				if (parts[3]) {
 					rawPhoto = Number(parts[3].slice(3,7));
-					//console.log(rawPhoto);
+					//logEvent(1, rawPhoto);
 				}
 
 				if (parts[4]) {
 					Vm = Number(parts[4].slice(3,7))*25*3.3/1023/2.717;
-					//console.log("Vm= " + Math.round(Vm * 10)/10);
+					//logEvent(1, "Vm= " + Math.round(Vm * 10)/10);
 				}
 			}
 		}
@@ -868,30 +871,30 @@ function parseReceivedSerialData(data) {
 
 		if (parts[0] == 'I') {//EBB read al1 inputs
 			if (data.length == 21){ //valid "I" return
-				//console.log(data);
-				//console.log(data.length);
+				//logEvent(1, data);
+				//logEvent(1, data.length);
 			var num = parseInt(parts[4],10);
 
-			//console.log(num);
-			// console.log("Theta fault pin = " + (num & 2));
-			// console.log("Rho fault pin = " + (num & 1));
-			// console.log("Th home pin = " + (num & 4));
+			//logEvent(1, num);
+			// logEvent(1, "Theta fault pin = " + (num & 2));
+			// logEvent(1, "Rho fault pin = " + (num & 1));
+			// logEvent(1, "Th home pin = " + (num & 4));
 
 			var thFaultState, rFaultState;
 			var thHomeState, rHomeState;
 			if ((num & 2) > 0) {thFaultState = 1;} else {thFaultState = 0;}
-			if (thFaultState == faultActiveState) {console.log("Theta faulted!");}
+			if (thFaultState == faultActiveState) {logEvent(2, "Theta faulted!");}
 			if ((num & 1) > 0) {rFaultState = 1;} else {rFaultState = 0;}
-			if (rFaultState == faultActiveState) {console.log("Rho faulted!");}
+			if (rFaultState == faultActiveState) {logEvent(2, "Rho faulted!");}
 
 			if ((num & 4) > 0) {thHomeState = 1;} else {thHomeState = 0;}
-			if (thHomeState == homingThHitState) {console.log("Theta at home");}
+			if (thHomeState == homingThHitState) {logEvent(1, "Theta at home");}
 
 
 			num = parseInt(parts[3],10);
-			// console.log("R home pin = " + (num & 64));
+			// logEvent(1, "R home pin = " + (num & 64));
 			if ((num & 64) > 0) {rHomeState = 1;} else {rHomeState = 0;}
-			if (rHomeState == homingRHitState) {console.log("Rho at home");}
+			if (rHomeState == homingRHitState) {logEvent(1, "Rho at home");}
 
 
 			}
@@ -942,7 +945,7 @@ module.exports = {
     thSPRad = thSPRev / (2* Math.PI);
 
     THETA_HOME_MAX =  Math.round(thSPRev * 1.03 / HOMETHSTEPS);//3% extra
-		// console.log('T H MAX= '+THETA_HOME_MAX);
+		// logEvent(1, 'T H MAX= '+THETA_HOME_MAX);
     RHO_HOME_MAX =  Math.round(rSPInch * (plotRadius + 0.25) / HOMERSTEPS);// 1/4" extra
   },
 
@@ -951,7 +954,7 @@ module.exports = {
 	// serial port object and saves it for communication with the bot.
 	useSerial: function(serial) {
 		sp = serial;
-		console.log('#useSerial', sp.path, 'isOpen:', sp.isOpen());
+		logEvent(1, '#useSerial', sp.path, 'isOpen:', sp.isOpen());
 
 		sp.on('data', parseReceivedSerialData);
 		sp.write('CU,1,0\r'); // turn off EBB sending "OK"s
@@ -1009,7 +1012,7 @@ module.exports = {
     if (options.pause) {
       pauseRequest = true;
     } else {
-      console.log('cannot pause');
+      logEvent(1, 'cannot pause');
     }
   },
 
@@ -1018,7 +1021,7 @@ module.exports = {
     if (options.play && verts.length > 0) {
       go();
     } else {
-      console.log('cannot play');
+      logEvent(1, 'cannot play');
     }
   },
 
@@ -1034,7 +1037,7 @@ module.exports = {
     MTV = track.thvmax;
 
     // Log status
-    console.log(
+    logEvent(1,
       'Plotter: playing track with config:',
       Vball, Accel, MTV,
       'vertices:',
@@ -1052,13 +1055,13 @@ module.exports = {
 	// get the autodim toggle value
   setAutodim: function(value) {
     autodim = value;
-	console.log ("autodim = " + autodim);
+	logEvent(1, "autodim = " + autodim);
   },
 
 	// get the brightness slider value
   setBrightness: function(value) {
     sliderBrightness = value;
-		//console.log ("sb: " + sliderBrightness);
+		//logEvent(1, "sb: " + sliderBrightness);
   },
 
   // Set a speed scalar where 1 is normal, 2 is double
@@ -1086,7 +1089,7 @@ module.exports = {
 
         // Say we're home right here where everything lies.
         setStatus('homing');
-        console.log('Current THETA/RHO set as HOME');
+        logEvent(1, 'Current THETA/RHO set as HOME');
         thAccum = rAccum = 0;
         THETA_HOMED = RHO_HOMED = true;
 

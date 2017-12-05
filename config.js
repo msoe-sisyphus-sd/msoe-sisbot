@@ -1,8 +1,8 @@
-var fs			= require('fs');
-var _           = require('underscore');
-var uuid		= require('uuid');
-var which_cson  = 'default.cson';
-var default_status = require('./default_status.js');
+var fs				= require('fs');
+var _           	= require('underscore');
+var uuid			= require('uuid');
+var which_cson  	= 'default.cson';
+var default_status 	= require('./default_status.js');
 
 if (process.env.NODE_ENV.indexOf('dev') == -1) {
     var which_cson  = require('/home/pi/sisbot-server/sisbot/configs/whichcson.js');
@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.2.8b', // remove playlist/tracks update, sleep timer updates
+			version	: '1.2.9b', // logging
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -31,7 +31,8 @@ var config = {
 				config: 'configs',
 				tracks: 'tracks', // models
 				cloud: 'siscloud',
-				api: 'sisapi'
+				api: 'sisapi',
+		  	  	logs: '/var/log/sisyphus/'
 			},
 			receiver : true, // receive messages from cloud
 			sisbot_config : which_cson,
