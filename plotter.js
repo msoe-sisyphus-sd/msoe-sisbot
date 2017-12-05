@@ -116,7 +116,7 @@ function checkPhoto() { //autodimming functionality:
 		if (photo > 1023) {photo = 1023;}
 		if (photo < photoMin) {photo = photoMin;} //photomin?
 		//console.log("raw photo = " + photo)
-		
+
 		photoSum = photoArray.reduce(add, 0);
         //console.log("photoSum = " + photoSum)
 
@@ -124,48 +124,48 @@ function checkPhoto() { //autodimming functionality:
 		photoSum += photoArray[photoArray.push(photo) - 1]; //add val to end and add it
 		photoAvg = photoSum / photoArraySize;
 		photoOut = photoAvg;
-		
+
 		//console.log("photoAvg = " + photoAvg);
-		
-		
+
+
 		if (sliderBrightness > 0.5){
 			photoOut *= BRamp * (Math.pow(5,sliderBrightness * 2) - 4);
 		}
 		else {
 			photoOut *= sliderBrightness * BRamp * 2;
 		};
-	
+
 		photoOut = Math.round(photoOut);
 		if ((photoOut> 0) && (photoOut < photoMin)) {photoOut = photoMin;}
 		if (photoOut > 1023) {photoOut = 1023};
 
 		//console.log("photoOut = " + photoOut);
-		
+
 		delta = Math.abs(photoOut - lastPhotoOut);
 		if (lastPhotoOut > 0) {delta /= lastPhotoOut}
-		
+
 		//console.log("delta = " + delta);
-		
-		if ( delta > .3 ) {
-			
+
+		if ( delta >= .5 ) {
+
 			if (photoOut != 0) {
 				sp.write("SE,1," + photoOut +"\r");
-				console.log("SE,1," + photoOut);
+				//console.log("SE,1," + photoOut);
 			}
 			else {
 				sp.write("SE,0\r");
-			  console.log("SE,0");
+			  	//console.log("SE,0");
 			}
 			photoAvgOld = photoAvg;
 			lastPhotoOut = photoOut;
-		}		
-		
-		
+		}
+
+		/*
 		if ( (delta > .1) && (delta < .3)) {
 			ctr++;
 			//console.log("ctr = " + ctr);
 			if (ctr > certain){
-		
+
 				if (photoOut != 0) {
 					sp.write("SE,1," + photoOut +"\r");
 					console.log("SE,1," + photoOut);
@@ -177,13 +177,14 @@ function checkPhoto() { //autodimming functionality:
 				ctr = 0;
 				photoAvgOld = photoAvg;
 				lastPhotoOut = photoOut;
-			}		
-		} 
+			}
+		}
 		else{
 			ctr = 0;
 		}
-  }	
-	
+		*/
+  }
+
 	if (STATUS != 'homing'){ //stop photosensing if homing
 	setTimeout(checkPhoto, photoMsec);
 	}
@@ -1048,7 +1049,7 @@ module.exports = {
     setStatus('playing');
     nextMove(Rmi);
   },
-	
+
 	// get the autodim toggle value
   setAutodim: function(value) {
     autodim = value;
