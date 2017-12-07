@@ -18,7 +18,9 @@ var io = require("socket.io");
 /**************************** BLE *********************************************/
 
 var ble_obj = {
-    initialize: function() {
+    initialize: function(sisbot_id) {
+        this.sisbot_id = sisbot_id;
+
         bleno.on('stateChange', this.on_state_change);
         bleno.on('advertisingStart', this.on_advertising_start);
     },
@@ -33,7 +35,9 @@ var ble_obj = {
         }));
     },
     on_state_change: function(state) {
-        if (state === 'poweredOn') bleno.startAdvertising('sisyphus', ['ec00']);
+        var ble_id = ble_obj.sisbot_id.substr(ble_obj.sisbot_id.length - 7);
+        console.log('BLE Sisbot ID', ble_id);
+        if (state === 'poweredOn') bleno.startAdvertising('sisbot' + ble_id, ['ec00']);
         else bleno.stopAdvertising();
     },
     on_advertising_start: function(error) {
@@ -63,8 +67,6 @@ Sisyphus_Characteristic.prototype.onReadRequest = function(offset, callback) {
     console.log('Sisyphus_Characteristic - onReadRequest: value = ' + ble_obj.ip_address.toString('hex'));
     callback(this.RESULT_SUCCESS, ble_obj.ip_address);
 };
-
-ble_obj.initialize();
 
 /**************************** SISBOT ******************************************/
 
@@ -156,6 +158,11 @@ var sisbot = {
 			}
 		});
 		this.current_state = this.collection.findWhere({type: "sisbot"});
+
+        // INITIALIZE BLUETOOTH
+        process.env['BLENO_DEVICE_NAME'] = 'sisbot ' + this.current_state.id;
+        ble_obj.initialize(this.current_state.id);
+
 		// force values on startup
 		this.current_state.set({
 			id: 'pi_'+this.config.pi_serial,
