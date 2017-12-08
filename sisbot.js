@@ -16,6 +16,11 @@ var bleno = require('bleno');
 var io = require("socket.io");
 
 /**************************** BLE *********************************************/
+var append_log = function(line) {
+    fs.appendFile('travis.log' , line, function (err) {
+      if (err) throw err;
+    });
+}
 
 var ble_obj = {
     initialize: function(sisbot_id) {
@@ -1084,6 +1089,7 @@ var sisbot = {
 					if (err) return console.log("Internet check err", err);
 					if (resp == "true") {
 						console.log("Internet connected.",self.current_state.get("is_internet_connected"));
+                        append_log('Internet connected: ' + self.current_state.get("is_internet_connected"));
 
             			self._changing_to_wifi = false;
 						self.current_state.set({
@@ -1103,9 +1109,11 @@ var sisbot = {
 					} else {
 						self._internet_retries++;
 						if (self._internet_retries < self.config.internet_retries) {
+                            append_log('Internet retry: ' + self.config.retry_internet_interval);
 							self._query_internet(self.config.retry_internet_interval);
 						} else if (!self._is_hotspot) {
 							console.log("Internet not connected, reverting to hotspot.");
+                            append_log('Internet not connected, reverting to hotspot: ');
 							self.current_state.set({ wifi_error: "true" });
 							self.reset_to_hotspot(null,null);
 						}
@@ -1173,11 +1181,14 @@ var sisbot = {
 				this.socket_update("disconnect");
 
 				console.log("Connect To Wifi", data.ssid);
-				exec('sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "'+data.ssid+'" "'+data.psk+'"', (error, stdout, stderr) => {
-					if (error) return console.error('exec error:',error);
+                append_log('Connect To Wifi: ' + data.ssid);
 
-					self._query_internet(5000); // check again in 5 seconds
-				});
+                setTimeout(function () {
+                    exec('sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "'+data.ssid+'" "'+data.psk+'"', (error, stdout, stderr) => {
+    					if (error) return console.error('exec error:',error);
+    					self._query_internet(5000); // check again in 5 seconds
+    				});
+                }, 100);
 			} else if (cb) {
 				console.log("Invalid Password", data.psk);
 				cb("Invalid password", null);
@@ -1207,6 +1218,7 @@ var sisbot = {
 		// Use disconnect_wifi if you want to remove old network/password
 		var self = this;
 		console.log("Sisbot Reset to Hotspot", data);
+        append_log('Sisbot Reset to Hotspot: ' + JSON.stringify(data));
 		clearTimeout(this._internet_check);
 		this._internet_retries = 0; // clear retry count
 
@@ -1225,12 +1237,16 @@ var sisbot = {
 		exec('sudo /home/pi/sisbot-server/sisbot/start_hotspot.sh', (error, stdout, stderr) => {
 			if (error) return console.error('exec error:',error);
 			console.log("start_hotspot", stdout);
+            append_log('Start Hotspot: ' + stdout);
+
             var new_state = {
                 is_available: "true",
                 reason_unavailable: "false",
                 local_ip: self._getIPAddress(),
                 failed_to_connect_to_wifi: (self._changing_to_wifi == true) ? 'true' : 'false'
             };
+
+            append_log('Debug Hotspot: ' + self._changing_to_wifi);
 
 			// forget bad network values (from cloud)
 			if (self.current_state.get('wifi_forget') == 'true') {
