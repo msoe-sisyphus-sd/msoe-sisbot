@@ -122,8 +122,14 @@ var sisbot = {
 			_.each(config.services.sisbot.connect, function(obj) {
 				//logEvent(1, 'obj', obj);
 				self.ansible.connect(obj, config.services[obj].address, config.services[obj].ansible_port, function(err, resp) {
-					if (resp == true) logEvent(1, "Sisbot Connected to " + obj);
-					else logEvent(2, obj + " Sisbot Connect Error", err);
+					if (resp == true) {
+						logEvent(1, "Sisbot Connected to " + obj);
+						if (config.services[obj].is_register) {
+							self.current_state.set("service_connected."+service_name, "false");
+							console.log("Register to", service_name);
+							setTimeout(self._register, 100, self, service_name);
+						}
+					} else logEvent(2, obj + " Sisbot Connect Error", err);
 				});
       		});
 		}
@@ -342,6 +348,84 @@ var sisbot = {
 
 	  return ip_address;
 	},
+	/***************************** Ansible connection ************************/
+	_register: function(self, service) {
+		logEvent(1, "_Register", service);
+		self.ansible.request({
+			service: service,
+			method: "register",
+			data: {
+				id: self.current_state.id,
+				hostname: self.current_state.get("hostname"),
+				service_name: service
+			},
+			cb: function(err,resp) {
+				// logEvent(1, "Connect Response",err,resp);
+				if (err) return console.log("Err:", err);
+				self._ready(resp);
+			}
+		});
+	},
+	_ready: function(data) {
+		var self = this;
+		logEvent(1, "Sisbot Ready", data);
+		this.connectionErrors = 0;
+
+		//send_stats();
+		// this.stats_reporter = setInterval(send_stats, 300000);
+		logEvent(2, "Send errors", this.error_messages.length);
+		if (this.error_messages.length > 0) {
+			_.each(this.error_messages, function(message) {
+				logEvent(2, "Send error", message);
+				self.ansible.request(message);
+			});
+			this.error_messages = [];
+		}
+
+		// this._request_config();
+
+		var service_connected = self.current_state.get("service_connected");
+		service_connected.api = "true"
+		self.current_state.set("service_connected", service_connected);
+
+		this.socket_update(self.current_state.toJSON());
+	},
+	_connectionError: function(service) {
+		this.connectionErrors++;
+		logEvent(2, "Connection Error",service,this.connectionErrors, this.current_state.id);
+
+		// request new config if connectionErrors == 100?
+		if (this.connectionErrors >= config.retry_count) {
+			// change the ansible address/port
+		}
+
+		// create error message to send when able
+		this.error_messages.push({
+			service: service,
+			method: "sisbot_error",
+			data: {
+				service:						service,
+				sisbotID: 						this.current_state.id,
+				address: 						this.current_state.get("address"),
+				version: 						this.current_state.get("version"),
+				error:							"Could not connect "+service
+			}
+		});
+	},
+	_connectionClosed: function(service) {
+		logEvent(1, "Connection Closed", service, this.connectionErrors, this.current_state.id);
+
+		var service_connected = this.current_state.get("service_connected");
+		if (service_connected[service] != undefined) {
+			service_connected[service] = "false"
+	        this.current_state.set("service_connected", service_connected);
+
+			this.socket_update(this.current_state.toJSON());
+		}
+
+		this._connectionError(service);
+	},
+	/***************************** Plotter ************************/
 	_connect() {
     	if (this.serial && this.serial.isOpen()) return true;
 
