@@ -24,9 +24,6 @@ var playlist = Backbone.Model.extend({
 		});
 
 		this.set("sorted_tracks", sorted_tracks);
-
-		//console.log("Tracks:", this.get('tracks'));
-		//console.log("Sorted Tracks:", this.get('sorted_tracks'));
 	},
 	reset_tracks: function() { // get unchanged values from collection
 		var self = this;
@@ -35,7 +32,6 @@ var playlist = Backbone.Model.extend({
 		var retain_obj = JSON.parse(JSON.stringify(current_track));
 
 		_.each(this.get('tracks'), function(obj, index) {
-			//console.log("Track before", obj);
 			var track_model = self.collection.get(obj.id);
 			obj.name = track_model.get('name');
 			obj._index = index;
@@ -67,7 +63,6 @@ var playlist = Backbone.Model.extend({
 
 		if (this.get("is_shuffle") == "false") {
 			var track0 = this.get('tracks')[sorted_list[0]];
-			//console.log("Compare:", track0.id != retain_obj.id, track0.id);
 			if (track0._index != retain_obj._index && track0.firstR != start_rho) {
 				if (track0.lastR != track0.firstR) { // reversible
 					console.log("Reverse First Track", track0);
@@ -80,7 +75,6 @@ var playlist = Backbone.Model.extend({
 			var track0 = this.get('tracks')[sorted_list[i]];
 			var track1 = this.get('tracks')[sorted_list[i+1]];
 
-			//console.log("Compare:", track1._index != retain_obj._index, track1._index);
 			if (track1._index == retain_obj._index) {
 				console.log("Don't change this: ", track1._index, track1.firstR, track1.lastR);
 			} else if (track0.lastR != track1.firstR) {

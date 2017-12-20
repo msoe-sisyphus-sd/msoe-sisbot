@@ -37,4 +37,10 @@ fi
 # fix factory reset issue
 cp /home/pi/sisbot-server/sisbot/factory_reset.sh /home/pi/sisbot-server/factory/sisbot
 
+# update rc.local
+cp /home/pi/sisbot-server/sisbot/rc.local /etc
+
+# make sure log file location existsSync
+mkdir -p /var/log/sisyphus
+
 echo "Upgrade_Finish completed"

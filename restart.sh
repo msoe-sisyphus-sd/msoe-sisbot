@@ -10,5 +10,5 @@ sudo kill -9 $nodepid
 done
 
 cd /home/pi/sisbot-server/sisproxy
-sudo NODE_ENV=sisbot node server.js &
+sudo NODE_ENV=sisbot node server.js >> /var/log/sisyphus/proxy.log  2>&1
 echo "Node restarted"

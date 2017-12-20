@@ -1,13 +1,14 @@
 var http			= require("http");
 var tls				= require("tls");
-var fs		  	= require('fs');
+var fs		  		= require('fs');
 var cors			= require("cors");
-var express	 	= require('express');
+var express	 		= require('express');
 var bodyParser		= require('body-parser');
 var iwconfig		= require('wireless-tools/iwconfig');
 var _				= require('underscore');
 var exec 			= require('child_process').exec;
-var io			  = require("socket.io");
+var io			 	= require("socket.io");
+var moment 			= require('moment');
 
 var local_config 	= require('./config.js');
 var sisbot_obj		= require('./sisbot.js');
@@ -42,9 +43,9 @@ var app = function(given_config,ansible) {
 	static.use(bodyParser.urlencoded({ limit: '50mb' }));
 
 	static.get('/', function(req, res) {
-		console.log("Get Page:",req.originalUrl);
+		logEvent(1, "Get Page:",req.originalUrl);
 		iwconfig.status('wlan0', function(err, resp) {
-		  console.log("Status", resp);
+		 	logEvent(1, "Status", resp);
 			if (resp.mode == 'master') {
 				res.sendFile(config.base_dir+'/index.html');
 			} else {
@@ -53,8 +54,8 @@ var app = function(given_config,ansible) {
 		});
 	});
 	static.get('/*', function(req, res) {
-		console.log("Get:",req.originalUrl);
-	  res.sendFile(config.base_dir+req.originalUrl);
+		logEvent(1, "Get:",req.originalUrl);
+	 	res.sendFile(config.base_dir+req.originalUrl);
 	});
 	static.post('/:service/:endpoint', function(req, res) {
 		service = req.params.service;
@@ -63,7 +64,7 @@ var app = function(given_config,ansible) {
 		var data = (_.isString(req.body.data)) ? JSON.parse(req.body.data) : req.body.data;
 		data = data.data;
 
-		if (endpoint != "state") console.log("Post:",service, endpoint, data);
+		if (endpoint != "state") logEvent(1, "Post:",service, endpoint, data);
 
 		var cb		= function (err, resp) {
 			res.json({ err: err, resp: resp });
@@ -72,7 +73,7 @@ var app = function(given_config,ansible) {
 		try {
 			services[service][endpoint](data,cb);
 		} catch (err) {
-			console.log("Error:", service, endpoint, err);
+			logEvent(2, "Error:", service, endpoint, err);
 		}
 	});
 
@@ -87,12 +88,12 @@ var app = function(given_config,ansible) {
 
 	socket_server.on('connection', function(socket) {
 		if (!sockets[socket.id]) {
-			console.log("Socket connect: "+socket.id);
+			logEvent(1, "Socket connect: "+socket.id);
 			sockets[socket.id] = socket;
 		}
 
 		socket.on('disconnect', function(data) {
-			console.log("Socket disconnect: ", data);
+			logEvent(1, "Socket disconnect: ", data);
 			delete sockets[data.id];
 		});
 	});
@@ -111,9 +112,26 @@ var app = function(given_config,ansible) {
 
 	/**************************** SISBOT SERVICE ****************************************/
 
+	function logEvent() {
+		// save to the log file for sisbot
+		if (local_config.folders.logs) {
+			var filename = local_config.folders.logs + moment().format('YYYYMMDD') + '_sisbot.log';
+
+			var line = Date.now();
+			_.each(arguments, function(obj, index) {
+				if (_.isObject(obj)) line += "\t"+JSON.stringify(obj);
+				else line += "\t"+obj;
+			});
+
+			fs.appendFile(filename, line + '\n', function(err, resp) {
+			  if (err) console.log("Log err", err);
+			});
+		} else console.log(arguments);
+	}
+
 	services.sisbot	= sisbot_obj.init(config, ansible, socket_update);
 
-	console.log("Sisbot Server created");
+	logEvent(1, "Sisbot Server created");
 }
 
 module.exports = app;

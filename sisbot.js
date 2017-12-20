@@ -20,7 +20,9 @@ var moment 		= require('moment');
 /**************************** BLE *********************************************/
 
 var ble_obj = {
-    initialize: function() {
+    initialize: function(sisbot_id) {
+        this.sisbot_id = sisbot_id;
+
         bleno.on('stateChange', this.on_state_change);
         bleno.on('advertisingStart', this.on_advertising_start);
     },
@@ -35,7 +37,9 @@ var ble_obj = {
         }));
     },
     on_state_change: function(state) {
-        if (state === 'poweredOn') bleno.startAdvertising('sisyphus', ['ec00']);
+        var ble_id = ble_obj.sisbot_id.substr(ble_obj.sisbot_id.length - 7);
+        logEvent(1, 'BLE Sisbot ID', ble_id);
+        if (state === 'poweredOn') bleno.startAdvertising('sisbot' + ble_id, ['ec00']);
         else bleno.stopAdvertising();
     },
     on_advertising_start: function(error) {
@@ -65,8 +69,6 @@ Sisyphus_Characteristic.prototype.onReadRequest = function(offset, callback) {
     callback(this.RESULT_SUCCESS, ble_obj.ip_address);
 };
 
-ble_obj.initialize();
-
 /**************************** SISBOT ******************************************/
 
 var SerialPort;
@@ -89,6 +91,9 @@ var sisbot = {
 
 	collection: new Backbone.Collection(),
 	current_state: null,
+
+	connectionErrors: 0,
+	error_messages: [],
 
 	_paused: false,
 	_autoplay: false,
@@ -119,17 +124,22 @@ var sisbot = {
 			}
 			this.ansible.setHandler(this);
 			this.ansible.init(config.services.sisbot.address, config.services.sisbot.ansible_port, config.receiver);
-			_.each(config.services.sisbot.connect, function(obj) {
-				//logEvent(1, 'obj', obj);
-				self.ansible.connect(obj, config.services[obj].address, config.services[obj].ansible_port, function(err, resp) {
+
+			_.each(self.config.services.sisbot.connect, function(service_name) {
+				//logEvent(1, 'service_name', service_name);
+				self.ansible.connect(service_name, self.config.services[service_name].address, self.config.services[service_name].ansible_port, function(err, resp) {
 					if (resp == true) {
-						logEvent(1, "Sisbot Connected to " + obj);
-						if (config.services[obj].is_register) {
-							self.current_state.set("service_connected."+service_name, "false");
-							console.log("Register to", service_name);
+						logEvent(1, "Sisbot Connected to " + service_name);
+						logEvent(1, "Sisbot connections", _.keys(self.ansible.sockets));
+						if (self.config.services[service_name].is_register) {
+							var service_connected = self.current_state.get("service_connected");
+							service_connected[service_name] = "false";
+							self.current_state.set('service_connected', service_connected);
+
+							logEvent(1, "Register to", service_name);
 							setTimeout(self._register, 100, self, service_name);
 						}
-					} else logEvent(2, obj + " Sisbot Connect Error", err);
+					} else logEvent(2, service_name + " Sisbot Connect Error", err);
 				});
       		});
 		}
@@ -166,6 +176,11 @@ var sisbot = {
 			}
 		});
 		this.current_state = this.collection.findWhere({type: "sisbot"});
+
+        // INITIALIZE BLUETOOTH
+        process.env['BLENO_DEVICE_NAME'] = 'sisbot ' + this.current_state.id;
+        ble_obj.initialize(this.current_state.id);
+
 		// force values on startup
 		this.current_state.set({
 			id: 'pi_'+this.config.pi_serial,
@@ -360,8 +375,8 @@ var sisbot = {
 				service_name: service
 			},
 			cb: function(err,resp) {
-				// logEvent(1, "Connect Response",err,resp);
-				if (err) return console.log("Err:", err);
+				logEvent(1, "Register Response",err,resp);
+				if (err) return logEvent(2, "Err:", err);
 				self._ready(resp);
 			}
 		});
@@ -395,7 +410,7 @@ var sisbot = {
 		logEvent(2, "Connection Error",service,this.connectionErrors, this.current_state.id);
 
 		// request new config if connectionErrors == 100?
-		if (this.connectionErrors >= config.retry_count) {
+		if (this.connectionErrors >= this.config.retry_count) {
 			// change the ansible address/port
 		}
 
@@ -564,6 +579,10 @@ var sisbot = {
 		} else if (cb) {
 			cb('Invalid hostname characters',null);
 		}
+	},
+	set: function(data, cb) {
+		logEvent(1, "Incoming Set", data);
+		if (cb) cb(null, data);
 	},
 	save: function(data, cb) {
 		var self = this;
@@ -1220,6 +1239,7 @@ var sisbot = {
 					if (err) return logEvent(2, "Internet check err", err);
 					if (resp == "true") {
 						logEvent(1, "Internet connected.",self.current_state.get("is_internet_connected"));
+                        append_log('Internet connected: ' + self.current_state.get("is_internet_connected"));
 
             			self._changing_to_wifi = false;
 						self.current_state.set({
@@ -1239,9 +1259,11 @@ var sisbot = {
 					} else {
 						self._internet_retries++;
 						if (self._internet_retries < self.config.internet_retries) {
+                            append_log('Internet retry: ' + self.config.retry_internet_interval);
 							self._query_internet(self.config.retry_internet_interval);
 						} else if (!self._is_hotspot) {
 							logEvent(2, "Internet not connected, reverting to hotspot.");
+                            append_log('Internet not connected, reverting to hotspot: ');
 							self.current_state.set({ wifi_error: "true" });
 							self.reset_to_hotspot(null,null);
 						}
@@ -1309,11 +1331,14 @@ var sisbot = {
 				this.socket_update("disconnect");
 
 				logEvent(1, "Connect To Wifi", data.ssid);
-				exec('sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "'+data.ssid+'" "'+data.psk+'"', (error, stdout, stderr) => {
-					if (error) return console.error('exec error:',error);
+                append_log('Connect To Wifi: ' + data.ssid);
 
-					self._query_internet(5000); // check again in 5 seconds
-				});
+                setTimeout(function () {
+                    exec('sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "'+data.ssid+'" "'+data.psk+'"', (error, stdout, stderr) => {
+    					if (error) return console.error('exec error:',error);
+    					self._query_internet(5000); // check again in 5 seconds
+    				});
+                }, 100);
 			} else if (cb) {
 				logEvent(2, "Invalid Password", data.psk);
 				cb("Invalid password", null);
@@ -1343,6 +1368,7 @@ var sisbot = {
 		// Use disconnect_wifi if you want to remove old network/password
 		var self = this;
 		logEvent(1, "Sisbot Reset to Hotspot", data);
+        append_log('Sisbot Reset to Hotspot: ' + JSON.stringify(data));
 		clearTimeout(this._internet_check);
 		this._internet_retries = 0; // clear retry count
 
@@ -1361,12 +1387,16 @@ var sisbot = {
 		exec('sudo /home/pi/sisbot-server/sisbot/start_hotspot.sh', (error, stdout, stderr) => {
 			if (error) return logEvent(2, 'exec error:',error);
 			logEvent(1, "start_hotspot", stdout);
+            append_log('Start Hotspot: ' + stdout);
+
             var new_state = {
                 is_available: "true",
                 reason_unavailable: "false",
                 local_ip: self._getIPAddress(),
                 failed_to_connect_to_wifi: (self._changing_to_wifi == true) ? 'true' : 'false'
             };
+
+            append_log('Debug Hotspot: ' + self._changing_to_wifi);
 
 			// forget bad network values (from cloud)
 			if (self.current_state.get('wifi_forget') == 'true') {
@@ -1430,6 +1460,18 @@ var sisbot = {
 			}
 		});
 	},
+	/* ------------- Onboarding ---------------- */
+	onboard_complete(data, cb) {
+		logEvent(1, "Onboard Complete", data);
+
+		// save given data
+		this.current_state.set(data);
+
+		// update cron jobs (includes save)
+		this.set_sleep_time(data, null);
+
+		if (cb) cb(null, this.current_state.toJSON());
+	},
 	/* ------------- Sleep Timer ---------------- */
 	test_time: function(data, cb) {
 		logEvent(1, "Test Time:", data);
@@ -1438,7 +1480,6 @@ var sisbot = {
 	},
 	set_sleep_time: function(data, cb) {
 		var self = this;
-		var now_date = new Date(Date.now());
 		logEvent(1, "Set Sleep Time:", data, this.current_state.get('is_sleeping'));
 
 		// cancel old timers
@@ -1453,7 +1494,7 @@ var sisbot = {
 
 		// set timer
 		if (data.sleep_time != "false") {
-			var sleep = moment(data.sleep_time);
+			var sleep = moment(data.sleep_time, 'H:MM A');
 			var cron = sleep.minute()+" "+sleep.hour()+" * * *";
 			logEvent(1, "Sleep", cron);
 
@@ -1462,7 +1503,7 @@ var sisbot = {
 			});
 		}
 		if (data.wake_time != "false") {
-			var wake = moment(data.wake_time);
+			var wake = moment(data.wake_time, 'H:MM A');
 			var cron = wake.minute()+" "+wake.hour()+" * * *";
 			logEvent(1, "Wake", cron);
 
@@ -1498,7 +1539,9 @@ var sisbot = {
 		if (this.current_state.get('is_sleeping') == 'false') {
 			// fade lights out
 			this.current_state.set('_brightness', this.current_state.get('brightness')); // remember, so wake resets it
-			this.set_brightness({value: 0}, null);
+
+			if (this.current_state.get('is_nightlight') == 'true') this.set_brightness({value: this.current_state.get('nightlight_brightness')}, null);
+			else this.set_brightness({value: 0}, null);
 
 			// pause track
 			this.pause(null, null);
@@ -1508,6 +1551,31 @@ var sisbot = {
 			this.socket_update(this.current_state.toJSON());
 		}
 		if (cb) cb(null, this.current_state.toJSON());
+	},
+	/* ------------------------------------------ */
+	get_log_file: function(data, cb) {
+		logEvent(1, "Get log file", data);
+		if (this.config.folders.logs) {
+			if (/([.]{2}\/)/g.test(data.filename)) { // make sure we are not trying to leave the folder
+				if (cb) cb('Invalid characters', null);
+			} else if (fs.existsSync(this.config.folders.logs+data.filename.toLowerCase()+'.log')) {
+				logEvent(1, "Get log file", data.filename);
+				var file = fs.readFileSync(this.config.folders.logs+data.filename.toLowerCase()+'.log', 'utf8');
+
+				// append current proxy, if PROXY
+				if (data.filename.toLowerCase().indexOf('proxy') > -1 && data.date === moment().format('MM/DD/YYYY'))
+					file += fs.readFileSync(this.config.folders.logs+'proxy.log', 'utf8');
+
+				if (cb) cb(null, file);
+			} else if (data.filename.toLowerCase().indexOf('proxy') > -1) {
+				// send proxy log
+				logEvent(1, "Get log file", 'proxy.log');
+				var file = fs.readFileSync(this.config.folders.logs+'proxy.log', 'utf8');
+				if (cb) cb(null, file);
+			} else {
+				if (cb) cb('Log not available', null);
+			}
+		} else if (cb) cb('No logs found', null);
 	},
 	/* ------------------------------------------ */
 	install_updates: function(data, cb) {
@@ -1641,8 +1709,9 @@ var sisbot = {
 
 var logEvent = function() {
 	// save to the log file for sisbot
-	if (sisbot.config.folders.logs) {
-		var filename = sisbot.config.folders.logs + '/' + moment().format('YYYYMMDD') + '_sisbot.log';
+	// if (sisbot.config.folders.logs) {
+		// var filename = sisbot.config.folders.logs + '/' + moment().format('YYYYMMDD') + '_sisbot.log';
+		var filename = '/var/log/sisyphus/' + moment().format('YYYYMMDD') + '_sisbot.log';
 
 		var line = Date.now();
 		_.each(arguments, function(obj, index) {
@@ -1650,10 +1719,17 @@ var logEvent = function() {
 			else line += "\t"+obj;
 		});
 
+		// console.log(line);
 		fs.appendFile(filename, line + '\n', function(err, resp) {
 		  if (err) console.log("Log err", err);
 		});
-	} else console.log(arguments);
+	// } else console.log(arguments);
+}
+
+var append_log = function(line) {
+    // fs.appendFile('travis.log' , line, function (err) {
+    //   if (err) throw err;
+    // });
 }
 
 module.exports = sisbot;

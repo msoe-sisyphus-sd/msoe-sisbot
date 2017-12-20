@@ -152,11 +152,11 @@ function checkPhoto() { //autodimming functionality:
 
 			if (photoOut != 0) {
 				sp.write("SE,1," + photoOut +"\r");
-				//console.log("SE,1," + photoOut);
+				//logEvent(1, "SE,1," + photoOut);
 			}
 			else {
 				sp.write("SE,0\r");
-			  	//console.log("SE,0");
+			  	//logEvent(1, "SE,0");
 			}
 			photoAvgOld = photoAvg;
 			lastPhotoOut = photoOut;

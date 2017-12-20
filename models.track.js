@@ -1,6 +1,6 @@
-var uuid				= require('uuid');
-var fs					= require('fs');
-var _						= require('underscore');
+var uuid			= require('uuid');
+var fs				= require('fs');
+var _				= require('underscore');
 var Backbone		= require('backbone');
 
 var track = Backbone.Model.extend({
