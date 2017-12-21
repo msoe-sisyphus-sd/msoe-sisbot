@@ -676,7 +676,7 @@ var sisbot = {
 		if (cb) cb(null, [playlist.toJSON(), this.current_state.toJSON()]); // send back current_state and the playlist
 	},
 	remove_playlist: function(data, cb) {
-		if (data.type != 'playlist')
+		if (data.type != 'playlist') {
 			if (cb) cb("Wrong data type", null);
 			return logEvent(2, "Remove Playlist sent wrong data type", data.type);
 		}
@@ -746,7 +746,7 @@ var sisbot = {
         });
     },
     remove_track: function(data, cb) {
-		if (data.type != 'track')
+		if (data.type != 'track') {
 			if (cb) cb("Wrong data type", null);
 			return logEvent(2, "Remove Track sent wrong data type", data.type);
 		}
