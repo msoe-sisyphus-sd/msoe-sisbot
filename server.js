@@ -123,6 +123,7 @@ var app = function(given_config,ansible) {
 				else line += "\t"+obj;
 			});
 
+			console.log(line);
 			fs.appendFile(filename, line + '\n', function(err, resp) {
 			  if (err) console.log("Log err", err);
 			});

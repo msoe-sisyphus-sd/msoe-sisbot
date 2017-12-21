@@ -676,6 +676,11 @@ var sisbot = {
 		if (cb) cb(null, [playlist.toJSON(), this.current_state.toJSON()]); // send back current_state and the playlist
 	},
 	remove_playlist: function(data, cb) {
+		if (data.type != 'playlist')
+			if (cb) cb("Wrong data type", null);
+			return logEvent(2, "Remove Playlist sent wrong data type", data.type);
+		}
+
 		logEvent(1, "Sisbot Remove Playlist", data);
 
 		// remove from collection
@@ -741,6 +746,11 @@ var sisbot = {
         });
     },
     remove_track: function(data, cb) {
+		if (data.type != 'track')
+			if (cb) cb("Wrong data type", null);
+			return logEvent(2, "Remove Track sent wrong data type", data.type);
+		}
+
 		var self = this;
         logEvent(1, "Sisbot Remove Track", data);
 
@@ -1480,7 +1490,7 @@ var sisbot = {
 	},
 	set_sleep_time: function(data, cb) {
 		var self = this;
-		logEvent(1, "Set Sleep Time:", data, this.current_state.get('is_sleeping'));
+		logEvent(1, "Set Sleep Time:", data.sleep_time, data.wake_time, this.current_state.get('is_sleeping'));
 
 		// cancel old timers
 		if (this.sleep_timer != null) {
@@ -1494,18 +1504,18 @@ var sisbot = {
 
 		// set timer
 		if (data.sleep_time != "false") {
-			var sleep = moment(data.sleep_time, 'H:MM A');
+			var sleep = moment(data.sleep_time, 'H:mm A');
 			var cron = sleep.minute()+" "+sleep.hour()+" * * *";
-			logEvent(1, "Sleep", cron);
+			logEvent(1, "Sleep", sleep.format('mm HH'), cron);
 
 			this.sleep_timer = scheduler.scheduleJob(cron, function(){
 				self.sleep_sisbot(null, null);
 			});
 		}
 		if (data.wake_time != "false") {
-			var wake = moment(data.wake_time, 'H:MM A');
+			var wake = moment(data.wake_time, 'H:mm A');
 			var cron = wake.minute()+" "+wake.hour()+" * * *";
-			logEvent(1, "Wake", cron);
+			logEvent(1, "Wake", wake.format('mm HH'), cron);
 
 			this.wake_timer = scheduler.scheduleJob(cron, function(){
 				self.wake_sisbot(null, null);
@@ -1719,7 +1729,7 @@ var logEvent = function() {
 			else line += "\t"+obj;
 		});
 
-		// console.log(line);
+		console.log(line);
 		fs.appendFile(filename, line + '\n', function(err, resp) {
 		  if (err) console.log("Log err", err);
 		});

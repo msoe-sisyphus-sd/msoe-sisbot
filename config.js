@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.2.10b', // sleep, nightlight, onboarding updates
+			version	: '1.2.11b', // Delete playlist/track error checking
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
