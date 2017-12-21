@@ -47,6 +47,7 @@ var playlist = Backbone.Model.extend({
 	_update_tracks: function(data) { // fix reversed state for non-randomized list
 		var self		= this;
 		var sorted_list = this.get('sorted_tracks');
+		if (sorted_list.length < 1) return false;
 		var start_rho	= 0; // homed
 		if (data != undefined && data.start_rho) start_rho = data.start_rho;
 
