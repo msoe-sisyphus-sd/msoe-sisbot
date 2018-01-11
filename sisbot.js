@@ -1480,6 +1480,9 @@ var sisbot = {
 		// update cron jobs (includes save)
 		this.set_sleep_time(data, null);
 
+		// TODO: update light brightness
+
+
 		if (cb) cb(null, this.current_state.toJSON());
 	},
 	/* ------------- Sleep Timer ---------------- */
