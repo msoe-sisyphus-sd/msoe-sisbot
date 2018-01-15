@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.2.12b', // Delete playlist bugfix
+			version	: '1.1.13', // changed version number scheme, added software_version
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -50,7 +50,7 @@ var config = {
 			internet_retries: 5, // retry # of times before resetting to hotspot
 			retry_internet_interval: 3000, // three seconds later
 			wifi_error_retry_interval: 60000, // one minute
-			default_data: default_status,
+			default_data: default_status
 		},
 		stopped: { // set NODE_ENV=sisbot_stopped to make it start without autoplaying
 			autoplay: false,

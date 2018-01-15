@@ -196,7 +196,8 @@ var sisbot = {
 			factory_resetting_error: "",
 			installed_updates: "false",
 			brightness: 0.7,
-			speed: 0.35
+			speed: 0.35,
+			software_version: this.config.version
 		});
 		this.current_state.set("local_ip", this._getIPAddress());
 		if (this.current_state.get("local_ip") == "192.168.42.1") {
