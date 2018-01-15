@@ -692,7 +692,7 @@ var sisbot = {
 		_.each(playlists, function(playlist_id) {
 			if (playlist_id != data.id) clean_playlists.push(playlist_id);
 		});
-		this.current_state.set("track_ids", clean_playlists);
+		this.current_state.set("playlist_ids", clean_playlists);
 
 		this.save(null, null);
 
