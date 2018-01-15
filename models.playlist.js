@@ -18,12 +18,14 @@ var playlist = Backbone.Model.extend({
 	},
 	collection: null,
 	initialize: function() {
-		var sorted_tracks = [];
-		_.each(this.get('tracks'), function(obj,index) {
-			sorted_tracks.push(index);
-		});
+		if (!this.get('is_current')) {
+			var sorted_tracks = [];
+			_.each(this.get('tracks'), function(obj,index) {
+				sorted_tracks.push(index);
+			});
 
-		this.set("sorted_tracks", sorted_tracks);
+			this.set("sorted_tracks", sorted_tracks);
+		}
 	},
 	reset_tracks: function() { // get unchanged values from collection
 		var self = this;

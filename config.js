@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.1.13', // changed version number scheme, added software_version
+			version	: '1.1.14', // fix playlist shuffle on startup
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

@@ -345,7 +345,8 @@ module.exports = [{
   "created_at": "2017-08-17 14:16:22",
   "updated_at": "2017-08-17 14:16:22",
   "created_by_id": "false",
-  "created_by_name": "User Name"
+  "created_by_name": "User Name",
+  "is_saved": "true"
 }, {
   "id": "2CBDAE96-EC22-48B4-A369-BFC624463C5F",
   "type": "track",
