@@ -19,7 +19,7 @@ var playlist = Backbone.Model.extend({
 	collection: null,
 	initialize: function() {
 		// build sorted_tracks if empty
-		if (this.set("sorted_tracks").length == 0) {
+		if (this.get("sorted_tracks").length == 0) {
 			var sorted_tracks = [];
 			_.each(this.get('tracks'), function(obj,index) {
 				sorted_tracks.push(index);
