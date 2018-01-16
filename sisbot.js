@@ -591,6 +591,8 @@ var sisbot = {
 		if (!this._saving) {
 			this._saving = true;
 
+			var returnObjects = [];
+
 			// TODO: merge the given data into collection and save
 			if (data != null) {
 				if (!_.isArray(data)) data = [data];
@@ -601,7 +603,7 @@ var sisbot = {
 						if (obj.is_autodim != self.current_state.get('is_autodim')) self.set_autodim({value: "true"}, null);
 						if (obj.brightness != self.current_state.get('brightness')) self.set_brightness({value: obj.brightness}, null);
 					}
-					self.collection.add(obj, {merge:true});
+					returnObjects.push(self.collection.add(obj, {merge:true}).toJSON());
 				});
 			}
 
@@ -609,7 +611,8 @@ var sisbot = {
 				self._saving = false;
 				if (err) return logEvent(2, err);
 			});
-			if (cb) cb(null, 'Saved');
+
+			if (cb) cb(null, returnObjects);
 		} else {
 			if (cb) cb('Another save in process, try again', null);
 		}
@@ -1370,7 +1373,7 @@ var sisbot = {
 		// This will remove old network/password
 		this.current_state.set({ wifi_network: "", wifi_password: "", wifi_error: "false" });
 
-		this.save(null, null);
+		// this.save(null, null);
 
 		this.reset_to_hotspot(data, cb);
 	},
