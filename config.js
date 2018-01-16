@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.1.14', // fix playlist shuffle on startup
+			version	: '1.1.16', // Wifi values default to false instead of empty string
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

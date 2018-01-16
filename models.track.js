@@ -5,17 +5,17 @@ var Backbone		= require('backbone');
 
 var track = Backbone.Model.extend({
 	defaults: {
-		id: 				uuid(),
-		type: 			'track',
-		name: 			'',
-		default_vel:				1,
-		default_accel:			0.5,
-		default_thvmax:			1,
+		id				: uuid(),
+		type			: 'track',
+		name			: '',
+		default_vel		: 1,
+		default_accel	: 0.5,
+		default_thvmax	: 1,
 		//reversed:		"false", // moved to playlist
-		firstR:			-1, // so we can auto-collect from thr if not given
-		lastR:			-1, // so we can auto-collect from thr if not given
-		r_type:			"r", // so we can auto-collect from thr if not given
-		reversible:	"true"
+		firstR			: -1, // so we can auto-collect from thr if not given
+		lastR			: -1, // so we can auto-collect from thr if not given
+		r_type			: "r", // so we can auto-collect from thr if not given
+		reversible		: "true"
 	},
 	collection: null,
 	get_plotter_obj: function(plotter_data) {

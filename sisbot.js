@@ -331,7 +331,7 @@ var sisbot = {
 			this._query_internet(5000); // check for internet connection after 5 seconds
 		} else {
 			// check if we should try reconnecting to wifi
-			if (this.current_state.get("wifi_network") != "" && this.current_state.get("wifi_password") != "") {
+			if (this.current_state.get("wifi_network") != "" && this.current_state.get("wifi_network") != "false" && this.current_state.get("wifi_password") != "" && this.current_state.get("wifi_password") != "false") {
 				this.change_to_wifi({ ssid: self.current_state.get("wifi_network"), psk: self.current_state.get("wifi_password") }, null);
 			}
 		}
@@ -1371,7 +1371,13 @@ var sisbot = {
 	},
 	disconnect_wifi: function(data, cb) {
 		// This will remove old network/password
-		this.current_state.set({ wifi_network: "", wifi_password: "", wifi_error: "false" });
+		this.current_state.set({
+			wifi_network: "false",
+			wifi_password: "false",
+			wifi_error: "false",
+			is_internet_connected: "false",
+			reason_unavailable: "disconnect_from_wifi"
+		});
 
 		// this.save(null, null);
 
@@ -1414,8 +1420,8 @@ var sisbot = {
 
 			// forget bad network values (from cloud)
 			if (self.current_state.get('wifi_forget') == 'true') {
-				new_state.wifi_network = "";
-				new_state.wifi_password = "";
+				new_state.wifi_network = "false";
+				new_state.wifi_password = "false";
 				new_state.wifi_error = "false"; // not an error to remember
 			}
 
@@ -1598,7 +1604,7 @@ var sisbot = {
 	install_updates: function(data, cb) {
 		var self = this;
 		logEvent(1, "Sisbot Install Updates", data);
-		if (this.current_state.get("is_internet_connected")!="true") {
+		if (this.current_state.get("is_internet_connected") != "true") {
 			if (cb) cb("Not connected to internet", null);
 			return logEvent(2, "Install error: not connected to internet");
 		}
