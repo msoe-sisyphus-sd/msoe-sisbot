@@ -4,21 +4,22 @@ var Backbone		= require('backbone');
 
 var playlist = Backbone.Model.extend({
 	defaults: {
-		id: 						uuid(),
-		type: 					"playlist",
-		name: 					"",
+		id					: uuid(),
+		type				: "playlist",
+		name				: "",
 
-		is_loop: 				"true",
-		is_shuffle: 		"true",
+		is_loop				: "true",
+		is_shuffle			: "true",
 
-		active_track_index: 	0,
-		active_track_id: "false",
-		tracks: 			[], // list of objects { id, vel, accel, thvmax, reversed, firstR, lastR, reversible }
-		sorted_tracks:	[] // list of index in tracks
+		active_track_index	: 0,
+		active_track_id		: "false",
+		tracks				: [], // list of objects { id, vel, accel, thvmax, reversed, firstR, lastR, reversible }
+		sorted_tracks		: [] // list of index in tracks
 	},
 	collection: null,
 	initialize: function() {
-		if (!this.get('is_current')) {
+		// build sorted_tracks if empty
+		if (this.set("sorted_tracks").length == 0) {
 			var sorted_tracks = [];
 			_.each(this.get('tracks'), function(obj,index) {
 				sorted_tracks.push(index);
