@@ -337,10 +337,7 @@ var sisbot = {
 		}
 
 		// sleep/wake timers
-		this.set_sleep_time({
-			sleep_time: this.current_state.get('sleep_time'),
-			wake_time: this.current_state.get('wake_time')
-		}, null);
+		this.set_sleep_time(this.current_state.toJSON(), null);
 
 		return this;
   	},
@@ -1275,7 +1272,7 @@ var sisbot = {
 						if (self._internet_retries < self.config.internet_retries) {
                             append_log('Internet retry: ' + self.config.retry_internet_interval);
 							self._query_internet(self.config.retry_internet_interval);
-						} else if (!self._is_hotspot) {
+						} else {
 							logEvent(2, "Internet not connected, reverting to hotspot.");
                             append_log('Internet not connected, reverting to hotspot: ');
 							self.current_state.set({ wifi_error: "true" });
@@ -1342,7 +1339,7 @@ var sisbot = {
 				if (cb) cb(null, self.current_state.toJSON());
 
 				// disconnect all socket connections first
-				this.socket_update("disconnect");
+				self.socket_update("disconnect");
 
 				logEvent(1, "Connect To Wifi", data.ssid);
                 append_log('Connect To Wifi: ' + data.ssid);
@@ -1350,9 +1347,10 @@ var sisbot = {
                 setTimeout(function () {
                     exec('sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "'+data.ssid+'" "'+data.psk+'"', (error, stdout, stderr) => {
     					if (error) return console.error('exec error:',error);
-    					self._query_internet(5000); // check again in 5 seconds
     				});
                 }, 100);
+
+				self._query_internet(5000); // check again in 5 seconds
 			} else if (cb) {
 				logEvent(2, "Invalid Password", data.psk);
 				cb("Invalid password", null);
@@ -1378,6 +1376,9 @@ var sisbot = {
 			is_internet_connected: "false",
 			reason_unavailable: "disconnect_from_wifi"
 		});
+
+		// make sure we don't throw an error, we wanted to disconnect
+		this._changing_to_wifi = false;
 
 		// this.save(null, null);
 
@@ -1415,8 +1416,6 @@ var sisbot = {
                 local_ip: self._getIPAddress(),
                 failed_to_connect_to_wifi: (self._changing_to_wifi == true) ? 'true' : 'false'
             };
-
-            append_log('Debug Hotspot: ' + self._changing_to_wifi);
 
 			// forget bad network values (from cloud)
 			if (self.current_state.get('wifi_forget') == 'true') {
@@ -1517,7 +1516,7 @@ var sisbot = {
 
 		// set timer
 		if (data.sleep_time != "false") {
-			var sleep = moment(data.sleep_time, 'H:mm A');
+			var sleep = moment(data.sleep_time+' '+data.timezone_offset, 'H:mm A Z');
 			var cron = sleep.minute()+" "+sleep.hour()+" * * *";
 			logEvent(1, "Sleep", sleep.format('mm HH'), cron);
 
@@ -1526,7 +1525,7 @@ var sisbot = {
 			});
 		}
 		if (data.wake_time != "false") {
-			var wake = moment(data.wake_time, 'H:mm A');
+			var wake = moment(data.wake_time+' '+data.timezone_offset, 'H:mm A Z');
 			var cron = wake.minute()+" "+wake.hour()+" * * *";
 			logEvent(1, "Wake", wake.format('mm HH'), cron);
 
@@ -1536,7 +1535,13 @@ var sisbot = {
 		}
 
 		// save to state
-		this.current_state.set({ sleep_time: data.sleep_time, wake_time: data.wake_time });
+		this.current_state.set({
+			sleep_time: data.sleep_time,
+			wake_time: data.wake_time,
+			timezone_offset: data.timezone_offset,
+			is_nightlight: data.is_nightlight,
+			nightlight_brightness: data.nightlight_brightness
+		});
 
 		this.save(null, null);
 

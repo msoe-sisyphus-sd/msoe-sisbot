@@ -39,7 +39,7 @@ var track = Backbone.Model.extend({
 
 		if (plotter_data.start != this_json.firstR && this_json.reversible == 'true') {
 			// WE NEED TO REVERSE THE TRACK
-			console.log("Reverse track");
+			// console.log("Reverse track");
 			return_obj.verts.reverse();
 			return_obj.firstR	= this_json.lastR;
 			return_obj.lastR	= this_json.firstR;

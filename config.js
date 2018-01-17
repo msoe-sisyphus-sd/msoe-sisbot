@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.1.16', // Wifi values default to false instead of empty string
+			version	: '1.1.17', // Sleep time zone fix
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

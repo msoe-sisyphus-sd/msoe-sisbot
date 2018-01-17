@@ -45,6 +45,7 @@ var sisbot_state = Backbone.Model.extend({
 		is_sleeping				: "false",
 		sleep_time				: "10:00 PM", // time to start sleep: H:MM A
 		wake_time				: "8:00 AM", // time to wake up: H:MM A
+		timezone_offset			: "-06:00", // Central time
 
 		wifi_network			: "",
 		wifi_password			: "",
