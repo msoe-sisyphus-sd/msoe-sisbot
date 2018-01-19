@@ -52,6 +52,20 @@ var config = {
 			wifi_error_retry_interval: 60000, // one minute
 			default_data: default_status
 		},
+		matt: {
+			folders: {
+			  cloud: 'sisyphus_cloud',
+			  api: 'api',
+			  sisbot: 'sisbot',
+			  proxy: 'proxy',
+			  app: 'cloud',
+			  content: 'content',
+			  config: 'configs',
+			  tracks: 'tracks', // models
+			  logs: '/Users/mattfox12/Documents/Sodo/Ease/Sisyphus/logs'
+			},
+			base_dir: '/Users/mattfox12/Documents/Sodo/Ease/Sisyphus',
+		},
 		stopped: { // set NODE_ENV=sisbot_stopped to make it start without autoplaying
 			autoplay: false,
 		},

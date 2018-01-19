@@ -193,7 +193,7 @@ module.exports = [{
     "thvmax": 1,
     "firstR": 1,
     "lastR": 0,
-    "_index": 16,
+    "_index": 15,
     "reversible": "true",
     "reversed": "true",
     "name": "seash5"
@@ -204,7 +204,7 @@ module.exports = [{
     "thvmax": 1,
     "firstR": 0,
     "lastR": 1,
-    "_index": 17,
+    "_index": 16,
     "reversible": "true",
     "reversed": "false",
     "name": "Erase",
@@ -216,7 +216,7 @@ module.exports = [{
     "thvmax": 1,
     "firstR": 0,
     "lastR": 0,
-    "_index": 18,
+    "_index": 17,
     "name": "sisvort1",
     "reversed": "false"
   }, {
@@ -226,7 +226,7 @@ module.exports = [{
     "thvmax": 1,
     "firstR": 0,
     "lastR": 1,
-    "_index": 19,
+    "_index": 18,
     "name": "spmrph1r",
     "reversed": "true",
     "reversible": "true"
@@ -237,7 +237,7 @@ module.exports = [{
     "thvmax": 1,
     "firstR": 1,
     "lastR": 1,
-    "_index": 20,
+    "_index": 19,
     "name": "ellweave1$p",
     "reversed": "false"
   }, {
@@ -247,7 +247,7 @@ module.exports = [{
     "thvmax": 1,
     "firstR": 0,
     "lastR": 1,
-    "_index": 21,
+    "_index": 20,
     "reversible": "true",
     "reversed": "false",
     "name": "swirl1b"
@@ -258,7 +258,7 @@ module.exports = [{
     "thvmax": 1,
     "firstR": 0,
     "lastR": 1,
-    "_index": 22,
+    "_index": 21,
     "reversible": "true",
     "reversed": "false",
     "name": "Erase"
@@ -269,7 +269,7 @@ module.exports = [{
     "thvmax": 1,
     "firstR": 0,
     "lastR": 1,
-    "_index": 23,
+    "_index": 22,
     "reversible": "true",
     "reversed": "false",
     "name": "tensig2$"
@@ -280,7 +280,7 @@ module.exports = [{
     "thvmax": 1,
     "firstR": 0,
     "lastR": 1,
-    "_index": 24,
+    "_index": 23,
     "name": "trialdn1",
     "reversed": "false",
     "reversible": "true"
@@ -291,7 +291,7 @@ module.exports = [{
     "thvmax": 1,
     "firstR": 0,
     "lastR": 1,
-    "_index": 25,
+    "_index": 24,
     "reversible": "true",
     "name": "sola3",
     "reversed": "false"
@@ -302,7 +302,7 @@ module.exports = [{
     "thvmax": 1,
     "firstR": 0,
     "lastR": 1,
-    "_index": 26,
+    "_index": 25,
     "name": "trwirl1",
     "reversed": "false",
     "reversible": "true"
@@ -313,7 +313,7 @@ module.exports = [{
     "thvmax": 1,
     "firstR": 1,
     "lastR": 0,
-    "_index": 27,
+    "_index": 26,
     "reversible": "true",
     "reversed": "false",
     "name": "zowie1r$b"
@@ -324,7 +324,7 @@ module.exports = [{
     "thvmax": 1,
     "firstR": 1,
     "lastR": 0,
-    "_index": 28,
+    "_index": 27,
     "reversible": "true",
     "reversed": "true",
     "name": "fox1warp2"
@@ -335,12 +335,12 @@ module.exports = [{
     "thvmax": 1,
     "firstR": 1,
     "lastR": 0,
-    "_index": 29,
+    "_index": 28,
     "reversible": "true",
     "reversed": "true",
     "name": "apache1"
   }],
-  "sorted_tracks": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29],
+  "sorted_tracks": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28],
   "description": "Description of Default Playlist",
   "created_at": "2017-08-17 14:16:22",
   "updated_at": "2017-08-17 14:16:22",

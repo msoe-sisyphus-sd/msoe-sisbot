@@ -124,24 +124,6 @@ var sisbot = {
 			}
 			this.ansible.setHandler(this);
 			this.ansible.init(config.services.sisbot.address, config.services.sisbot.ansible_port, config.receiver);
-
-			_.each(self.config.services.sisbot.connect, function(service_name) {
-				//logEvent(1, 'service_name', service_name);
-				self.ansible.connect(service_name, self.config.services[service_name].address, self.config.services[service_name].ansible_port, function(err, resp) {
-					if (resp == true) {
-						logEvent(1, "Sisbot Connected to " + service_name);
-						logEvent(1, "Sisbot connections", _.keys(self.ansible.sockets));
-						if (self.config.services[service_name].is_register) {
-							var service_connected = self.current_state.get("service_connected");
-							service_connected[service_name] = "false";
-							self.current_state.set('service_connected', service_connected);
-
-							logEvent(1, "Register to", service_name);
-							setTimeout(self._register, 100, self, service_name);
-						}
-					} else logEvent(2, service_name + " Sisbot Connect Error", err);
-				});
-      		});
 		}
 
 		// Load in the saved state
@@ -341,6 +323,35 @@ var sisbot = {
 
 		return this;
   	},
+	_setupAnsible() {
+		var self = this;
+		_.each(self.config.services.sisbot.connect, function(service_name) {
+			//logEvent(1, 'service_name', service_name);
+			if (!self.ansible.sockets[service_name]) {
+				self.ansible.connect(service_name, self.config.services[service_name].address, self.config.services[service_name].ansible_port, function(err, resp) {
+					if (resp == true) {
+						logEvent(1, "Sisbot Connected to " + service_name);
+						logEvent(1, "Sisbot connections", _.keys(self.ansible.sockets));
+						if (self.config.services[service_name].is_register) {
+							var service_connected = self.current_state.get("service_connected");
+							service_connected[service_name] = "false";
+							self.current_state.set('service_connected', service_connected);
+
+							logEvent(1, "Register to", service_name);
+							setTimeout(self._register, 100, self, service_name);
+						}
+					} else logEvent(2, service_name + " Sisbot Connect Error", err);
+				});
+			}
+  		});
+	},
+	_teardownAnsible() {
+		var self = this;
+		_.each(self.config.services.sisbot.connect, function(service_name) {
+			logEvent(1, 'Disconnect', service_name);
+			self.ansible.disconnect(service_name);
+		});
+	},
 	_getIPAddress() {
 	  var ip_address = '0.0.0.0';
 	  var interfaces = os.networkInterfaces();
@@ -463,36 +474,36 @@ var sisbot = {
 					var playlist = self.collection.get(self.current_state.get("default_playlist_id"));
 					playlist.set({active_track_id: "false", active_track_index: -1});
 					playlist.reset_tracks(); // start with non-reversed list
-					playlist.set_shuffle(playlist.get('is_shuffle')); // update order, active tracks indexing
+					playlist.set_shuffle({ is_shuffle: playlist.get('is_shuffle'), start_rho: 0 }); // update order, active tracks indexing
 					playlist.set({active_track_index: 0});
 
 					// error check, we don't want r11
-					var start_index = playlist.get("active_track_index");
-					var track_obj = playlist.get("tracks")[playlist.get('sorted_tracks')[start_index]];
-					if (track_obj.firstR == 1) {
-						logEvent(1, "R1 start detected", track_obj);
-						// find the first track to start at r0
-						var searching = true;
-						_.each(playlist.get("sorted_tracks"), function(track_index, index) {
-							if (searching) {
-								var new_obj = playlist.get("tracks")[track_index];
-								if (new_obj.firstR == 0 || new_obj.lastR == 0) {
-									playlist.set({active_track_index: -1}); // so this track is allowed to reverse
-									playlist.reset_tracks(); // reset their reversed state
-									playlist.set({active_track_index: index});
-									playlist.set_shuffle(playlist.get('is_shuffle')); // shuffle with active track as first
-									searching = false;
-								}
-							}
-						});
-					}
+					// var start_index = playlist.get("active_track_index");
+					// var track_obj = playlist.get("tracks")[playlist.get('sorted_tracks')[start_index]];
+					// if (track_obj.firstR == 1) {
+					// 	logEvent(1, "R1 start detected", track_obj);
+					// 	// find the first track to start at r0
+					// 	var searching = true;
+					// 	_.each(playlist.get("sorted_tracks"), function(track_index, index) {
+					// 		if (searching) {
+					// 			var new_obj = playlist.get("tracks")[track_index];
+					// 			if (new_obj.firstR == 0 || new_obj.lastR == 0) {
+					// 				playlist.set({active_track_index: -1}); // so this track is allowed to reverse
+					// 				playlist.reset_tracks(); // reset their reversed state
+					// 				playlist.set({active_track_index: index});
+					// 				playlist.set_shuffle({ is_shuffle: playlist.get('is_shuffle')}); // shuffle with active track as first
+					// 				searching = false;
+					// 			}
+					// 		}
+					// 	});
+					// }
 					//logEvent(1, "Model Playlist Tracks", playlist.get("tracks"));
 
 					var playlist_obj = playlist.toJSON();
 					logEvent(1, "Playlist Active Index:", playlist_obj.active_track_index);
 					playlist_obj.skip_save = true;
 					playlist_obj.is_current = true; // we already set the randomized pattern
-					playlist_obj.active_track_index = playlist_obj.sorted_tracks[0]; // make it start on the first of randomized list
+					// playlist_obj.active_track_index = playlist_obj.sorted_tracks[0]; // make it start on the first of randomized list
 					//logEvent(1, "Send Playlist Tracks", playlist_obj.tracks);
 
 					self.set_playlist(playlist_obj, function(err, resp) {
@@ -663,7 +674,7 @@ var sisbot = {
 		var playlist = this.collection.add(new_playlist, {merge: true});
 		playlist.collection = this.collection;
 		playlist.config = this.config;
-		playlist.set_shuffle(playlist.get('is_shuffle')); // update sorted list, tracks objects
+		playlist.set_shuffle({ is_shuffle: playlist.get('is_shuffle') }); // update sorted list, tracks objects
 
 		// add to current_state
 		var playlists = this.current_state.get("playlist_ids");
@@ -785,7 +796,7 @@ var sisbot = {
 		        playlist.set("tracks", clean_tracks);
 
 				// fix the sorted order, or just reshuffle
-				playlist.set_shuffle(playlist.get('is_shuffle'));
+				playlist.set_shuffle({ is_shuffle: playlist.get('is_shuffle') });
 
 				return_objs.push(playlist.toJSON());
 			}
@@ -918,13 +929,33 @@ var sisbot = {
 			delete data.skip_save;
 		}
 
+		// TODO: check if we are shuffled, and need to grab track from next_tracks
+		if (data.is_shuffle && data.is_current && do_save) { // skip_save is used on bootup, don't pull from next tracks in that case
+			var current_playlist = this.collection.get(this.current_state.get('active_playlist_id'));
+			if (current_playlist != undefined && current_playlist.id == data.id && current_playlist.get('is_shuffle') == data.is_shuffle) {
+				// compare active_track_index to given index
+				if (current_playlist.get('active_track_index') >= data.active_track_index) {
+					console.log("Grab track from next_tracks", current_playlist.get('active_track_index'));
+					var sorted_tracks = current_playlist.get('next_tracks');
+
+					// reset randomized tracks
+					var next_tracks = current_playlist._randomize({
+						start_index: sorted_tracks[sorted_tracks.length-1]
+					});
+
+					data.sorted_tracks = sorted_tracks;
+					data.next_tracks = next_tracks;
+				}
+			}
+		}
+
 		// save playlist
 		var new_playlist = new Playlist(data);
 		//if (data.is_current) new_playlist.unset("sorted_tracks"); // so we don't overwrite the old random list
 		var playlist = this.collection.add(new_playlist, {merge: true});
 		playlist.collection = this.collection;
 		playlist.config = this.config;
-		if (data.is_shuffle && !data.is_current) playlist.set_shuffle(data.is_shuffle);
+		if (data.is_shuffle && !data.is_current) playlist.set_shuffle({ is_shuffle: data.is_shuffle });
 
 		// update current_state
 		this.current_state.set({
@@ -947,7 +978,7 @@ var sisbot = {
 		}
 
 		// tell sockets
-		this.socket_update(this.current_state.toJSON());
+		this.socket_update([playlist.toJSON(), this.current_state.toJSON()]);
 		if (do_save) this.save(null, null);
 
 		if (cb)	cb(null, playlist.toJSON());
@@ -1144,7 +1175,7 @@ var sisbot = {
 		var active_playlist_id = this.current_state.get('active_playlist_id');
 		if (active_playlist_id != "false") {
 			var playlist = this.collection.get(active_playlist_id);
-			playlist.set_shuffle(data.value);
+			playlist.set_shuffle({ is_shuffle: data.value });
 			this.current_state.set('is_shuffle', data.value);
 
 			this.save(null, null);
@@ -1169,8 +1200,9 @@ var sisbot = {
 		logEvent(1, 'Sisbot set autodim', data);
 
 		this.current_state.set('is_autodim', data.value);
-
 		plotter.setAutodim(data.value);// notify plotter of autodim setting
+
+		this.set_brightness({ value: this.current_state.get("brightness") });
 
 		this.save(null, null);
 
@@ -1232,6 +1264,8 @@ var sisbot = {
 					self.current_state.set("is_hotspot", "true");
 				} else {
 					self.current_state.set("is_hotspot", "false");
+
+					self._setupAnsible();
 				}
 			}
 
@@ -1403,6 +1437,9 @@ var sisbot = {
 
 		// disconnect all socket connections first
 		this.socket_update("disconnect");
+
+		// disconnect Ansible
+		this._teardownAnsible();
 
 		logEvent(1, "Start_hotspot");
 		exec('sudo /home/pi/sisbot-server/sisbot/start_hotspot.sh', (error, stdout, stderr) => {
@@ -1747,7 +1784,7 @@ var logEvent = function() {
 			else line += "\t"+obj;
 		});
 
-		console.log(line);
+		// console.log(line);
 		fs.appendFile(filename, line + '\n', function(err, resp) {
 		  if (err) console.log("Log err", err);
 		});

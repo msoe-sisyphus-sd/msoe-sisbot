@@ -53,6 +53,13 @@ var app = function(given_config,ansible) {
 			}
 		});
 	});
+	static.get('/:service/download_log_file/:filename', function (req, res) {
+		var service 		= req.params.service;
+		var filename 		= req.params.filename.replace('.log', '');
+		var file_loc		= config.folders.logs + filename + '.log';
+
+		res.download(file_loc);
+	});
 	static.get('/*', function(req, res) {
 		logEvent(1, "Get:",req.originalUrl);
 	 	res.sendFile(config.base_dir+req.originalUrl);

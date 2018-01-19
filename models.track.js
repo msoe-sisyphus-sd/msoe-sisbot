@@ -89,11 +89,11 @@ var track = Backbone.Model.extend({
 
 		// !! error check !!
 		if (return_value[0].r != self.get("firstR")) {
-			console.log("R[0] not matching", return_value[0].r, self.get("firstR"));
+			// console.log("R[0] not matching", return_value[0].r, self.get("firstR"));
 			this.set({firstR: return_value[0].r, r_type:"r"+return_value[0].r+this.get("lastR")});
 		}
 		if (return_value[return_value.length-1].r != self.get("lastR")) {
-			console.log("R[n] not matching", return_value[return_value.length-1].r, self.get("lastR"));
+			// console.log("R[n] not matching", return_value[return_value.length-1].r, self.get("lastR"));
 			this.set({lastR: return_value[return_value.length-1].r, r_type:"r"+this.get("firstR")+return_value[return_value.length-1].r});
 		}
 		if (this.get('firstR') == this.get('lastR')) {
