@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.1.17', // Sleep time zone fix
+			version	: '1.1.18', // Playlist shuffle changes, downloadable log files
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
