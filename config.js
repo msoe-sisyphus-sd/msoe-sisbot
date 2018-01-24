@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.1.18', // Playlist shuffle changes, downloadable log files
+			version	: '1.1.19', // Ansible connection based on share_log_files
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

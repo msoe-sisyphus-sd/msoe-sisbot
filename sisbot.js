@@ -179,11 +179,12 @@ var sisbot = {
 			installed_updates: "false",
 			brightness: 0.7,
 			speed: 0.35,
+			is_internet_connected: "false",
 			software_version: this.config.version
 		});
 		this.current_state.set("local_ip", this._getIPAddress());
 		if (this.current_state.get("local_ip") == "192.168.42.1") {
-			this.current_state.set({is_hotspot: "true", is_internet_connected: "false"});
+			this.current_state.set("is_hotspot", "true");
 		} else {
 			this.current_state.set("is_hotspot", "false");
 		}
@@ -310,6 +311,7 @@ var sisbot = {
 
 		// wifi connect
 		if (this.current_state.get("is_hotspot") == "false") {
+			// this.current_state.set("is_internet_connected", "false"); // assume false, so sockets connect
 			this._query_internet(5000); // check for internet connection after 5 seconds
 		} else {
 			// check if we should try reconnecting to wifi
@@ -351,6 +353,8 @@ var sisbot = {
 			logEvent(1, 'Disconnect', service_name);
 			self.ansible.disconnect(service_name);
 		});
+
+		logEvent(1, "Ansible teardown complete");
 	},
 	_getIPAddress() {
 	  var ip_address = '0.0.0.0';
@@ -415,33 +419,38 @@ var sisbot = {
 		this.socket_update(self.current_state.toJSON());
 	},
 	_connectionError: function(service) {
-		this.connectionErrors++;
-		logEvent(2, "Connection Error",service,this.connectionErrors, this.current_state.id);
+		var service_connected = this.current_state.get("service_connected");
 
-		// request new config if connectionErrors == 100?
-		if (this.connectionErrors >= this.config.retry_count) {
-			// change the ansible address/port
-		}
+		// make sure connection has not been disconnected on purpose
+		if (service_connected[service] != undefined && service_connected[service] == "true") {
+			this.connectionErrors++;
+			logEvent(2, "Connection Error",service,this.connectionErrors, this.current_state.id);
 
-		// create error message to send when able
-		this.error_messages.push({
-			service: service,
-			method: "sisbot_error",
-			data: {
-				service:						service,
-				sisbotID: 						this.current_state.id,
-				address: 						this.current_state.get("address"),
-				version: 						this.current_state.get("version"),
-				error:							"Could not connect "+service
+			// request new config if connectionErrors == 100?
+			if (this.connectionErrors >= this.config.retry_count) {
+				// change the ansible address/port
 			}
-		});
+
+			// create error message to send when able
+			this.error_messages.push({
+				service: service,
+				method: "sisbot_error",
+				data: {
+					service:						service,
+					sisbotID: 						this.current_state.id,
+					address: 						this.current_state.get("address"),
+					version: 						this.current_state.get("version"),
+					error:							"Could not connect "+service
+				}
+			});
+		}
 	},
 	_connectionClosed: function(service) {
 		logEvent(1, "Connection Closed", service, this.connectionErrors, this.current_state.id);
 
 		var service_connected = this.current_state.get("service_connected");
 		if (service_connected[service] != undefined) {
-			service_connected[service] = "false"
+			service_connected[service] = "false";
 	        this.current_state.set("service_connected", service_connected);
 
 			this.socket_update(this.current_state.toJSON());
@@ -610,6 +619,7 @@ var sisbot = {
 						if (obj.state) delete obj.state; // don't listen to updates to this, plotter is in control of this
 						if (obj.is_autodim != self.current_state.get('is_autodim')) self.set_autodim({value: "true"}, null);
 						if (obj.brightness != self.current_state.get('brightness')) self.set_brightness({value: obj.brightness}, null);
+						if (obj.share_log_files != self.current_state.get('share_log_files')) self.set_share_log_files({value: obj.share_log_files}, null);
 					}
 					returnObjects.push(self.collection.add(obj, {merge:true}).toJSON());
 				});
@@ -1143,10 +1153,10 @@ var sisbot = {
 			if (cb)	cb(null, this.current_state.toJSON());
 		} else if (cb) cb('No Connection', null);
 	},
-  get_state: function(data, cb) {
+	get_state: function(data, cb) {
 		logEvent(1, "Sisbot get state", data);
-    if (cb) cb(null, this.current_state);
-  },
+		if (cb) cb(null, this.current_state);
+	},
 	_clamp: function(value, min, max) {
 		var return_value = value;
 		if (return_value < min) return_value = min;
@@ -1238,6 +1248,20 @@ var sisbot = {
 
 		if (cb)	cb(null, this.current_state.toJSON());
 	},
+	set_share_log_files: function(data, cb) {
+		logEvent(1, 'Sisbot set share log files', data);
+
+		// toggle on/off ansible if different
+		if (data.value != this.current_state.get('share_log_files')) {
+			if (data.value == 'true') {
+				if (this.current_state.get('is_internet_connected') == 'true') this._setupAnsible();
+			} else this._teardownAnsible();
+		}
+
+		this.current_state.set('share_log_files', data.value);
+
+		if (cb)	cb(null, this.current_state.toJSON());
+	},
 	/* --------------- WIFI ---------------------*/
 	_validate_internet: function(data, cb) {
 		//logEvent(1, "Sisbot validate internet");
@@ -1252,12 +1276,6 @@ var sisbot = {
 
 			logEvent(1, "Internet Connected Check", returnValue);
 
-			// update values
-			self.current_state.set({
-				is_internet_connected: returnValue,
-				local_ip: self._getIPAddress()
-			});
-
 			if (self.current_state.get("is_internet_connected") != returnValue) {
 				// change hotspot status
 				if (self.current_state.get("local_ip") == "192.168.42.1") {
@@ -1265,9 +1283,15 @@ var sisbot = {
 				} else {
 					self.current_state.set("is_hotspot", "false");
 
-					self._setupAnsible();
+					if (self.current_state.get("share_log_files") == "true") self._setupAnsible();
 				}
 			}
+
+			// update values
+			self.current_state.set({
+				is_internet_connected: returnValue,
+				local_ip: self._getIPAddress()
+			});
 
             setTimeout(function () {
     			self.current_state.set({is_internet_connected: returnValue, local_ip: self._getIPAddress()});
@@ -1784,7 +1808,7 @@ var logEvent = function() {
 			else line += "\t"+obj;
 		});
 
-		// console.log(line);
+		console.log(line);
 		fs.appendFile(filename, line + '\n', function(err, resp) {
 		  if (err) console.log("Log err", err);
 		});
