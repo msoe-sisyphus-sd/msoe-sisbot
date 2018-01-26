@@ -358,14 +358,14 @@ var playlist = Backbone.Model.extend({
 
 		// make sure current track does not change current first/lastR values
 		var current_track = {};
-		if (data.current_track_index == undefined) {
+		if (data.current_track_index == undefined || data.current_track_index < 0) {
 			current_track = this.get_current_track();
 			// console.log("Retain Current", current_track);
 		} else {
 			current_track = this.get('tracks')[sorted_list[data.current_track_index]];
 			// console.log("Retain Given", sorted_list[data.current_track_index], current_track);
 		}
-		if (data.start_rho >= 0 && current_track.firstR != data.start_rho && current_track.lastR == data.start_rho) {
+		if (current_track.id != "false" && data.start_rho >= 0 && current_track.firstR != data.start_rho && current_track.lastR == data.start_rho) {
 			this._reverseTrack(current_track);
 		}
 		var retain_obj = JSON.parse(JSON.stringify(current_track));

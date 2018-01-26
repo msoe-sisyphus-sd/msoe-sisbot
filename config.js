@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.1.19', // Ansible connection based on share_log_files
+			version	: '1.1.20', // Speed update, New Playlist bugfix
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -40,7 +40,7 @@ var config = {
 			serial_path: '/dev/ttyACM0',
 			autoplay: true,
 			skip_incompatible: true,
-			min_speed: 0.5,
+			min_speed: 0.15,
 			max_speed: 1.75,
 			auto_th: 1.570796,
 			failed_home_rho: 0.2,
