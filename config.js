@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.1.20', // Speed update, New Playlist bugfix
+			version	: '1.1.21', // Selecting track with rho: 1 doesn't skip to next after home
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
