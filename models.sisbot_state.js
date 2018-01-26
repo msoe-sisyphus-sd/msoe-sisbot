@@ -34,6 +34,7 @@ var sisbot_state = Backbone.Model.extend({
 		active_playlist_id		: "false",
 		active_track			: { id: "false" }, // { id, vel, accel, thmax, reversed }
 		_end_rho				: 0,
+		repeat_current			: "false", // use to keep playing selected track
 
 		is_homed				: "false",
 		is_serial_open			: "false",

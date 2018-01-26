@@ -216,7 +216,10 @@ var sisbot = {
 			var playlist_id = self.current_state.get('active_playlist_id');
 			if (playlist_id != "false") {
 				var playlist = self.collection.get(playlist_id);
-				self.current_state.set('active_track', playlist.get_next_track({ start_rho: self.current_state.get('_end_rho') }));
+				if (self.current_state.get('repeat_current') != 'true') {
+					self.current_state.set('active_track', playlist.get_next_track({ start_rho: self.current_state.get('_end_rho') }));
+				}
+				self.current_state.set('repeat_current', 'false');
 
 				// update UI
 				self.socket_update([self.current_state.toJSON(), playlist.toJSON()]);
@@ -278,7 +281,7 @@ var sisbot = {
 							};
 							self._paused = false;
 							self.plotter.playTrack(track_obj);
-							self.current_state.set('_end_rho', self._move_to_rho); // pull from track_obj
+							self.current_state.set({_end_rho: self._move_to_rho, repeat_current: 'true'}); // pull from track_obj
 							self._move_to_rho = 0;
 						} else {
 							self._play_track(track, null);
