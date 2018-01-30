@@ -96,6 +96,7 @@ var sisbot = {
 	error_messages: [],
 
 	_paused: false,
+	_play_next: false,
 	_autoplay: false,
 	_home_next: false,
 	_move_to_rho: 0,
@@ -213,11 +214,16 @@ var sisbot = {
 		plotter.onFinishTrack(function() {
 			logEvent(1, "Track Finished");
 			if (self._home_next == true) return logEvent(1, "Home Next, skip playing next");
+
 			var playlist_id = self.current_state.get('active_playlist_id');
 			if (playlist_id != "false") {
 				var playlist = self.collection.get(playlist_id);
 				if (self.current_state.get('repeat_current') != 'true') {
-					self.current_state.set('active_track', playlist.get_next_track({ start_rho: self.current_state.get('_end_rho') }));
+					if (self.current_state.get('is_paused_between_tracks') == 'true') {
+						self._paused = true;
+						self.current_state.set('is_waiting_between_tracks', 'true');
+						// self._play_next = true;
+					} else self.current_state.set('active_track', playlist.get_next_track({ start_rho: self.current_state.get('_end_rho') }));
 				}
 				self.current_state.set('repeat_current', 'false');
 
@@ -562,7 +568,16 @@ var sisbot = {
 		if (cb) cb(null, this.collection.toJSON());
 	},
 	state: function(data, cb) {
-		if (cb) cb(null, this.current_state.toJSON());
+		logEvent(1, "Sisbot state");
+		var return_objs = [this.current_state.toJSON()];
+
+		var playlist_id = this.current_state.get('active_playlist_id');
+		if (playlist_id != 'false') return_objs.push(this.collection.get(playlist_id).toJSON());
+
+		// logEvent(1, "Sisbot state", return_objs);
+
+		if (cb) cb(null, return_objs);
+		// if (cb) cb(null, this.current_state.toJSON());
 	},
 	exists: function(data, cb) {
 		logEvent(1, "Sisbot Exists", data);
@@ -643,7 +658,26 @@ var sisbot = {
 		if (this._validateConnection()) {
 			if (this._paused) this.current_state.set("state", "playing");
 			this._paused = false;
-			plotter.resume();
+
+			// move on to next track if we paused between tracks
+			if (this.current_state.get('is_waiting_between_tracks') == 'true') {
+			// if (this._play_next) {
+				var playlist_id = this.current_state.get('active_playlist_id');
+				if (playlist_id != "false") {
+					var playlist = this.collection.get(playlist_id);
+					this.current_state.set('active_track', playlist.get_next_track({ start_rho: this.current_state.get('_end_rho') }));
+					this.socket_update(playlist.toJSON());
+				}
+				this._play_track(this.current_state.get('active_track'), null);
+
+				this.current_state.set('is_waiting_between_tracks', 'false');
+				this.socket_update(this.current_state.toJSON());
+
+				// this._play_next = false;
+			} else {
+				plotter.resume();
+			}
+
 			if (cb)	cb(null, this.current_state.toJSON());
 		} else if (cb) cb('No Connection', null);
 	},
@@ -1157,8 +1191,9 @@ var sisbot = {
 		} else if (cb) cb('No Connection', null);
 	},
 	get_state: function(data, cb) {
-		logEvent(1, "Sisbot get state", data);
-		if (cb) cb(null, this.current_state);
+		logEvent(1, "Sisbot state", return_objs);
+
+		if (cb) cb(null, this.current_state.toJSON());
 	},
 	_clamp: function(value, min, max) {
 		var return_value = value;
@@ -1251,6 +1286,16 @@ var sisbot = {
 
 		if (cb)	cb(null, this.current_state.toJSON());
 	},
+	set_pause_between_tracks: function(data, cb) {
+		// { is_paused_between_tracks: "true" }
+		logEvent(1, 'Sisbot set pause between tracks', data);
+
+		this.current_state.set('is_paused_between_tracks', data.is_paused_between_tracks);
+
+		this.save(null, null);
+
+		if (cb)	cb(null, this.current_state.toJSON());
+	},
 	set_share_log_files: function(data, cb) {
 		logEvent(1, 'Sisbot set share log files', data);
 
@@ -1327,6 +1372,8 @@ var sisbot = {
 
 						// check again later
 						self._query_internet(self.config.check_internet_interval);
+
+						self.socket_update(self.current_state.toJSON());
                         self._post_state_to_cloud();
 					} else {
 						self._internet_retries++;
