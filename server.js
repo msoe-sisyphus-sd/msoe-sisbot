@@ -89,7 +89,7 @@ var app = function(given_config,ansible) {
 	/**************************** SOCKET.IO ***************************************/
 
 	var sockets			= { /* id: socket */	};
-	var socket_server	= io.listen(server);
+	var socket_server   = io.listen(server, { pingTimeout: 1000, pingInterval: 400 });
 
 	socket_server.origins('*:*');
 
