@@ -1023,7 +1023,8 @@ var sisbot = {
 			active_playlist_id: data.id,
 			active_track: playlist.get_current_track(),
 			is_shuffle: data.is_shuffle,
-			is_loop: data.is_loop
+			is_loop: data.is_loop,
+			is_waiting_between_tracks: "false"
 		});
 		logEvent(1, "Current track", this.current_state.get('active_track'));
 		if (this.current_state.get('state') == "playing") {
@@ -1068,7 +1069,8 @@ var sisbot = {
 			active_playlist_id: "false",
 			active_track: track.toJSON(),
 			is_shuffle: "false",
-			is_loop: "true"
+			is_loop: "true",
+			is_waiting_between_tracks: "false"
 		});
 		if (this.current_state.get('state') == "playing") {
 			plotter.pause();
