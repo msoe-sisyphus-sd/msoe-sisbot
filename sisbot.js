@@ -218,6 +218,12 @@ var sisbot = {
 			var playlist_id = self.current_state.get('active_playlist_id');
 			if (playlist_id != "false") {
 				var playlist = self.collection.get(playlist_id);
+				// make sure playlist was not deleted
+				if (!playlist) {
+					self.current_state.set('active_playlist_id', 'false');
+					return self.socket_update(self.current_state.toJSON());
+				}
+
 				if (self.current_state.get('repeat_current') != 'true') {
 					if (self.current_state.get('is_paused_between_tracks') == 'true') {
 						self._paused = true;
@@ -229,8 +235,15 @@ var sisbot = {
 
 				// update UI
 				self.socket_update([self.current_state.toJSON(), playlist.toJSON()]);
-			} else if (self.current_state.get('is_loop') != "true") {
-				self.current_state.set('active_track', {id: 'false'});
+			} else {
+				// Single Track
+				if (self.current_state.get('repeat_current') != 'true') {
+					self._paused = true;
+					self.current_state.set({
+						is_waiting_between_tracks: 'true'
+					});
+				}
+				self.current_state.set('repeat_current', 'false');
 
 				// update UI
 				self.socket_update(self.current_state.toJSON());

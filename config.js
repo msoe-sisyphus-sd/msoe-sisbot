@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.1.22', // Pause between tracks, sends both sisbot state and current playlist to app
+			version	: '1.1.23', // Fixed crash when deleted currently playing playlist, pause after single track
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
