@@ -85,6 +85,7 @@ var playlist = Backbone.Model.extend({
 		this.set("active_track_id", return_value);
 
  		// check for last track & looping so we can reshuffle if needed
+		// console.log("Next Track Index", track_index, tracks.length-1);
 		if (track_index >= tracks.length-1 && this.get("is_loop") == "true") {
 			if (this.get("is_shuffle") == "true") {
 				// switch to second list

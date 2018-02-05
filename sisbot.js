@@ -684,13 +684,13 @@ var sisbot = {
 				this._play_track(this.current_state.get('active_track'), null);
 
 				this.current_state.set('is_waiting_between_tracks', 'false');
-				this.socket_update(this.current_state.toJSON());
 
 				// this._play_next = false;
 			} else {
 				plotter.resume();
 			}
 
+			this.socket_update(this.current_state.toJSON());
 			if (cb)	cb(null, this.current_state.toJSON());
 		} else if (cb) cb('No Connection', null);
 	},
@@ -995,7 +995,7 @@ var sisbot = {
 			if (current_playlist != undefined && current_playlist.id == data.id && current_playlist.get('is_shuffle') == data.is_shuffle) {
 				// compare active_track_index to given index
 				if (current_playlist.get('active_track_index') >= data.active_track_index) {
-					console.log("Grab track from next_tracks", current_playlist.get('active_track_index'));
+					// console.log("Grab track from next_tracks", current_playlist.get('active_track_index'));
 					var sorted_tracks = current_playlist.get('next_tracks');
 
 					// reset randomized tracks
@@ -1863,9 +1863,9 @@ var sisbot = {
 
 var logEvent = function() {
 	// save to the log file for sisbot
-	// if (sisbot.config.folders.logs) {
-		// var filename = sisbot.config.folders.logs + '/' + moment().format('YYYYMMDD') + '_sisbot.log';
-		var filename = '/var/log/sisyphus/' + moment().format('YYYYMMDD') + '_sisbot.log';
+	if (sisbot.config.folders.logs) {
+		var filename = sisbot.config.folders.logs + '/' + moment().format('YYYYMMDD') + '_sisbot.log';
+		// var filename = '/var/log/sisyphus/' + moment().format('YYYYMMDD') + '_sisbot.log';
 
 		var line = Date.now();
 		_.each(arguments, function(obj, index) {
@@ -1873,11 +1873,11 @@ var logEvent = function() {
 			else line += "\t"+obj;
 		});
 
-		console.log(line);
+		// console.log(line);
 		fs.appendFile(filename, line + '\n', function(err, resp) {
 		  if (err) console.log("Log err", err);
 		});
-	// } else console.log(arguments);
+	} else console.log(arguments);
 }
 
 var append_log = function(line) {

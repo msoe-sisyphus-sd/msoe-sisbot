@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.1.23', // Fixed crash when deleted currently playing playlist, pause after single track
+			version	: '1.1.24', // 1.2 release prep
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
