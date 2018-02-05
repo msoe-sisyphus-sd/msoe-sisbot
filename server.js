@@ -1,19 +1,17 @@
-var http					= require("http");
-var tls						= require("tls");
-var fs          	= require('fs');
-var cors					= require("cors");
-var express     	= require('express');
+var http			= require("http");
+var tls				= require("tls");
+var fs		  		= require('fs');
+var cors			= require("cors");
+var express	 		= require('express');
 var bodyParser		= require('body-parser');
-var iwconfig			= require('wireless-tools/iwconfig');
-// var iwlist			= require('wireless-tools/iwlist');
-var _							= require('underscore');
-var exec 					= require('child_process').exec;
-// var httpProxy   = require('http-proxy');
+var iwconfig		= require('wireless-tools/iwconfig');
+var _				= require('underscore');
+var exec 			= require('child_process').exec;
+var io			 	= require("socket.io");
+var moment 			= require('moment');
 
-var local_config 				= require('./config.js');
-var sisbot_obj					= require('./sisbot.js');
-// var ansible 		= require('./ansible.js');
-// var api 					= require('./api/server.js')(config, null);
+var local_config 	= require('./config.js');
+var sisbot_obj		= require('./sisbot.js');
 
 var config = {};
 
@@ -32,38 +30,22 @@ var app = function(given_config,ansible) {
 	}
 	if (config.pi_serial == undefined) config.pi_serial = getserial();
 
-	/**************************** PROXY *******************************************/
-
-	// var proxy       = httpProxy.createServer();
-
 	/**************************** SERVICES ****************************************/
 
-	// var used_ports = [];
-	var services = {};
-	services.sisbot = sisbot_obj.init(config,ansible);
-	// console.log("Services:", config.services);
-	// _.each(config.services, function (service, key) {
-	//   if (service.address !== 'localhost') return this;
-	//
-	// 	console.log("Create Service", key, service);
-	//   var service_obj = require(service.dir + '/'+key+'.js');
-	// 	var local_config = require(service.dir + '/config.js');
-	// 	local_config = _.extend(config, local_config);
-	//
-	// });
+	var services	= {};
 
 	/**************************** SERVER *******************************************/
 
-	var static             = new express();
+	var static			 = new express();
 
 	static.use(cors());
 	static.use(bodyParser.json());
 	static.use(bodyParser.urlencoded({ limit: '50mb' }));
 
 	static.get('/', function(req, res) {
-		console.log("Get Page:",req.originalUrl);
+		logEvent(1, "Get Page:",req.originalUrl);
 		iwconfig.status('wlan0', function(err, resp) {
-		  console.log("Status", resp);
+		 	logEvent(1, "Status", resp);
 			if (resp.mode == 'master') {
 				res.sendFile(config.base_dir+'/index.html');
 			} else {
@@ -71,9 +53,16 @@ var app = function(given_config,ansible) {
 			}
 		});
 	});
+	static.get('/:service/download_log_file/:filename', function (req, res) {
+		var service 		= req.params.service;
+		var filename 		= req.params.filename.replace('.log', '');
+		var file_loc		= config.folders.logs + filename + '.log';
+
+		res.download(file_loc);
+	});
 	static.get('/*', function(req, res) {
-		console.log("Get:",req.originalUrl);
-	  res.sendFile(config.base_dir+req.originalUrl);
+		logEvent(1, "Get:",req.originalUrl);
+	 	res.sendFile(config.base_dir+req.originalUrl);
 	});
 	static.post('/:service/:endpoint', function(req, res) {
 		service = req.params.service;
@@ -82,21 +71,75 @@ var app = function(given_config,ansible) {
 		var data = (_.isString(req.body.data)) ? JSON.parse(req.body.data) : req.body.data;
 		data = data.data;
 
-		if (endpoint != "state") console.log("Post:",service, endpoint, data);
+		if (endpoint != "state") logEvent(1, "Post:",service, endpoint, data);
 
 		var cb		= function (err, resp) {
 			res.json({ err: err, resp: resp });
+			if (!err)	socket_update(resp);
 		};
 		try {
 			services[service][endpoint](data,cb);
 		} catch (err) {
-			console.log("Error:", service, endpoint, err);
+			logEvent(2, "Error:", service, endpoint, err);
 		}
 	});
 
-	http.createServer(static).listen(config.servers.sisbot.port);
+	var server = http.createServer(static).listen(config.servers.sisbot.port);
 
-	console.log("Sisbot Server created");
+	/**************************** SOCKET.IO ***************************************/
+
+	var sockets			= { /* id: socket */	};
+	var socket_server   = io.listen(server, { pingTimeout: 1000, pingInterval: 400 });
+
+	socket_server.origins('*:*');
+
+	socket_server.on('connection', function(socket) {
+		if (!sockets[socket.id]) {
+			logEvent(1, "Socket connect: "+socket.id);
+			sockets[socket.id] = socket;
+		}
+
+		socket.on('disconnect', function(data) {
+			logEvent(1, "Socket disconnect: ", data);
+			delete sockets[data.id];
+		});
+	});
+
+	function socket_update(data) {
+		if (data != null) {
+			_.each(sockets, function(socket, id) {
+				if (data == "disconnect") {
+					socket.disconnect(true);
+				} else {
+					socket.emit('set', data);
+				}
+			});
+		}
+	}
+
+	/**************************** SISBOT SERVICE ****************************************/
+
+	function logEvent() {
+		// save to the log file for sisbot
+		if (local_config.folders.logs) {
+			var filename = local_config.folders.logs + moment().format('YYYYMMDD') + '_sisbot.log';
+
+			var line = Date.now();
+			_.each(arguments, function(obj, index) {
+				if (_.isObject(obj)) line += "\t"+JSON.stringify(obj);
+				else line += "\t"+obj;
+			});
+
+			console.log(line);
+			fs.appendFile(filename, line + '\n', function(err, resp) {
+			  if (err) console.log("Log err", err);
+			});
+		} else console.log(arguments);
+	}
+
+	services.sisbot	= sisbot_obj.init(config, ansible, socket_update);
+
+	logEvent(1, "Sisbot Server created");
 }
 
 module.exports = app;

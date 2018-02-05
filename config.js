@@ -1,8 +1,8 @@
-var fs			= require('fs');
-var _           = require('underscore');
-var uuid		= require('uuid');
-var which_cson  = 'default.cson';
-var default_status = require('./default_status.js');
+var fs				= require('fs');
+var _           	= require('underscore');
+var uuid			= require('uuid');
+var which_cson  	= 'default.cson';
+var default_status 	= require('./default_status.js');
 
 if (process.env.NODE_ENV.indexOf('dev') == -1) {
     var which_cson  = require('/home/pi/sisbot-server/sisbot/configs/whichcson.js');
@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.0.9', // update autodim
+			version	: '1.1.24', // 1.2 release prep
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -31,7 +31,8 @@ var config = {
 				config: 'configs',
 				tracks: 'tracks', // models
 				cloud: 'siscloud',
-				api: 'sisapi'
+				api: 'sisapi',
+		  	  	logs: '/var/log/sisyphus/'
 			},
 			receiver : true, // receive messages from cloud
 			sisbot_config : which_cson,
@@ -39,17 +40,31 @@ var config = {
 			serial_path: '/dev/ttyACM0',
 			autoplay: true,
 			skip_incompatible: true,
-			min_speed: 0.5,
+			min_speed: 0.15,
 			max_speed: 1.75,
 			auto_th: 1.570796,
 			failed_home_rho: 0.2,
 			failed_home_th: 1.570796,
 			max_rand_retries: 10,
-			check_internet_interval: 300000, // every five minutes, // 1800000 once every half hour, confirm an internet connection
+			check_internet_interval: 300000, // every thirty minutes, // 1800000 once every half hour, confirm an internet connection
 			internet_retries: 5, // retry # of times before resetting to hotspot
 			retry_internet_interval: 3000, // three seconds later
 			wifi_error_retry_interval: 60000, // one minute
-			default_data: default_status,
+			default_data: default_status
+		},
+		matt: {
+			folders: {
+			  cloud: 'sisyphus_cloud',
+			  api: 'api',
+			  sisbot: 'sisbot',
+			  proxy: 'proxy',
+			  app: 'cloud',
+			  content: 'content',
+			  config: 'configs',
+			  tracks: 'tracks', // models
+			  logs: '/Users/mattfox12/Documents/Sodo/Ease/Sisyphus/logs'
+			},
+			base_dir: '/Users/mattfox12/Documents/Sodo/Ease/Sisyphus',
 		},
 		stopped: { // set NODE_ENV=sisbot_stopped to make it start without autoplaying
 			autoplay: false,

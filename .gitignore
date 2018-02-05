@@ -1,5 +1,6 @@
 .DS_Store
 configs/whichcson.js
+content/status.json
 
 # Logs
 logs

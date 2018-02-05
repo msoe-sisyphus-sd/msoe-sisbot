@@ -1,21 +1,21 @@
-var uuid				= require('uuid');
-var fs					= require('fs');
-var _						= require('underscore');
+var uuid			= require('uuid');
+var fs				= require('fs');
+var _				= require('underscore');
 var Backbone		= require('backbone');
 
 var track = Backbone.Model.extend({
 	defaults: {
-		id: 				uuid(),
-		type: 			'track',
-		name: 			'',
-		default_vel:				1,
-		default_accel:			0.5,
-		default_thvmax:			1,
+		id				: uuid(),
+		type			: 'track',
+		name			: '',
+		default_vel		: 1,
+		default_accel	: 0.5,
+		default_thvmax	: 1,
 		//reversed:		"false", // moved to playlist
-		firstR:			-1, // so we can auto-collect from thr if not given
-		lastR:			-1, // so we can auto-collect from thr if not given
-		r_type:			"r", // so we can auto-collect from thr if not given
-		reversible:	"true"
+		firstR			: -1, // so we can auto-collect from thr if not given
+		lastR			: -1, // so we can auto-collect from thr if not given
+		r_type			: "r", // so we can auto-collect from thr if not given
+		reversible		: "true"
 	},
 	collection: null,
 	get_plotter_obj: function(plotter_data) {
@@ -39,7 +39,7 @@ var track = Backbone.Model.extend({
 
 		if (plotter_data.start != this_json.firstR && this_json.reversible == 'true') {
 			// WE NEED TO REVERSE THE TRACK
-			console.log("Reverse track");
+			// console.log("Reverse track");
 			return_obj.verts.reverse();
 			return_obj.firstR	= this_json.lastR;
 			return_obj.lastR	= this_json.firstR;
@@ -89,11 +89,11 @@ var track = Backbone.Model.extend({
 
 		// !! error check !!
 		if (return_value[0].r != self.get("firstR")) {
-			console.log("R[0] not matching", return_value[0].r, self.get("firstR"));
+			// console.log("R[0] not matching", return_value[0].r, self.get("firstR"));
 			this.set({firstR: return_value[0].r, r_type:"r"+return_value[0].r+this.get("lastR")});
 		}
 		if (return_value[return_value.length-1].r != self.get("lastR")) {
-			console.log("R[n] not matching", return_value[return_value.length-1].r, self.get("lastR"));
+			// console.log("R[n] not matching", return_value[return_value.length-1].r, self.get("lastR"));
 			this.set({lastR: return_value[return_value.length-1].r, r_type:"r"+this.get("firstR")+return_value[return_value.length-1].r});
 		}
 		if (this.get('firstR') == this.get('lastR')) {
