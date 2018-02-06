@@ -98,9 +98,7 @@ var app = function(given_config,ansible) {
 			logEvent(1, "Socket connect: "+socket.id);
 			sockets[socket.id] = socket;
 
-			console.log("Socket Connect: ", socket.id);
 			services['sisbot'].state({}, function(err, resp) {
-				console.log("Socket Update: ", resp);
 				socket.emit('set', resp);
 			});
 		}
