@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.1.24', // 1.2 release prep
+			version	: '1.1.25', // socket connect bugfix, night mode light fix
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

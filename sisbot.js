@@ -746,6 +746,9 @@ var sisbot = {
 		this.save(null, null);
 
 		if (cb) cb(null, [playlist.toJSON(), this.current_state.toJSON()]); // send back current_state and the playlist
+
+		// tell all connected devices
+		self.socket_update([playlist.toJSON(), this.current_state.toJSON()]);
 	},
 	remove_playlist: function(data, cb) {
 		if (data.type != 'playlist') {
@@ -807,6 +810,9 @@ var sisbot = {
 			self.thumbnail_generate({ id: data.id }, function(err, resp) {
 				// do nothing. this generates the thumbnails in the app folder
 				if (cb) cb(null, [track.toJSON(), self.current_state.toJSON()]); // send back current_state and the track
+
+				// tell all connected devices
+				self.socket_update([track.toJSON(), self.current_state.toJSON()]);
 			});
 		});
     },
@@ -1249,7 +1255,7 @@ var sisbot = {
 		}
 	},
 	set_speed: function(data, cb) {
-		var percent = this._clamp(data.value, 0.0, 1.0); // 0.0-1.0f
+		var percent = this._clamp(+data.value, 0.0, 1.0); // 0.0-1.0f
 		var speed = this.config.min_speed + percent * (this.config.max_speed - this.config.min_speed);
 		logEvent(1, "Sisbot Set Speed", speed);
     	plotter.setSpeed(speed);
@@ -1280,7 +1286,7 @@ var sisbot = {
 			else return;
 		}
 
-		var value = this._clamp(data.value, 0.0, 1.0);
+		var value = this._clamp(+data.value, 0.0, 1.0);
 		this.current_state.set('brightness', value);
 
 		if (this.current_state.get('is_autodim') == "true") {
@@ -1677,6 +1683,7 @@ var sisbot = {
 		logEvent(1, "Wake Sisbot", this.current_state.get('is_sleeping'));
 		if (this.current_state.get('is_sleeping') != 'false') {
 			// turn lights back on
+			this.set_autodim({value: this.current_state.get('_is_autodim')}, null);
 			this.set_brightness({value: this.current_state.get('_brightness')}, null); // reset to remembered value
 
 			// play track
@@ -1692,10 +1699,13 @@ var sisbot = {
 		logEvent(1, "Sleep Sisbot", this.current_state.get('is_sleeping'));
 		if (this.current_state.get('is_sleeping') == 'false') {
 			// fade lights out
+			this.current_state.set('_is_autodim', this.current_state.get('is_autodim')); // remember, so wake resets it
 			this.current_state.set('_brightness', this.current_state.get('brightness')); // remember, so wake resets it
 
-			if (this.current_state.get('is_nightlight') == 'true') this.set_brightness({value: this.current_state.get('nightlight_brightness')}, null);
-			else this.set_brightness({value: 0}, null);
+			if (this.current_state.get('is_nightlight') == 'true') {
+				this.set_autodim({value: 'false'}, null);
+				this.set_brightness({value: this.current_state.get('nightlight_brightness')}, null);
+			} else this.set_brightness({value: 0}, null);
 
 			// pause track
 			this.pause(null, null);
@@ -1855,6 +1865,10 @@ var sisbot = {
 		logEvent(1, "Sisbot Reboot", data);
 		this.current_state.set({is_available: "false", reason_unavailable: "rebooting"});
 		if (cb) cb(null, this.current_state.toJSON());
+
+		// disconnect all socket connections first
+		this.socket_update("disconnect");
+
 		exec('sudo reboot', (error, stdout, stderr) => {
 		  if (error) return logEvent(2, 'exec error:',error);
 		});
