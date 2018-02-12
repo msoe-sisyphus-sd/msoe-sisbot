@@ -163,7 +163,7 @@ var sisbot = {
         // INITIALIZE BLUETOOTH
         process.env['BLENO_DEVICE_NAME'] = 'sisbot ' + this.current_state.id;
         ble_obj.initialize(this.current_state.id);
-		
+
 		// force do_not_remind if old Version (1.0)
 		var old_version = +this.current_state.get('software_version');
 		if (old_version && old_version < 1.1) {
@@ -1758,16 +1758,21 @@ var sisbot = {
 
 		this.current_state.set('installing_updates','true');
 		this.pause(null, null);
+
+		// send response first
+		if (cb) cb(null, this.current_state.toJSON());
+
 		exec('/home/pi/sisbot-server/sisbot/update.sh '+this.config.service_branches.sisbot+' '+this.config.service_branches.app+' '+this.config.service_branches.proxy+' > /home/pi/sisbot-server/update.log', (error, stdout, stderr) => {
 			self.current_state.set({installing_updates: 'false'});
 		  	if (error) {
-				if (cb) cb(error, null);
+				// if (cb) cb(error, null);
 				return logEvent(2, 'exec error:',error);
 			}
 			logEvent(1, "Install complete");
 			self.current_state.set({installed_updates: 'true'}); // makes page reload
 
 			self.save(null, null);
+			self.socket_update(self.current_state.toJSON());
 
 			self.restart(null,cb);
 		});
