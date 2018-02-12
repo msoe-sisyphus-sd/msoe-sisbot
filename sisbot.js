@@ -163,6 +163,12 @@ var sisbot = {
         // INITIALIZE BLUETOOTH
         process.env['BLENO_DEVICE_NAME'] = 'sisbot ' + this.current_state.id;
         ble_obj.initialize(this.current_state.id);
+		
+		// force do_not_remind if old Version (1.0)
+		var old_version = +this.current_state.get('software_version');
+		if (old_version && old_version < 1.1) {
+			this.current_state.set('do_not_remind', 'false');
+		}
 
 		// force values on startup
 		this.current_state.set({

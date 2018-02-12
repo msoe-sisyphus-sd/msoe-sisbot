@@ -99,6 +99,7 @@ var app = function(given_config,ansible) {
 			sockets[socket.id] = socket;
 
 			services['sisbot'].state({}, function(err, resp) {
+				if (err) return;
 				socket.emit('set', resp);
 			});
 		}
