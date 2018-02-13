@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.1.28', // bugfix restart after install updates
+			version	: '1.1.29', // bugfix autodim change
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

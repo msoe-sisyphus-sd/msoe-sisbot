@@ -94,6 +94,7 @@ var photoAvgOld = photoMin;
 var photoMsec = 250; // -sample potosensor every.  higher-->slower change
 var sliderBrightness;
 var lastPhotoOut = photoMin;
+var photoTimeout; // timeout value, so we don't call extra times
 var ctr = 0;
 var certain = 4;
 
@@ -113,7 +114,7 @@ function checkPhoto() { //autodimming functionality:
 
 	sp.write("A\r"); //SBB command to check analog inputs
 
- if (autodim == "true") {	//need to check autodim toggle fn'ing
+ 	if (autodim == "true") {	//need to check autodim toggle fn'ing
  		photo = rawPhoto;
 		if (photo > 1023) {photo = 1023;}
 		if (photo < photoMin) {photo = photoMin;} //photomin?
@@ -185,10 +186,12 @@ function checkPhoto() { //autodimming functionality:
 			ctr = 0;
 		}
 		*/
-  }
+  	}
 
+	// remove extra timeout calls
+	clearTimeout(photoTimeout);
 	if (STATUS != 'homing'){ //stop photosensing if homing
-	setTimeout(checkPhoto, photoMsec);
+		photoTimeout = setTimeout(checkPhoto, photoMsec);
 	}
 }
 
@@ -506,7 +509,7 @@ function goThetaHome() {
     setStatus('waiting');
     logEvent(1, 'theta homing aborted');
 
-		setTimeout(checkPhoto, photoMsec); //restart photosensing for autodim
+	photoTimeout = setTimeout(checkPhoto, photoMsec); //restart photosensing for autodim
 
     return;
   }
@@ -514,11 +517,11 @@ function goThetaHome() {
   if (THETA_HOME_COUNTER == THETA_HOME_MAX) {
     logEvent(2, 'Failed to find Theta home!');
     //setStatus('waiting');
-		thAccum = 0;
-		WAITING_THETA_HOMED = false;
-		setStatus('home_th_failed');
+	thAccum = 0;
+	WAITING_THETA_HOMED = false;
+	setStatus('home_th_failed');
 
-		setTimeout(checkPhoto, photoMsec); //restart photosensing for autodim
+	photoTimeout = setTimeout(checkPhoto, photoMsec); //restart photosensing for autodim
     return;
   }
 
@@ -597,7 +600,7 @@ function goRhoHome() {
     pauseRequest = false;
     setStatus('waiting');
     logEvent(1, 'theta homing aborted');
-  setTimeout(checkPhoto, photoMsec); //restart photosensing for autodim
+  	photoTimeout = setTimeout(checkPhoto, photoMsec); //restart photosensing for autodim
     return;
   }
 
@@ -680,7 +683,7 @@ function goRhoHome() {
 				setStatus('waiting');
 			}
 
-			setTimeout(checkPhoto, photoMsec); //restart photosensing for autodim
+			photoTimeout = setTimeout(checkPhoto, photoMsec); //restart photosensing for autodim
 
 			return;
 
@@ -1056,6 +1059,11 @@ module.exports = {
   setAutodim: function(value) {
     autodim = value;
 	logEvent(1, "autodim = " + autodim);
+
+	if (autodim == 'true') {
+		photoArray.fill(photoMin);
+		checkPhoto();
+	}
   },
 
 	// get the brightness slider value
