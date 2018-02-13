@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.1.26', // socket connect err checking, force new onboarding if updating from 1.0.x
+			version	: '1.1.27', // socket pingTimeout, pingInterval moved to config, increased
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -50,7 +50,9 @@ var config = {
 			internet_retries: 5, // retry # of times before resetting to hotspot
 			retry_internet_interval: 3000, // three seconds later
 			wifi_error_retry_interval: 60000, // one minute
-			default_data: default_status
+			default_data: default_status,
+			pingTimeout: 1300, // socket pingTimeout
+			pingInterval: 600 // socket pingInterval
 		},
 		matt: {
 			folders: {
