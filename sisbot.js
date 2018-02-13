@@ -1774,7 +1774,7 @@ var sisbot = {
 			self.save(null, null);
 			self.socket_update(self.current_state.toJSON());
 
-			self.restart(null,cb);
+			self.restart(null,null);
 		});
 	},
 	local_sisbots: function(data, cb) {
