@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.1.27', // socket pingTimeout, pingInterval moved to config, increased
+			version	: '1.1.28', // bugfix restart after install updates
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
