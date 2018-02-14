@@ -54,6 +54,7 @@ var sisbot_state = Backbone.Model.extend({
 		wifi_password			: "",
 		wifi_forget				: "false", // forget wifi credentials on fail to connect (from cloud)
 		wifi_error				: "false", // flag to know if should be trying to reconnect to wifi
+		failed_to_connect_to_wifi: "false", 
 
 		share_log_files			: "false"
 	},

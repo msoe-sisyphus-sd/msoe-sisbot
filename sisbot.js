@@ -1401,6 +1401,8 @@ var sisbot = {
 						self._query_internet(self.config.check_internet_interval);
 
 						self.socket_update(self.current_state.toJSON());
+
+						// TODO: only post if IP address changed
                         self._post_state_to_cloud();
 					} else {
 						self._internet_retries++;
@@ -1423,10 +1425,13 @@ var sisbot = {
         var self = this;
 
         // logEvent(1, 'LETS TRY AND GET TO CLOUD', this.current_state.toJSON());
+		var state = this.current_state.toJSON();
+		delete state.wifi_password;
+		delete state.wifi_network;
 
         request.post('https://api.sisyphus.withease.io/sisbot_state/' + this.current_state.id, {
                 form: {
-                    data: this.current_state.toJSON()
+                    data: state
                 }
             },
             function on_resp(error, response, body) {
@@ -1465,7 +1470,8 @@ var sisbot = {
 					reason_unavailable: "connect_to_wifi",
 					wifi_network: data.ssid,
 					wifi_password: data.psk,
-					is_hotspot: "false"
+					is_hotspot: "false",
+					failed_to_connect_to_wifi: "false"
 				});
 
 				// logEvent(1, "New State:", self.current_state.toJSON());
@@ -1534,6 +1540,17 @@ var sisbot = {
 			is_hotspot: "true",
 			is_internet_connected: "false"
 		});
+
+		// forget bad network values (from cloud)
+		if (this.current_state.get('wifi_forget') == 'true') {
+			this.current_state.set({
+				wifi_network: "false",
+				wifi_password: "false",
+				wifi_error: "false", // not an error to remember
+				wifi_forget: "false"
+			});
+		}
+
 		if (cb) cb(null, this.current_state.toJSON());
 
 		// disconnect all socket connections first
@@ -1554,13 +1571,6 @@ var sisbot = {
                 local_ip: self._getIPAddress(),
                 failed_to_connect_to_wifi: (self._changing_to_wifi == true) ? 'true' : 'false'
             };
-
-			// forget bad network values (from cloud)
-			if (self.current_state.get('wifi_forget') == 'true') {
-				new_state.wifi_network = "false";
-				new_state.wifi_password = "false";
-				new_state.wifi_error = "false"; // not an error to remember
-			}
 
             self._changing_to_wifi = false;
 			self.current_state.set(new_state);
