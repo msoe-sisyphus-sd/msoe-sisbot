@@ -511,7 +511,7 @@ var sisbot = {
 					var playlist = self.collection.get(self.current_state.get("default_playlist_id"));
 					playlist.set({active_track_id: "false", active_track_index: -1});
 					playlist.reset_tracks(); // start with non-reversed list
-					playlist.set_shuffle({ is_shuffle: playlist.get('is_shuffle'), start_rho: 0 }); // update order, active tracks indexing
+					playlist.set_shuffle({ is_shuffle: "true", start_rho: 0 }); // update order, active tracks indexing
 					playlist.set({active_track_index: 0});
 
 					// error check, we don't want r11
