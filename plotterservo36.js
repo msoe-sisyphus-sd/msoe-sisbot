@@ -997,6 +997,14 @@ module.exports = {
     onStateChanged = fn;
   },
 
+  onServoThFault: function(fn) {
+	  onServoThFault = fn;
+  },
+
+  onServoRhoFault: function(fn) {
+	  onServoRhoFault = fn;
+  },
+
   // Move the theta motor a single nudge
   jogThetaRight: function() {
     jog('theta', 'pos');

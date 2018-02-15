@@ -217,17 +217,17 @@ var sisbot = {
 
 		// plotter
     	this.plotter.setConfig(CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config));
-		this.plotter.onServoThFault(function() {
+		plotter.onServoThFault(function() {
 			self.current_state.set("servo_th_fault", "true");
 			self.pause(null, null);
 			self.socket_update(self.current_state.toJSON()); // notify connected UI
 		});
-		this.plotter.onServoRhoFault(function() {
+		plotter.onServoRhoFault(function() {
 			self.current_state.set("servo_rho_fault", "true");
 			self.pause(null, null);
 			self.socket_update(self.current_state.toJSON()); // notify connected UI
 		});
-		this.plotter.onFinishTrack(function() {
+		plotter.onFinishTrack(function() {
 			logEvent(1, "Track Finished");
 			if (self._home_next == true) return logEvent(1, "Home Next, skip playing next");
 
@@ -245,7 +245,11 @@ var sisbot = {
 						self._paused = true;
 						self.current_state.set('is_waiting_between_tracks', 'true');
 						// self._play_next = true;
-					} else self.current_state.set('active_track', playlist.get_next_track({ start_rho: self.current_state.get('_end_rho') }));
+					} else {
+						var nextTrack = playlist.get_next_track({ start_rho: self.current_state.get('_end_rho') });
+						self.current_state.set('active_track', nextTrack);
+						if (nextTrack.id.indexOf('attach') == 0 || nextTrack.id.indexOf('detach') == 0) self._home_next = true;
+					}
 				}
 				self.current_state.set('repeat_current', 'false');
 
@@ -265,7 +269,7 @@ var sisbot = {
 				self.socket_update(self.current_state.toJSON());
 			}
 		});
-    	this.plotter.onStateChanged(function(newState, oldState) {
+    	plotter.onStateChanged(function(newState, oldState) {
 			if (newState == 'homing') self.current_state.set("state", "homing");
 			if (newState == 'playing') self.current_state.set("state", "playing");
 			if (newState == 'waiting') {
@@ -683,6 +687,8 @@ var sisbot = {
 		}
 	},
 	play: function(data, cb) {
+		var self = this;
+
 		logEvent(1, "Sisbot Play", data);
 		if (this._validateConnection()) {
 			if (this._paused) this.current_state.set("state", "playing");
@@ -694,10 +700,24 @@ var sisbot = {
 				var playlist_id = this.current_state.get('active_playlist_id');
 				if (playlist_id != "false") {
 					var playlist = this.collection.get(playlist_id);
-					this.current_state.set('active_track', playlist.get_next_track({ start_rho: this.current_state.get('_end_rho') }));
+
+					var nextTrack = playlist.get_next_track({ start_rho: self.current_state.get('_end_rho') });
+					this.current_state.set('active_track', nextTrack);
+					if (nextTrack.id.indexOf('attach') == 0 || nextTrack.id.indexOf('detach') == 0) self._home_next = true;
+
+					// this.current_state.set('active_track', playlist.get_next_track({ start_rho: this.current_state.get('_end_rho') }));
 					this.socket_update(playlist.toJSON());
 				}
-				this._play_track(this.current_state.get('active_track'), null);
+
+				if (self._home_next) {
+					this.current_state.set('state', 'waiting'); // fix so it does the home correctly
+					console.log(1, "Home Next", this.current_state.get("state"));
+					setTimeout(function() {
+						self.home(null, null);
+					}, 100);
+				} else {
+					this._play_track(this.current_state.get('active_track'), null);
+				}
 
 				this.current_state.set('is_waiting_between_tracks', 'false');
 
@@ -1123,11 +1143,6 @@ var sisbot = {
 			if (this.current_state.get("is_homed") == "true") {
 				var track = this.collection.get(data.id);
 				if (track != undefined) {
-					// check for servo track
-					if (track.id.indexOf('attach') == 0 || track.id.indexOf('detach') == 0) {
-						this.current_state.set("is_homed", "false");
-					}
-
 				    if (this.current_state.get("is_homed") == "true") {
 						_.extend(data, {start:self.current_state.get('_end_rho')});
 						var track_obj = track.get_plotter_obj(data);
