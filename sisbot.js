@@ -74,7 +74,7 @@ Sisyphus_Characteristic.prototype.onReadRequest = function(offset, callback) {
 var SerialPort;
 if (process.env.NODE_ENV.indexOf("dummy") < 0) SerialPort = require('serialport').SerialPort;
 
-var plotter = require('./plotter');
+var plotter = require('./plotterservo36'); // require('./plotter');
 var Sisbot_state = require('./models.sisbot_state');
 var Playlist = require('./models.playlist');
 var Track = require('./models.track');
@@ -217,7 +217,17 @@ var sisbot = {
 
 		// plotter
     	this.plotter.setConfig(CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config));
-		plotter.onFinishTrack(function() {
+		this.plotter.onServoThFault(function() {
+			self.current_state.set("servo_th_fault", "true");
+			self.pause(null, null);
+			self.socket_update(self.current_state.toJSON()); // notify connected UI
+		});
+		this.plotter.onServoRhoFault(function() {
+			self.current_state.set("servo_rho_fault", "true");
+			self.pause(null, null);
+			self.socket_update(self.current_state.toJSON()); // notify connected UI
+		});
+		this.plotter.onFinishTrack(function() {
 			logEvent(1, "Track Finished");
 			if (self._home_next == true) return logEvent(1, "Home Next, skip playing next");
 
@@ -255,7 +265,7 @@ var sisbot = {
 				self.socket_update(self.current_state.toJSON());
 			}
 		});
-    	plotter.onStateChanged(function(newState, oldState) {
+    	this.plotter.onStateChanged(function(newState, oldState) {
 			if (newState == 'homing') self.current_state.set("state", "homing");
 			if (newState == 'playing') self.current_state.set("state", "playing");
 			if (newState == 'waiting') {
@@ -1113,7 +1123,12 @@ var sisbot = {
 			if (this.current_state.get("is_homed") == "true") {
 				var track = this.collection.get(data.id);
 				if (track != undefined) {
-			    if (this.current_state.get("is_homed") == "true") {
+					// check for servo track
+					if (track.id.indexOf('attach') == 0 || track.id.indexOf('detach') == 0) {
+						this.current_state.set("is_homed", "false");
+					}
+
+				    if (this.current_state.get("is_homed") == "true") {
 						_.extend(data, {start:self.current_state.get('_end_rho')});
 						var track_obj = track.get_plotter_obj(data);
 						if (track_obj != "false") {

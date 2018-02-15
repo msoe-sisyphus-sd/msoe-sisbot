@@ -564,6 +564,20 @@ module.exports = [{
   "default_vel": 1,
   "default_accel": 0.5,
   "default_thvmax": 1
+},  {
+  "id": "attach",
+  "type": "track",
+  "name": "Attach",
+  "default_vel": 1,
+  "default_accel": 0.5,
+  "default_thvmax": 1
+},  {
+  "id": "detach",
+  "type": "track",
+  "name": "Detach",
+  "default_vel": 1,
+  "default_accel": 0.5,
+  "default_thvmax": 1
 }, {
   "id": "452e628f-fe10-4858-9ed0-fc4b47b6d2e9",
   "type": "playlist",
