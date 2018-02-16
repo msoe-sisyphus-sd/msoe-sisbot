@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.3.01', // servo update for multiball
+			version	: '1.3.02', // attach/detach homing based on track name
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
