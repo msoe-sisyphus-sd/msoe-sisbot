@@ -248,7 +248,9 @@ var sisbot = {
 					} else {
 						var nextTrack = playlist.get_next_track({ start_rho: self.current_state.get('_end_rho') });
 						self.current_state.set('active_track', nextTrack);
-						if (nextTrack.name.toLowerCase().indexOf('attach') == 0 || nextTrack.name.toLowerCase().indexOf('detach') == 0) self._home_next = true;
+						if (nextTrack.id != 'false' && nextTrack.name != undefined) {
+							if (nextTrack.name.toLowerCase().indexOf('attach') == 0 || nextTrack.name.toLowerCase().indexOf('detach') == 0) self._home_next = true;
+						}
 					}
 				}
 				self.current_state.set('repeat_current', 'false');
@@ -703,7 +705,9 @@ var sisbot = {
 
 					var nextTrack = playlist.get_next_track({ start_rho: self.current_state.get('_end_rho') });
 					this.current_state.set('active_track', nextTrack);
-					if (nextTrack.name.toLowerCase().indexOf('attach') == 0 || nextTrack.name.toLowerCase().indexOf('detach') == 0) self._home_next = true;
+					if (nextTrack.id != 'false' && nextTrack.name != undefined) {
+						if (nextTrack.name.toLowerCase().indexOf('attach') == 0 || nextTrack.name.toLowerCase().indexOf('detach') == 0) self._home_next = true;
+					}
 
 					// this.current_state.set('active_track', playlist.get_next_track({ start_rho: this.current_state.get('_end_rho') }));
 					this.socket_update(playlist.toJSON());
