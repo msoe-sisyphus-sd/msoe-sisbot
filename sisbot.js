@@ -1782,7 +1782,6 @@ var sisbot = {
 			self.current_state.set({installed_updates: 'true'}); // makes page reload
 
 			self.save(null, null);
-			self.socket_update(self.current_state.toJSON());
 
 			self.reboot(null,null);
 		});
@@ -1885,6 +1884,8 @@ var sisbot = {
 	reboot: function(data,cb) {
 		logEvent(1, "Sisbot Reboot", data);
 		this.current_state.set({is_available: "false", reason_unavailable: "rebooting"});
+		this.socket_update(this.current_state.toJSON());
+
 		if (cb) cb(null, this.current_state.toJSON());
 
 		// disconnect all socket connections first
