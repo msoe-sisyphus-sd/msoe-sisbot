@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.1.30', // wifi connect/disconnect optimizations
+			version	: '1.1.31', // reboot to fix bluetooth after updating
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
