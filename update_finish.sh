@@ -44,3 +44,8 @@ cp /home/pi/sisbot-server/sisbot/rc.local /etc
 mkdir -p /var/log/sisyphus
 
 echo "Upgrade_Finish completed"
+
+# 1.0-1.2 reboot necessity, to make sure bluetooth updates self
+if [ -z "$1" ]; then
+	sudo reboot
+fi

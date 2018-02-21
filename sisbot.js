@@ -1772,7 +1772,7 @@ var sisbot = {
 		// send response first
 		if (cb) cb(null, this.current_state.toJSON());
 
-		exec('/home/pi/sisbot-server/sisbot/update.sh '+this.config.service_branches.sisbot+' '+this.config.service_branches.app+' '+this.config.service_branches.proxy+' > /home/pi/sisbot-server/update.log', (error, stdout, stderr) => {
+		exec('/home/pi/sisbot-server/sisbot/update.sh '+this.config.service_branches.sisbot+' '+this.config.service_branches.app+' '+this.config.service_branches.proxy+' false > /home/pi/sisbot-server/update.log', (error, stdout, stderr) => {
 			self.current_state.set({installing_updates: 'false'});
 		  	if (error) {
 				// if (cb) cb(error, null);
