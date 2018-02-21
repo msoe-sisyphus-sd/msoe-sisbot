@@ -1891,9 +1891,11 @@ var sisbot = {
 		// disconnect all socket connections first
 		this.socket_update("disconnect");
 
-		exec('sudo reboot', (error, stdout, stderr) => {
-		  if (error) return logEvent(2, 'exec error:',error);
-		});
+		setTimeout(function() {
+			exec('sudo reboot', (error, stdout, stderr) => {
+			  if (error) return logEvent(2, 'exec error:',error);
+			});
+		}), 250);
 	}
 };
 
