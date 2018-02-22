@@ -1779,7 +1779,6 @@ var sisbot = {
 				return logEvent(2, 'exec error:',error);
 			}
 			logEvent(1, "Install complete");
-			self.current_state.set({installed_updates: 'true'}); // makes page reload
 
 			self.save(null, null);
 
@@ -1895,7 +1894,7 @@ var sisbot = {
 			exec('sudo reboot', (error, stdout, stderr) => {
 			  if (error) return logEvent(2, 'exec error:',error);
 			});
-		}, 250);
+		}, 500);
 	}
 };
 
