@@ -74,7 +74,7 @@ Sisyphus_Characteristic.prototype.onReadRequest = function(offset, callback) {
 var SerialPort;
 if (process.env.NODE_ENV.indexOf("dummy") < 0) SerialPort = require('serialport').SerialPort;
 
-var plotter = require('./plotterservo36'); // require('./plotter');
+var plotter = require('./plotter');
 var Sisbot_state = require('./models.sisbot_state');
 var Playlist = require('./models.playlist');
 var Track = require('./models.track');
@@ -99,6 +99,7 @@ var sisbot = {
 	_play_next: false,
 	_autoplay: false,
 	_home_next: false,
+	_moved_out: false, // small ball adjustment before homing
 	_move_to_rho: 0,
 	_saving: false,
 
@@ -761,7 +762,27 @@ var sisbot = {
 			} else {
 				this._paused = false;
 				this.current_state.set("state", "homing");
-				plotter.home();
+				if (this._moved_out) {
+					plotter.home();
+					this._moved_out = false;
+				} else {
+					this._moved_out = true; // call plotter.home() next time instead
+					this._home_next = true; // home again after this outward movement
+					var track_obj = {
+						verts: [{th:0,r:0}],
+						vel: 1,
+						accel: 0.5,
+						thvmax: 0.5
+					};
+					if (plotter.getThetaHome() == true) {
+						logEvent(1, "Homing... Fix theta and rho");
+						track_obj.verts.push({th:self.config.auto_home_th, r:self.config.auto_home_rho});
+					} else {
+						logEvent(1, "Homing... Fix rho");
+						track_obj.verts.push({th:0, r:self.config.auto_home_rho});
+					}
+					self.plotter.playTrack(track_obj);
+				}
 				if (cb)	cb(null, this.current_state.toJSON());
 			}
 		} else if (cb) cb('No Connection', null);

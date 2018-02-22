@@ -5,7 +5,7 @@ var _ 		= require('underscore');
 var moment 	= require('moment');
 var config 	= require('./config');
 
-{//globals:
+{ //globals:
 var Vball=2,  Accel = 2, MTV=0.5, Vmin = 0.1, Voverride = 1;
 var balls  = 1; //sis vs tant mode
 //machine constants:
@@ -33,7 +33,7 @@ var useFaultSensors = 1; // True if the bot has sensors. Otherwise the current p
 //var faultRPin = "D,0"; // SBB board pin for homing rho sensor
 //var faultThActiveState = 1; // The value the sensor reports when triggered. 0 or 1.
 //var faultRActiveState = 1; // The value the sensor reports when triggered. 0 or 1.
-faultActiveState = 0;
+faultActiveState = 1;
 
 var STATUS = 'waiting'; //vs. playing, homing
 var options = {  //user commands available
@@ -845,13 +845,11 @@ function parseReceivedSerialData(data) {
 
 		if (parts[0] == 'PI') {//EBB Pin Input return prefix
 
-
  			if (WAITING_THETA_HOMED) {
 
 				if (parseInt(parts[1], 10) == homingThHitState)  {
 					THETA_HOMED = true;
-				}
-				else {
+				} else {
 					THETA_HOMED = false;
 					RETESTCOUNTER = 0;
 				}
@@ -876,30 +874,38 @@ function parseReceivedSerialData(data) {
 			if (data.length == 21){ //valid "I" return
 				//logEvent(1, data);
 				//logEvent(1, data.length);
-			var num = parseInt(parts[4],10);
+				var num = parseInt(parts[4],10);
 
-			//logEvent(1, num);
-			// logEvent(1, "Theta fault pin = " + (num & 2));
-			// logEvent(1, "Rho fault pin = " + (num & 1));
-			// logEvent(1, "Th home pin = " + (num & 4));
+				//logEvent(1, num);
+				// logEvent(1, "Theta fault pin = " + (num & 2));
+				// logEvent(1, "Rho fault pin = " + (num & 1));
+				// logEvent(1, "Th home pin = " + (num & 4));
 
-			var thFaultState, rFaultState;
-			var thHomeState, rHomeState;
-			if ((num & 2) > 0) {thFaultState = 1;} else {thFaultState = 0;}
-			if (thFaultState == faultActiveState) {logEvent(2, "Theta faulted!");}
-			if ((num & 1) > 0) {rFaultState = 1;} else {rFaultState = 0;}
-			if (rFaultState == faultActiveState) {logEvent(2, "Rho faulted!");}
+				var thFaultState, rFaultState;
+				var thHomeState, rHomeState;
+				if ((num & 2) > 0) {thFaultState = 1;} else {thFaultState = 0;}
+				if (thFaultState == faultActiveState) {
+					console.log("Theta faulted!");
+					onServoThFault();
+				}
+				if ((num & 1) > 0) {rFaultState = 1;} else {rFaultState = 0;}
+				if (rFaultState == faultActiveState) {
+					console.log("Rho faulted!");
+					onServoRhoFault();
+				}
 
-			if ((num & 4) > 0) {thHomeState = 1;} else {thHomeState = 0;}
-			if (thHomeState == homingThHitState) {logEvent(1, "Theta at home");}
+				if ((num & 4) > 0) {thHomeState = 1;} else {thHomeState = 0;}
+				if (thHomeState == homingThHitState) {
+					console.log("Theta at home");
+					THETA_HOMED = true;
+				} else {
+					THETA_HOMED = false;
+				}
 
-
-			num = parseInt(parts[3],10);
-			// logEvent(1, "R home pin = " + (num & 64));
-			if ((num & 64) > 0) {rHomeState = 1;} else {rHomeState = 0;}
-			if (rHomeState == homingRHitState) {logEvent(1, "Rho at home");}
-
-
+				num = parseInt(parts[3],10);
+				// console.log("R home pin = " + (num & 64));
+				if ((num & 64) > 0) {rHomeState = 1;} else {rHomeState = 0;}
+				if (rHomeState == homingRHitState) {console.log("Rho at home");}
 			}
 
     }
@@ -916,6 +922,12 @@ var onFinishTrack = function() {};
 
 // Called when the plotter state changes from/to any of waiting, homing, or playing.
 var onStateChanged = function() {};
+
+// Called when theta fault detected
+var onServoThFault = function() {};
+
+// Called when rho fault detected
+var onServoRhoFault = function() {};
 
 module.exports = {
 
@@ -979,6 +991,10 @@ module.exports = {
     return STATUS;
   },
 
+  getThetaHome: function() {
+	  return THETA_HOMED;
+  },
+
   // Set a calback to be executed when a track is complete.
   onFinishTrack: function(fn) {
     onFinishTrack = fn;
@@ -988,6 +1004,14 @@ module.exports = {
   // This function should expect two arguments: newState, oldState.
   onStateChanged: function(fn) {
     onStateChanged = fn;
+  },
+
+  onServoThFault: function(fn) {
+	  onServoThFault = fn;
+  },
+
+  onServoRhoFault: function(fn) {
+	  onServoRhoFault = fn;
   },
 
   // Move the theta motor a single nudge

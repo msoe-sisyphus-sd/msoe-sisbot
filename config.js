@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.3.02', // attach/detach homing based on track name
+			version	: '1.3.03', // move ball out (and over if needed) before homing
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -45,6 +45,8 @@ var config = {
 			auto_th: 1.570796,
 			failed_home_rho: 0.2,
 			failed_home_th: 1.570796,
+			auto_home_rho: 0.1,
+			auto_home_th: 0.25,
 			max_rand_retries: 10,
 			check_internet_interval: 1800000, // every thirty minutes, // 1800000 once every half hour, confirm an internet connection
 			internet_retries: 5, // retry # of times before resetting to hotspot
