@@ -410,7 +410,7 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg,
   RSEG = rSeg;
   //logEvent(1, 'rSeg: ' + Math.floor(rSeg*1000)/1000);
   if (balls == 1) rEffect = rSeg; //sis
-  else rEffect = plotRadius/2 + Math.abs(Radius/2 - rSeg); //tant
+  else rEffect = plotRadius/2 + Math.abs(plotRadius/2 - rSeg); //tant
 
   if (rEffect > rCrit) { //ball is outside rCrit:
       rFactor1 = Math.sqrt((RDIST * RDIST +
@@ -1055,6 +1055,14 @@ module.exports = {
 
   // Plot a track, with some motion config meta data.
   playTrack: function(track) {
+	console.log("TRACKNAME = " + track.name);
+	if (track.name == "attach"){
+		balls = 2;
+	}
+	if (track.name == "detach"){
+		balls = 1;
+	}  
+	  
     // Save the track data
     verts = track.verts;
     miMax = verts.length - 1;
@@ -1107,6 +1115,36 @@ module.exports = {
   getSpeed: function() {
     return Voverride;
   },
+  
+  getThetaPosition: function() {
+	var thetaDistHome, modRads, rawRads, shortestRads;
+	
+	rawRads = thAccum / thSPRad;
+	console.log("thAccum is " + thAccum + " steps");
+	console.log("raw Theta postion is " + rawRads + " rads"); 
+	
+	modRads = rawRads % (2 * Math.PI);
+	console.log("modRads = " + modRads); 
+	
+	shortestRads = modRads*-1; //this is verified correct - but theta sign is wrong :(
+	
+	if (modRads > Math.PI){
+		shortestRads = 2 * Math.PI - modRads; //shortestRads = modRads - 2 * Math.PI;
+	}
+	if (modRads < -1 * Math.PI){
+		shortestRads = -2 * Math.PI - modRads; //shortestRads = modRads + 2 * Math.PI;
+	}
+	
+	  
+    return shortestRads;
+ },
+   
+  getRhoPosition: function() {
+	  
+	//rSeg = (rAccum - thAccum * rthAsp * nestedAxisSign) * rDirSign/ rSPInch;  
+	  
+    return ((rAccum - thAccum * rthAsp * nestedAxisSign) * rDirSign/ rSPInch)/plotRadius;
+ },
 
   // Find the ball and reset it's position.
   home: function() {
