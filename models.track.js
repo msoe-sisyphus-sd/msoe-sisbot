@@ -78,28 +78,32 @@ var track = Backbone.Model.extend({
 		});
 
 		// make sure first/last rho is 0 or 1
-		if (return_value[0].r != 0 && return_value[0].r != 1) {
-			console.log("Invalid track start", return_value[0].r);
-			return_value[0].r = Math.round(return_value[0].r);
-		}
-		if (return_value[return_value.length-1].r != 0 && return_value[return_value.length-1].r != 1) {
-			console.log("Invalid track end", return_value[return_value.length-1].r);
-			return_value[return_value.length-1].r = Math.round(return_value[return_value.length-1].r);
-		}
+		if (return_value.length > 0) {
+			if (return_value[0].r != 0 && return_value[0].r != 1) {
+				console.log("Invalid track start", return_value[0].r);
+				return_value[0].r = Math.round(return_value[0].r);
+			}
+			if (return_value[return_value.length-1].r != 0 && return_value[return_value.length-1].r != 1) {
+				console.log("Invalid track end", return_value[return_value.length-1].r);
+				return_value[return_value.length-1].r = Math.round(return_value[return_value.length-1].r);
+			}
 
-		// !! error check !!
-		if (return_value[0].r != self.get("firstR")) {
-			// console.log("R[0] not matching", return_value[0].r, self.get("firstR"));
-			this.set({firstR: return_value[0].r, r_type:"r"+return_value[0].r+this.get("lastR")});
-		}
-		if (return_value[return_value.length-1].r != self.get("lastR")) {
-			// console.log("R[n] not matching", return_value[return_value.length-1].r, self.get("lastR"));
-			this.set({lastR: return_value[return_value.length-1].r, r_type:"r"+this.get("firstR")+return_value[return_value.length-1].r});
-		}
-		if (this.get('firstR') == this.get('lastR')) {
-			this.set('reversible', 'false');
+			// !! error check !!
+			if (return_value[0].r != self.get("firstR")) {
+				// console.log("R[0] not matching", return_value[0].r, self.get("firstR"));
+				this.set({firstR: return_value[0].r, r_type:"r"+return_value[0].r+this.get("lastR")});
+			}
+			if (return_value[return_value.length-1].r != self.get("lastR")) {
+				// console.log("R[n] not matching", return_value[return_value.length-1].r, self.get("lastR"));
+				this.set({lastR: return_value[return_value.length-1].r, r_type:"r"+this.get("firstR")+return_value[return_value.length-1].r});
+			}
+			if (this.get('firstR') == this.get('lastR')) {
+				this.set('reversible', 'false');
+			} else {
+				this.set('reversible', 'true');
+			}
 		} else {
-			this.set('reversible', 'true');
+			console.log("No verts found!", self.get('id'), self.get('name'));
 		}
 
 		//console.log("Track verts", return_value.length, self.get("r_type"));
