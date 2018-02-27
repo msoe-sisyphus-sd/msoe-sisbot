@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.1.32', // tracks without verts will fail with console log
+			version	: '1.1.33', // track image queue added, skip playing track if no verts
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

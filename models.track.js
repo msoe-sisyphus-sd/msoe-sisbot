@@ -25,6 +25,12 @@ var track = Backbone.Model.extend({
 		delete this_json.verts;
 		_.extend(return_obj, plotter_data);
 		return_obj.verts = this.get_verts(); // make sure verts are in the object to send to plotter
+
+		if (return_obj.verts.length < 1) {
+			console.log(this.get("name"), "Track cannot be cleanly started");
+			return "false";
+		}
+
 		_.extend(return_obj, this_json);
 
 		// make sure vel, accel, thvmax are set
@@ -56,21 +62,19 @@ var track = Backbone.Model.extend({
 
 		return return_obj;
 	},
-	get_verts: function() {
-		//console.log("Get Verts",this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+this.get('id')+'.thr');
+	get_verts_from_data: function(data) {
 		var self = this;
 		var return_value = [];
 
-		var data = fs.readFileSync(this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+this.get('id')+'.thr', 'utf8');
-
 		// Step the file, line by line
 		var lines = data.toString().trim().split('\n');
-		var regex = /^\s*$/; // eliminate empty lines
+		// var regex = /^\s*$/; // eliminate empty lines
+		var pos_regex = /^[0-9.e-]+\s+[0-9.e-]+/;
 
 		_.map(lines, function(line) {
 			line.trim();
 
-			if (line.length > 0 && line.substring(0,1) != '#' && !line.match(regex)) {
+			if (line.length > 0 && pos_regex.test(line)) { //line.substring(0,1) != '#' && !line.match(regex)) {
 				var values = line.split(/\s+/);
 				var entry = {th:parseFloat(values[0]),r:parseFloat(values[1])};
 				return_value.push(entry);
@@ -81,19 +85,19 @@ var track = Backbone.Model.extend({
 		if (return_value.length > 0) {
 			if (return_value[0].r != 0 && return_value[0].r != 1) {
 				console.log("Invalid track start", return_value[0].r);
-				return_value[0].r = Math.round(return_value[0].r);
+				return_value.unshift({th:return_value[0].th,r:Math.round(return_value[0].r)});
 			}
 			if (return_value[return_value.length-1].r != 0 && return_value[return_value.length-1].r != 1) {
 				console.log("Invalid track end", return_value[return_value.length-1].r);
-				return_value[return_value.length-1].r = Math.round(return_value[return_value.length-1].r);
+				return_value.push({th:return_value[return_value.length-1].th,r:Math.round(return_value[return_value.length-1].r)});
 			}
 
 			// !! error check !!
-			if (return_value[0].r != self.get("firstR")) {
+			if (return_value[0].r != this.get("firstR")) {
 				// console.log("R[0] not matching", return_value[0].r, self.get("firstR"));
 				this.set({firstR: return_value[0].r, r_type:"r"+return_value[0].r+this.get("lastR")});
 			}
-			if (return_value[return_value.length-1].r != self.get("lastR")) {
+			if (return_value[return_value.length-1].r != this.get("lastR")) {
 				// console.log("R[n] not matching", return_value[return_value.length-1].r, self.get("lastR"));
 				this.set({lastR: return_value[return_value.length-1].r, r_type:"r"+this.get("firstR")+return_value[return_value.length-1].r});
 			}
@@ -103,12 +107,20 @@ var track = Backbone.Model.extend({
 				this.set('reversible', 'true');
 			}
 		} else {
-			console.log("No verts found!", self.get('id'), self.get('name'));
+			console.log("No verts found!", this.get('id'), this.get('name'));
 		}
 
 		//console.log("Track verts", return_value.length, self.get("r_type"));
 
 		return return_value;
+	},
+	get_verts: function() {
+		//console.log("Get Verts",this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+this.get('id')+'.thr');
+		var self = this;
+
+		var data = fs.readFileSync(this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+this.get('id')+'.thr', 'utf8');
+
+		return this.get_verts_from_data(data);
 	}
 });
 

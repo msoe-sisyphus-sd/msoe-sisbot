@@ -102,6 +102,8 @@ var sisbot = {
 	_move_to_rho: 0,
 	_saving: false,
 
+	_thumbnail_queue: [],
+
 	_internet_check: 0,
 	_internet_retries: 0,
 	_changing_to_wifi: false,
@@ -781,18 +783,27 @@ var sisbot = {
 	},
 	add_track: function(data, cb) {
 		var self = this;
-		logEvent(1, "Sisbot Add Track", data);
+		logEvent(1, "Sisbot Add Track", data.id, data.name);
 
 		// pull out coordinates
 		var verts = data.verts;
 		if (verts == undefined || verts == "") {
-			if (cb) return cb("No verts given", null);
+			logEvent(2, "No verts given", data.id, data.name);
+			if (cb) return cb('No verts given for '+data.name, null);
 			else return;
 		}
 		delete data.verts;
 
 		// save playlist
 		var new_track = new Track(data);
+		var new_verts = new_track.get_verts_from_data(verts); // so our first/last rho are forced correct
+
+		if (new_verts.length < 1) {
+			logEvent(2, "Incorrect verts given", data.id, data.name);
+			if (cb) return cb('Incorrect verts given for '+data.name, null);
+			else return;
+		}
+
 		var track = this.collection.add(new_track, {merge: true});
 		track.collection = this.collection;
 		track.config = this.config;
@@ -810,16 +821,22 @@ var sisbot = {
 				if (cb) return cb(err, null);
 				else return;
 			}
-			track.get_verts(); // so our first/last rho are forced correct
 
 			self.save(null, null);
-			self.thumbnail_generate({ id: data.id }, function(err, resp) {
-				// do nothing. this generates the thumbnails in the app folder
-				if (cb) cb(null, [track.toJSON(), self.current_state.toJSON()]); // send back current_state and the track
 
-				// tell all connected devices
-				self.socket_update([track.toJSON(), self.current_state.toJSON()]);
-			});
+			self._thumbnail_queue.push({ id: data.id });
+			// generate thumbnail now, if first (and only) in queue
+			if (self._thumbnail_queue.length == 1) {
+				self.thumbnail_generate(self._thumbnail_queue[0], function(err, resp) {
+					// do nothing. this generates the thumbnails in the app folder
+					if (cb) cb(null, [track.toJSON(), self.current_state.toJSON()]); // send back current_state and the track
+
+					// tell all connected devices
+					self.socket_update([track.toJSON(), self.current_state.toJSON()]);
+				});
+			} else {
+				if (cb) cb(null, self.current_state.toJSON()); // send back current_state without track
+			}
 		});
     },
     /*********************** UPLOAD TRACK TO CLOUD ************************/
@@ -897,6 +914,7 @@ var sisbot = {
 			self.thumbnail_generate({id: all_tracks.pop()}, gen_next_track);
 	},
     thumbnail_generate: function(data, cb) {
+		console.log("Thumbnail generate", data);
         // @id
         var self = this;
         var track_dir = this.config.base_dir + '/' + this.config.folders.sisbot + '/' + this.config.folders.content + '/' + this.config.folders.tracks;
@@ -932,8 +950,15 @@ var sisbot = {
             });
 
             function check_cb() {
-                if (--num_resp == 0)
+                if (--num_resp == 0) {
                     if (cb) cb(cb_err, null);
+
+					self._thumbnail_queue.shift(); // remove first in queue
+					if (self._thumbnail_queue.length > 0) {
+						// generate next thumbnail in _thumbnail_queue
+						self.thumbnail_generate(self._thumbnail_queue[0], null);
+					}
+				}
             }
         });
     },
