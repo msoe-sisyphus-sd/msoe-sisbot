@@ -108,6 +108,9 @@ var sisbot = {
 	_internet_retries: 0,
 	_changing_to_wifi: false,
 
+	_hostname_queue: {},
+	_hostname_schedule: null,
+
 	init: function(config, session_manager, socket_update) {
 		var self = this;
     	this.config = config;
@@ -658,6 +661,12 @@ var sisbot = {
 						if (obj.state) delete obj.state; // don't listen to updates to this, plotter is in control of this
 						if (obj.is_autodim != self.current_state.get('is_autodim')) self.set_autodim({value: "true"}, null);
 						if (obj.brightness != self.current_state.get('brightness')) self.set_brightness({value: obj.brightness}, null);
+						if (obj.name != self.current_state.get('name')) {
+							var regex = /^[^a-zA-Z]*/; // make sure first character is a-z
+							var regex2 = /[^0-9a-zA-Z\-]+/g; // greedy remove all non alpha-numerical or dash chars
+							var clean_hostname = obj.name.replace(regex,"").replace(regex2,"");
+							self.set_hostname({hostname: clean_hostname}, null);
+						}
 						if (obj.share_log_files != self.current_state.get('share_log_files')) self.set_share_log_files({value: obj.share_log_files}, null);
 					}
 					returnObjects.push(self.collection.add(obj, {merge:true}).toJSON());
@@ -1026,7 +1035,7 @@ var sisbot = {
 			delete data.skip_save;
 		}
 
-		// TODO: check if we are shuffled, and need to grab track from next_tracks
+		// check if we are shuffled, and need to grab track from next_tracks
 		if (data.is_shuffle && data.is_current && do_save) { // skip_save is used on bootup, don't pull from next tracks in that case
 			var current_playlist = this.collection.get(this.current_state.get('active_playlist_id'));
 			if (current_playlist != undefined && current_playlist.id == data.id && current_playlist.get('is_shuffle') == data.is_shuffle) {
@@ -1053,6 +1062,9 @@ var sisbot = {
 		playlist.collection = this.collection;
 		playlist.config = this.config;
 		if (data.is_shuffle && !data.is_current) playlist.set_shuffle({ is_shuffle: data.is_shuffle });
+
+		// clean playlist tracks
+		if (!data.is_shuffle) playlist._update_tracks({ current_track_index: active_track_index });
 
 		// update current_state
 		this.current_state.set({
@@ -1654,16 +1666,30 @@ var sisbot = {
 	},
 	/* ------------- Onboarding ---------------- */
 	onboard_complete(data, cb) {
+		var self = this;
 		logEvent(1, "Onboard Complete", data);
-
-		// save given data
-		this.current_state.set(data);
 
 		// update cron jobs (includes save)
 		this.set_sleep_time(data, null);
 
-		// TODO: update light brightness
+		// change hostname?
+		if (data.name != this.current_state.get('name')) {
 
+			// fix hostname
+			var regex = /^[^a-zA-Z]*/; // make sure first character is a-z
+			var regex2 = /[^0-9a-zA-Z\-]+/g; // greedy remove all non alpha-numerical or dash chars
+			this._hostname_queue = { hostname: data.name.replace(regex,"").replace(regex2,"") };
+
+			// set hostname at 4:00 AM
+			var host_date = moment('4:00 AM '+data.timezone_offset, 'H:mm A Z');
+			var cron = host_date.minute()+" "+host_date.hour()+" * * *";
+			this._hostname_schedule = scheduler.scheduleJob(cron, function(){
+				self.set_hostname(self._hostname_queue, null);
+			});
+		}
+
+		// save given data
+		this.current_state.set(data);
 
 		if (cb) cb(null, this.current_state.toJSON());
 	},

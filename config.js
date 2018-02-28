@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.1.33', // track image queue added, skip playing track if no verts
+			version	: '1.1.34', // Setting Table name also sets the hostname, delayed hostname change after reboot, playlist track selection plays correct track (unshuffled) 
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
