@@ -1064,7 +1064,12 @@ var sisbot = {
 		if (data.is_shuffle && !data.is_current) playlist.set_shuffle({ is_shuffle: data.is_shuffle });
 
 		// clean playlist tracks
-		if (!data.is_shuffle) playlist._update_tracks({ current_track_index: active_track_index });
+		if (!data.is_shuffle) {
+			var active_index = data.active_track_index;
+			playlist.set('active_track_index', -1); // allow this track to start at 1, if it is supposed to
+			playlist._update_tracks();
+			playlist.set('active_track_index', active_index);
+		}
 
 		// update current_state
 		this.current_state.set({
