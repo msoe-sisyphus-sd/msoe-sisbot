@@ -165,6 +165,16 @@ var sisbot = {
 		});
 		this.current_state = this.collection.findWhere({type: "sisbot"});
 
+		// make sure the hostname is correct
+		var regex = /^[^a-zA-Z]*/; // make sure first character is a-z
+		var regex2 = /[^0-9a-zA-Z\-]+/g; // greedy remove all non alpha-numerical or dash chars
+		var clean_hostname = this.current_state.get('name').replace(regex,"").replace(regex2,"");
+		if (this.current_state.get('hostname') != clean_hostname+'.local') {
+			self.set_hostname({hostname: clean_hostname}, null);
+			logEvent(2, "Fix incorrect hostname");
+			return; // stop here
+		}
+
         // INITIALIZE BLUETOOTH
         process.env['BLENO_DEVICE_NAME'] = 'sisbot ' + this.current_state.id;
         ble_obj.initialize(this.current_state.id);
@@ -833,12 +843,18 @@ var sisbot = {
 
 			self.save(null, null);
 
-			self._thumbnail_queue.push({ id: data.id });
+			var generate_first = (self._thumbnail_queue.length <= 0);
+
+			// generate three sizes
+			self._thumbnail_queue.push({ id: data.id, dimensions: 400 });
+			self._thumbnail_queue.push({ id: data.id, dimensions: 100 });
+			self._thumbnail_queue.push({ id: data.id, dimensions: 50 });
+
 			// generate thumbnail now, if first (and only) in queue
-			if (self._thumbnail_queue.length == 1) {
+			if (generate_first) {
 				self.thumbnail_generate(self._thumbnail_queue[0], function(err, resp) {
-					// do nothing. this generates the thumbnails in the app folder
-					if (cb) cb(null, [track.toJSON(), self.current_state.toJSON()]); // send back current_state and the track
+					// send back current_state and the track
+					if (cb) cb(null, [track.toJSON(), self.current_state.toJSON()]);
 
 					// tell all connected devices
 					self.socket_update([track.toJSON(), self.current_state.toJSON()]);
@@ -923,7 +939,7 @@ var sisbot = {
 			self.thumbnail_generate({id: all_tracks.pop()}, gen_next_track);
 	},
     thumbnail_generate: function(data, cb) {
-		console.log("Thumbnail generate", data);
+		logEvent(1, "Thumbnail generate", data);
         // @id
         var self = this;
         var track_dir = this.config.base_dir + '/' + this.config.folders.sisbot + '/' + this.config.folders.content + '/' + this.config.folders.tracks;
@@ -934,41 +950,24 @@ var sisbot = {
                 else return;
             }
 
-            var num_resp = 3; // number of thumnails to generate before sending resp
             var cb_err = null;
 
-            data.dimensions = 400;
             data.raw_coors = raw_coors;
             self._thumbnails_generate(data, function(err, resp) {
-                if (err) cb_err = err;
-                check_cb();
-            });
-
-            data.dimensions = 100;
-            data.raw_coors = raw_coors;
-            self._thumbnails_generate(data, function(err, resp) {
-                if (err) cb_err = err;
-                check_cb();
-            });
-
-            data.dimensions = 50;
-            data.raw_coors = raw_coors;
-            self._thumbnails_generate(data, function(err, resp) {
-                if (err) cb_err = err;
-                check_cb();
-            });
-
-            function check_cb() {
-                if (--num_resp == 0) {
-                    if (cb) cb(cb_err, null);
-
-					self._thumbnail_queue.shift(); // remove first in queue
-					if (self._thumbnail_queue.length > 0) {
-						// generate next thumbnail in _thumbnail_queue
-						self.thumbnail_generate(self._thumbnail_queue[0], null);
-					}
+                if (err) {
+					if (cb) cb(cb_err, null);
 				}
-            }
+
+				if (cb) cb(null, { id: data.id, dimensions: data.dimensions }); // don't send back verts
+
+				self._thumbnail_queue.shift(); // remove first in queue
+				if (self._thumbnail_queue.length > 0) {
+					// generate next thumbnail in _thumbnail_queue
+					self.thumbnail_generate(self._thumbnail_queue[0], null);
+				} else {
+					logEvent(1, "All thumbnails generated");
+				}
+            });
         });
     },
     _thumbnails_generate: function(data, cb) {

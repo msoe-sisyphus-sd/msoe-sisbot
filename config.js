@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.1.34', // Setting Table name also sets the hostname, delayed hostname change after reboot, playlist track selection plays correct track (unshuffled) 
+			version	: '1.1.35', // Thumbnail generation is entirely single queued, fix hostname to match table name on startup if they do not match
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
