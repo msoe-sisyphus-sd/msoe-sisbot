@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.1.35', // Thumbnail generation is entirely single queued, fix hostname to match table name on startup if they do not match
+			version	: '1.2.0', // 1.2.0 Rollout
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
