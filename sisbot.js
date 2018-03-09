@@ -1677,25 +1677,21 @@ var sisbot = {
 		this.set_sleep_time(data, null);
 
 		// change hostname?
+		var change_hostname = false;
 		if (data.name != this.current_state.get('name')) {
-
 			// fix hostname
 			var regex = /^[^a-zA-Z]*/; // make sure first character is a-z
 			var regex2 = /[^0-9a-zA-Z\-]+/g; // greedy remove all non alpha-numerical or dash chars
 			this._hostname_queue = { hostname: data.name.replace(regex,"").replace(regex2,"") };
-
-			// set hostname at 4:00 AM
-			var host_date = moment('4:00 AM '+data.timezone_offset, 'H:mm A Z');
-			var cron = host_date.minute()+" "+host_date.hour()+" * * *";
-			this._hostname_schedule = scheduler.scheduleJob(cron, function(){
-				self.set_hostname(self._hostname_queue, null);
-			});
+			change_hostname = true;
 		}
 
 		// save given data
 		this.current_state.set(data);
 
 		if (cb) cb(null, this.current_state.toJSON());
+
+		if (change_hostname) this.set_hostname(this._hostname_queue, null);
 	},
 	/* ------------- Sleep Timer ---------------- */
 	test_time: function(data, cb) {

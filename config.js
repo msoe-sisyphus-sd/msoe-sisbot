@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.3.0', // 1.3.0 Factory Reset changes
+			version	: '1.3.1', // 1.3.1 Change hostname right away after onboarding
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
