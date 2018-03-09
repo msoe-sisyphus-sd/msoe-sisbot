@@ -1915,7 +1915,7 @@ var sisbot = {
 		logEvent(1, "Sisbot Factory Reset", data);
 		this.current_state.set({is_available: "false", reason_unavailable: "resetting"});
 		if (cb) cb(null, this.current_state.toJSON());
-		var ls = spawn('./factory_reset.sh',[],{cwd:"/home/pi/sisbot-server/sisbot/",detached:true,stdio:'ignore'});
+		var ls = spawn('./factory_reset.sh',[],{cwd:"/home/pi/sisbot-server/",detached:true,stdio:'ignore'});
 		ls.on('error', (err) => {
 			logEvent(2, 'Failed to start child process.');
 		});
