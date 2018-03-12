@@ -50,7 +50,11 @@ sudo chown -R pi sisbot
 sudo chown -R pi siscloud
 sudo chown -R pi sisproxy
 
-sudo /home/pi/sisbot-server/sisbot/update_finish.sh
+if [ -n "$4" ]; then
+	sudo /home/pi/sisbot-server/sisbot/update_finish.sh "$4"
+else
+	sudo /home/pi/sisbot-server/sisbot/update_finish.sh
+fi
 
 echo "Upgrade completed"
 

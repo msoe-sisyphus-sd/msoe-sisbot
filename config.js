@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.3.03', // move ball out (and over if needed) before homing
+			version	: '1.3.2', // 1.3.2 Servo Cson variables added to setConfig, run detach after first home
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

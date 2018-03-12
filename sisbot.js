@@ -100,12 +100,19 @@ var sisbot = {
 	_autoplay: false,
 	_home_next: false,
 	_moved_out: false, // small ball adjustment before homing
+	_detach_track: false, // for tables with multiple balls
+	_detach_first: false, // for tables with multiple balls, after first home
 	_move_to_rho: 0,
 	_saving: false,
+
+	_thumbnail_queue: [],
 
 	_internet_check: 0,
 	_internet_retries: 0,
 	_changing_to_wifi: false,
+
+	_hostname_queue: {},
+	_hostname_schedule: null,
 
 	init: function(config, session_manager, socket_update) {
 		var self = this;
@@ -160,6 +167,16 @@ var sisbot = {
 			}
 		});
 		this.current_state = this.collection.findWhere({type: "sisbot"});
+
+		// make sure the hostname is correct
+		var regex = /^[^a-zA-Z]*/; // make sure first character is a-z
+		var regex2 = /[^0-9a-zA-Z\-]+/g; // greedy remove all non alpha-numerical or dash chars
+		var clean_hostname = this.current_state.get('name').replace(regex,"").replace(regex2,"");
+		if (this.current_state.get('hostname') != clean_hostname+'.local') {
+			self.set_hostname({hostname: clean_hostname}, null);
+			logEvent(2, "Fix incorrect hostname");
+			return; // stop here
+		}
 
         // INITIALIZE BLUETOOTH
         process.env['BLENO_DEVICE_NAME'] = 'sisbot ' + this.current_state.id;
@@ -217,7 +234,14 @@ var sisbot = {
 		});
 
 		// plotter
-    	this.plotter.setConfig(CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config));
+		var cson_config = CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config);
+    	this.plotter.setConfig(cson_config);
+		if (cson_config.balls && cson_config.balls > 1) {
+			this._detach_first = true;
+
+			if (cson_config.detach_track) this._detach_track = cson_config.detach_track;
+			else this._detach_track = "detach.thr";
+		}
 		plotter.onServoThFault(function() {
 			self.current_state.set("servo_th_fault", "true");
 			self.pause(null, null);
@@ -308,7 +332,13 @@ var sisbot = {
 					// autoplay after first home
 					logEvent(1, "Play next ",self.current_state.get('active_track').name, self.current_state.get('active_track').firstR, "Rho:", self.current_state.get('_end_rho'));
 
-					if (self.current_state.get('active_track').id != "false") {
+					// _detach_first?
+					if (self._detach_first) {
+						var track = self.collection.get(self._detach_track);
+						self._play_track(track, null);
+
+						self._detach_first = false;
+					} else if (self.current_state.get('active_track').id != "false") {
 						var track = self.current_state.get('active_track');
 						// if (self.current_state.get("active_playlist_id") == "false") {
 						if (track.firstR != undefined && track.firstR != 0) self._move_to_rho = track.firstR;
@@ -515,68 +545,37 @@ var sisbot = {
 
 		try {
 	      	this.serial.open(function (error) {
-	      	self.plotter.useSerial(self.serial);
-			console.info('Serial: connected!');
+		      	self.plotter.useSerial(self.serial);
+				console.info('Serial: connected!');
 
-			self.current_state.set("is_serial_open", "true");
-			self.set_brightness({value:self.current_state.get("brightness")}, null);
-			self.set_speed({value:self.current_state.get("speed")}, null);
+				self.current_state.set("is_serial_open", "true");
+				self.set_brightness({value:self.current_state.get("brightness")}, null);
+				self.set_speed({value:self.current_state.get("speed")}, null);
 
-			if (self.config.autoplay) {
-				//logEvent(1, "Autoplay:", self.current_state.get("default_playlist_id"));
-				if (self.current_state.get("default_playlist_id") != "false" && self.collection.get(self.current_state.get("default_playlist_id"))!=undefined) {
-					var playlist = self.collection.get(self.current_state.get("default_playlist_id"));
-					playlist.set({active_track_id: "false", active_track_index: -1});
-					playlist.reset_tracks(); // start with non-reversed list
-					playlist.set_shuffle({ is_shuffle: "true", start_rho: 0 }); // update order, active tracks indexing
-					playlist.set({active_track_index: 0});
+				if (self.config.autoplay) {
+					//logEvent(1, "Autoplay:", self.current_state.get("default_playlist_id"));
+					if (self.current_state.get("default_playlist_id") != "false" && self.collection.get(self.current_state.get("default_playlist_id"))!=undefined) {
+						var playlist = self.collection.get(self.current_state.get("default_playlist_id"));
+						playlist.set({active_track_id: "false", active_track_index: -1});
+						playlist.reset_tracks(); // start with non-reversed list
+						playlist.set_shuffle({ is_shuffle: "true", start_rho: 0 }); // update order, active tracks indexing
+						playlist.set({active_track_index: 0});
 
-					// error check, we don't want r11
-					// var start_index = playlist.get("active_track_index");
-					// var track_obj = playlist.get("tracks")[playlist.get('sorted_tracks')[start_index]];
-					// if (track_obj.firstR == 1) {
-					// 	logEvent(1, "R1 start detected", track_obj);
-					// 	// find the first track to start at r0
-					// 	var searching = true;
-					// 	_.each(playlist.get("sorted_tracks"), function(track_index, index) {
-					// 		if (searching) {
-					// 			var new_obj = playlist.get("tracks")[track_index];
-					// 			if (new_obj.firstR == 0 || new_obj.lastR == 0) {
-					// 				playlist.set({active_track_index: -1}); // so this track is allowed to reverse
-					// 				playlist.reset_tracks(); // reset their reversed state
-					// 				playlist.set({active_track_index: index});
-					// 				playlist.set_shuffle({ is_shuffle: playlist.get('is_shuffle')}); // shuffle with active track as first
-					// 				searching = false;
-					// 			}
-					// 		}
-					// 	});
-					// }
-					//logEvent(1, "Model Playlist Tracks", playlist.get("tracks"));
+						var playlist_obj = playlist.toJSON();
+						logEvent(1, "Playlist Active Index:", playlist_obj.active_track_index);
+						playlist_obj.skip_save = true;
+						playlist_obj.is_current = true; // we already set the randomized pattern
 
-					var playlist_obj = playlist.toJSON();
-					logEvent(1, "Playlist Active Index:", playlist_obj.active_track_index);
-					playlist_obj.skip_save = true;
-					playlist_obj.is_current = true; // we already set the randomized pattern
-					// playlist_obj.active_track_index = playlist_obj.sorted_tracks[0]; // make it start on the first of randomized list
-					//logEvent(1, "Send Playlist Tracks", playlist_obj.tracks);
-
-					self.set_playlist(playlist_obj, function(err, resp) {
-						if (err) return logEvent(1, "Set initial playlist", err);
-						self.socket_update(resp);
-					});
+						self.set_playlist(playlist_obj, function(err, resp) {
+							if (err) return logEvent(1, "Set initial playlist", err);
+							self.socket_update(resp);
+						});
+					}
 				}
-				// else {
-				// 	var playlist = self.collection.get("F42695C4-AE32-4956-8C7D-0FF6A7E9D492").toJSON();
-				// 	if (playlist != undefined) {
-				// 		playlist.skip_save = true;
-				// 		self.set_playlist(playlist, null);
-				// 	}
-				// }
-			}
-		});
-    } catch(err) {
-      console.error('Connect err', err);
-    }
+			});
+	    } catch(err) {
+	      console.error('Connect err', err);
+	    }
 	},
 	// VERSIONS OF CODE
 	latest_software_version: function (data, cb) {
@@ -673,6 +672,12 @@ var sisbot = {
 						if (obj.state) delete obj.state; // don't listen to updates to this, plotter is in control of this
 						if (obj.is_autodim != self.current_state.get('is_autodim')) self.set_autodim({value: "true"}, null);
 						if (obj.brightness != self.current_state.get('brightness')) self.set_brightness({value: obj.brightness}, null);
+						if (obj.name != self.current_state.get('name')) {
+							var regex = /^[^a-zA-Z]*/; // make sure first character is a-z
+							var regex2 = /[^0-9a-zA-Z\-]+/g; // greedy remove all non alpha-numerical or dash chars
+							var clean_hostname = obj.name.replace(regex,"").replace(regex2,"");
+							self.set_hostname({hostname: clean_hostname}, null);
+						}
 						if (obj.share_log_files != self.current_state.get('share_log_files')) self.set_share_log_files({value: obj.share_log_files}, null);
 					}
 					returnObjects.push(self.collection.add(obj, {merge:true}).toJSON());
@@ -836,18 +841,27 @@ var sisbot = {
 	},
 	add_track: function(data, cb) {
 		var self = this;
-		logEvent(1, "Sisbot Add Track", data);
+		logEvent(1, "Sisbot Add Track", data.id, data.name);
 
 		// pull out coordinates
 		var verts = data.verts;
 		if (verts == undefined || verts == "") {
-			if (cb) return cb("No verts given", null);
+			logEvent(2, "No verts given", data.id, data.name);
+			if (cb) return cb('No verts given for '+data.name, null);
 			else return;
 		}
 		delete data.verts;
 
 		// save playlist
 		var new_track = new Track(data);
+		var new_verts = new_track.get_verts_from_data(verts); // so our first/last rho are forced correct
+
+		if (new_verts.length < 1) {
+			logEvent(2, "Incorrect verts given", data.id, data.name);
+			if (cb) return cb('Incorrect verts given for '+data.name, null);
+			else return;
+		}
+
 		var track = this.collection.add(new_track, {merge: true});
 		track.collection = this.collection;
 		track.config = this.config;
@@ -865,16 +879,28 @@ var sisbot = {
 				if (cb) return cb(err, null);
 				else return;
 			}
-			track.get_verts(); // so our first/last rho are forced correct
 
 			self.save(null, null);
-			self.thumbnail_generate({ id: data.id }, function(err, resp) {
-				// do nothing. this generates the thumbnails in the app folder
-				if (cb) cb(null, [track.toJSON(), self.current_state.toJSON()]); // send back current_state and the track
 
-				// tell all connected devices
-				self.socket_update([track.toJSON(), self.current_state.toJSON()]);
-			});
+			var generate_first = (self._thumbnail_queue.length <= 0);
+
+			// generate three sizes
+			self._thumbnail_queue.push({ id: data.id, dimensions: 400 });
+			self._thumbnail_queue.push({ id: data.id, dimensions: 100 });
+			self._thumbnail_queue.push({ id: data.id, dimensions: 50 });
+
+			// generate thumbnail now, if first (and only) in queue
+			if (generate_first) {
+				self.thumbnail_generate(self._thumbnail_queue[0], function(err, resp) {
+					// send back current_state and the track
+					if (cb) cb(null, [track.toJSON(), self.current_state.toJSON()]);
+
+					// tell all connected devices
+					self.socket_update([track.toJSON(), self.current_state.toJSON()]);
+				});
+			} else {
+				if (cb) cb(null, self.current_state.toJSON()); // send back current_state without track
+			}
 		});
     },
     /*********************** UPLOAD TRACK TO CLOUD ************************/
@@ -952,6 +978,7 @@ var sisbot = {
 			self.thumbnail_generate({id: all_tracks.pop()}, gen_next_track);
 	},
     thumbnail_generate: function(data, cb) {
+		logEvent(1, "Thumbnail generate", data);
         // @id
         var self = this;
         var track_dir = this.config.base_dir + '/' + this.config.folders.sisbot + '/' + this.config.folders.content + '/' + this.config.folders.tracks;
@@ -962,34 +989,24 @@ var sisbot = {
                 else return;
             }
 
-            var num_resp = 3; // number of thumnails to generate before sending resp
             var cb_err = null;
 
-            data.dimensions = 400;
             data.raw_coors = raw_coors;
             self._thumbnails_generate(data, function(err, resp) {
-                if (err) cb_err = err;
-                check_cb();
-            });
+                if (err) {
+					if (cb) cb(cb_err, null);
+				}
 
-            data.dimensions = 100;
-            data.raw_coors = raw_coors;
-            self._thumbnails_generate(data, function(err, resp) {
-                if (err) cb_err = err;
-                check_cb();
-            });
+				if (cb) cb(null, { id: data.id, dimensions: data.dimensions }); // don't send back verts
 
-            data.dimensions = 50;
-            data.raw_coors = raw_coors;
-            self._thumbnails_generate(data, function(err, resp) {
-                if (err) cb_err = err;
-                check_cb();
+				self._thumbnail_queue.shift(); // remove first in queue
+				if (self._thumbnail_queue.length > 0) {
+					// generate next thumbnail in _thumbnail_queue
+					self.thumbnail_generate(self._thumbnail_queue[0], null);
+				} else {
+					logEvent(1, "All thumbnails generated");
+				}
             });
-
-            function check_cb() {
-                if (--num_resp == 0)
-                    if (cb) cb(cb_err, null);
-            }
         });
     },
     _thumbnails_generate: function(data, cb) {
@@ -1056,7 +1073,7 @@ var sisbot = {
 			delete data.skip_save;
 		}
 
-		// TODO: check if we are shuffled, and need to grab track from next_tracks
+		// check if we are shuffled, and need to grab track from next_tracks
 		if (data.is_shuffle && data.is_current && do_save) { // skip_save is used on bootup, don't pull from next tracks in that case
 			var current_playlist = this.collection.get(this.current_state.get('active_playlist_id'));
 			if (current_playlist != undefined && current_playlist.id == data.id && current_playlist.get('is_shuffle') == data.is_shuffle) {
@@ -1083,6 +1100,14 @@ var sisbot = {
 		playlist.collection = this.collection;
 		playlist.config = this.config;
 		if (data.is_shuffle && !data.is_current) playlist.set_shuffle({ is_shuffle: data.is_shuffle });
+
+		// clean playlist tracks
+		if (!data.is_shuffle) {
+			var active_index = data.active_track_index;
+			playlist.set('active_track_index', -1); // allow this track to start at 1, if it is supposed to
+			playlist._update_tracks();
+			playlist.set('active_track_index', active_index);
+		}
 
 		// update current_state
 		this.current_state.set({
@@ -1684,18 +1709,28 @@ var sisbot = {
 	},
 	/* ------------- Onboarding ---------------- */
 	onboard_complete(data, cb) {
+		var self = this;
 		logEvent(1, "Onboard Complete", data);
-
-		// save given data
-		this.current_state.set(data);
 
 		// update cron jobs (includes save)
 		this.set_sleep_time(data, null);
 
-		// TODO: update light brightness
+		// change hostname?
+		var change_hostname = false;
+		if (data.name != this.current_state.get('name')) {
+			// fix hostname
+			var regex = /^[^a-zA-Z]*/; // make sure first character is a-z
+			var regex2 = /[^0-9a-zA-Z\-]+/g; // greedy remove all non alpha-numerical or dash chars
+			this._hostname_queue = { hostname: data.name.replace(regex,"").replace(regex2,"") };
+			change_hostname = true;
+		}
 
+		// save given data
+		this.current_state.set(data);
 
 		if (cb) cb(null, this.current_state.toJSON());
+
+		if (change_hostname) this.set_hostname(this._hostname_queue, null);
 	},
 	/* ------------- Sleep Timer ---------------- */
 	test_time: function(data, cb) {
@@ -1827,19 +1862,17 @@ var sisbot = {
 		// send response first
 		if (cb) cb(null, this.current_state.toJSON());
 
-		exec('/home/pi/sisbot-server/sisbot/update.sh '+this.config.service_branches.sisbot+' '+this.config.service_branches.app+' '+this.config.service_branches.proxy+' > /home/pi/sisbot-server/update.log', (error, stdout, stderr) => {
+		exec('/home/pi/sisbot-server/sisbot/update.sh '+this.config.service_branches.sisbot+' '+this.config.service_branches.app+' '+this.config.service_branches.proxy+' false > /home/pi/sisbot-server/update.log', (error, stdout, stderr) => {
 			self.current_state.set({installing_updates: 'false'});
 		  	if (error) {
 				// if (cb) cb(error, null);
 				return logEvent(2, 'exec error:',error);
 			}
 			logEvent(1, "Install complete");
-			self.current_state.set({installed_updates: 'true'}); // makes page reload
 
 			self.save(null, null);
-			self.socket_update(self.current_state.toJSON());
 
-			self.restart(null,null);
+			self.reboot(null,null);
 		});
 	},
 	local_sisbots: function(data, cb) {
@@ -1917,7 +1950,7 @@ var sisbot = {
 		logEvent(1, "Sisbot Factory Reset", data);
 		this.current_state.set({is_available: "false", reason_unavailable: "resetting"});
 		if (cb) cb(null, this.current_state.toJSON());
-		var ls = spawn('./factory_reset.sh',[],{cwd:"/home/pi/sisbot-server/sisbot/",detached:true,stdio:'ignore'});
+		var ls = spawn('./factory_reset.sh',[],{cwd:"/home/pi/sisbot-server/",detached:true,stdio:'ignore'});
 		ls.on('error', (err) => {
 			logEvent(2, 'Failed to start child process.');
 		});
@@ -1940,14 +1973,18 @@ var sisbot = {
 	reboot: function(data,cb) {
 		logEvent(1, "Sisbot Reboot", data);
 		this.current_state.set({is_available: "false", reason_unavailable: "rebooting"});
+		this.socket_update(this.current_state.toJSON());
+
 		if (cb) cb(null, this.current_state.toJSON());
 
 		// disconnect all socket connections first
 		this.socket_update("disconnect");
 
-		exec('sudo reboot', (error, stdout, stderr) => {
-		  if (error) return logEvent(2, 'exec error:',error);
-		});
+		setTimeout(function() {
+			exec('sudo reboot', (error, stdout, stderr) => {
+			  if (error) return logEvent(2, 'exec error:',error);
+			});
+		}, 500);
 	}
 };
 

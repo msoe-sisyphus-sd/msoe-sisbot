@@ -28,7 +28,7 @@ var homingRPin; // SBB board pin for homing rho sensor
 var homingThHitState; // The value the sensor reports when triggered. 0 or 1.
 var homingRHitState; // The value the sensor reports when triggered. 0 or 1.
 
-var useFaultSensors = 1; // True if the bot has sensors. Otherwise the current position is considered home.
+var useFaultSensors = 0; // True if the bot has sensors. Otherwise the current position is considered home.
 //var faultThPin = "D,1"; // SBB board pin for homing theta sensor
 //var faultRPin = "D,0"; // SBB board pin for homing rho sensor
 //var faultThActiveState = 1; // The value the sensor reports when triggered. 0 or 1.
@@ -951,7 +951,7 @@ module.exports = {
     homingThPin = config.homingThPin;
 
     HOMETHSTEPS = config.homingThSteps * thDirSign;
-		HOMERSTEPS = config.homingRSteps;
+	HOMERSTEPS = config.homingRSteps;
 
     homingThHitState = parseInt(config.homingThHitState, 10)
     homingRHitState = parseInt(config.homingRHitState, 10)
@@ -961,8 +961,13 @@ module.exports = {
     thSPRad = thSPRev / (2* Math.PI);
 
     THETA_HOME_MAX =  Math.round(thSPRev * 1.03 / HOMETHSTEPS);//3% extra
-		// logEvent(1, 'T H MAX= '+THETA_HOME_MAX);
+	// logEvent(1, 'T H MAX= '+THETA_HOME_MAX);
     RHO_HOME_MAX =  Math.round(rSPInch * (plotRadius + 0.25) / HOMERSTEPS);// 1/4" extra
+
+	// Servo values
+	if (config.useFaultSensors)		useFaultSensors = config.useFaultSensors;
+	if (config.faultActiveState)	faultActiveState = config.faultActiveState;
+	if (config.balls) 				balls = config.balls;
   },
 
 
