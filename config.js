@@ -45,8 +45,8 @@ var config = {
 			auto_th: 1.570796,
 			failed_home_rho: 0.2,
 			failed_home_th: 1.570796,
-			auto_home_rho: 0.1,
-			auto_home_th: 0.25,
+			auto_home_rho: 0.0185, //.25" for r=13.5"
+ 			auto_home_th: 0.0417, //.25" for 6" diam falcon
 			max_rand_retries: 10,
 			check_internet_interval: 1800000, // every thirty minutes, // 1800000 once every half hour, confirm an internet connection
 			internet_retries: 5, // retry # of times before resetting to hotspot

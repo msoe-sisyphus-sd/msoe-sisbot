@@ -17,6 +17,8 @@ var bleno 		= require('bleno');
 var io 			= require('socket.io');
 var moment 		= require('moment');
 
+var sensored = true;
+
 /**************************** BLE *********************************************/
 
 var ble_obj = {
@@ -767,12 +769,43 @@ var sisbot = {
 			} else {
 				this._paused = false;
 				this.current_state.set("state", "homing");
+			
+				////////// DR Homing:
+		if (sensored == false){
+			
+			var thetaPosition, rhoPosition;
+		
+			thetaPosition = plotter.getThetaPosition();
+			console.log("shortest theta dist away from home = " + thetaPosition + " rads");
+			rhoPosition = plotter.getRhoPosition();
+			console.log("rho dist away form home = " + rhoPosition + " normalized");
+				
+			var track_obj = {
+						verts: [{th: thetaPosition, r: rhoPosition},{th:0,r:0}],
+						vel: 1,
+						accel: 0.5,
+						thvmax: 0.5
+					};
+					self._paused = false;
+					console.log("doing DEAD RECKONING homing...");
+					self.plotter.playTrack(track_obj);
+					self._home_next = true; // home after this outward movement
+					
+					sensored = true; //next time round, sensored home
+					
+					return;
+		}
+				/////////////////////	
 				if (this._moved_out) {
+					
+					sensored = false;
+					
 					plotter.home();
 					this._moved_out = false;
 				} else {
 					this._moved_out = true; // call plotter.home() next time instead
 					this._home_next = true; // home again after this outward movement
+					sensored = true; // sensored home after backoff
 					var track_obj = {
 						verts: [{th:0,r:0}],
 						vel: 1,
