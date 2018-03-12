@@ -245,12 +245,12 @@ var sisbot = {
 			else this._detach_track = "detach.thr";
 		}
 		plotter.onServoThFault(function() {
-			self.current_state.set("servo_th_fault", "true");
+			self.current_state.set("reason_unavailable", "servo_th_fault");
 			self.pause(null, null);
 			self.socket_update(self.current_state.toJSON()); // notify connected UI
 		});
 		plotter.onServoRhoFault(function() {
-			self.current_state.set("servo_rho_fault", "true");
+			self.current_state.set("reason_unavailable", "servo_rho_fault");
 			self.pause(null, null);
 			self.socket_update(self.current_state.toJSON()); // notify connected UI
 		});
@@ -769,17 +769,17 @@ var sisbot = {
 			} else {
 				this._paused = false;
 				this.current_state.set("state", "homing");
-			
+
 				////////// DR Homing:
 		if (sensored == false){
-			
+
 			var thetaPosition, rhoPosition;
-		
+
 			thetaPosition = plotter.getThetaPosition();
 			console.log("shortest theta dist away from home = " + thetaPosition + " rads");
 			rhoPosition = plotter.getRhoPosition();
 			console.log("rho dist away form home = " + rhoPosition + " normalized");
-				
+
 			var track_obj = {
 						verts: [{th: thetaPosition, r: rhoPosition},{th:0,r:0}],
 						vel: 1,
@@ -790,16 +790,16 @@ var sisbot = {
 					console.log("doing DEAD RECKONING homing...");
 					self.plotter.playTrack(track_obj);
 					self._home_next = true; // home after this outward movement
-					
+
 					sensored = true; //next time round, sensored home
-					
+
 					return;
 		}
-				/////////////////////	
+				/////////////////////
 				if (this._moved_out) {
-					
+
 					sensored = false;
-					
+
 					plotter.home();
 					this._moved_out = false;
 				} else {

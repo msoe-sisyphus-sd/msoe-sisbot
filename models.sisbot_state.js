@@ -58,8 +58,6 @@ var sisbot_state = Backbone.Model.extend({
 
 		is_multiball			: "true", // allow multiple balls
 		ball_count				: 1, // 1 or 2
-		servo_th_fault			: "false",
-		servo_rho_fault			: "false",
 
 		share_log_files			: "false"
 	},
