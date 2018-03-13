@@ -102,9 +102,14 @@ var sisbot = {
 	_move_to_rho: 0,
 	_saving: false,
 
+	_thumbnail_queue: [],
+
 	_internet_check: 0,
 	_internet_retries: 0,
 	_changing_to_wifi: false,
+
+	_hostname_queue: {},
+	_hostname_schedule: null,
 
 	init: function(config, session_manager, socket_update) {
 		var self = this;
@@ -159,6 +164,16 @@ var sisbot = {
 			}
 		});
 		this.current_state = this.collection.findWhere({type: "sisbot"});
+
+		// make sure the hostname is correct
+		var regex = /^[^a-zA-Z]*/; // make sure first character is a-z
+		var regex2 = /[^0-9a-zA-Z\-]+/g; // greedy remove all non alpha-numerical or dash chars
+		var clean_hostname = this.current_state.get('name').replace(regex,"").replace(regex2,"");
+		if (this.current_state.get('hostname') != clean_hostname+'.local') {
+			self.set_hostname({hostname: clean_hostname}, null);
+			logEvent(2, "Fix incorrect hostname");
+			return; // stop here
+		}
 
         // INITIALIZE BLUETOOTH
         process.env['BLENO_DEVICE_NAME'] = 'sisbot ' + this.current_state.id;
@@ -656,6 +671,12 @@ var sisbot = {
 						if (obj.state) delete obj.state; // don't listen to updates to this, plotter is in control of this
 						if (obj.is_autodim != self.current_state.get('is_autodim')) self.set_autodim({value: "true"}, null);
 						if (obj.brightness != self.current_state.get('brightness')) self.set_brightness({value: obj.brightness}, null);
+						if (obj.name != self.current_state.get('name')) {
+							var regex = /^[^a-zA-Z]*/; // make sure first character is a-z
+							var regex2 = /[^0-9a-zA-Z\-]+/g; // greedy remove all non alpha-numerical or dash chars
+							var clean_hostname = obj.name.replace(regex,"").replace(regex2,"");
+							self.set_hostname({hostname: clean_hostname}, null);
+						}
 						if (obj.share_log_files != self.current_state.get('share_log_files')) self.set_share_log_files({value: obj.share_log_files}, null);
 					}
 					returnObjects.push(self.collection.add(obj, {merge:true}).toJSON());
@@ -781,18 +802,27 @@ var sisbot = {
 	},
 	add_track: function(data, cb) {
 		var self = this;
-		logEvent(1, "Sisbot Add Track", data);
+		logEvent(1, "Sisbot Add Track", data.id, data.name);
 
 		// pull out coordinates
 		var verts = data.verts;
 		if (verts == undefined || verts == "") {
-			if (cb) return cb("No verts given", null);
+			logEvent(2, "No verts given", data.id, data.name);
+			if (cb) return cb('No verts given for '+data.name, null);
 			else return;
 		}
 		delete data.verts;
 
 		// save playlist
 		var new_track = new Track(data);
+		var new_verts = new_track.get_verts_from_data(verts); // so our first/last rho are forced correct
+
+		if (new_verts.length < 1) {
+			logEvent(2, "Incorrect verts given", data.id, data.name);
+			if (cb) return cb('Incorrect verts given for '+data.name, null);
+			else return;
+		}
+
 		var track = this.collection.add(new_track, {merge: true});
 		track.collection = this.collection;
 		track.config = this.config;
@@ -810,16 +840,28 @@ var sisbot = {
 				if (cb) return cb(err, null);
 				else return;
 			}
-			track.get_verts(); // so our first/last rho are forced correct
 
 			self.save(null, null);
-			self.thumbnail_generate({ id: data.id }, function(err, resp) {
-				// do nothing. this generates the thumbnails in the app folder
-				if (cb) cb(null, [track.toJSON(), self.current_state.toJSON()]); // send back current_state and the track
 
-				// tell all connected devices
-				self.socket_update([track.toJSON(), self.current_state.toJSON()]);
-			});
+			var generate_first = (self._thumbnail_queue.length <= 0);
+
+			// generate three sizes
+			self._thumbnail_queue.push({ id: data.id, dimensions: 400 });
+			self._thumbnail_queue.push({ id: data.id, dimensions: 100 });
+			self._thumbnail_queue.push({ id: data.id, dimensions: 50 });
+
+			// generate thumbnail now, if first (and only) in queue
+			if (generate_first) {
+				self.thumbnail_generate(self._thumbnail_queue[0], function(err, resp) {
+					// send back current_state and the track
+					if (cb) cb(null, [track.toJSON(), self.current_state.toJSON()]);
+
+					// tell all connected devices
+					self.socket_update([track.toJSON(), self.current_state.toJSON()]);
+				});
+			} else {
+				if (cb) cb(null, self.current_state.toJSON()); // send back current_state without track
+			}
 		});
     },
     /*********************** UPLOAD TRACK TO CLOUD ************************/
@@ -897,6 +939,7 @@ var sisbot = {
 			self.thumbnail_generate({id: all_tracks.pop()}, gen_next_track);
 	},
     thumbnail_generate: function(data, cb) {
+		logEvent(1, "Thumbnail generate", data);
         // @id
         var self = this;
         var track_dir = this.config.base_dir + '/' + this.config.folders.sisbot + '/' + this.config.folders.content + '/' + this.config.folders.tracks;
@@ -907,34 +950,24 @@ var sisbot = {
                 else return;
             }
 
-            var num_resp = 3; // number of thumnails to generate before sending resp
             var cb_err = null;
 
-            data.dimensions = 400;
             data.raw_coors = raw_coors;
             self._thumbnails_generate(data, function(err, resp) {
-                if (err) cb_err = err;
-                check_cb();
-            });
+                if (err) {
+					if (cb) cb(cb_err, null);
+				}
 
-            data.dimensions = 100;
-            data.raw_coors = raw_coors;
-            self._thumbnails_generate(data, function(err, resp) {
-                if (err) cb_err = err;
-                check_cb();
-            });
+				if (cb) cb(null, { id: data.id, dimensions: data.dimensions }); // don't send back verts
 
-            data.dimensions = 50;
-            data.raw_coors = raw_coors;
-            self._thumbnails_generate(data, function(err, resp) {
-                if (err) cb_err = err;
-                check_cb();
+				self._thumbnail_queue.shift(); // remove first in queue
+				if (self._thumbnail_queue.length > 0) {
+					// generate next thumbnail in _thumbnail_queue
+					self.thumbnail_generate(self._thumbnail_queue[0], null);
+				} else {
+					logEvent(1, "All thumbnails generated");
+				}
             });
-
-            function check_cb() {
-                if (--num_resp == 0)
-                    if (cb) cb(cb_err, null);
-            }
         });
     },
     _thumbnails_generate: function(data, cb) {
@@ -1001,7 +1034,7 @@ var sisbot = {
 			delete data.skip_save;
 		}
 
-		// TODO: check if we are shuffled, and need to grab track from next_tracks
+		// check if we are shuffled, and need to grab track from next_tracks
 		if (data.is_shuffle && data.is_current && do_save) { // skip_save is used on bootup, don't pull from next tracks in that case
 			var current_playlist = this.collection.get(this.current_state.get('active_playlist_id'));
 			if (current_playlist != undefined && current_playlist.id == data.id && current_playlist.get('is_shuffle') == data.is_shuffle) {
@@ -1028,6 +1061,14 @@ var sisbot = {
 		playlist.collection = this.collection;
 		playlist.config = this.config;
 		if (data.is_shuffle && !data.is_current) playlist.set_shuffle({ is_shuffle: data.is_shuffle });
+
+		// clean playlist tracks
+		if (!data.is_shuffle) {
+			var active_index = data.active_track_index;
+			playlist.set('active_track_index', -1); // allow this track to start at 1, if it is supposed to
+			playlist._update_tracks();
+			playlist.set('active_track_index', active_index);
+		}
 
 		// update current_state
 		this.current_state.set({
@@ -1629,18 +1670,28 @@ var sisbot = {
 	},
 	/* ------------- Onboarding ---------------- */
 	onboard_complete(data, cb) {
+		var self = this;
 		logEvent(1, "Onboard Complete", data);
-
-		// save given data
-		this.current_state.set(data);
 
 		// update cron jobs (includes save)
 		this.set_sleep_time(data, null);
 
-		// TODO: update light brightness
+		// change hostname?
+		var change_hostname = false;
+		if (data.name != this.current_state.get('name')) {
+			// fix hostname
+			var regex = /^[^a-zA-Z]*/; // make sure first character is a-z
+			var regex2 = /[^0-9a-zA-Z\-]+/g; // greedy remove all non alpha-numerical or dash chars
+			this._hostname_queue = { hostname: data.name.replace(regex,"").replace(regex2,"") };
+			change_hostname = true;
+		}
 
+		// save given data
+		this.current_state.set(data);
 
 		if (cb) cb(null, this.current_state.toJSON());
+
+		if (change_hostname) this.set_hostname(this._hostname_queue, null);
 	},
 	/* ------------- Sleep Timer ---------------- */
 	test_time: function(data, cb) {
@@ -1779,7 +1830,6 @@ var sisbot = {
 				return logEvent(2, 'exec error:',error);
 			}
 			logEvent(1, "Install complete");
-			self.current_state.set({installed_updates: 'true'}); // makes page reload
 
 			self.save(null, null);
 
@@ -1861,7 +1911,7 @@ var sisbot = {
 		logEvent(1, "Sisbot Factory Reset", data);
 		this.current_state.set({is_available: "false", reason_unavailable: "resetting"});
 		if (cb) cb(null, this.current_state.toJSON());
-		var ls = spawn('./factory_reset.sh',[],{cwd:"/home/pi/sisbot-server/sisbot/",detached:true,stdio:'ignore'});
+		var ls = spawn('./factory_reset.sh',[],{cwd:"/home/pi/sisbot-server/",detached:true,stdio:'ignore'});
 		ls.on('error', (err) => {
 			logEvent(2, 'Failed to start child process.');
 		});
@@ -1895,7 +1945,7 @@ var sisbot = {
 			exec('sudo reboot', (error, stdout, stderr) => {
 			  if (error) return logEvent(2, 'exec error:',error);
 			});
-		}, 250);
+		}, 500);
 	}
 };
 

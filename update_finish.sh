@@ -35,7 +35,7 @@ else
 fi
 
 # fix factory reset issue
-cp /home/pi/sisbot-server/sisbot/factory_reset.sh /home/pi/sisbot-server/factory/sisbot
+cp /home/pi/sisbot-server/sisbot/factory_reset.sh /home/pi/sisbot-server/
 
 # update rc.local
 cp /home/pi/sisbot-server/sisbot/rc.local /etc

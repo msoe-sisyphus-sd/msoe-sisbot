@@ -71,7 +71,11 @@ var app = function(given_config,ansible) {
 		var data = (_.isString(req.body.data)) ? JSON.parse(req.body.data) : req.body.data;
 		data = data.data;
 
-		if (endpoint != "state") logEvent(1, "Post:",service, endpoint, data);
+		// TODO: remove add_track as well, or at least don't log the verts
+		if (endpoint != "state") {
+			var truncated_data = _.omit(data, 'verts', 'wifi_password', 'password'); // add any keys to skip from logging
+			logEvent(1, "Post:",service, endpoint,truncated_data);
+		}
 
 		var cb		= function (err, resp) {
 			res.json({ err: err, resp: resp });
