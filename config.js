@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.3.1', // 1.3.1 Change hostname right away after onboarding
+			version	: '1.3.2', // 1.3.2 Fix for proxy able to revert on bad update
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
