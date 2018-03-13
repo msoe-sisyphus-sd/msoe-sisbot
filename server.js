@@ -84,7 +84,7 @@ var app = function(given_config,ansible) {
 		}
 	});
 
-	var server = http.createServer(static).listen(config.servers.sisbot.port);
+	var server = http.createServer(static).listen(config.services.sisbot.port);
 
 	/**************************** SOCKET.IO ***************************************/
 

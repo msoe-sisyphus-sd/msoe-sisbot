@@ -1895,7 +1895,7 @@ var sisbot = {
 			exec('sudo reboot', (error, stdout, stderr) => {
 			  if (error) return logEvent(2, 'exec error:',error);
 			});
-		}), 250);
+		}, 250);
 	}
 };
 
