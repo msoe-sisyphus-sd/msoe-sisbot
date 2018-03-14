@@ -19,7 +19,7 @@ cd /home/pi/sisbot-server/sisbot/content/
 rm status.json
 
 #reset rc.local
-sudo echo -e "#!/bin/sh -e\ncd /home/pi/sisbot-server/sisproxy && NODE_ENV=sisbot node server.js &\nexit 0\n" > /etc/rc.local
+#sudo echo -e "#!/bin/sh -e\ncd /home/pi/sisbot-server/sisproxy && NODE_ENV=sisbot node server.js &\nexit 0\n" > /etc/rc.local
 
 # reset sisbot
 cd /home/pi/sisbot-server/sisbot

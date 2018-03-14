@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.3.3', // 1.3.3 Factory Reset change
+			version	: '1.3.4', // 1.3.4 rc.local crash fix
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
