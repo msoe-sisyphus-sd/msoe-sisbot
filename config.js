@@ -9,14 +9,14 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
     // PROVE CSON FILE EXISTS
     if (!fs.existsSync('/home/pi/sisbot-server/sisbot/configs/' + which_cson)) {
-            console.log('!!!!! MISSING CSON FILE !!!!!');
-            which_cson = 'default.cson';
+        console.log('!!!!! MISSING CSON FILE !!!!!');
+        which_cson = 'default.cson';
     }
 }
 
 var config = {
 		base: {
-			version	: '1.3.2', // 1.3.2 Fix for proxy able to revert on bad update
+			version	: '1.3.3', // 1.3.3 Factory Reset change
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

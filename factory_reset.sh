@@ -23,15 +23,15 @@ sudo echo -e "#!/bin/sh -e\ncd /home/pi/sisbot-server/sisproxy && NODE_ENV=sisbo
 
 # reset sisbot
 cd /home/pi/sisbot-server/sisbot
-git reset --hard a7438e8e6a48138e521bbf328d9e259116aad2e6
+git reset --hard fc4e8901bed70c906807b62c22b4b3a9c52b7d06
 
 # reset siscloud
 cd /home/pi/sisbot-server/siscloud
-git reset --hard 26705710fc09a376add9362a674a9f46a59c6995
+git reset --hard 7aa47893759f44ff30f357937e23e27e0cb9df59
 
 # reset sisproxy
 cd /home/pi/sisbot-server/sisproxy
-git reset --hard 0b5857439aec3dc8e9e2f3b0eee5844d95115d51
+git reset --hard 30197f736b75830ad57e15b898766cd4e41dc9ae
 
 # reset hostname
 cd /home/pi/sisbot-server/sisbot
