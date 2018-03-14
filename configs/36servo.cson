@@ -1,4 +1,4 @@
-# Sisbot config for 36 servo 
+# Sisbot config for 36 servo
 
 serialPath: "/dev/ttyACM0"
 
@@ -13,6 +13,11 @@ autoplay: true
 jogStepsTheta: 50
 jogStepsRadius: 100
 
+isServo: true
+faultActiveState: 1
+twoBallEnabled: true
+attach_track: "attach.thr" # set table specific track name for attach
+detach_track: "detach.thr" # set table specific track name for detach
 
 useHomeSensors: true# false means that a "home" event means to set the current $
 homingThSteps: 17# Steps per homing check on Theta
@@ -24,7 +29,7 @@ homingRHitState: 0 # The value the sensor reports when triggered. 0 or 1.
 
 #useFaultSensors: true# false means that a "home" event means to set the current $
 #faultThHitState: 1 # The value the sensor reports when triggered. 0 or 1.
-#faultRHitState: 1 # 
+#faultRHitState: 1 #
 
 
 

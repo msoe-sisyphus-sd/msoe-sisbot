@@ -6,6 +6,7 @@ var moment 	= require('moment');
 var config 	= require('./config');
 
 { //globals:
+var twoBallEnabled=false;
 var Vball=2,  Accel = 2, MTV=0.5, Vmin = 0.1, Voverride = 1;
 var balls  = 1; //sis vs tant mode
 //machine constants:
@@ -965,9 +966,9 @@ module.exports = {
     RHO_HOME_MAX =  Math.round(rSPInch * (plotRadius + 0.25) / HOMERSTEPS);// 1/4" extra
 
 	// Servo values
-	if (config.useFaultSensors)		useFaultSensors = config.useFaultSensors;
+	if (config.isServo)				useFaultSensors = config.isServo;
 	if (config.faultActiveState)	faultActiveState = config.faultActiveState;
-	if (config.balls) 				balls = config.balls;
+	if (config.twoBallEnabled)		twoBallEnabled = config.twoBallEnabled;
   },
 
 
@@ -1066,8 +1067,8 @@ module.exports = {
 	}
 	if (track.name == "detach"){
 		balls = 1;
-	}  
-	  
+	}
+
     // Save the track data
     verts = track.verts;
     miMax = verts.length - 1;
@@ -1120,34 +1121,34 @@ module.exports = {
   getSpeed: function() {
     return Voverride;
   },
-  
+
   getThetaPosition: function() {
 	var thetaDistHome, modRads, rawRads, shortestRads;
-	
+
 	rawRads = thAccum / thSPRad;
 	console.log("thAccum is " + thAccum + " steps");
-	console.log("raw Theta postion is " + rawRads + " rads"); 
-	
+	console.log("raw Theta postion is " + rawRads + " rads");
+
 	modRads = rawRads % (2 * Math.PI);
-	console.log("modRads = " + modRads); 
-	
+	console.log("modRads = " + modRads);
+
 	shortestRads = modRads*-1; //this is verified correct - but theta sign is wrong :(
-	
+
 	if (modRads > Math.PI){
 		shortestRads = 2 * Math.PI - modRads; //shortestRads = modRads - 2 * Math.PI;
 	}
 	if (modRads < -1 * Math.PI){
 		shortestRads = -2 * Math.PI - modRads; //shortestRads = modRads + 2 * Math.PI;
 	}
-	
-	  
+
+
     return shortestRads;
  },
-   
+
   getRhoPosition: function() {
-	  
-	//rSeg = (rAccum - thAccum * rthAsp * nestedAxisSign) * rDirSign/ rSPInch;  
-	  
+
+	//rSeg = (rAccum - thAccum * rthAsp * nestedAxisSign) * rDirSign/ rSPInch;
+
     return ((rAccum - thAccum * rthAsp * nestedAxisSign) * rDirSign/ rSPInch)/plotRadius;
  },
 

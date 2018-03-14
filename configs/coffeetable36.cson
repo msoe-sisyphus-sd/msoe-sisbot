@@ -13,6 +13,7 @@ autoplay: true
 jogStepsTheta: 50
 jogStepsRadius: 100
 
+twoBallEnabled: false
 
 useHomeSensors: true# false means that a "home" event means to set the current $
 homingThSteps: 17# Steps per homing check on Theta

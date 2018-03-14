@@ -102,6 +102,7 @@ var sisbot = {
 	_autoplay: false,
 	_home_next: false,
 	_moved_out: false, // small ball adjustment before homing
+	_attach_track: false, // for tables with multiple balls
 	_detach_track: false, // for tables with multiple balls
 	_detach_first: false, // for tables with multiple balls, after first home
 	_move_to_rho: 0,
@@ -238,8 +239,11 @@ var sisbot = {
 		// plotter
 		var cson_config = CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config);
     	this.plotter.setConfig(cson_config);
-		if (cson_config.balls && cson_config.balls > 1) {
+		if (cson_config.twoBallEnabled) {
 			this._detach_first = true;
+
+			if (cson_config.attach_track) this._attach_track = cson_config.attach_track;
+			else this._attach_track = "attach.thr";
 
 			if (cson_config.detach_track) this._detach_track = cson_config.detach_track;
 			else this._detach_track = "detach.thr";
