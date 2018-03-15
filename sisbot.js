@@ -1495,7 +1495,7 @@ var sisbot = {
 	},
 	change_to_wifi: function(data, cb) {
 		var self = this;
-		logEvent(1, "Sisbot change to wifi", data);
+		logEvent(1, "Sisbot change to wifi", data.ssid);
 		if (data.ssid == undefined || data.ssid == "" || data.ssid == "false") {
 			if (cb) cb("No network name given", null);
 		} else if (data.psk && (data.psk == "" || data.psk.length >= 8)) {
