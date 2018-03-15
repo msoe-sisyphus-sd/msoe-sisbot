@@ -99,7 +99,7 @@ var app = function(given_config,ansible) {
 
 	socket_server.on('connection', function(socket) {
 		if (!sockets[socket.id]) {
-			logEvent(1, "Socket connect: "+socket.id);
+			// logEvent(1, "Socket connect: "+socket.id);
 			sockets[socket.id] = socket;
 
 			services['sisbot'].state({}, function(err, resp) {
@@ -109,7 +109,7 @@ var app = function(given_config,ansible) {
 		}
 
 		socket.on('disconnect', function(data) {
-			logEvent(1, "Socket disconnect: ", data);
+			// logEvent(1, "Socket disconnect: ", data);
 			delete sockets[data.id];
 		});
 	});
@@ -139,7 +139,7 @@ var app = function(given_config,ansible) {
 				else line += "\t"+obj;
 			});
 
-			console.log(line);
+			// console.log(line);
 			fs.appendFile(filename, line + '\n', function(err, resp) {
 			  if (err) console.log("Log err", err);
 			});
