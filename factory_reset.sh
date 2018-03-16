@@ -19,19 +19,19 @@ cd /home/pi/sisbot-server/sisbot/content/
 rm status.json
 
 #reset rc.local
-#sudo echo -e "#!/bin/sh -e\ncd /home/pi/sisbot-server/sisproxy && NODE_ENV=sisbot node server.js &\nexit 0\n" > /etc/rc.local
+#sudo echo -e "#!/bin/sh -e\ncd /home/pi/sisbot-server/sisproxy && git reset --hard && NODE_ENV=sisbot node server.js &\nexit 0\n" > /etc/rc.local
 
 # reset sisbot
 cd /home/pi/sisbot-server/sisbot
-git reset --hard fc4e8901bed70c906807b62c22b4b3a9c52b7d06
+git reset --hard
 
 # reset siscloud
 cd /home/pi/sisbot-server/siscloud
-git reset --hard 7aa47893759f44ff30f357937e23e27e0cb9df59
+git reset --hard
 
 # reset sisproxy
 cd /home/pi/sisbot-server/sisproxy
-git reset --hard 30197f736b75830ad57e15b898766cd4e41dc9ae
+git reset --hard
 
 # reset hostname
 cd /home/pi/sisbot-server/sisbot
