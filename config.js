@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.3.3', // 1.3.3 Fault message change for UI
+			version	: '1.3.4', // 1.3.4 Default attach/detach fix
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

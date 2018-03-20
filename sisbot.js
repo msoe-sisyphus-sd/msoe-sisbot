@@ -243,10 +243,10 @@ var sisbot = {
 			this._detach_first = true;
 
 			if (cson_config.attach_track) this._attach_track = cson_config.attach_track;
-			else this._attach_track = "attach.thr";
+			else this._attach_track = "attach";
 
 			if (cson_config.detach_track) this._detach_track = cson_config.detach_track;
-			else this._detach_track = "detach.thr";
+			else this._detach_track = "detach";
 		}
 		plotter.onServoThFault(function() {
 			self.current_state.set("reason_unavailable", "servo_th_fault");
