@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.3.5', // 1.3.5 rc.local git reset
+			version	: '1.2.1', // 1.2.1 Auto-recovery
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
