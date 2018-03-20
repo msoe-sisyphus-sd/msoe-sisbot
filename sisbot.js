@@ -613,6 +613,18 @@ var sisbot = {
 		if (cb) cb(null, return_objs);
 		// if (cb) cb(null, this.current_state.toJSON());
 	},
+	get_collection: function(data, cb) {
+		var self = this;
+		var return_objs = [];
+
+		this.collection.each(function(model) {
+			if (model.id != self.current_state.id) return_objs.push(model.toJSON());
+		});
+		return_objs.push(this.current_state.toJSON()); // sisbot state last
+		// logEvent(1, "Sisbot state", return_objs);
+
+		if (cb) cb(null, return_objs);
+	},
 	exists: function(data, cb) {
 		logEvent(1, "Sisbot Exists", data);
 		if (cb) cb(null, this.current_state.toJSON());
@@ -1398,10 +1410,11 @@ var sisbot = {
 					self.current_state.set("is_hotspot", "true");
 				} else {
 					self.current_state.set("is_hotspot", "false");
-
-					if (self.current_state.get("share_log_files") == "true") self._setupAnsible();
 				}
 			}
+
+			// make sure connected to remote
+			if (returnValue == "true" && self.current_state.get("share_log_files") == "true") self._setupAnsible();
 
 			// update values
 			self.current_state.set({
@@ -1512,7 +1525,8 @@ var sisbot = {
 					wifi_network: data.ssid,
 					wifi_password: data.psk,
 					is_hotspot: "false",
-					failed_to_connect_to_wifi: "false"
+					failed_to_connect_to_wifi: "false",
+					is_internet_connected: "true"
 				});
 
 				// logEvent(1, "New State:", self.current_state.toJSON());

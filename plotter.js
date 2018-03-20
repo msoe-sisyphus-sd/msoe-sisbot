@@ -394,6 +394,8 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg,
       RthLOsteps=thLOsteps;    RrLOsteps=rLOsteps;
       ReLOth=eLOth;  ReLOr=eLOr;  RfracSeg = fracSeg;
 
+	  sp.write('EM,0,0\r'); // turn off motors
+
       return; //break the nextSeg chain = being paused
     }
     else ASindex--; //decel on the way to being paused
