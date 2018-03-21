@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.3.6', // Beta numbering
+			version	: '1.3.7', // Socket connect revert to send just state
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

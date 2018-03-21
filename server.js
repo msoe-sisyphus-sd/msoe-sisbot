@@ -102,7 +102,7 @@ var app = function(given_config,ansible) {
 			// logEvent(1, "Socket connect: "+socket.id);
 			sockets[socket.id] = socket;
 
-			services['sisbot'].get_collection({}, function(err, resp) {
+			services['sisbot'].state({}, function(err, resp) {
 				if (err) return;
 				socket.emit('set', resp);
 			});
