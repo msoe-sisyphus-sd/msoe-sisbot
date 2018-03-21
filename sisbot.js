@@ -1402,16 +1402,16 @@ var sisbot = {
 			// logEvent(1, 'stdout:', stdout);
 			// logEvent(1, 'stderr:', stderr);
 
-			logEvent(1, "Internet Connected Check", returnValue);
+			logEvent(1, "Internet Connected Check", returnValue, self.current_state.get("local_ip"));
 
-			if (self.current_state.get("is_internet_connected") != returnValue) {
+			// if (self.current_state.get("is_internet_connected") != returnValue) {
 				// change hotspot status
-				if (self.current_state.get("local_ip") == "192.168.42.1") {
-					self.current_state.set("is_hotspot", "true");
-				} else {
-					self.current_state.set("is_hotspot", "false");
-				}
-			}
+				// if (self.current_state.get("local_ip") == "192.168.42.1") {
+				// 	self.current_state.set("is_hotspot", "true");
+				// } else {
+				// 	self.current_state.set("is_hotspot", "false");
+				// }
+			// }
 
 			// make sure connected to remote
 			if (returnValue == "true" && self.current_state.get("share_log_files") == "true") self._setupAnsible();
@@ -1521,7 +1521,6 @@ var sisbot = {
 			if (/^([^\r\n"]{8,64})$/g.test(data.psk)) {
 				self.current_state.set({
 					is_available: "false",
-					reason_unavailable: "connect_to_wifi",
 					wifi_network: data.ssid,
 					wifi_password: data.psk,
 					is_hotspot: "false",
@@ -1538,7 +1537,6 @@ var sisbot = {
 				self.socket_update("disconnect");
 
 				logEvent(1, "Connect To Wifi", data.ssid);
-                append_log('Connect To Wifi: ' + data.ssid);
 
                 setTimeout(function () {
                     exec('sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "'+data.ssid+'" "'+data.psk+'"', (error, stdout, stderr) => {
@@ -1546,7 +1544,7 @@ var sisbot = {
     				});
                 }, 100);
 
-				self._query_internet(5000); // check again in 5 seconds
+				self._query_internet(8000); // check again in 8 seconds
 			} else if (cb) {
 				logEvent(2, "Invalid Password", data.psk);
 				cb("Invalid password", null);
