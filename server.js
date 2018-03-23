@@ -148,7 +148,7 @@ var app = function(given_config,ansible) {
 
 	services.sisbot	= sisbot_obj.init(config, ansible, socket_update);
 
-	logEvent(1, "Sisbot Server created");
+	logEvent(1, "Sisbot Server created", config.version);
 }
 
 module.exports = app;

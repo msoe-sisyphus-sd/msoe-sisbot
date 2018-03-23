@@ -1706,14 +1706,9 @@ var sisbot = {
 		if (change_hostname) this.set_hostname(this._hostname_queue, null);
 	},
 	/* ------------- Sleep Timer ---------------- */
-	test_time: function(data, cb) {
-		logEvent(1, "Test Time:", data);
-		var time = moment(data.time);
-		if (cb) cb(null, { time: moment().format(), hour: time.hour(), minute: time.minute() });
-	},
 	set_sleep_time: function(data, cb) {
 		var self = this;
-		logEvent(1, "Set Sleep Time:", data.sleep_time, data.wake_time, this.current_state.get('is_sleeping'));
+		logEvent(1, "Set Sleep Time:", data.sleep_time, data.wake_time, data.timezone_offset, this.current_state.get('is_sleeping'));
 
 		// cancel old timers
 		if (this.sleep_timer != null) {
