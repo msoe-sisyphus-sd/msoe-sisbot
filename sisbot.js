@@ -277,7 +277,7 @@ var sisbot = {
 						self.current_state.set('is_waiting_between_tracks', 'true');
 						// self._play_next = true;
 					} else {
-						var nextTrack = playlist.get_next_track({ start_rho: self.current_state.get('_end_rho') });
+						var nextTrack = playlist.get_next_track({ start_rho: self.plotter.getRhoPosition() });
 						self.current_state.set('active_track', nextTrack);
 						if (nextTrack.id != 'false' && nextTrack.name != undefined) {
 							if (nextTrack.name.toLowerCase().indexOf('attach') == 0 || nextTrack.name.toLowerCase().indexOf('detach') == 0) self._home_next = true;
@@ -332,7 +332,7 @@ var sisbot = {
 				}
 
 				self._home_next = false; // clear home next
-				self.current_state.set({is_homed: "true", _end_rho: 0}); // reset
+				self.current_state.set({is_homed: "true", _end_rho: self.plotter.getRhoPosition()}); // reset
 
 				if (newState == 'waiting' && self._autoplay && self.current_state.get('installing_updates') == "false") {
 					// autoplay after first home
@@ -347,7 +347,7 @@ var sisbot = {
 					} else if (self.current_state.get('active_track').id != "false") {
 						var track = self.current_state.get('active_track');
 						// if (self.current_state.get("active_playlist_id") == "false") {
-						if (track.firstR != undefined && track.firstR != 0) self._move_to_rho = track.firstR;
+						if (track.firstR != undefined && track.firstR != self.plotter.getRhoPosition()) self._move_to_rho = track.firstR;
 						// }
 						// move to start rho
 						if (self._move_to_rho != 0) {
@@ -1216,7 +1216,7 @@ var sisbot = {
 	},
 	_play_track: function(data, cb) {
 		var self = this;
-		logEvent(1, "Sisbot Play Track", data.name, "r:"+data.firstR+data.lastR, "reversed:", data.reversed, "Table R:", self.current_state.get('_end_rho'));
+		logEvent(1, "Sisbot Play Track", data.name, "r:"+data.firstR+data.lastR, "reversed:", data.reversed, "Table R:", self.plotter.getRhoPosition());
 		if (data == undefined || data == null || data == "false") {
 			logEvent(2, "No Track given");
 			if (cb) cb("No track", null);
@@ -1231,7 +1231,7 @@ var sisbot = {
 				var track = this.collection.get(data.id);
 				if (track != undefined) {
 				    if (this.current_state.get("is_homed") == "true") {
-						_.extend(data, {start:self.current_state.get('_end_rho')});
+						_.extend(data, {start:self.plotter.getRhoPosition()});
 						var track_obj = track.get_plotter_obj(data);
 						if (track_obj != "false") {
 							this._paused = false;
@@ -1261,6 +1261,7 @@ var sisbot = {
 	},
 	play_next_track: function(data, cb) {
 		logEvent(1, "Sisbot Play Next Track", data);
+		var self = this;
 		if (this.current_state.get('active_playlist_id') == "false") {
 			logEvent(2, "No Playlist");
 			if (cb) cb('No playlist', null);
@@ -1275,7 +1276,7 @@ var sisbot = {
 		if (playlist != undefined) {
 			this._autoplay = true; // make it play, even if a home is needed after homing
 			if (this.current_state.get("is_homed") == "true") {
-				var track = playlist.get_next_track({ start_rho: this.current_state.get('_end_rho') });
+				var track = playlist.get_next_track({ start_rho: self.plotter.getRhoPosition() });
 				if (track != "false")	{
 					this._play_track(track, cb);
 				}
