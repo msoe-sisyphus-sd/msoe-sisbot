@@ -598,17 +598,15 @@ var sisbot = {
 		return true;
 	},
 	connect: function(data, cb) {
-		logEvent(1, "Sisbot Connect", data);
+		// logEvent(1, "Sisbot Connect", data);
 		if (cb) cb(null, this.collection.toJSON());
 	},
 	state: function(data, cb) {
-		logEvent(1, "Sisbot state");
+		// logEvent(1, "Sisbot state");
 		var return_objs = [this.current_state.toJSON()];
 
 		var playlist_id = this.current_state.get('active_playlist_id');
 		if (playlist_id != 'false') return_objs.push(this.collection.get(playlist_id).toJSON());
-
-		// logEvent(1, "Sisbot state", return_objs);
 
 		if (cb) cb(null, return_objs);
 		// if (cb) cb(null, this.current_state.toJSON());
@@ -626,7 +624,7 @@ var sisbot = {
 		if (cb) cb(null, return_objs);
 	},
 	exists: function(data, cb) {
-		logEvent(1, "Sisbot Exists", data);
+		// logEvent(1, "Sisbot Exists", data);
 		if (cb) cb(null, this.current_state.toJSON());
 	},
 	set_default_playlist: function(data, cb) {
@@ -1136,6 +1134,9 @@ var sisbot = {
 			if (cb) return cb('already playing', null);
 			else return;
 		}
+
+		// make sure track firstR/lastR are not -1
+		if (track.get('firstR') < 0 || track.get('lastR') < 0) track.get_verts();
 
 		// update current_state
 		this.current_state.set({
