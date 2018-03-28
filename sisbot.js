@@ -1059,7 +1059,7 @@ var sisbot = {
 			if (current_playlist != undefined && current_playlist.id == data.id && current_playlist.get('is_shuffle') == data.is_shuffle) {
 				// compare active_track_index to given index
 				if (current_playlist.get('active_track_index') >= data.active_track_index) {
-					// console.log("Grab track from next_tracks", current_playlist.get('active_track_index'));
+					// logEvent(1, "Grab track from next_tracks", current_playlist.get('active_track_index'));
 					var sorted_tracks = current_playlist.get('next_tracks');
 
 					// reset randomized tracks
@@ -1977,7 +1977,7 @@ var logEvent = function() {
 		var filename = sisbot.config.folders.logs + '/' + moment().format('YYYYMMDD') + '_sisbot.log';
 		// var filename = '/var/log/sisyphus/' + moment().format('YYYYMMDD') + '_sisbot.log';
 
-		var line = Date.now();
+		var line = moment().format('YYYYMMDD HH:mm:ss Z');
 		_.each(arguments, function(obj, index) {
 			if (_.isObject(obj)) line += "\t"+JSON.stringify(obj);
 			else line += "\t"+obj;
