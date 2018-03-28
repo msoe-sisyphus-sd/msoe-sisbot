@@ -954,32 +954,40 @@ var sisbot = {
 		logEvent(1, "Thumbnail generate", data);
         // @id
         var self = this;
-        var track_dir = this.config.base_dir + '/' + this.config.folders.sisbot + '/' + this.config.folders.content + '/' + this.config.folders.tracks;
+		var track = this.collection.get(data.id);
 
-        fs.readFile(track_dir + '/' + data.id + '.thr', 'utf-8', function(err, raw_coors) {
+		var coordinates = track.get_verts();
+
+		// reduce coordinates if too long
+		logEvent(1, "Given Points:", coordinates.length, "Max:", self.config.max_thumbnail_points);
+		if (coordinates.length > self.config.max_thumbnail_points) {
+			var total_count = coordinates.length;
+			var remove_every = Math.ceil(1/(self.config.max_thumbnail_points/coordinates.length));
+			for (var i=total_count-2-remove_every; i > 1; i -= remove_every) {
+				coordinates.splice(i+1, remove_every-1);
+			}
+		}
+		logEvent(1, "Total Points: ", coordinates.length);
+
+		data.raw_coors = '';
+		_.each(coordinates, function(obj) {
+			data.raw_coors += obj.th+' '+obj.r+'\n';
+		});
+
+		self._thumbnails_generate(data, function(err, resp) {
             if (err) {
-                if (cb) return cb('Could not generate thumbnails. No track file.', null);
-                else return;
-            }
+				if (cb) cb(cb_err, null);
+			}
 
-            var cb_err = null;
+			if (cb) cb(null, { id: data.id, dimensions: data.dimensions }); // don't send back verts
 
-            data.raw_coors = raw_coors;
-            self._thumbnails_generate(data, function(err, resp) {
-                if (err) {
-					if (cb) cb(cb_err, null);
-				}
-
-				if (cb) cb(null, { id: data.id, dimensions: data.dimensions }); // don't send back verts
-
-				self._thumbnail_queue.shift(); // remove first in queue
-				if (self._thumbnail_queue.length > 0) {
-					// generate next thumbnail in _thumbnail_queue
-					self.thumbnail_generate(self._thumbnail_queue[0], null);
-				} else {
-					logEvent(1, "All thumbnails generated");
-				}
-            });
+			self._thumbnail_queue.shift(); // remove first in queue
+			if (self._thumbnail_queue.length > 0) {
+				// generate next thumbnail in _thumbnail_queue
+				self.thumbnail_generate(self._thumbnail_queue[0], null);
+			} else {
+				logEvent(1, "All thumbnails generated");
+			}
         });
     },
     _thumbnails_generate: function(data, cb) {
@@ -1027,6 +1035,7 @@ var sisbot = {
         logEvent(1, '#### MAKE WEBSHOT', thumbs_file, base_url);
 
         webshot(html, thumbs_file, opts, function(err) {
+	        logEvent(1, '#### WEBSHOT FINISHED', thumbs_file, err);
             if (cb) cb(err, null);
         });
     },
