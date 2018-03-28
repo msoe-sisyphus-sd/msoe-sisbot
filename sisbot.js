@@ -251,12 +251,14 @@ var sisbot = {
 		plotter.onServoThFault(function() {
 			self.current_state.set("reason_unavailable", "servo_th_fault");
 			self.pause(null, null);
-			self.socket_update(self.current_state.toJSON()); // notify connected UI
+			self.socket_update(self.current_state.toJSON()); // notify all connected UI
+			clearTimeout(this._internet_check); // stop internet checks
 		});
 		plotter.onServoRhoFault(function() {
 			self.current_state.set("reason_unavailable", "servo_rho_fault");
 			self.pause(null, null);
-			self.socket_update(self.current_state.toJSON()); // notify connected UI
+			self.socket_update(self.current_state.toJSON()); // notify all connected UI
+			clearTimeout(this._internet_check); // stop internet checks
 		});
 		plotter.onFinishTrack(function() {
 			logEvent(1, "Track Finished");
@@ -1506,11 +1508,14 @@ var sisbot = {
             			self._changing_to_wifi = false;
 						self.current_state.set({
 							is_available: "true",
-							reason_unavailable: "false",
 							failed_to_connect_to_wifi: "false",
 							wifi_forget: "false",
 						 	wifi_error: "false"
 						});
+						// leave current state alone if fault
+						if (self.current_state.get('reason_unavailable').indexOf('_fault') < 0) {
+							self.current_state.set("reason_unavailable", "false");
+						}
 						self._internet_retries = 0; // successful, reset
 
 						self.save(null, null);
