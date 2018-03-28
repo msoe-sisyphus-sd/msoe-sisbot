@@ -598,17 +598,15 @@ var sisbot = {
 		return true;
 	},
 	connect: function(data, cb) {
-		logEvent(1, "Sisbot Connect", data);
+		// logEvent(1, "Sisbot Connect", data);
 		if (cb) cb(null, this.collection.toJSON());
 	},
 	state: function(data, cb) {
-		logEvent(1, "Sisbot state");
+		// logEvent(1, "Sisbot state");
 		var return_objs = [this.current_state.toJSON()];
 
 		var playlist_id = this.current_state.get('active_playlist_id');
 		if (playlist_id != 'false') return_objs.push(this.collection.get(playlist_id).toJSON());
-
-		// logEvent(1, "Sisbot state", return_objs);
 
 		if (cb) cb(null, return_objs);
 		// if (cb) cb(null, this.current_state.toJSON());
@@ -626,7 +624,7 @@ var sisbot = {
 		if (cb) cb(null, return_objs);
 	},
 	exists: function(data, cb) {
-		logEvent(1, "Sisbot Exists", data);
+		// logEvent(1, "Sisbot Exists", data);
 		if (cb) cb(null, this.current_state.toJSON());
 	},
 	set_default_playlist: function(data, cb) {
@@ -872,7 +870,7 @@ var sisbot = {
 					self.socket_update([track.toJSON(), self.current_state.toJSON()]);
 				});
 			} else {
-				if (cb) cb(null, self.current_state.toJSON()); // send back current_state without track
+				if (cb) cb(null, [track.toJSON(), self.current_state.toJSON()]); // send back current_state without track
 			}
 		});
     },
@@ -954,32 +952,40 @@ var sisbot = {
 		logEvent(1, "Thumbnail generate", data);
         // @id
         var self = this;
-        var track_dir = this.config.base_dir + '/' + this.config.folders.sisbot + '/' + this.config.folders.content + '/' + this.config.folders.tracks;
+		var track = this.collection.get(data.id);
 
-        fs.readFile(track_dir + '/' + data.id + '.thr', 'utf-8', function(err, raw_coors) {
+		var coordinates = track.get_verts();
+
+		// reduce coordinates if too long
+		logEvent(1, "Given Points:", coordinates.length, "Max:", self.config.max_thumbnail_points);
+		if (coordinates.length > self.config.max_thumbnail_points) {
+			var total_count = coordinates.length;
+			var remove_every = Math.ceil(1/(self.config.max_thumbnail_points/coordinates.length));
+			for (var i=total_count-2-remove_every; i > 1; i -= remove_every) {
+				coordinates.splice(i+1, remove_every-1);
+			}
+		}
+		logEvent(1, "Total Points: ", coordinates.length);
+
+		data.raw_coors = '';
+		_.each(coordinates, function(obj) {
+			data.raw_coors += obj.th+' '+obj.r+'\n';
+		});
+
+		self._thumbnails_generate(data, function(err, resp) {
             if (err) {
-                if (cb) return cb('Could not generate thumbnails. No track file.', null);
-                else return;
-            }
+				if (cb) cb(cb_err, null);
+			}
 
-            var cb_err = null;
+			if (cb) cb(null, { id: data.id, dimensions: data.dimensions }); // don't send back verts
 
-            data.raw_coors = raw_coors;
-            self._thumbnails_generate(data, function(err, resp) {
-                if (err) {
-					if (cb) cb(cb_err, null);
-				}
-
-				if (cb) cb(null, { id: data.id, dimensions: data.dimensions }); // don't send back verts
-
-				self._thumbnail_queue.shift(); // remove first in queue
-				if (self._thumbnail_queue.length > 0) {
-					// generate next thumbnail in _thumbnail_queue
-					self.thumbnail_generate(self._thumbnail_queue[0], null);
-				} else {
-					logEvent(1, "All thumbnails generated");
-				}
-            });
+			self._thumbnail_queue.shift(); // remove first in queue
+			if (self._thumbnail_queue.length > 0) {
+				// generate next thumbnail in _thumbnail_queue
+				self.thumbnail_generate(self._thumbnail_queue[0], null);
+			} else {
+				logEvent(1, "All thumbnails generated");
+			}
         });
     },
     _thumbnails_generate: function(data, cb) {
@@ -1027,6 +1033,7 @@ var sisbot = {
         logEvent(1, '#### MAKE WEBSHOT', thumbs_file, base_url);
 
         webshot(html, thumbs_file, opts, function(err) {
+	        logEvent(1, '#### WEBSHOT FINISHED', thumbs_file, err);
             if (cb) cb(err, null);
         });
     },
@@ -1127,6 +1134,9 @@ var sisbot = {
 			if (cb) return cb('already playing', null);
 			else return;
 		}
+
+		// make sure track firstR/lastR are not -1
+		if (track.get('firstR') < 0 || track.get('lastR') < 0) track.get_verts();
 
 		// update current_state
 		this.current_state.set({
