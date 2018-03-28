@@ -870,7 +870,7 @@ var sisbot = {
 					self.socket_update([track.toJSON(), self.current_state.toJSON()]);
 				});
 			} else {
-				if (cb) cb(null, self.current_state.toJSON()); // send back current_state without track
+				if (cb) cb(null, [track.toJSON(), self.current_state.toJSON()]); // send back current_state without track
 			}
 		});
     },
