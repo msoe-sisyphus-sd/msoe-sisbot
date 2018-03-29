@@ -666,7 +666,7 @@ var sisbot = {
 	},
 	save: function(data, cb) {
 		var self = this;
-		logEvent(1, "Sisbot Save", data);
+		// logEvent(1, "Sisbot Save", data);
 		if (!this._saving) {
 			this._saving = true;
 
@@ -948,13 +948,39 @@ var sisbot = {
 		if (all_tracks.length > 0)
 			self.thumbnail_generate({id: all_tracks.pop()}, gen_next_track);
 	},
+	thumbnail_preview_generate: function(data, cb) {
+		logEvent(1, "Thumbnail preview", data.name);
+
+        var self = this;
+
+		// add to front of queue
+		self._thumbnail_queue.unshift(data);
+
+		if (self._thumbnail_queue.length == 1) {
+			self.thumbnail_generate(self._thumbnail_queue[0], function(err, resp) {
+				// send back current_state and the track
+				if (cb) cb(null, [track.toJSON(), self.current_state.toJSON()]);
+
+				// tell all connected devices
+				self.socket_update([track.toJSON(), self.current_state.toJSON()]);
+			});
+		} else {
+			if (cb) cb(null, null);
+		}
+	},
     thumbnail_generate: function(data, cb) {
 		logEvent(1, "Thumbnail generate", data);
         // @id
         var self = this;
-		var track = this.collection.get(data.id);
+		var coordinates = [];
 
-		var coordinates = track.get_verts();
+		if (data.id != 'preview') {
+			var track = this.collection.get(data.id);
+			coordinates = track.get_verts();
+		} else {
+			var temp_track = new Track(data);
+			coordinates = temp_track.get_verts_from_data(data.raw_coors);
+		}
 
 		// reduce coordinates if too long
 		logEvent(1, "Given Points:", coordinates.length, "Max:", self.config.max_thumbnail_points);
