@@ -793,7 +793,7 @@ var logEvent = function() {
 	if (config.folders.logs) {
 		var filename = config.folders.logs + '/' + moment().format('YYYYMMDD') + '_plotter.log';
 
-		var line = Date.now();
+		var line = moment().format('YYYYMMDD HH:mm:ss Z');
 		_.each(arguments, function(obj, index) {
 			if (_.isObject(obj)) line += "\t"+JSON.stringify(obj);
 			else line += "\t"+obj;

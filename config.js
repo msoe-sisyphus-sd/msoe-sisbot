@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.3.8', // Track upload fix, image coordinates reduced.
+			version	: '1.3.10', // Onboarding callback change
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

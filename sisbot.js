@@ -666,7 +666,7 @@ var sisbot = {
 	},
 	save: function(data, cb) {
 		var self = this;
-		logEvent(1, "Sisbot Save", data);
+		// logEvent(1, "Sisbot Save", data);
 		if (!this._saving) {
 			this._saving = true;
 
@@ -948,13 +948,36 @@ var sisbot = {
 		if (all_tracks.length > 0)
 			self.thumbnail_generate({id: all_tracks.pop()}, gen_next_track);
 	},
+	thumbnail_preview_generate: function(data, cb) {
+		logEvent(1, "Thumbnail preview", data.name);
+
+        var self = this;
+
+		// add to front of queue
+		self._thumbnail_queue.unshift(data);
+
+		if (self._thumbnail_queue.length == 1) {
+			self.thumbnail_generate(self._thumbnail_queue[0], function(err, resp) {
+				// send back current_state and the track
+				if (cb) cb(null, { 'id':data.id });
+			});
+		} else {
+			if (cb) cb(null, null);
+		}
+	},
     thumbnail_generate: function(data, cb) {
 		logEvent(1, "Thumbnail generate", data);
         // @id
         var self = this;
-		var track = this.collection.get(data.id);
+		var coordinates = [];
 
-		var coordinates = track.get_verts();
+		if (data.id != 'preview') {
+			var track = this.collection.get(data.id);
+			coordinates = track.get_verts();
+		} else {
+			var temp_track = new Track(data);
+			coordinates = temp_track.get_verts_from_data(data.raw_coors);
+		}
 
 		// reduce coordinates if too long
 		logEvent(1, "Given Points:", coordinates.length, "Max:", self.config.max_thumbnail_points);
@@ -1059,7 +1082,7 @@ var sisbot = {
 			if (current_playlist != undefined && current_playlist.id == data.id && current_playlist.get('is_shuffle') == data.is_shuffle) {
 				// compare active_track_index to given index
 				if (current_playlist.get('active_track_index') >= data.active_track_index) {
-					// console.log("Grab track from next_tracks", current_playlist.get('active_track_index'));
+					// logEvent(1, "Grab track from next_tracks", current_playlist.get('active_track_index'));
 					var sorted_tracks = current_playlist.get('next_tracks');
 
 					// reset randomized tracks
@@ -1711,9 +1734,8 @@ var sisbot = {
 		// save given data
 		this.current_state.set(data);
 
-		if (cb) cb(null, this.current_state.toJSON());
-
-		if (change_hostname) this.set_hostname(this._hostname_queue, null);
+		if (change_hostname) this.set_hostname(this._hostname_queue, cb);
+		else if (cb) cb(null, this.current_state.toJSON());
 	},
 	/* ------------- Sleep Timer ---------------- */
 	set_sleep_time: function(data, cb) {
@@ -1972,7 +1994,7 @@ var logEvent = function() {
 		var filename = sisbot.config.folders.logs + '/' + moment().format('YYYYMMDD') + '_sisbot.log';
 		// var filename = '/var/log/sisyphus/' + moment().format('YYYYMMDD') + '_sisbot.log';
 
-		var line = Date.now();
+		var line = moment().format('YYYYMMDD HH:mm:ss Z');
 		_.each(arguments, function(obj, index) {
 			if (_.isObject(obj)) line += "\t"+JSON.stringify(obj);
 			else line += "\t"+obj;
