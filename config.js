@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.3.9', // Track preview image
+			version	: '1.3.10', // Onboarding callback change
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

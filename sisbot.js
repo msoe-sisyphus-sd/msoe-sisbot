@@ -959,10 +959,7 @@ var sisbot = {
 		if (self._thumbnail_queue.length == 1) {
 			self.thumbnail_generate(self._thumbnail_queue[0], function(err, resp) {
 				// send back current_state and the track
-				if (cb) cb(null, [track.toJSON(), self.current_state.toJSON()]);
-
-				// tell all connected devices
-				self.socket_update([track.toJSON(), self.current_state.toJSON()]);
+				if (cb) cb(null, { 'id':data.id });
 			});
 		} else {
 			if (cb) cb(null, null);
@@ -1737,9 +1734,8 @@ var sisbot = {
 		// save given data
 		this.current_state.set(data);
 
-		if (cb) cb(null, this.current_state.toJSON());
-
-		if (change_hostname) this.set_hostname(this._hostname_queue, null);
+		if (change_hostname) this.set_hostname(this._hostname_queue, cb);
+		else if (cb) cb(null, this.current_state.toJSON());
 	},
 	/* ------------- Sleep Timer ---------------- */
 	test_time: function(data, cb) {
