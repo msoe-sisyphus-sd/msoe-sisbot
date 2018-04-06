@@ -954,7 +954,11 @@ var sisbot = {
         var self = this;
 
 		// add to front of queue
-		self._thumbnail_queue.unshift(data);
+		if (self._thumbnail_queue.length == 0) self._thumbnail_queue.push(data);
+		else {
+			if (cb) data.cb = cb;
+			self._thumbnail_queue.splice(1, 0, data);
+		}
 
 		if (self._thumbnail_queue.length == 1) {
 			self.thumbnail_generate(self._thumbnail_queue[0], function(err, resp) {
@@ -962,11 +966,12 @@ var sisbot = {
 				if (cb) cb(null, { 'id':data.id });
 			});
 		} else {
-			if (cb) cb(null, null);
+			console.log("Thumbnails queue", self._thumbnail_queue.length);
+			// if (cb) cb(null, null);
 		}
 	},
     thumbnail_generate: function(data, cb) {
-		logEvent(1, "Thumbnail generate", data);
+		logEvent(1, "Thumbnail generate", data.id);
         // @id
         var self = this;
 		var coordinates = [];
@@ -1004,6 +1009,7 @@ var sisbot = {
 
 			self._thumbnail_queue.shift(); // remove first in queue
 			if (self._thumbnail_queue.length > 0) {
+				logEvent(1, "Generate thumbnails left", self._thumbnail_queue.length);
 				// generate next thumbnail in _thumbnail_queue
 				self.thumbnail_generate(self._thumbnail_queue[0], null);
 			} else {
@@ -1057,6 +1063,7 @@ var sisbot = {
 
         webshot(html, thumbs_file, opts, function(err) {
 	        logEvent(1, '#### WEBSHOT FINISHED', thumbs_file, err);
+			if (data.cb) data.cb(err, { 'id':data.id });
             if (cb) cb(err, null);
         });
     },
