@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.2.1', // 1.2.1 Auto-recovery
+			version	: '1.2.2', // 1.2.2 Night mode defaults
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
