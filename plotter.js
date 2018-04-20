@@ -395,6 +395,8 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg,
       RthLOsteps=thLOsteps;    RrLOsteps=rLOsteps;
       ReLOth=eLOth;  ReLOr=eLOr;  RfracSeg = fracSeg;
 
+	  sp.write('EM,0,0\r'); // turn off motors
+
       return; //break the nextSeg chain = being paused
     }
     else ASindex--; //decel on the way to being paused
@@ -792,7 +794,7 @@ var logEvent = function() {
 	if (config.folders.logs) {
 		var filename = config.folders.logs + '/' + moment().format('YYYYMMDD') + '_plotter.log';
 
-		var line = Date.now();
+		var line = moment().format('YYYYMMDD HH:mm:ss Z');
 		_.each(arguments, function(obj, index) {
 			if (_.isObject(obj)) line += "\t"+JSON.stringify(obj);
 			else line += "\t"+obj;

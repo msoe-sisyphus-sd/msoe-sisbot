@@ -607,23 +607,33 @@ var sisbot = {
 		return true;
 	},
 	connect: function(data, cb) {
-		logEvent(1, "Sisbot Connect", data);
+		// logEvent(1, "Sisbot Connect", data);
 		if (cb) cb(null, this.collection.toJSON());
 	},
 	state: function(data, cb) {
-		logEvent(1, "Sisbot state");
+		// logEvent(1, "Sisbot state");
 		var return_objs = [this.current_state.toJSON()];
 
 		var playlist_id = this.current_state.get('active_playlist_id');
 		if (playlist_id != 'false') return_objs.push(this.collection.get(playlist_id).toJSON());
 
-		// logEvent(1, "Sisbot state", return_objs);
-
 		if (cb) cb(null, return_objs);
 		// if (cb) cb(null, this.current_state.toJSON());
 	},
+	get_collection: function(data, cb) {
+		var self = this;
+		var return_objs = [];
+
+		this.collection.each(function(model) {
+			if (model.id != self.current_state.id) return_objs.push(model.toJSON());
+		});
+		return_objs.push(this.current_state.toJSON()); // sisbot state last
+		// logEvent(1, "Sisbot state", return_objs);
+
+		if (cb) cb(null, return_objs);
+	},
 	exists: function(data, cb) {
-		logEvent(1, "Sisbot Exists", data);
+		// logEvent(1, "Sisbot Exists", data);
 		if (cb) cb(null, this.current_state.toJSON());
 	},
 	set_default_playlist: function(data, cb) {
@@ -665,7 +675,7 @@ var sisbot = {
 	},
 	save: function(data, cb) {
 		var self = this;
-		logEvent(1, "Sisbot Save", data);
+		// logEvent(1, "Sisbot Save", data);
 		if (!this._saving) {
 			this._saving = true;
 
@@ -938,7 +948,7 @@ var sisbot = {
 					self.socket_update([track.toJSON(), self.current_state.toJSON()]);
 				});
 			} else {
-				if (cb) cb(null, self.current_state.toJSON()); // send back current_state without track
+				if (cb) cb(null, [track.toJSON(), self.current_state.toJSON()]); // send back current_state without track
 			}
 		});
     },
@@ -1016,36 +1026,73 @@ var sisbot = {
 		if (all_tracks.length > 0)
 			self.thumbnail_generate({id: all_tracks.pop()}, gen_next_track);
 	},
+	thumbnail_preview_generate: function(data, cb) {
+		logEvent(1, "Thumbnail preview", data.name);
+
+        var self = this;
+
+		// add to front of queue
+		if (self._thumbnail_queue.length == 0) self._thumbnail_queue.push(data);
+		else {
+			if (cb) data.cb = cb;
+			self._thumbnail_queue.splice(1, 0, data);
+		}
+
+		if (self._thumbnail_queue.length == 1) {
+			self.thumbnail_generate(self._thumbnail_queue[0], function(err, resp) {
+				// send back current_state and the track
+				if (cb) cb(null, { 'id':data.id });
+			});
+		} else {
+			console.log("Thumbnails queue", self._thumbnail_queue.length);
+			// if (cb) cb(null, null);
+		}
+	},
     thumbnail_generate: function(data, cb) {
-		logEvent(1, "Thumbnail generate", data);
+		logEvent(1, "Thumbnail generate", data.id);
         // @id
         var self = this;
-        var track_dir = this.config.base_dir + '/' + this.config.folders.sisbot + '/' + this.config.folders.content + '/' + this.config.folders.tracks;
+		var coordinates = [];
 
-        fs.readFile(track_dir + '/' + data.id + '.thr', 'utf-8', function(err, raw_coors) {
+		if (data.id != 'preview') {
+			var track = this.collection.get(data.id);
+			coordinates = track.get_verts();
+		} else {
+			var temp_track = new Track(data);
+			coordinates = temp_track.get_verts_from_data(data.raw_coors);
+		}
+
+		// reduce coordinates if too long
+		logEvent(1, "Given Points:", coordinates.length, "Max:", self.config.max_thumbnail_points);
+		if (coordinates.length > self.config.max_thumbnail_points) {
+			var total_count = coordinates.length;
+			var remove_every = Math.ceil(1/(self.config.max_thumbnail_points/coordinates.length));
+			for (var i=total_count-2-remove_every; i > 1; i -= remove_every) {
+				coordinates.splice(i+1, remove_every-1);
+			}
+		}
+		logEvent(1, "Total Points: ", coordinates.length);
+
+		data.raw_coors = '';
+		_.each(coordinates, function(obj) {
+			data.raw_coors += obj.th+' '+obj.r+'\n';
+		});
+
+		self._thumbnails_generate(data, function(err, resp) {
             if (err) {
-                if (cb) return cb('Could not generate thumbnails. No track file.', null);
-                else return;
-            }
+				if (cb) cb(cb_err, null);
+			}
 
-            var cb_err = null;
+			if (cb) cb(null, { id: data.id, dimensions: data.dimensions }); // don't send back verts
 
-            data.raw_coors = raw_coors;
-            self._thumbnails_generate(data, function(err, resp) {
-                if (err) {
-					if (cb) cb(cb_err, null);
-				}
-
-				if (cb) cb(null, { id: data.id, dimensions: data.dimensions }); // don't send back verts
-
-				self._thumbnail_queue.shift(); // remove first in queue
-				if (self._thumbnail_queue.length > 0) {
-					// generate next thumbnail in _thumbnail_queue
-					self.thumbnail_generate(self._thumbnail_queue[0], null);
-				} else {
-					logEvent(1, "All thumbnails generated");
-				}
-            });
+			self._thumbnail_queue.shift(); // remove first in queue
+			if (self._thumbnail_queue.length > 0) {
+				logEvent(1, "Generate thumbnails left", self._thumbnail_queue.length);
+				// generate next thumbnail in _thumbnail_queue
+				self.thumbnail_generate(self._thumbnail_queue[0], null);
+			} else {
+				logEvent(1, "All thumbnails generated");
+			}
         });
     },
     _thumbnails_generate: function(data, cb) {
@@ -1093,6 +1140,8 @@ var sisbot = {
         logEvent(1, '#### MAKE WEBSHOT', thumbs_file, base_url);
 
         webshot(html, thumbs_file, opts, function(err) {
+	        logEvent(1, '#### WEBSHOT FINISHED', thumbs_file, err);
+			if (data.cb) data.cb(err, { 'id':data.id });
             if (cb) cb(err, null);
         });
     },
@@ -1118,7 +1167,7 @@ var sisbot = {
 			if (current_playlist != undefined && current_playlist.id == data.id && current_playlist.get('is_shuffle') == data.is_shuffle) {
 				// compare active_track_index to given index
 				if (current_playlist.get('active_track_index') >= data.active_track_index) {
-					// console.log("Grab track from next_tracks", current_playlist.get('active_track_index'));
+					// logEvent(1, "Grab track from next_tracks", current_playlist.get('active_track_index'));
 					var sorted_tracks = current_playlist.get('next_tracks');
 
 					// reset randomized tracks
@@ -1193,6 +1242,9 @@ var sisbot = {
 			if (cb) return cb('already playing', null);
 			else return;
 		}
+
+		// make sure track firstR/lastR are not -1
+		if (track.get('firstR') < 0 || track.get('lastR') < 0) track.get_verts();
 
 		// update current_state
 		this.current_state.set({
@@ -1469,18 +1521,19 @@ var sisbot = {
 			// logEvent(1, 'stdout:', stdout);
 			// logEvent(1, 'stderr:', stderr);
 
-			logEvent(1, "Internet Connected Check", returnValue);
+			logEvent(1, "Internet Connected Check", returnValue, self.current_state.get("local_ip"));
 
-			if (self.current_state.get("is_internet_connected") != returnValue) {
+			// if (self.current_state.get("is_internet_connected") != returnValue) {
 				// change hotspot status
-				if (self.current_state.get("local_ip") == "192.168.42.1") {
-					self.current_state.set("is_hotspot", "true");
-				} else {
-					self.current_state.set("is_hotspot", "false");
+				// if (self.current_state.get("local_ip") == "192.168.42.1") {
+				// 	self.current_state.set("is_hotspot", "true");
+				// } else {
+				// 	self.current_state.set("is_hotspot", "false");
+				// }
+			// }
 
-					if (self.current_state.get("share_log_files") == "true") self._setupAnsible();
-				}
-			}
+			// make sure connected to remote
+			if (returnValue == "true" && self.current_state.get("share_log_files") == "true") self._setupAnsible();
 
 			// update values
 			self.current_state.set({
@@ -1577,7 +1630,7 @@ var sisbot = {
 	},
 	change_to_wifi: function(data, cb) {
 		var self = this;
-		logEvent(1, "Sisbot change to wifi", data);
+		logEvent(1, "Sisbot change to wifi", data.ssid);
 		if (data.ssid == undefined || data.ssid == "" || data.ssid == "false") {
 			if (cb) cb("No network name given", null);
 		} else if (data.psk && (data.psk == "" || data.psk.length >= 8)) {
@@ -1590,11 +1643,11 @@ var sisbot = {
 			if (/^([^\r\n"]{8,64})$/g.test(data.psk)) {
 				self.current_state.set({
 					is_available: "false",
-					reason_unavailable: "connect_to_wifi",
 					wifi_network: data.ssid,
 					wifi_password: data.psk,
 					is_hotspot: "false",
-					failed_to_connect_to_wifi: "false"
+					failed_to_connect_to_wifi: "false",
+					is_internet_connected: "true"
 				});
 
 				// logEvent(1, "New State:", self.current_state.toJSON());
@@ -1606,7 +1659,6 @@ var sisbot = {
 				self.socket_update("disconnect");
 
 				logEvent(1, "Connect To Wifi", data.ssid);
-                append_log('Connect To Wifi: ' + data.ssid);
 
                 setTimeout(function () {
                     exec('sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "'+data.ssid+'" "'+data.psk+'"', (error, stdout, stderr) => {
@@ -1614,7 +1666,7 @@ var sisbot = {
     				});
                 }, 100);
 
-				self._query_internet(5000); // check again in 5 seconds
+				self._query_internet(8000); // check again in 8 seconds
 			} else if (cb) {
 				logEvent(2, "Invalid Password", data.psk);
 				cb("Invalid password", null);
@@ -1771,9 +1823,8 @@ var sisbot = {
 		// save given data
 		this.current_state.set(data);
 
-		if (cb) cb(null, this.current_state.toJSON());
-
-		if (change_hostname) this.set_hostname(this._hostname_queue, null);
+		if (change_hostname) this.set_hostname(this._hostname_queue, cb);
+		else if (cb) cb(null, this.current_state.toJSON());
 	},
 	/* ------------- Sleep Timer ---------------- */
 	test_time: function(data, cb) {
@@ -2037,7 +2088,7 @@ var logEvent = function() {
 		var filename = sisbot.config.folders.logs + '/' + moment().format('YYYYMMDD') + '_sisbot.log';
 		// var filename = '/var/log/sisyphus/' + moment().format('YYYYMMDD') + '_sisbot.log';
 
-		var line = Date.now();
+		var line = moment().format('YYYYMMDD HH:mm:ss Z');
 		_.each(arguments, function(obj, index) {
 			if (_.isObject(obj)) line += "\t"+JSON.stringify(obj);
 			else line += "\t"+obj;

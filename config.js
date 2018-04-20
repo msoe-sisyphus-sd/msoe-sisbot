@@ -9,14 +9,14 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
     // PROVE CSON FILE EXISTS
     if (!fs.existsSync('/home/pi/sisbot-server/sisbot/configs/' + which_cson)) {
-            console.log('!!!!! MISSING CSON FILE !!!!!');
-            which_cson = 'default.cson';
+        console.log('!!!!! MISSING CSON FILE !!!!!');
+        which_cson = 'default.cson';
     }
 }
 
 var config = {
 		base: {
-			version	: '1.3.4', // 1.3.4 Default attach/detach fix
+			version	: '1.3.12', // SVG update, servo merge
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -54,7 +54,8 @@ var config = {
 			wifi_error_retry_interval: 60000, // one minute
 			default_data: default_status,
 			pingTimeout: 1300, // socket pingTimeout
-			pingInterval: 600 // socket pingInterval
+			pingInterval: 600, // socket pingInterval
+			max_thumbnail_points: 10000
 		},
 		matt: {
 			folders: {
