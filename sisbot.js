@@ -1697,7 +1697,7 @@ var sisbot = {
 			if (cb) cb("No network name given", null);
 		} else if (data.psk && (data.psk == "" || data.psk.length >= 8)) {
 			clearTimeout(this._internet_check);
-      		this._changing_to_wifi = true;
+  		this._changing_to_wifi = true;
 			this._internet_retries = 0; // clear retry count
 
 			// Make sure password is valid
@@ -1705,6 +1705,7 @@ var sisbot = {
 			if (/^([^\r\n"]{8,64})$/g.test(data.psk)) {
 				self.current_state.set({
 					is_available: "false",
+          reason_unavailable: "connect_to_wifi",
 					wifi_network: data.ssid,
 					wifi_password: data.psk,
 					is_hotspot: "false",
