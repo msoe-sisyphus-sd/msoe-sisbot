@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.3.12', // SVG update, servo merge
+			version	: '1.3.13', // Dead reckon homing updates
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

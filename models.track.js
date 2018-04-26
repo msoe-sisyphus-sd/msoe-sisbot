@@ -66,6 +66,8 @@ var track = Backbone.Model.extend({
 		var self = this;
 		var return_value = [];
 
+		// console.log("Get Verts From Data", data);
+
 		// Step the file, line by line
 		var lines = data.toString().trim().split('\n');
 		// var regex = /^\s*$/; // eliminate empty lines

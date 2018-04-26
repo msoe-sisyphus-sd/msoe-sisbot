@@ -800,9 +800,9 @@ var logEvent = function() {
 			else line += "\t"+obj;
 		});
 
-		console.log(line);
+		console.log(line); // !! comment out in master !!
 		fs.appendFile(filename, line + '\n', function(err, resp) {
-		  if (err) console.log("Log err", err);
+		  if (err) console.log("Plotter Log err", err);
 		});
 	} else console.log(arguments);
 }
@@ -888,28 +888,35 @@ function parseReceivedSerialData(data) {
 				var thFaultState, rFaultState;
 				var thHomeState, rHomeState;
 				if ((num & 2) > 0) {thFaultState = 1;} else {thFaultState = 0;}
-				if (thFaultState == faultActiveState) {
-					console.log("Theta faulted!");
-					onServoThFault();
-				}
 				if ((num & 1) > 0) {rFaultState = 1;} else {rFaultState = 0;}
-				if (rFaultState == faultActiveState) {
-					console.log("Rho faulted!");
+        if (thFaultState == faultActiveState && rFaultState == faultActiveState) {
+					logEvent(2, "Theta and Rho faulted!");
+					onServoThRhoFault();
+				} else if (thFaultState == faultActiveState) {
+					logEvent(2, "Theta faulted!");
+					onServoThFault();
+				} else if (rFaultState == faultActiveState) {
+					logEvent(2, "Rho faulted!");
 					onServoRhoFault();
 				}
 
 				if ((num & 4) > 0) {thHomeState = 1;} else {thHomeState = 0;}
 				if (thHomeState == homingThHitState) {
-					console.log("Theta at home");
+					logEvent(1, "Theta at home");
 					THETA_HOMED = true;
 				} else {
 					THETA_HOMED = false;
 				}
 
 				num = parseInt(parts[3],10);
-				// console.log("R home pin = " + (num & 64));
+				// logEvent(1, "R home pin = " + (num & 64));
 				if ((num & 64) > 0) {rHomeState = 1;} else {rHomeState = 0;}
-				if (rHomeState == homingRHitState) {console.log("Rho at home");}
+				if (rHomeState == homingRHitState) {
+          logEvent(1, "Rho at home");
+					RHO_HOMED = true;
+        } else {
+					RHO_HOMED = false;
+        }
 			}
 
     }
@@ -932,6 +939,9 @@ var onServoThFault = function() {};
 
 // Called when rho fault detected
 var onServoRhoFault = function() {};
+
+// Called when th && rho fault detected
+var onServoThRhoFault = function() {};
 
 module.exports = {
 
@@ -1004,6 +1014,10 @@ module.exports = {
 	  return THETA_HOMED;
   },
 
+  getRhoHome: function() {
+	  return RHO_HOMED;
+  },
+
   // Set a calback to be executed when a track is complete.
   onFinishTrack: function(fn) {
     onFinishTrack = fn;
@@ -1021,6 +1035,10 @@ module.exports = {
 
   onServoRhoFault: function(fn) {
 	  onServoRhoFault = fn;
+  },
+
+  onServoThRhoFault: function(fn) {
+	  onServoThRhoFault = fn;
   },
 
   // Move the theta motor a single nudge
@@ -1063,13 +1081,13 @@ module.exports = {
 
   // Plot a track, with some motion config meta data.
   playTrack: function(track) {
-	console.log("TRACKNAME = " + track.name);
-	if (track.name == "attach"){
-		balls = 2;
-	}
-	if (track.name == "detach"){
-		balls = 1;
-	}
+  	logEvent(1, "TRACKNAME = " + track.name);
+  	if (track.name == "attach"){
+  		balls = 2;
+  	}
+  	if (track.name == "detach"){
+  		balls = 1;
+  	}
 
     // Save the track data
     verts = track.verts;
@@ -1128,11 +1146,11 @@ module.exports = {
 	var thetaDistHome, modRads, rawRads, shortestRads;
 
 	rawRads = thAccum / thSPRad;
-	console.log("thAccum is " + thAccum + " steps");
-	console.log("raw Theta postion is " + rawRads + " rads");
+	logEvent(1, "thAccum is " + thAccum + " steps");
+	logEvent(1, "raw Theta postion is " + rawRads + " rads");
 
 	modRads = rawRads % (2 * Math.PI);
-	console.log("modRads = " + modRads);
+	logEvent(1, "modRads = " + modRads);
 
 	shortestRads = modRads*-1; //this is verified correct - but theta sign is wrong :(
 
