@@ -595,9 +595,12 @@ var sisbot = {
 		this.serial.write(command+'\r');
 	},
 	_validateConnection: function() {
-    if (this.current_state.get('reason_unavailable').indexOf('_fault') >= 0) return false;
+    if (this.current_state.get('reason_unavailable').indexOf('_fault') >= 0) {
+		  logEvent(2, 'Fault state, not a valid connection');
+      return false;
+    }
 		if (!this.serial || !this.serial.isOpen()) {
-		  console.error('No serial connection');
+		  logEvent(2, 'No serial connection');
 		  this.current_state.set("is_serial_open", "false");
 		  return false;
 		}
@@ -636,7 +639,14 @@ var sisbot = {
 	},
   test_unavailable: function(data, cb) {
 		logEvent(1, "Test Reason Unavailable", data);
+    // pause if given fault reason
+    if (data.value.indexOf('_fault') >= 0) {
+      this.pause(null, null);
+    }
     this.current_state.set('reason_unavailable', data.value);
+
+    this.socket_update(this.current_state.toJSON()); // notify all connected UI
+    clearTimeout(this._internet_check); // stop internet checks
 
     if (cb) cb(null, this.current_state.toJSON());
   },
@@ -719,8 +729,8 @@ var sisbot = {
 	play: function(data, cb) {
 		var self = this;
 
-		logEvent(1, "Sisbot Play", data);
 		if (this._validateConnection()) {
+  		logEvent(1, "Sisbot Play", data);
 			if (this._paused) this.current_state.set("state", "playing");
 			this._paused = false;
 
@@ -773,9 +783,9 @@ var sisbot = {
 	},
 	home: function(data, cb) {
 		var self = this;
-		logEvent(1, "Sisbot Home", data);
 
 		if (this._validateConnection()) {
+	    logEvent(1, "Sisbot Home", data);
 			if (data) { // special instructions?
 				if (data.stop) this._autoplay = false; // home without playing anything afterward
 				if (data.clear_tracks) this.current_state.set({active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
