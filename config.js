@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.3.13', // Dead reckon homing updates
+			version	: '1.3.14', // Remove preview verts from log files, validate_connection checks for fault status
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

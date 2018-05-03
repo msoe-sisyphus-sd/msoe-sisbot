@@ -251,22 +251,22 @@ var sisbot = {
 		}
 		plotter.onServoThFault(function() {
       if (self.current_state.get('reason_unavailable') != 'servo_th_fault') logEvent(2, "Servo Th Fault!");
-			self.current_state.set("reason_unavailable", "servo_th_fault");
 			self.pause(null, null);
+			self.current_state.set("reason_unavailable", "servo_th_fault");
 			self.socket_update(self.current_state.toJSON()); // notify all connected UI
 			clearTimeout(self._internet_check); // stop internet checks
 		});
 		plotter.onServoRhoFault(function() {
       if (self.current_state.get('reason_unavailable') != 'servo_rho_fault') logEvent(2, "Servo Rho Fault!");
-			self.current_state.set("reason_unavailable", "servo_rho_fault");
 			self.pause(null, null);
+			self.current_state.set("reason_unavailable", "servo_rho_fault");
 			self.socket_update(self.current_state.toJSON()); // notify all connected UI
 			clearTimeout(self._internet_check); // stop internet checks
 		});
 		plotter.onServoThRhoFault(function() {
       if (self.current_state.get('reason_unavailable') != 'servo_th_rho_fault') logEvent(2, 'Servo Th and Rho Fault!');
-			self.current_state.set("reason_unavailable", "servo_th_rho_fault");
 			self.pause(null, null);
+			self.current_state.set("reason_unavailable", "servo_th_rho_fault");
 			self.socket_update(self.current_state.toJSON()); // notify all connected UI
 			clearTimeout(self._internet_check); // stop internet checks
 		});
@@ -590,11 +590,12 @@ var sisbot = {
 	  if (cb) cb(null, this.config.service_branches);
 	},
 	// Execute a serial command, and log it to the console.
-	_serialWrite(command) {
+	_serialWrite: function(command) {
 		logEvent(1, 'SERIAL:',command);
 		this.serial.write(command+'\r');
 	},
-	_validateConnection() {
+	_validateConnection: function() {
+    if (this.current_state.get('reason_unavailable').indexOf('_fault') >= 0) return false;
 		if (!this.serial || !this.serial.isOpen()) {
 		  console.error('No serial connection');
 		  this.current_state.set("is_serial_open", "false");
@@ -762,8 +763,8 @@ var sisbot = {
 		} else if (cb) cb('No Connection', null);
 	},
 	pause: function(data, cb) {
-		logEvent(1, "Sisbot Pause", data);
 		if (this._validateConnection()) {
+  		logEvent(1, "Sisbot Pause", data);
 			this._paused = true;
 			this.current_state.set("state", "paused");
 			plotter.pause();
@@ -1015,33 +1016,33 @@ var sisbot = {
         });
         this.current_state.set("track_ids", clean_tracks);
 
-		// remove from playlists
-		var playlists = this.current_state.get("playlist_ids");
-		var return_objs = [];
-		_.each(playlists, function(playlist_id) {
-			var playlist = self.collection.get(playlist_id);
-			var did_remove = false;
+    		// remove from playlists
+    		var playlists = this.current_state.get("playlist_ids");
+    		var return_objs = [];
+    		_.each(playlists, function(playlist_id) {
+    			var playlist = self.collection.get(playlist_id);
+    			var did_remove = false;
 
-			var tracks = playlist.get("tracks");
-	        var clean_tracks = [];
-			// remove all instances of the track_id
-			_.each(tracks, function(track_obj) {
-				if (track_obj.id != data.id) clean_tracks.push(track_obj);
-				else did_remove = true;
-			});
+    			var tracks = playlist.get("tracks");
+    	        var clean_tracks = [];
+    			// remove all instances of the track_id
+    			_.each(tracks, function(track_obj) {
+    				if (track_obj.id != data.id) clean_tracks.push(track_obj);
+    				else did_remove = true;
+    			});
 
-			if (did_remove) {
-		        playlist.set("tracks", clean_tracks);
+    			if (did_remove) {
+    		        playlist.set("tracks", clean_tracks);
 
-				// fix the sorted order, or just reshuffle
-				playlist.set_shuffle({ is_shuffle: playlist.get('is_shuffle') });
+    				// fix the sorted order, or just reshuffle
+    				playlist.set_shuffle({ is_shuffle: playlist.get('is_shuffle') });
 
-				return_objs.push(playlist.toJSON());
-			}
-		});
+    				return_objs.push(playlist.toJSON());
+    			}
+    		});
 
-		// add sisbot_state
-		return_objs.push(this.current_state.toJSON());
+    		// add sisbot_state
+    		return_objs.push(this.current_state.toJSON());
 
         this.save(null, null);
 
@@ -2157,7 +2158,7 @@ var logEvent = function() {
 			else line += "\t"+obj;
 		});
 
-		console.log(line);
+		console.log(line); // !! comment out in master !!
 		fs.appendFile(filename, line + '\n', function(err, resp) {
 		  if (err) console.log("Log err", err);
 		});
