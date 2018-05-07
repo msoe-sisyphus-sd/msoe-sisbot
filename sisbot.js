@@ -862,6 +862,8 @@ var sisbot = {
         if (cb)	cb(null, this.current_state.toJSON());
       } else {
         this._sensored = true; // force sensored home
+	      
+/*****/	this._moved_out = true; // inelegant way to get rid of move out (for now)
 
         if (this._moved_out) {
           self.plotter.home();

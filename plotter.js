@@ -1082,12 +1082,14 @@ module.exports = {
   // Plot a track, with some motion config meta data.
   playTrack: function(track) {
   	logEvent(1, "TRACKNAME = " + track.name);
-  	if (track.name == "attach"){
-  		balls = 2;
-  	}
-  	if (track.name == "detach"){
-  		balls = 1;
-  	}
+  	if (twoBallEnabled){
+		if (track.name == "attach"){
+			balls = 2;
+		}
+		if (track.name == "detach"){
+			balls = 1;
+		}
+	}
 
     // Save the track data
     verts = track.verts;
