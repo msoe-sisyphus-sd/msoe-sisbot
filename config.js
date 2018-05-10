@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.3.14', // Remove preview verts from log files, validate_connection checks for fault status
+			version	: '1.3.15', // Auto-generate attach/detach from config, auto move between incompatible tracks
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -47,6 +47,7 @@ var config = {
 			failed_home_th: 1.570796,
 			auto_home_rho: 0.0185, //.25" for r=13.5"
  			auto_home_th: 0.0417, //.25" for 6" diam falcon
+      auto_track_start_rho: true, // move to track start rho if non-continuous
 			max_rand_retries: 10,
 			check_internet_interval: 1800000, // every thirty minutes, // 1800000 once every half hour, confirm an internet connection
 			internet_retries: 5, // retry # of times before resetting to hotspot

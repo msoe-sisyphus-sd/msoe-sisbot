@@ -16,8 +16,8 @@ jogStepsRadius: 100
 isServo: true
 faultActiveState: 1
 twoBallEnabled: true
-attach_track: "attach" # set table specific track name for attach
-detach_track: "detach" # set table specific track name for detach
+attach_track: '0 0,-0.2963 0,-0.2963 -0.0741,0 -0.0741,-0.2963 -0.0741,-0.2963 0,0 0' # set table specific attach verts
+detach_track: '0 0,-0.2963 0,-0.2963 -0.0741,0 -0.0741,0 0' # set table specific detach verts
 
 useHomeSensors: true# false means that a "home" event means to set the current $
 homingThSteps: 17# Steps per homing check on Theta
