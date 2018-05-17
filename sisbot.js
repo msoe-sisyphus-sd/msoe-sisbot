@@ -637,8 +637,13 @@ var sisbot = {
 	set_hostname: function(data,cb) {
 		var self = this;
 
-		logEvent(1, "Sisbot Set Hostname", data);
+		logEvent(1, "Sisbot Set Hostname", data, process.platform);
 		ValidHostnameRegex = new RegExp("^[a-zA-Z][a-zA-Z0-9\-]*$");
+
+    if (process.platform != 'linux') {
+      if (cb)	cb(null, this.current_state.toJSON());
+      return;
+    }
 
 		if (data.hostname.search(ValidHostnameRegex) == 0) {
 			if (data.hostname+'.local' != self.current_state.get('hostname')) { // set new hostname
