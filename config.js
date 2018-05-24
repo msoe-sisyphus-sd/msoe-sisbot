@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.2.2', // 1.2.2 Night mode defaults
+			version	: '1.4.0', // SVG update/thumbnail image generation
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -52,7 +52,8 @@ var config = {
 			wifi_error_retry_interval: 60000, // one minute
 			default_data: default_status,
 			pingTimeout: 1300, // socket pingTimeout
-			pingInterval: 600 // socket pingInterval
+			pingInterval: 600, // socket pingInterval
+			max_thumbnail_points: 10000
 		},
 		matt: {
 			folders: {

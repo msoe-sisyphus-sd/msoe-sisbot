@@ -13,13 +13,13 @@ var sisbot_state = Backbone.Model.extend({
 		hostname						: "sisyphus.local",
 		local_ip						: "",
 
-		is_available							: "true",
-		installing_updates				: "false",
+		is_available					: "true",
+		installing_updates		: "false",
 		installing_updates_error	: "",
 		factory_resetting					: "false",
 		factory_resetting_error		: "",
-		do_not_remind							: "false",
-		hostname_prompt						: "false",
+		do_not_remind					: "false",
+		hostname_prompt				: "false",
 
 		state									: "waiting", // playing, homing, paused, waiting
 		brightness						: 0.8,
