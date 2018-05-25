@@ -18,7 +18,7 @@ var track = Backbone.Model.extend({
 		reversible		: "true"
 	},
 	collection: null,
-	get_plotter_obj: function(plotter_data) {
+	get_plotter_obj: function(plotter_data, auto_track_start_rho) {
 		//console.log("Get Plotter Obj", this.get("name"), plotter_data);
 		var return_obj = {};
 		var this_json = this.toJSON();
@@ -53,7 +53,8 @@ var track = Backbone.Model.extend({
 			return_obj.reversed = "true";
 		}
 
-		if (plotter_data.start !== return_obj.firstR) {
+		// throw error if we won't auto-move to start rho
+		if (auto_track_start_rho != true && plotter_data.start !== return_obj.firstR) {
 			console.log(this.get("name"), "Track cannot be cleanly started");
 			return "false";
 		}
@@ -65,6 +66,8 @@ var track = Backbone.Model.extend({
 	get_verts_from_data: function(data) {
 		var self = this;
 		var return_value = [];
+
+		// console.log("Get Verts From Data", data);
 
 		// Step the file, line by line
 		var lines = data.toString().trim().split('\n');

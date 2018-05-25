@@ -56,6 +56,9 @@ var sisbot_state = Backbone.Model.extend({
 		wifi_error				: "false", // flag to know if should be trying to reconnect to wifi
 		failed_to_connect_to_wifi: "false",
 
+		is_multiball			: "false", // allow multiple balls
+		ball_count				: 1, // 1 or 2
+
 		share_log_files			: "false"
 	},
 	initialize: function() {

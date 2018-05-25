@@ -11,6 +11,8 @@ stepsPerRadiusInch: 2573.2841325173814
 
 autoplay: true # when true it will home and play the default playlist sequentially on boot.
 
+twoBallEnabled: false
+
 # Default movement parameters
 # 5. Default velocity (in/sec)= 1
 # 6. Default acceleration (in/sec^2)= 1
