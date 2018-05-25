@@ -971,7 +971,7 @@ var sisbot = {
 				if (cb) cb(null, { 'id':data.id });
 			});
 		} else {
-			console.log("Thumbnails queue", self._thumbnail_queue.length);
+		    logEvent(1, "Thumbnails queue", self._thumbnail_queue.length);
 			// if (cb) cb(null, null);
 		}
 	},
@@ -2012,7 +2012,7 @@ var logEvent = function() {
 			else line += "\t"+obj;
 		});
 
-		console.log(line);
+		// console.log(line);
 		fs.appendFile(filename, line + '\n', function(err, resp) {
 		  if (err) console.log("Log err", err);
 		});
