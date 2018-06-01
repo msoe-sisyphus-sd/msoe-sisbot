@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.3.15', // Auto-generate attach/detach from config, auto move between incompatible tracks
+			version	: '1.5.1', // Max speed adjustable by cson
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

@@ -240,6 +240,7 @@ var sisbot = {
 		// plotter
 		var cson_config = CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config);
   	this.plotter.setConfig(cson_config);
+    if (cson_config.max_speed) this.config.max_speed; // overwrite config.js max_speed if table allows
 		if (cson_config.twoBallEnabled) {
       logEvent(1, "Enable two ball");
 			this._detach_first = true;
