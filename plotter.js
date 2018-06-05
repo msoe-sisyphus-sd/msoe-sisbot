@@ -1105,7 +1105,8 @@ module.exports = {
       'Plotter: playing track with config:',
       Vball, Accel, MTV,
       'vertices:',
-      verts.length
+      verts.length,
+      'balls: '+balls
     );
 
     // Go!
