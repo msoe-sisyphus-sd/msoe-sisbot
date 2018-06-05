@@ -1082,11 +1082,11 @@ module.exports = {
   // Plot a track, with some motion config meta data.
   playTrack: function(track) {
   	logEvent(1, "TRACKNAME = " + track.name);
-  	if (twoBallEnabled){
-  		if (track.name == "attach"){
+  	if (twoBallEnabled && track.id) { // make sure id exists
+  		if (track.id == "attach"){
   			balls = 2;
   		}
-  		if (track.name == "detach"){
+  		if (track.id == "detach"){
   			balls = 1;
   		}
   	}
