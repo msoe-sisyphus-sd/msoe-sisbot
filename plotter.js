@@ -1083,13 +1083,13 @@ module.exports = {
   playTrack: function(track) {
   	logEvent(1, "TRACKNAME = " + track.name);
   	if (twoBallEnabled){
-		if (track.name == "attach"){
-			balls = 2;
-		}
-		if (track.name == "detach"){
-			balls = 1;
-		}
-	}
+  		if (track.name == "attach"){
+  			balls = 2;
+  		}
+  		if (track.name == "detach"){
+  			balls = 1;
+  		}
+  	}
 
     // Save the track data
     verts = track.verts;
