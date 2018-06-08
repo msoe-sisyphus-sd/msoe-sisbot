@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.5.1', // Max speed adjustable by cson
+			version	: '1.5.2', // Fix verts that may have been saved into status.json, better verts save prevention
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

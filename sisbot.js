@@ -156,7 +156,11 @@ var sisbot = {
 		_.each(objs, function(obj) {
 			switch (obj.type) {
 				case "track":
-					self.collection.add(new Track(obj));
+					var track = self.collection.add(new Track(obj));
+          if (track.get('verts')) {
+            logEvent(2, "Track saved verts", track.get('name'));
+            track.unset('verts');
+          }
 					break;
 				case "playlist":
 					self.collection.add(new Playlist(obj));
@@ -1297,6 +1301,9 @@ var sisbot = {
 		}
 		logEvent(1, "Sisbot Set Track", data.name, data.firstR, data.lastR);
 
+    // make sure verts are not a part of this
+    if (data.verts) delete data.verts;
+
 		var new_track = new Track(data);
 		var track = this.collection.add(new_track, {merge: true});
 		track.collection = this.collection;
@@ -1642,9 +1649,9 @@ var sisbot = {
 				local_ip: self._getIPAddress()
 			});
 
-            setTimeout(function () {
-    			self.current_state.set({is_internet_connected: returnValue, local_ip: self._getIPAddress()});
-            }, 10000);
+      setTimeout(function () {
+	      self.current_state.set({is_internet_connected: returnValue, local_ip: self._getIPAddress()});
+      }, 10000);
 
 			if (cb) cb(null, returnValue);
 		});
@@ -1657,9 +1664,9 @@ var sisbot = {
 					if (err) return logEvent(2, "Internet check err", err);
 					if (resp == "true") {
 						logEvent(1, "Internet connected.",self.current_state.get("is_internet_connected"));
-                        append_log('Internet connected: ' + self.current_state.get("is_internet_connected"));
+            append_log('Internet connected: ' + self.current_state.get("is_internet_connected"));
 
-            			self._changing_to_wifi = false;
+      			self._changing_to_wifi = false;
 						self.current_state.set({
 							is_available: "true",
 							failed_to_connect_to_wifi: "false",
@@ -2191,10 +2198,13 @@ var logEvent = function() {
 			else line += "\t"+obj;
 		});
 
-		console.log(line); // !! comment out in master !!
 		fs.appendFile(filename, line + '\n', function(err, resp) {
 		  if (err) console.log("Log err", err);
 		});
+
+    // redline errors
+    if (arguments[0] == 2 || arguments[0] == '2') line = '\x1b[31m'+line+'\x1b[0m';
+		console.log(line); // !! comment out in master !!
 	} else console.log(arguments);
 }
 
