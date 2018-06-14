@@ -1,6 +1,4 @@
-configs/.DS_Store
-content/.DS_Store
-.DS_Store
+*.DS_Store
 configs/whichcson.js
 content/status.json
 
