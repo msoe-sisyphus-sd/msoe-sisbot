@@ -838,6 +838,7 @@ var sisbot = {
 					};
 					self._paused = false;
 					logEvent("doing DEAD RECKONING homing...");
+					console.log("doing DEAD RECKONING homing...");
 					self.plotter.playTrack(track_obj);
 					self._home_next = true; // home after this outward movement
 
@@ -859,13 +860,20 @@ var sisbot = {
     //
 		if (this._validateConnection()) {
       var thHome = self.plotter.getThetaHome();
+			
       var rhoHome = self.plotter.getRhoHome();
-
+			
       logEvent(1, "Sensor Values", thHome, rhoHome);
+			console.log("Sensor Values", thHome, rhoHome);
+			//testing this:
+			thHome = false;
+			rhoHome = false;
+			console.log("setting homes false here");
 
       /////////////////////
       if (thHome && rhoHome) {
         logEvent(1, "DEAD RECKONING Home Successful");
+				console.log("DEAD RECKONING Home Successful");
         this._sensored = false;
         this._home_next = false;
 				this.current_state.set({state: "waiting", is_homed: "true", _end_rho: 0});
@@ -886,6 +894,7 @@ var sisbot = {
 /*****/	this._moved_out = true; // inelegant way to get rid of move out (for now)
 
         if (this._moved_out) {
+					console.log("not at home after DR, doing sensored...");
           self.plotter.home();
           this._moved_out = false;
         } else {
