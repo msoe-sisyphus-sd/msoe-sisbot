@@ -16,11 +16,22 @@ var scheduler 	= require('node-schedule');
 var bleno 		= require('bleno');
 var io 			= require('socket.io');
 var moment 		= require('moment');
+var log4js    = require('log4js');
+
+
+/**************************** Logging *********************************************/
+log4js.configure({
+  appenders: { sisbot: { type: 'file', filename: 'sisbot.log' } },
+  categories: { default: { appenders: ['sisbot'], level: 'debug' } }
+});
+const logger = log4js.getLogger('sisbot');
+
 
 /**************************** BLE *********************************************/
 
 var ble_obj = {
     initialize: function(sisbot_id) {
+    		logEvent(1, "ble_obj initialize()");
         this.sisbot_id = sisbot_id;
 
         bleno.on('stateChange', this.on_state_change);
@@ -29,6 +40,7 @@ var ble_obj = {
     char: false,
     ip_address: new Buffer([0, 0, 0, 0]),
     update_ip_address: function(ip_address_str) {
+    		logEvent(1, "ble_obj update_ip_address()");
         logEvent(1, 'Updated IP ADDRESS', ip_address_str, ip_address_str.split('.').map(function(i) {
             return +i;
         }));
@@ -37,12 +49,14 @@ var ble_obj = {
         }));
     },
     on_state_change: function(state) {
+    		logEvent(1, "ble_obj on_state_change()");
         var ble_id = ble_obj.sisbot_id.substr(ble_obj.sisbot_id.length - 7);
         logEvent(1, 'BLE Sisbot ID', ble_id);
         if (state === 'poweredOn') bleno.startAdvertising('sisbot' + ble_id, ['ec00']);
         else bleno.stopAdvertising();
     },
     on_advertising_start: function(error) {
+    		logEvent(1, "ble_obj on_advertising_start()");
         if (error) return logEvent(2, '### WE HAD ISSUE STARTING BLUETOOTH');
 
         bleno.setServices([
@@ -121,6 +135,8 @@ var sisbot = {
 		var self = this;
   	this.config = config;
 		logEvent(1, "Init Sisbot");
+		logger.info("Initialzie sisbot");
+
 
 		this.socket_update = socket_update;
 

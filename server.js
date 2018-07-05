@@ -68,6 +68,11 @@ var app = function(given_config,ansible) {
 		service = req.params.service;
 		endpoint = req.params.endpoint;
 
+
+		logEvent(1, "Sisbot POST recieved to service " + service + " endpoint " + endpoint);
+
+
+
 		var data = (_.isString(req.body.data)) ? JSON.parse(req.body.data) : req.body.data;
 		data = data.data;
 
@@ -116,6 +121,7 @@ var app = function(given_config,ansible) {
 
 	function socket_update(data) {
 		if (data != null) {
+			logEvent(1, "socket_update()  data=", data);
 			_.each(sockets, function(socket, id) {
 				if (data == "disconnect") {
 					socket.disconnect(true);
