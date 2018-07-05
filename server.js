@@ -78,7 +78,7 @@ var app = function(given_config,ansible) {
 
 		// TODO: remove add_track as well, or at least don't log the verts
 		if (endpoint != "state") {
-			var truncated_data = _.omit(data, 'verts', 'wifi_password', 'password'); // add any keys to skip from logging
+			var truncated_data = _.omit(data, 'verts', 'raw_coors', 'wifi_password', 'password', 'psk'); // add any keys to skip from logging
 			logEvent(1, "Post:",service, endpoint,truncated_data);
 		}
 
@@ -139,7 +139,7 @@ var app = function(given_config,ansible) {
 		if (local_config.folders.logs) {
 			var filename = local_config.folders.logs + moment().format('YYYYMMDD') + '_sisbot.log';
 
-			var line = Date.now();
+			var line = moment().format('YYYYMMDD HH:mm:ss Z');
 			_.each(arguments, function(obj, index) {
 				if (_.isObject(obj)) line += "\t"+JSON.stringify(obj);
 				else line += "\t"+obj;

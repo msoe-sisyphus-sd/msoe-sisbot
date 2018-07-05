@@ -113,6 +113,12 @@ var sisbot = {
 	_play_next: false,
 	_autoplay: false,
 	_home_next: false,
+  _sensored: true, // use a sensored home
+  _home_delay: 0,
+	_moved_out: false, // small ball adjustment before homing
+	_attach_track: false, // for tables with multiple balls
+	_detach_track: false, // for tables with multiple balls
+	_detach_first: false, // for tables with multiple balls, after first home
 	_move_to_rho: 0,
 	_saving: false,
 
@@ -127,7 +133,7 @@ var sisbot = {
 
 	init: function(config, session_manager, socket_update) {
 		var self = this;
-    	this.config = config;
+  	this.config = config;
 		logEvent(1, "Init Sisbot");
 		logger.info("Initialzie sisbot");
 
@@ -151,7 +157,7 @@ var sisbot = {
 		// Load in the saved state
 		var objs = [];
 		if (fs.existsSync(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.content+'/'+config.sisbot_state)) {
-			//logEvent(1, "Load saved state:", config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.content+'/'+config.sisbot_state);
+			logEvent(1, "Load saved state:", config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.content+'/'+config.sisbot_state);
 			var saved_state = fs.readFileSync(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.content+'/'+config.sisbot_state, 'utf8');
 			try {
 				objs = JSON.parse(saved_state);
@@ -166,7 +172,11 @@ var sisbot = {
 		_.each(objs, function(obj) {
 			switch (obj.type) {
 				case "track":
-					self.collection.add(new Track(obj));
+					var track = self.collection.add(new Track(obj));
+          if (track.get('verts')) {
+            logEvent(2, "Track saved verts", track.get('name'));
+            track.unset('verts');
+          }
 					break;
 				case "playlist":
 					self.collection.add(new Playlist(obj));
@@ -206,6 +216,7 @@ var sisbot = {
 			id: 'pi_'+this.config.pi_serial,
 			pi_id: 'pi_'+this.config.pi_serial,
 			is_homed: "false",
+      _end_rho: 0, // on startup, we should be at 0
 			state: "waiting",
 			is_available: "true",
 			reason_unavailable: "false",
@@ -247,7 +258,49 @@ var sisbot = {
 		});
 
 		// plotter
-    	this.plotter.setConfig(CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config));
+		var cson_config = CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config);
+  	this.plotter.setConfig(cson_config);
+    if (cson_config.max_speed) this.config.max_speed = cson_config.max_speed; // overwrite config.js max_speed if table allows
+		if (cson_config.twoBallEnabled) {
+      logEvent(1, "Enable two ball");
+			this._detach_first = true;
+      this.current_state.set('is_multiball','true'); // allow frontend to know
+
+			if (cson_config.attach_track) {
+        logEvent(1, "Generate Attach track", cson_config.attach_track);
+        var a_verts = cson_config.attach_track.split(',').join('\n');
+        this.add_track({id:'attach',name:'Attach',verts:a_verts},null);
+        // this._attach_track = cson_config.attach_track;
+      }
+
+			if (cson_config.detach_track) {
+        logEvent(1, "Generate Detach track", cson_config.detach_track);
+        var d_verts = cson_config.detach_track.split(',').join('\n');
+        this.add_track({id:'detach',name:'Detach',verts:d_verts},null);
+        // this._detach_track = cson_config.detach_track;
+			}
+		}
+		plotter.onServoThFault(function() {
+      if (self.current_state.get('reason_unavailable') != 'servo_th_fault') logEvent(2, "Servo Th Fault!");
+			self.pause(null, null);
+			self.current_state.set("reason_unavailable", "servo_th_fault");
+			self.socket_update(self.current_state.toJSON()); // notify all connected UI
+			clearTimeout(self._internet_check); // stop internet checks
+		});
+		plotter.onServoRhoFault(function() {
+      if (self.current_state.get('reason_unavailable') != 'servo_rho_fault') logEvent(2, "Servo Rho Fault!");
+			self.pause(null, null);
+			self.current_state.set("reason_unavailable", "servo_rho_fault");
+			self.socket_update(self.current_state.toJSON()); // notify all connected UI
+			clearTimeout(self._internet_check); // stop internet checks
+		});
+		plotter.onServoThRhoFault(function() {
+      if (self.current_state.get('reason_unavailable') != 'servo_th_rho_fault') logEvent(2, 'Servo Th and Rho Fault!');
+			self.pause(null, null);
+			self.current_state.set("reason_unavailable", "servo_th_rho_fault");
+			self.socket_update(self.current_state.toJSON()); // notify all connected UI
+			clearTimeout(self._internet_check); // stop internet checks
+		});
 		plotter.onFinishTrack(function() {
 			logEvent(1, "Track Finished");
 			if (self._home_next == true) return logEvent(1, "Home Next, skip playing next");
@@ -266,7 +319,13 @@ var sisbot = {
 						self._paused = true;
 						self.current_state.set('is_waiting_between_tracks', 'true');
 						// self._play_next = true;
-					} else self.current_state.set('active_track', playlist.get_next_track({ start_rho: self.current_state.get('_end_rho') }));
+					} else {
+						var nextTrack = playlist.get_next_track({ start_rho: self.current_state.get('_end_rho') });
+						self.current_state.set('active_track', nextTrack);
+						if (nextTrack.id != 'false' && nextTrack.name != undefined) {
+							if (nextTrack.name.toLowerCase().indexOf('attach') == 0 || nextTrack.name.toLowerCase().indexOf('detach') == 0) self._home_next = true;
+						}
+					}
 				}
 				self.current_state.set('repeat_current', 'false');
 
@@ -286,9 +345,9 @@ var sisbot = {
 				self.socket_update(self.current_state.toJSON());
 			}
 		});
-    	plotter.onStateChanged(function(newState, oldState) {
+  	plotter.onStateChanged(function(newState, oldState) {
 			if (newState == 'homing') self.current_state.set("state", "homing");
-			if (newState == 'playing') self.current_state.set("state", "playing");
+			if (newState == 'playing' && !self._home_next) self.current_state.set("state", "playing");
 			if (newState == 'waiting') {
 				if (self._paused) self.current_state.set("state", "paused");
 				if (!self._paused) self.current_state.set("state", "waiting");
@@ -302,7 +361,7 @@ var sisbot = {
 				}
 				if (newState == 'home_rho_failed') {
 					// move ball out and around a bit, and try again
-					logEvent(2, "Fix failed home");
+					logEvent(2, "Failed home!");
 					var track_obj = {
 						verts: [{th:0,r:0},{th:self.config.failed_home_th,r:self.config.failed_home_rho}],
 						vel: 1,
@@ -315,6 +374,7 @@ var sisbot = {
 					return;
 				}
 
+        self._sensored = false; // don't sensored home next
 				self._home_next = false; // clear home next
 				self.current_state.set({is_homed: "true", _end_rho: 0}); // reset
 
@@ -322,26 +382,18 @@ var sisbot = {
 					// autoplay after first home
 					logEvent(1, "Play next ",self.current_state.get('active_track').name, self.current_state.get('active_track').firstR, "Rho:", self.current_state.get('_end_rho'));
 
-					if (self.current_state.get('active_track').id != "false") {
-						var track = self.current_state.get('active_track');
-						// if (self.current_state.get("active_playlist_id") == "false") {
-						if (track.firstR != undefined && track.firstR != 0) self._move_to_rho = track.firstR;
-						// }
-						// move to start rho
-						if (self._move_to_rho != 0) {
-							var track_obj = {
-								verts: [{th:0,r:0},{th:self.config.auto_th,r:self._move_to_rho}],
-								vel: 1,
-								accel: 0.5,
-								thvmax: 0.5
-							};
-							self._paused = false;
-							self.plotter.playTrack(track_obj);
-							self.current_state.set({_end_rho: self._move_to_rho, repeat_current: 'true'}); // pull from track_obj
-							self._move_to_rho = 0;
-						} else {
-							self._play_track(track, null);
-						}
+					// _detach_first?
+					if (self._detach_first) {
+						var track = self.collection.get('detach'); // detach id is always 'detach'
+            logEvent(1, "Detach First", track.toJSON());
+
+            self.current_state.set('repeat_current', 'true'); // don't step over wanted first track
+
+						self._play_track(track.toJSON(), null);
+
+						self._detach_first = false;
+					} else if (self.current_state.get('active_track').id != "false") {
+            self._play_given_track(self.current_state.get('active_track'));
 					}
 				}
 			}
@@ -354,7 +406,7 @@ var sisbot = {
 						self.home(null, null);
 					}, 1000);
 				} else if (self.current_state.get('active_track').id != "false") {
-					logEvent(1, "Play next track! Rho: ", self.current_state.get('_end_rho'));
+					logEvent(1, "Play next track. Rho: ", self.current_state.get('_end_rho'));
 					self._play_track(self.current_state.get('active_track'), null); // autoplay after first home
 				} else {
 					logEvent(1, "No Next Track", self.current_state.get('active_track'));
@@ -383,7 +435,7 @@ var sisbot = {
 		this.set_sleep_time(this.current_state.toJSON(), null);
 
 		return this;
-  	},
+	},
 	_setupAnsible() {
 		var self = this;
 		_.each(self.config.services.sisbot.connect, function(service_name) {
@@ -518,7 +570,7 @@ var sisbot = {
 		this._connectionError(service);
 	},
 	/***************************** Plotter ************************/
-	_connect() {
+	_connect: function() {
     	if (this.serial && this.serial.isOpen()) return true;
 
 		var self = this;
@@ -528,69 +580,38 @@ var sisbot = {
  		this.serial = new SerialPort(this.config.serial_path, {}, false);
 
 		try {
-	      	this.serial.open(function (error) {
-	      	self.plotter.useSerial(self.serial);
-			console.info('Serial: connected!');
+      	this.serial.open(function (error) {
+      	self.plotter.useSerial(self.serial);
+				console.info('Serial: connected!');
 
-			self.current_state.set("is_serial_open", "true");
-			self.set_brightness({value:self.current_state.get("brightness")}, null);
-			self.set_speed({value:self.current_state.get("speed")}, null);
+				self.current_state.set("is_serial_open", "true");
+				self.set_brightness({value:self.current_state.get("brightness")}, null);
+				self.set_speed({value:self.current_state.get("speed")}, null);
 
-			if (self.config.autoplay) {
-				//logEvent(1, "Autoplay:", self.current_state.get("default_playlist_id"));
-				if (self.current_state.get("default_playlist_id") != "false" && self.collection.get(self.current_state.get("default_playlist_id"))!=undefined) {
-					var playlist = self.collection.get(self.current_state.get("default_playlist_id"));
-					playlist.set({active_track_id: "false", active_track_index: -1});
-					playlist.reset_tracks(); // start with non-reversed list
-					playlist.set_shuffle({ is_shuffle: "true", start_rho: 0 }); // update order, active tracks indexing
-					playlist.set({active_track_index: 0});
+				if (self.config.autoplay) {
+					//logEvent(1, "Autoplay:", self.current_state.get("default_playlist_id"));
+					if (self.current_state.get("default_playlist_id") != "false" && self.collection.get(self.current_state.get("default_playlist_id"))!=undefined) {
+						var playlist = self.collection.get(self.current_state.get("default_playlist_id"));
+						playlist.set({active_track_id: "false", active_track_index: -1});
+						playlist.reset_tracks(); // start with non-reversed list
+						playlist.set_shuffle({ is_shuffle: "true", start_rho: 0 }); // update order, active tracks indexing
+						playlist.set({active_track_index: 0});
 
-					// error check, we don't want r11
-					// var start_index = playlist.get("active_track_index");
-					// var track_obj = playlist.get("tracks")[playlist.get('sorted_tracks')[start_index]];
-					// if (track_obj.firstR == 1) {
-					// 	logEvent(1, "R1 start detected", track_obj);
-					// 	// find the first track to start at r0
-					// 	var searching = true;
-					// 	_.each(playlist.get("sorted_tracks"), function(track_index, index) {
-					// 		if (searching) {
-					// 			var new_obj = playlist.get("tracks")[track_index];
-					// 			if (new_obj.firstR == 0 || new_obj.lastR == 0) {
-					// 				playlist.set({active_track_index: -1}); // so this track is allowed to reverse
-					// 				playlist.reset_tracks(); // reset their reversed state
-					// 				playlist.set({active_track_index: index});
-					// 				playlist.set_shuffle({ is_shuffle: playlist.get('is_shuffle')}); // shuffle with active track as first
-					// 				searching = false;
-					// 			}
-					// 		}
-					// 	});
-					// }
-					//logEvent(1, "Model Playlist Tracks", playlist.get("tracks"));
+						var playlist_obj = playlist.toJSON();
+						logEvent(1, "Playlist Active Index:", playlist_obj.active_track_index);
+						playlist_obj.skip_save = true;
+						playlist_obj.is_current = true; // we already set the randomized pattern
 
-					var playlist_obj = playlist.toJSON();
-					logEvent(1, "Playlist Active Index:", playlist_obj.active_track_index);
-					playlist_obj.skip_save = true;
-					playlist_obj.is_current = true; // we already set the randomized pattern
-					// playlist_obj.active_track_index = playlist_obj.sorted_tracks[0]; // make it start on the first of randomized list
-					//logEvent(1, "Send Playlist Tracks", playlist_obj.tracks);
-
-					self.set_playlist(playlist_obj, function(err, resp) {
-						if (err) return logEvent(1, "Set initial playlist", err);
-						self.socket_update(resp);
-					});
+						self.set_playlist(playlist_obj, function(err, resp) {
+							if (err) return logEvent(1, "Set initial playlist", err);
+							self.socket_update(resp);
+						});
+					}
 				}
-				// else {
-				// 	var playlist = self.collection.get("F42695C4-AE32-4956-8C7D-0FF6A7E9D492").toJSON();
-				// 	if (playlist != undefined) {
-				// 		playlist.skip_save = true;
-				// 		self.set_playlist(playlist, null);
-				// 	}
-				// }
-			}
-		});
-    } catch(err) {
-      console.error('Connect err', err);
-    }
+			});
+	    } catch(err) {
+	      console.error('Connect err', err);
+	    }
 	},
 	// VERSIONS OF CODE
 	latest_software_version: function (data, cb) {
@@ -600,13 +621,17 @@ var sisbot = {
 	  if (cb) cb(null, this.config.service_branches);
 	},
 	// Execute a serial command, and log it to the console.
-	_serialWrite(command) {
+	_serialWrite: function(command) {
 		logEvent(1, 'SERIAL:',command);
 		this.serial.write(command+'\r');
 	},
-	_validateConnection() {
+	_validateConnection: function() {
+    if (this.current_state.get('reason_unavailable').indexOf('_fault') >= 0) {
+		  logEvent(2, 'Fault state, not a valid connection');
+      return false;
+    }
 		if (!this.serial || !this.serial.isOpen()) {
-		  console.error('No serial connection');
+		  logEvent(2, 'No serial connection');
 		  this.current_state.set("is_serial_open", "false");
 		  return false;
 		}
@@ -643,6 +668,19 @@ var sisbot = {
 		// logEvent(1, "Sisbot Exists", data);
 		if (cb) cb(null, this.current_state.toJSON());
 	},
+  test_unavailable: function(data, cb) {
+		logEvent(1, "Test Reason Unavailable", data);
+    // pause if given fault reason
+    if (data.value.indexOf('_fault') >= 0) {
+      this.pause(null, null);
+    }
+    this.current_state.set('reason_unavailable', data.value);
+
+    this.socket_update(this.current_state.toJSON()); // notify all connected UI
+    clearTimeout(this._internet_check); // stop internet checks
+
+    if (cb) cb(null, this.current_state.toJSON());
+  },
 	set_default_playlist: function(data, cb) {
 		logEvent(1, "Sisbot Set Default Playlist", data);
 
@@ -725,8 +763,10 @@ var sisbot = {
 		}
 	},
 	play: function(data, cb) {
-		logEvent(1, "Sisbot Play", data);
+		var self = this;
+
 		if (this._validateConnection()) {
+  		logEvent(1, "Sisbot Play", data);
 			if (this._paused) this.current_state.set("state", "playing");
 			this._paused = false;
 
@@ -736,10 +776,26 @@ var sisbot = {
 				var playlist_id = this.current_state.get('active_playlist_id');
 				if (playlist_id != "false") {
 					var playlist = this.collection.get(playlist_id);
-					this.current_state.set('active_track', playlist.get_next_track({ start_rho: this.current_state.get('_end_rho') }));
+
+					var nextTrack = playlist.get_next_track({ start_rho: self.current_state.get('_end_rho') });
+					this.current_state.set('active_track', nextTrack);
+					if (nextTrack.id != 'false' && nextTrack.name != undefined) {
+						if (nextTrack.name.toLowerCase().indexOf('attach') == 0 || nextTrack.name.toLowerCase().indexOf('detach') == 0) self._home_next = true;
+					}
+
+					// this.current_state.set('active_track', playlist.get_next_track({ start_rho: this.current_state.get('_end_rho') }));
 					this.socket_update(playlist.toJSON());
 				}
-				this._play_track(this.current_state.get('active_track'), null);
+
+				if (self._home_next) {
+					this.current_state.set('state', 'waiting'); // fix so it does the home correctly
+					logEvent(1, "Home Next", this.current_state.get("state"));
+					setTimeout(function() {
+						self.home(null, null);
+					}, 100);
+				} else {
+					this._play_track(this.current_state.get('active_track'), null);
+				}
 
 				this.current_state.set('is_waiting_between_tracks', 'false');
 
@@ -753,8 +809,8 @@ var sisbot = {
 		} else if (cb) cb('No Connection', null);
 	},
 	pause: function(data, cb) {
-		logEvent(1, "Sisbot Pause", data);
 		if (this._validateConnection()) {
+  		logEvent(1, "Sisbot Pause", data);
 			this._paused = true;
 			this.current_state.set("state", "paused");
 			plotter.pause();
@@ -763,8 +819,9 @@ var sisbot = {
 	},
 	home: function(data, cb) {
 		var self = this;
-		logEvent(1, "Sisbot Home", data);
+
 		if (this._validateConnection()) {
+	    logEvent(1, "Sisbot Home", data);
 			if (data) { // special instructions?
 				if (data.stop) this._autoplay = false; // home without playing anything afterward
 				if (data.clear_tracks) this.current_state.set({active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
@@ -779,11 +836,105 @@ var sisbot = {
 			} else {
 				this._paused = false;
 				this.current_state.set("state", "homing");
-				plotter.home();
-				if (cb)	cb(null, this.current_state.toJSON());
+
+				////////// DR Homing:
+	      if (this._sensored == false){
+    			var thetaPosition, rhoPosition;
+
+    			thetaPosition = self.plotter.getThetaPosition();
+    			logEvent("shortest theta dist away from home = " + thetaPosition + " rads");
+    			rhoPosition = plotter.getRhoPosition();
+    			logEvent("rho dist away form home = " + rhoPosition + " normalized");
+
+    			var track_obj = {
+						verts: [{th: thetaPosition, r: rhoPosition},{th:0,r:0}],
+						vel: 1,
+						accel: 0.5,
+						thvmax: 0.5
+					};
+					self._paused = false;
+					logEvent("doing DEAD RECKONING homing...");
+					console.log("doing DEAD RECKONING homing...");
+					self.plotter.playTrack(track_obj);
+					self._home_next = true; // home after this outward movement
+
+					self._sensored = true; //next time round, sensored home
+
+  				if (cb)	cb(null, this.current_state.toJSON());
+	      } else {
+          // delay, then check if we need to move out
+          self._home_delay = setTimeout(function() {
+            self._delayed_home(data, cb);
+          }, 500); // wait a half second
+        }
 			}
 		} else if (cb) cb('No Connection', null);
 	},
+  _delayed_home: function(data, cb) {
+    var self = this;
+
+    //
+		if (this._validateConnection()) {
+      var thHome = self.plotter.getThetaHome();
+			
+      var rhoHome = self.plotter.getRhoHome();
+			
+      logEvent(1, "Sensor Values", thHome, rhoHome);
+			console.log("Sensor Values", thHome, rhoHome);
+			//testing this:
+			thHome = false;
+			rhoHome = false;
+			console.log("setting homes false here");
+
+      /////////////////////
+      if (thHome && rhoHome) {
+        logEvent(1, "DEAD RECKONING Home Successful");
+				console.log("DEAD RECKONING Home Successful");
+        this._sensored = false;
+        this._home_next = false;
+				this.current_state.set({state: "waiting", is_homed: "true", _end_rho: 0});
+
+        // play next track as intended
+        if (self.current_state.get('active_track').id != "false") {
+					logEvent(1, "Force next track, start Rho: ", self.current_state.get('_end_rho'));
+					self._play_given_track(self.current_state.get('active_track'), null);
+				} else {
+					logEvent(1, "No Next Track", self.current_state.get('active_track'));
+				}
+
+        // send callback to UI
+        if (cb)	cb(null, this.current_state.toJSON());
+      } else {
+        this._sensored = true; // force sensored home
+
+/*****/	this._moved_out = true; // inelegant way to get rid of move out (for now)
+
+        if (this._moved_out) {
+					console.log("not at home after DR, doing sensored...");
+          self.plotter.home();
+          this._moved_out = false;
+        } else {
+          this._moved_out = true; // call plotter.home() next time instead
+          this._home_next = true; // home again after this outward movement
+          var track_obj = {
+            verts: [{th:0,r:0}],
+            vel: 1,
+            accel: 0.5,
+            thvmax: 0.5
+          };
+          if (thHome == true) {
+            logEvent(1, "Homing... Fix theta and rho");
+            track_obj.verts.push({th:self.config.auto_home_th, r:self.config.auto_home_rho});
+          } else {
+            logEvent(1, "Homing... Fix rho");
+            track_obj.verts.push({th:0, r:self.config.auto_home_rho});
+          }
+          self.plotter.playTrack(track_obj);
+        }
+        if (cb)	cb(null, this.current_state.toJSON());
+      }
+    } else if (cb) cb('No Connection', null);
+  },
 	add_playlist: function(data, cb) {
 		logEvent(1, "Sisbot Add Playlist", data);
 
@@ -922,33 +1073,33 @@ var sisbot = {
         });
         this.current_state.set("track_ids", clean_tracks);
 
-		// remove from playlists
-		var playlists = this.current_state.get("playlist_ids");
-		var return_objs = [];
-		_.each(playlists, function(playlist_id) {
-			var playlist = self.collection.get(playlist_id);
-			var did_remove = false;
+    		// remove from playlists
+    		var playlists = this.current_state.get("playlist_ids");
+    		var return_objs = [];
+    		_.each(playlists, function(playlist_id) {
+    			var playlist = self.collection.get(playlist_id);
+    			var did_remove = false;
 
-			var tracks = playlist.get("tracks");
-	        var clean_tracks = [];
-			// remove all instances of the track_id
-			_.each(tracks, function(track_obj) {
-				if (track_obj.id != data.id) clean_tracks.push(track_obj);
-				else did_remove = true;
-			});
+    			var tracks = playlist.get("tracks");
+    	        var clean_tracks = [];
+    			// remove all instances of the track_id
+    			_.each(tracks, function(track_obj) {
+    				if (track_obj.id != data.id) clean_tracks.push(track_obj);
+    				else did_remove = true;
+    			});
 
-			if (did_remove) {
-		        playlist.set("tracks", clean_tracks);
+    			if (did_remove) {
+    		        playlist.set("tracks", clean_tracks);
 
-				// fix the sorted order, or just reshuffle
-				playlist.set_shuffle({ is_shuffle: playlist.get('is_shuffle') });
+    				// fix the sorted order, or just reshuffle
+    				playlist.set_shuffle({ is_shuffle: playlist.get('is_shuffle') });
 
-				return_objs.push(playlist.toJSON());
-			}
-		});
+    				return_objs.push(playlist.toJSON());
+    			}
+    		});
 
-		// add sisbot_state
-		return_objs.push(this.current_state.toJSON());
+    		// add sisbot_state
+    		return_objs.push(this.current_state.toJSON());
 
         this.save(null, null);
 
@@ -987,11 +1138,11 @@ var sisbot = {
 				if (cb) cb(null, { 'id':data.id });
 			});
 		} else {
-			console.log("Thumbnails queue", self._thumbnail_queue.length);
+		    logEvent(1, "Thumbnails queue", self._thumbnail_queue.length);
 			// if (cb) cb(null, null);
 		}
 	},
-    thumbnail_generate: function(data, cb) {
+  thumbnail_generate: function(data, cb) {
 		logEvent(1, "Thumbnail generate", data.id);
         // @id
         var self = this;
@@ -1052,6 +1203,7 @@ var sisbot = {
                 width: data.dimensions + 16,
                 height: data.dimensions
             },
+            phantomPath: '/home/pi/phantomjs/bin/phantomjs',
             userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_4) AppleWebKit/600.7.12 (KHTML, like Gecko) Version/8.0.7 Safari/600.7.12',
             shotSize: {
                 width: 'window',
@@ -1175,6 +1327,9 @@ var sisbot = {
 		}
 		logEvent(1, "Sisbot Set Track", data.name, data.firstR, data.lastR);
 
+    // make sure verts are not a part of this
+    if (data.verts) delete data.verts;
+
 		var new_track = new Track(data);
 		var track = this.collection.add(new_track, {merge: true});
 		track.collection = this.collection;
@@ -1213,7 +1368,7 @@ var sisbot = {
 	},
 	_play_track: function(data, cb) {
 		var self = this;
-		logEvent(1, "Sisbot Play Track", data.name, "r:"+data.firstR+data.lastR, "reversed:", data.reversed, "Table R:", self.current_state.get('_end_rho'));
+		logEvent(1, "Sisbot Play Track", data.name, "r:"+data.firstR+data.lastR, "reversed:", data.reversed, "Table R:", self.current_state.get('_end_rho'), this.current_state.get('state'));
 		if (data == undefined || data == null || data == "false") {
 			logEvent(2, "No Track given");
 			if (cb) cb("No track", null);
@@ -1227,19 +1382,27 @@ var sisbot = {
 			if (this.current_state.get("is_homed") == "true") {
 				var track = this.collection.get(data.id);
 				if (track != undefined) {
-			    if (this.current_state.get("is_homed") == "true") {
+				    if (this.current_state.get("is_homed") == "true") {
 						_.extend(data, {start:self.current_state.get('_end_rho')});
-						var track_obj = track.get_plotter_obj(data);
+						var track_obj = track.get_plotter_obj(data, self.config.auto_track_start_rho);
 						if (track_obj != "false") {
 							this._paused = false;
-							this.plotter.playTrack(track_obj);
-							this.current_state.set('_end_rho', track_obj.lastR); // pull from track_obj
 
-							this.save(null, null);
+              // compare to be sure we can start this track
+              if (self.current_state.get('_end_rho') !== track_obj.firstR) {
+                logEvent(1, "Track mismatch, move to start rho", track_obj.firstR);
+                this._play_given_track(track_obj, null);
+              } else {
+  							this.plotter.playTrack(track_obj);
+  							this.current_state.set('_end_rho', track_obj.lastR); // pull from track_obj
 
+  							this.save(null, null);
+              }
+
+              self.socket_update([track.toJSON(),self.current_state.toJSON()]);
 							if (cb)	cb(null, [track.toJSON(),self.current_state.toJSON()]);
 						} else {
-							logEvent(2, "Continuous play not possible, skip this", track_obj.name);
+							logEvent(2, "Continuous play not possible, skip this");
 
 							if (this.current_state.get("active_playlist_id") != "false") {
 								this.play_next_track(null, cb);
@@ -1256,8 +1419,36 @@ var sisbot = {
 			}
 		} else if (cb) cb('No Connection', null);
 	},
+  _play_given_track: function(data, cb) { // play the track, and force move to its start rho if needed
+    var self = this;
+    var track = data;
+    if (track == undefined) return logEvent(2, "No Given Track");
+    var move_to_rho = false; // do we even need to?
+
+    // if (self.current_state.get("active_playlist_id") == "false") {
+    if (track.firstR != undefined && track.firstR != self.current_state.get('_end_rho')) move_to_rho = track.firstR;
+    // }
+    // move to start rho
+    if (move_to_rho !== false) {
+      var track_obj = {
+        verts: [{th:0,r:plotter.getRhoPosition()},{th:self.config.auto_th,r:move_to_rho}],
+        vel: 1,
+        accel: 0.5,
+        thvmax: 0.5
+      };
+      self._paused = false;
+      self.plotter.playTrack(track_obj);
+      self.current_state.set({_end_rho: move_to_rho, repeat_current: 'true'}); // pull from track_obj
+      // self._move_to_rho = move_to_rho;
+    } else {
+      self._play_track(track, null);
+    }
+
+    if (cb) cb(null, self.current_state.toJSON());
+  },
 	play_next_track: function(data, cb) {
 		logEvent(1, "Sisbot Play Next Track", data);
+		var self = this;
 		if (this.current_state.get('active_playlist_id') == "false") {
 			logEvent(2, "No Playlist");
 			if (cb) cb('No playlist', null);
@@ -1272,8 +1463,9 @@ var sisbot = {
 		if (playlist != undefined) {
 			this._autoplay = true; // make it play, even if a home is needed after homing
 			if (this.current_state.get("is_homed") == "true") {
-				var track = playlist.get_next_track({ start_rho: this.current_state.get('_end_rho') });
+				var track = playlist.get_next_track({ start_rho: self.current_state.get('_end_rho') });
 				if (track != "false")	{
+          this.current_state.set('active_track', track); // make sure UI is up-to-date
 					this._play_track(track, cb);
 				}
 			} else {
@@ -1483,9 +1675,9 @@ var sisbot = {
 				local_ip: self._getIPAddress()
 			});
 
-            setTimeout(function () {
-    			self.current_state.set({is_internet_connected: returnValue, local_ip: self._getIPAddress()});
-            }, 10000);
+      setTimeout(function () {
+	      self.current_state.set({is_internet_connected: returnValue, local_ip: self._getIPAddress()});
+      }, 10000);
 
 			if (cb) cb(null, returnValue);
 		});
@@ -1498,16 +1690,19 @@ var sisbot = {
 					if (err) return logEvent(2, "Internet check err", err);
 					if (resp == "true") {
 						logEvent(1, "Internet connected.",self.current_state.get("is_internet_connected"));
-                        append_log('Internet connected: ' + self.current_state.get("is_internet_connected"));
+            append_log('Internet connected: ' + self.current_state.get("is_internet_connected"));
 
-            			self._changing_to_wifi = false;
+      			self._changing_to_wifi = false;
 						self.current_state.set({
 							is_available: "true",
-							reason_unavailable: "false",
 							failed_to_connect_to_wifi: "false",
 							wifi_forget: "false",
 						 	wifi_error: "false"
 						});
+						// leave current state alone if fault
+						if (self.current_state.get('reason_unavailable').indexOf('_fault') < 0) {
+							self.current_state.set("reason_unavailable", "false");
+						}
 						self._internet_retries = 0; // successful, reset
 
 						self.save(null, null);
@@ -1574,7 +1769,7 @@ var sisbot = {
 			if (cb) cb("No network name given", null);
 		} else if (data.psk && (data.psk == "" || data.psk.length >= 8)) {
 			clearTimeout(this._internet_check);
-      		this._changing_to_wifi = true;
+  		this._changing_to_wifi = true;
 			this._internet_retries = 0; // clear retry count
 
 			// Make sure password is valid
@@ -1582,6 +1777,7 @@ var sisbot = {
 			if (/^([^\r\n"]{8,64})$/g.test(data.psk)) {
 				self.current_state.set({
 					is_available: "false",
+          reason_unavailable: "connect_to_wifi",
 					wifi_network: data.ssid,
 					wifi_password: data.psk,
 					is_hotspot: "false",
@@ -2028,10 +2224,13 @@ var logEvent = function() {
 			else line += "\t"+obj;
 		});
 
-		console.log(line);
 		fs.appendFile(filename, line + '\n', function(err, resp) {
 		  if (err) console.log("Log err", err);
 		});
+
+    // redline errors
+    if (arguments[0] == 2 || arguments[0] == '2') line = '\x1b[31m'+line+'\x1b[0m';
+		console.log(line); // !! comment out in master !!
 	} else console.log(arguments);
 }
 

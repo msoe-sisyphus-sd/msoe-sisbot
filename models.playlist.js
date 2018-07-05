@@ -328,26 +328,6 @@ var playlist = Backbone.Model.extend({
 
 		var final_order = _.pluck(randomized_tracks,'_index');
 		return final_order;
-
-		// var first_rs = _.pluck(randomized_tracks,'firstR');
-		// var last_rs = _.pluck(randomized_tracks,'lastR');
-        //
-		// // update tracks to match firstR, lastR, reversed
-		// _.each(randomized_tracks, function(track_obj) {
-		// 	var track = self.get('tracks')[track_obj._index];
-		// 	track.firstR = track_obj.firstR;
-		// 	track.lastR = track_obj.lastR;
-		// 	track.reversed = track_obj.reversed;
-		// });
-        //
-		// // update self with randomly ordered list
-		// this.set({sorted_tracks: final_order, active_track_index: 0});
-        //
-		// console.log("Randomized Tracks, retries:", retries, "best:", best_count);
-		// for (var i=0; i<final_order.length; i++) {
-		// 	console.log("["+final_order[i]+", r"+first_rs[i]+last_rs[i]+"]")
-		// }
-		// console.log("First Track", this.get('tracks')[this.get("sorted_tracks")[this.get("active_track_index")]]);
 	},
 	_update_tracks: function(data) { // fix reversed state for non-randomized list
 		// console.log("Update tracks", data);
