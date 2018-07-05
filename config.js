@@ -51,8 +51,8 @@ var config = {
 			retry_internet_interval: 3000, // three seconds later
 			wifi_error_retry_interval: 60000, // one minute
 			default_data: default_status,
-			pingTimeout: 1300, // socket pingTimeout
-			pingInterval: 600, // socket pingInterval
+			pingTimeout: 8000, // socket pingTimeout
+			pingInterval: 5000, // socket pingInterval
 			max_thumbnail_points: 10000
 		},
 		matt: {
