@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.5.4', // PhantomJS update for preview images
+			version	: '1.5.5', // PhantomJS update for preview images
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
