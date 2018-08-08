@@ -109,17 +109,17 @@ function checkPhoto() { //autodimming functionality:
 	var photo, photoAvg = 0, photoOut = 0, delta;
 	if (plotRadius > 10) BRamp = 4; //temp fix for less light under 36 than 22
 
-	if (useFaultSensors){
-		checkFault();
-	}
-
-	sp.write("A\r"); //SBB command to check analog inputs
+	sp.write("I\r"); //SBB command to check digital inputs
+	
+	if (useFaultSensors)	sp.write("A2\r"); //SBB command to check analog inputs
+	else sp.write("A\r");
+	
 
  	if (autodim == "true") {	//need to check autodim toggle fn'ing
  		photo = rawPhoto;
 		if (photo > 1023) {photo = 1023;}
 		if (photo < photoMin) {photo = photoMin;} //photomin?
-		//logEvent(1, "raw photo = " + photo)
+		//console.log( "raw photo = " + photo)
 
 		photoSum = photoArray.reduce(add, 0);
         //logEvent(1, "photoSum = " + photoSum)
@@ -195,7 +195,6 @@ function checkPhoto() { //autodimming functionality:
 		photoTimeout = setTimeout(checkPhoto, photoMsec);
 	}
 }
-
 function add(a, b) {
     return a + b;
 }
@@ -519,6 +518,7 @@ function goThetaHome() {
 
   if (THETA_HOME_COUNTER == THETA_HOME_MAX) {
     logEvent(2, 'Failed to find Theta home!');
+	console.log( 'Failed to find Theta home!');
     //setStatus('waiting');
 	thAccum = 0;
 	WAITING_THETA_HOMED = false;
@@ -696,45 +696,7 @@ function goRhoHome() {
 
 }
 
-//////      FAULT DETECTION     ///////////////////////////////////
-function checkFault() {
-	//Theta fault pin = D,1 / R fault pin = D,0
 
-	sp.write("I\r");
-	//logEvent(1, thetaFaultQueryStr);
-	//if (THETA_FAULTED){
-	//	if (RETESTCOUNTER < RETESTNUM) //not fully confirmed yet:
-		//	RETESTCOUNTER++;
-	  //else{
-		//	logEvent(1, "THETA AXIS FAULTED!")
-		//	RETESTCOUNTER = 0;
-			//stop program and alert user here
-		//}
-	//}
-	//else{
-		//RETESTCOUNTER = 0;
-	//}
-}
-/*
-function checkRhoFault() {
-	//Rho fault pin = D,0
-	var rhoFaultQueryStr = "PI," + faultRPin + "\r";
-	sp.write(rhoFaultQueryStr);
-	logEvent(1, rhoFaultQueryStr);
-	if (R_FAULTED){
-		if (RETESTCOUNTER < RETESTNUM) //not fully confirmed yet:
-			RETESTCOUNTER++;
-	  else{
-			logEvent(1, "R AXIS FAULTED!")
-			RETESTCOUNTER = 0;
-			//stop program and alert user here
-		}
-	}
-	else{
-		//RETESTCOUNTER = 0;
-	}
-}
-*/
 
 //////      JOG     ///////////////////////////////////
 function jog(axis, direction) {
@@ -820,8 +782,7 @@ function parseReceivedSerialData(data) {
 
   if (parts[0] == '!')  {logEvent(2, "EBB error: " + data);}
 	else {
-
-		if (parts[0] == 'A'){ //analog pin states
+		if (parts[0] == 'A'){ //analog data Tma, Rma, photo, Vm - (legacy)
 				//logEvent(1, parts)
 
 			if (data.length == 33){ //analog report came back complete
@@ -830,7 +791,7 @@ function parseReceivedSerialData(data) {
 					//logEvent(1, 'Theta current = ' + Math.round(maTheta) + 'mA') ;
 				}
 
-				if (parts[2]) {
+				if (parts[1]) {
 					maR = Number(parts[2].slice(3,7)) * 707 * 3.3 / 1023;
 					//logEvent(1, 'R current = ' + Math.round(maR) + 'mA') ;
 				}
@@ -846,14 +807,43 @@ function parseReceivedSerialData(data) {
 				}
 			}
 		}
-
+		
+	//	if (parts[0] == 'A1'){} for future use when serial parser improved...
+	//for SBB 2.2.18+, avg'd Tma, Rma, photo, Vm and sampleCount
+		
+		if (parts[0] == 'A2'){ //for SBB 2.2.18+ only avg'd photo and sampleCount
+			if (data.length == 20){ //analog report came back complete 
+				if (parts[1]) {
+					photoAccum = Number(parts[1].slice(3,11));
+					//console.log("photoAccum= " + photoAccum);	
+				}
+				if (parts[2]) { 
+					sampleCount = Number(parts[2].slice(3,8)) //count is always , 5 digits
+					//console.log( "sampleCount= "+ sampleCount);
+					//if (sampleCount>9999) resend "A" command...
+					if (sampleCount) {
+						avgPhoto = photoAccum / sampleCount;
+						if (avgPhoto > 0 && avgPhoto < 1024) {
+							rawPhoto = avgPhoto;
+							console.log( "Avg'd rawPhoto= " + rawPhoto );
+							//console.log( "sampleCount= "+ sampleCount);
+							//console.log("photoAccum= " + photoAccum);
+							//console.log();
+						}
+					}
+				}
+			}
+		}
+		
 		if (parts[0] == 'PI') {//EBB Pin Input return prefix
+
 
  			if (WAITING_THETA_HOMED) {
 
 				if (parseInt(parts[1], 10) == homingThHitState)  {
 					THETA_HOMED = true;
-				} else {
+				}
+				else {
 					THETA_HOMED = false;
 					RETESTCOUNTER = 0;
 				}
@@ -873,7 +863,7 @@ function parseReceivedSerialData(data) {
 				return;
 			}
 		}
-
+		
 		if (parts[0] == 'I') {//EBB read al1 inputs
 			if (data.length == 21){ //valid "I" return
 				//logEvent(1, data);
@@ -881,9 +871,9 @@ function parseReceivedSerialData(data) {
 				var num = parseInt(parts[4],10);
 
 				//logEvent(1, num);
-				// logEvent(1, "Theta fault pin = " + (num & 2));
-				// logEvent(1, "Rho fault pin = " + (num & 1));
-				// logEvent(1, "Th home pin = " + (num & 4));
+				 //console.log( "Theta fault pin = " + (num & 2));
+				//console.log(  "Rho fault pin = " + (num & 1));
+				//console.log(  "Th home pin = " + (num & 4));
 
 				var thFaultState, rFaultState;
 				var thHomeState, rHomeState;
@@ -902,7 +892,7 @@ function parseReceivedSerialData(data) {
 
 				if ((num & 4) > 0) {thHomeState = 1;} else {thHomeState = 0;}
 				if (thHomeState == homingThHitState) {
-					logEvent(1, "Theta at home");
+					//console.log(  "Theta at home");
 					THETA_HOMED = true;
 				} else {
 					THETA_HOMED = false;
@@ -912,7 +902,7 @@ function parseReceivedSerialData(data) {
 				// logEvent(1, "R home pin = " + (num & 64));
 				if ((num & 64) > 0) {rHomeState = 1;} else {rHomeState = 0;}
 				if (rHomeState == homingRHitState) {
-          logEvent(1, "Rho at home");
+          console.log(  "Rho at home");
 					RHO_HOMED = true;
         } else {
 					RHO_HOMED = false;
