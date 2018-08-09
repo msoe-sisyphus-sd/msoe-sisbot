@@ -874,12 +874,13 @@ function parseReceivedSerialData(data) {
 				 //console.log( "Theta fault pin = " + (num & 2));
 				//console.log(  "Rho fault pin = " + (num & 1));
 				//console.log(  "Th home pin = " + (num & 4));
-
+			if (useFaultSensors)
+			{
 				var thFaultState, rFaultState;
 				var thHomeState, rHomeState;
 				if ((num & 2) > 0) {thFaultState = 1;} else {thFaultState = 0;}
 				if ((num & 1) > 0) {rFaultState = 1;} else {rFaultState = 0;}
-        if (thFaultState == faultActiveState && rFaultState == faultActiveState) {
+        			if (thFaultState == faultActiveState && rFaultState == faultActiveState) {
 					logEvent(2, "Theta and Rho faulted!");
 					onServoThRhoFault();
 				} else if (thFaultState == faultActiveState) {
@@ -889,7 +890,7 @@ function parseReceivedSerialData(data) {
 					logEvent(2, "Rho faulted!");
 					onServoRhoFault();
 				}
-
+			}
 				if ((num & 4) > 0) {thHomeState = 1;} else {thHomeState = 0;}
 				if (thHomeState == homingThHitState) {
 					//console.log(  "Theta at home");
