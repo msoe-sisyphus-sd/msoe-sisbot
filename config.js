@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.5.7', // dont read for faults on stepper tables
+			version	: '1.5.8', // same as 1.5.7, testing firmware update for staging
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
