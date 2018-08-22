@@ -81,8 +81,8 @@ var moment = require("moment");
 //globals for autodimming:
 var autodim = "true";
 var rawPhoto = 1;  //raw photosensor 10-bit analog value
-var rawPhotoLast = 1;
-var photoArraySize = 32; //higher-->slower change
+//var rawPhotoLast = 1;
+var photoArraySize = 16; //higher-->slower change
 var photoArray = [];
 photoArray.length = photoArraySize;
 photoArray.fill(0);
@@ -92,6 +92,8 @@ var photoSum = 0;
 var photoMin = 5; //minimum non-off LED brightness
 photoArray.fill(photoMin);
 var photoAvgOld = photoMin;
+var bigChangeCounter = 0;
+var bigChangeIsReal = 4; //higher vals -> slower response, but more stable
 var photoMsec = 250; // -sample potosensor every.  higher-->slower change
 var sliderBrightness;
 var lastPhotoOut = photoMin;
@@ -106,7 +108,7 @@ var Vm;      //motor voltage
 }
 
 function checkPhoto() { //autodimming functionality:
-	var photo, photoAvg = 0, photoOut = 0, delta;
+	var photo, photoAvg = 0, photoOut = 0, delta, trusted = true;
 	if (plotRadius > 10) BRamp = 4; //temp fix for less light under 36 than 22
 
 	sp.write("I\r"); //SBB command to check digital inputs
@@ -116,22 +118,41 @@ function checkPhoto() { //autodimming functionality:
 	
 
  	if (autodim == "true") {	//need to check autodim toggle fn'ing
- 		photo = rawPhoto;
-		if (photo > 1023) {photo = 1023;}
-		if (photo < photoMin) {photo = photoMin;} //photomin?
-		//console.log( "raw photo = " + photo)
+		//console.log("photoAvgOld: " + photoAvgOld);
+	//filter spurious readings:
+		if (Math.abs(rawPhoto - photoAvgOld) / photoAvgOld > 0.5) {
+			if (bigChangeCounter < bigChangeIsReal) { 
+				bigChangeCounter = bigChangeCounter + 1;
+				//console.log("bigChangeCtr = " + bigChangeCounter );
+				photoOut = photoAvgOld; // don't trust use prior avg
+				photoAvg = photoAvgOld;
+				trusted = false;
+			}
+			
+		}
+		if (trusted) { //trusted sensor reading
+			bigChangeCounter = 0;
+			photo = rawPhoto; 
+			
+			if (photo > 1023) {photo = 1023;}
+			if (photo < photoMin) {photo = photoMin;} //photomin?
+			//console.log( "raw photo = " + photo)
 
-		photoSum = photoArray.reduce(add, 0);
-        //logEvent(1, "photoSum = " + photoSum)
+			
+			//logEvent(1, "photoSum = " + photoSum)
 
-		photoSum -= photoArray.shift(); //delete first val in array and subtract from sum
-		photoSum += photoArray[photoArray.push(photo) - 1]; //add val to end and add it
-		photoAvg = photoSum / photoArraySize;
-		photoOut = photoAvg;
-
-		//logEvent(1, "photoAvg = " + photoAvg);
-
-
+			photoArray.shift(); //delete first val in array 
+			photoArray.push(photo); //add new val to end 
+			photoSum = photoArray.reduce(add, 0);
+			photoAvg = photoSum / photoArraySize;
+		
+			photoOut = photoAvg;
+			//console.log("photoAvg* = " + photoAvg);
+			//logEvent(1, "photoAvg = " + photoAvg);
+		}
+		
+		photoAvgOld = photoAvg;
+		
 		if (sliderBrightness > 0.5){
 			photoOut *= BRamp * (Math.pow(5,sliderBrightness * 2) - 4);
 		}
@@ -154,40 +175,19 @@ function checkPhoto() { //autodimming functionality:
 
 			if (photoOut != 0) {
 				sp.write("SE,1," + photoOut +"\r");
+				//console.log('\x1b[31m%s\x1b[0m',"SE,1," + photoOut +"\r"); //in red
+				//console.log("SE,1," + photoOut +"\r");
 				//logEvent(1, "SE,1," + photoOut);
 			}
 			else {
 				sp.write("SE,0\r");
+				//console.log("SE,0\r");
 			  	//logEvent(1, "SE,0");
 			}
-			photoAvgOld = photoAvg;
+			
 			lastPhotoOut = photoOut;
 		}
-
-		/*
-		if ( (delta > .1) && (delta < .3)) {
-			ctr++;
-			//logEvent(1, "ctr = " + ctr);
-			if (ctr > certain){
-
-				if (photoOut != 0) {
-					sp.write("SE,1," + photoOut +"\r");
-					// logEvent(1, "SE,1," + photoOut);
-				}
-				else {
-					sp.write("SE,0\r");
-			    // logEvent(1, "SE,0");
-				}
-				ctr = 0;
-				photoAvgOld = photoAvg;
-				lastPhotoOut = photoOut;
-			}
-		}
-		else{
-			ctr = 0;
-		}
-		*/
-  	}
+	}
 
 	// remove extra timeout calls
 	clearTimeout(photoTimeout);
@@ -825,7 +825,7 @@ function parseReceivedSerialData(data) {
 						avgPhoto = photoAccum / sampleCount;
 						if (avgPhoto > 0 && avgPhoto < 1024) {
 							rawPhoto = avgPhoto;
-							console.log( "Avg'd rawPhoto= " + rawPhoto );
+							//console.log( "Avg'd rawPhoto= " + rawPhoto );
 							//console.log( "sampleCount= "+ sampleCount);
 							//console.log("photoAccum= " + photoAccum);
 							//console.log();
