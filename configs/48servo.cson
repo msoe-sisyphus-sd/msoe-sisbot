@@ -16,8 +16,8 @@ jogStepsRadius: 100
 isServo: true
 faultActiveState: 1
 twoBallEnabled: true
-attach_track: '0 0,-0.2963 0,-0.2963 -0.0526,0 -0.0526,-0.2963 -0.0526,-0.2963 0,0 0' # set table specific attach verts
-detach_track: '0 0,-0.2963 0,-0.2963 -0.0526,0 -0.0526,0 0' # set table specific detach verts
+attach_track: '0 0,-0.6 0,-0.6 -0.0526,0 -0.0526,-0.6 -0.0526,-0.6 0,0 0' # set table specific attach verts
+detach_track: '0 0,-0.6 0,-0.6 -0.0526,0 -0.0526,0 0' # set table specific detach verts
 
 max_speed: 4
 
