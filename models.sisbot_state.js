@@ -16,7 +16,7 @@ var sisbot_state = Backbone.Model.extend({
 		is_available					: "true",
 		installing_updates		: "false",
 		installing_updates_error	: "",
-		factory_resetting			: "false",
+		factory_resetting					: "false",
 		factory_resetting_error		: "",
 		do_not_remind					: "false",
 		hostname_prompt				: "false",

@@ -791,7 +791,7 @@ function parseReceivedSerialData(data) {
 					//logEvent(1, 'Theta current = ' + Math.round(maTheta) + 'mA') ;
 				}
 
-				if (parts[1]) {
+				if (parts[2]) {
 					maR = Number(parts[2].slice(3,7)) * 707 * 3.3 / 1023;
 					//logEvent(1, 'R current = ' + Math.round(maR) + 'mA') ;
 				}
