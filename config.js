@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.5.10', // updates to CSON for attach path
+			version	: '1.6.0', // September 2018 release
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
