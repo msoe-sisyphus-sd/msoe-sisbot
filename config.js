@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.6.0', // September 2018 release
+			version	: '1.5.11', // excluding 2 ball tracks if not 2ball table
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

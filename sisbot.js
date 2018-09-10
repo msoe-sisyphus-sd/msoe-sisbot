@@ -169,27 +169,86 @@ var sisbot = {
 			logEvent(1, "Load defaults");
 			objs = this.config.default_data;
 		}
+
+    var cson_config = CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config);
+
+
+    //var tracks = this.current_state.get("track_ids");
+    var tracks = [];
+    //var playlists = this.current_state.get("playlist_ids");
+    //var playlists = [];
+
+    logEvent(1, "looping through loaded state");
+
 		_.each(objs, function(obj) {
 			switch (obj.type) {
 				case "track":
-					var track = self.collection.add(new Track(obj));
-          if (track.get('verts')) {
-            logEvent(2, "Track saved verts", track.get('name'));
-            track.unset('verts');
+          var is_2ball = cson_config.twoBallEnabled;
+          var is_2ball_track = false;
+          logEvent(1,"reading track from state ", obj.name);
+          if (obj.name == 'Attach') { is_2ball_track = true; }
+          if (obj.name == 'Detach') { is_2ball_track = true; }
+          logEvent(1, "track switch 2ball ", is_2ball , " track_type ", is_2ball_track);
+
+          if (is_2ball || is_2ball_track == false)
+          {
+            logEvent(1, "adding track named to self.collection ", obj.name);
+            var newTrack = new Track(obj);
+  					var track = self.collection.add(newTrack);
+            if (track.get('verts')) {
+              logEvent(2, "Track saved verts", track.get('name'));
+              track.unset('verts');
+            }
+            if (tracks.indexOf(track.get("id")) < 0) {
+              tracks.push(track.get("id"));
+            }
           }
+
 					break;
 				case "playlist":
-					self.collection.add(new Playlist(obj));
+          var newPlaylist = new Playlist(obj);
+          logEvent(1,"reading in playlist during init " + newPlaylist.get('name'));
+          if (newPlaylist.get('name') == "2Ball Demo")
+          {
+            logEvent(1,"Found the 2Ball Demo playlist");
+            if (cson_config.twoBallEnabled) {
+              logEvent(1,"Two ball config, allowed to see this playlist");
+              self.collection.add(newPlaylist);
+              // if (playlists.indexOf(playlist.get("id")) < 0) {
+              //   playlists.push(playlist.get("id"));
+              // }
+            }
+          }
+          else
+          {
+            logEvent(1,"saving playlist to collection " + newPlaylist.get('name'));
+  					self.collection.add(newPlaylist);
+            // if (playlists.indexOf(playlist.get("id")) < 0) {
+            //   playlists.push(playlist.get("id"));
+            // }
+          }
 					break;
 				case "sisbot":
+          logEvent(1,"getting sisbot state");
 					self.collection.add(new Sisbot_state(obj));
 					break;
 				default:
 					logEvent(1, "Unknown:", obj);
 					self.collection.add(obj);
 			}
+      
+
+
 		});
+
+
 		this.current_state = this.collection.findWhere({type: "sisbot"});
+
+    logEvent(1,"setting track_ids to ", tracks);
+    this.current_state.set("track_ids", tracks);
+    logEvent(1,"done setting track_ids");
+    // this.current_state.set("playlist_ids", playlists);
+    
 
 		// make sure the hostname is correct
 		var regex = /^[^a-zA-Z]*/; // make sure first character is a-z
@@ -246,6 +305,7 @@ var sisbot = {
 
 			switch (obj.get('type')) {
 				case 'track':
+          logEvent(1,"setting up all tracks " + obj.get('name'));
 					if (obj.get('firstR') < 0 || obj.get('lastR') < 0) obj.get_verts(); // load thr file to get the first/last rho values
 					break;
 				case 'playlist':
@@ -258,7 +318,7 @@ var sisbot = {
 		});
 
 		// plotter
-		var cson_config = CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config);
+    var cson_config = CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config);
   	this.plotter.setConfig(cson_config);
     if (cson_config.max_speed) this.config.max_speed = cson_config.max_speed; // overwrite config.js max_speed if table allows
 		if (cson_config.twoBallEnabled) {
@@ -660,7 +720,7 @@ var sisbot = {
 			if (model.id != self.current_state.id) return_objs.push(model.toJSON());
 		});
 		return_objs.push(this.current_state.toJSON()); // sisbot state last
-		// logEvent(1, "Sisbot state", return_objs);
+		// logEvent(1, "Sisbot state  get_collection", return_objs);
 
 		if (cb) cb(null, return_objs);
 	},
