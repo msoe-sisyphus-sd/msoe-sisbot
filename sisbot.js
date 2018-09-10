@@ -176,7 +176,7 @@ var sisbot = {
     //var tracks = this.current_state.get("track_ids");
     var tracks = [];
     //var playlists = this.current_state.get("playlist_ids");
-    //var playlists = [];
+    var playlists = [];
 
     logEvent(1, "looping through loaded state");
 
@@ -213,19 +213,19 @@ var sisbot = {
             logEvent(1,"Found the 2Ball Demo playlist");
             if (cson_config.twoBallEnabled) {
               logEvent(1,"Two ball config, allowed to see this playlist");
-              self.collection.add(newPlaylist);
-              // if (playlists.indexOf(playlist.get("id")) < 0) {
-              //   playlists.push(playlist.get("id"));
-              // }
+              var playlist = self.collection.add(newPlaylist);
+              if (playlists.indexOf(playlist.get("id")) < 0) {
+                playlists.push(playlist.get("id"));
+              }
             }
           }
           else
           {
             logEvent(1,"saving playlist to collection " + newPlaylist.get('name'));
-  					self.collection.add(newPlaylist);
-            // if (playlists.indexOf(playlist.get("id")) < 0) {
-            //   playlists.push(playlist.get("id"));
-            // }
+  					var playlist = self.collection.add(newPlaylist);
+            if (playlists.indexOf(playlist.get("id")) < 0) {
+              playlists.push(playlist.get("id"));
+            }
           }
 					break;
 				case "sisbot":
@@ -247,7 +247,7 @@ var sisbot = {
     logEvent(1,"setting track_ids to ", tracks);
     this.current_state.set("track_ids", tracks);
     logEvent(1,"done setting track_ids");
-    // this.current_state.set("playlist_ids", playlists);
+    this.current_state.set("playlist_ids", playlists);
     
 
 		// make sure the hostname is correct
