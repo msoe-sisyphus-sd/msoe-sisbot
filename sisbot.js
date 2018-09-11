@@ -1707,6 +1707,37 @@ var sisbot = {
 	_validate_internet: function(data, cb) {
 		//logEvent(1, "Sisbot validate internet");
 		var self = this;
+
+    if (self.config.allow_non_internet_lan_connection == true)
+    {
+      exec('route | grep default', (error, stdout, stderr) => {
+        //if (error) return console.error('exec error:',error);
+
+        var returnValue = "false";
+        if (stdout.indexOf("default") > -1) returnValue = "true";
+        // logEvent(1, 'stdout:', stdout);
+        // logEvent(1, 'stderr:', stderr);
+
+        logEvent(1, "Internet Connected Check", returnValue, self.current_state.get("local_ip"));
+
+        // make sure connected to remote
+        if (returnValue == "true" && self.current_state.get("share_log_files") == "true") self._setupAnsible();
+
+        // update values
+        self.current_state.set({
+          is_internet_connected: returnValue,
+          local_ip: self._getIPAddress()
+        });
+
+        setTimeout(function () {
+          self.current_state.set({is_internet_connected: returnValue, local_ip: self._getIPAddress()});
+        }, 10000);
+
+        if (cb) cb(null, returnValue);
+      });
+      return;
+    }
+
 		exec('ping -c 1 -W 2 google.com', (error, stdout, stderr) => {
 			//if (error) return console.error('exec error:',error);
 
