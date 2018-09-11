@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.1', // allow switchover from hotspot to non-internet lan 
+			version	: '1.9.2', // hotspot to intenet switch, try internet, then try LAN only
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -50,7 +50,6 @@ var config = {
       auto_track_start_rho: true, // move to track start rho if non-continuous
 			max_rand_retries: 10,
 			check_internet_interval: 1800000, // every thirty minutes, // 1800000 once every half hour, confirm an internet connection
-			allow_non_internet_lan_connection: false,
 			internet_retries: 5, // retry # of times before resetting to hotspot
 			retry_internet_interval: 3000, // three seconds later
 			wifi_error_retry_interval: 60000, // one minute
