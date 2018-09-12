@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.2', // hotspot to intenet switch, try internet, then try LAN only
+			version	: '1.10.1', // hotspot to intenet switch, try internet, then try LAN only
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
