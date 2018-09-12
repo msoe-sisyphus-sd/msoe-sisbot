@@ -126,6 +126,7 @@ var sisbot = {
 
 	_internet_check: 0,
 	_internet_retries: 0,
+  _internet_lanonly_check: false,
 	_changing_to_wifi: false,
 
 	_hostname_queue: {},
@@ -483,6 +484,7 @@ var sisbot = {
 		// wifi connect
 		if (this.current_state.get("is_hotspot") == "false") {
 			// this.current_state.set("is_internet_connected", "false"); // assume false, so sockets connect
+      this._internet_lanonly_check = false;
 			this._query_internet(5000); // check for internet connection after 5 seconds
 		} else {
 			// check if we should try reconnecting to wifi
@@ -1707,6 +1709,37 @@ var sisbot = {
 	_validate_internet: function(data, cb) {
 		//logEvent(1, "Sisbot validate internet");
 		var self = this;
+
+    if (self._internet_lanonly_check == true)
+    {
+      exec('route | grep default', (error, stdout, stderr) => {
+        //if (error) return console.error('exec error:',error);
+
+        var returnValue = "false";
+        if (stdout.indexOf("default") > -1) returnValue = "true";
+        // logEvent(1, 'stdout:', stdout);
+        // logEvent(1, 'stderr:', stderr);
+
+        logEvent(1, "Internet Connected Check", returnValue, self.current_state.get("local_ip"));
+
+        // make sure connected to remote
+        if (returnValue == "true" && self.current_state.get("share_log_files") == "true") self._setupAnsible();
+
+        // update values
+        self.current_state.set({
+          is_internet_connected: returnValue,
+          local_ip: self._getIPAddress()
+        });
+
+        setTimeout(function () {
+          self.current_state.set({is_internet_connected: returnValue, local_ip: self._getIPAddress()});
+        }, 10000);
+
+        if (cb) cb(null, returnValue);
+      });
+      return;
+    }
+
 		exec('ping -c 1 -W 2 google.com', (error, stdout, stderr) => {
 			//if (error) return console.error('exec error:',error);
 
@@ -1780,6 +1813,13 @@ var sisbot = {
                             append_log('Internet retry: ' + self.config.retry_internet_interval);
 							self._query_internet(self.config.retry_internet_interval);
 						} else {
+              if (self._internet_lanonly_check == false)
+              {
+                self._internet_lanonly_check = true;
+                self._internet_retries = 0;
+                self._query_internet(self.config.retry_internet_interval);
+                return;
+              }
 							logEvent(2, "Internet not connected, reverting to hotspot.");
                             append_log('Internet not connected, reverting to hotspot: ');
 							self.current_state.set({ wifi_error: "true" });
@@ -1861,6 +1901,7 @@ var sisbot = {
     				});
                 }, 100);
 
+        self._internet_lanonly_check = false;
 				self._query_internet(8000); // check again in 8 seconds
 			} else if (cb) {
 				logEvent(2, "Invalid Password", data.psk);
