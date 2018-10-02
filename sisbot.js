@@ -948,8 +948,10 @@ var sisbot = {
 			rhoHome = false;
 			console.log("setting homes false here");
 
+      var skip_move_out_if_sensors_at_home = true;
+
       /////////////////////
-      if (thHome && rhoHome) {
+      if (thHome && rhoHome && !skip_move_out_if_sensors_at_home) {
         logEvent(1, "DEAD RECKONING Home Successful");
 				console.log("DEAD RECKONING Home Successful");
         this._sensored = false;
@@ -969,7 +971,7 @@ var sisbot = {
       } else {
         this._sensored = true; // force sensored home
 
-/*****/	this._moved_out = true; // inelegant way to get rid of move out (for now)
+      	this._moved_out = false; // restore the move out after DR has failed
 
         if (this._moved_out) {
 					console.log("not at home after DR, doing sensored...");
@@ -985,11 +987,11 @@ var sisbot = {
             thvmax: 0.5
           };
           if (thHome == true) {
-            logEvent(1, "Homing... Fix theta and rho");
+            logEvent(1, "Homing... Failed rho after DR, Fix rho");
             track_obj.verts.push({th:self.config.auto_home_th, r:self.config.auto_home_rho});
           } else {
-            logEvent(1, "Homing... Fix rho");
-            track_obj.verts.push({th:0, r:self.config.auto_home_rho});
+            logEvent(1, "Homing... Failed Theta after DR, Fix theta and rho");
+            track_obj.verts.push({th:self.config.auto_home_th, r:self.config.auto_home_rho});
           }
           self.plotter.playTrack(track_obj);
         }
