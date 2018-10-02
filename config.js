@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.2', // move out after DR regardless of the sensor values.
+			version	: '1.9.3', // reverse changes to move out until further testing
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
