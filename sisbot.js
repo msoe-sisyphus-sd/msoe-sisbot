@@ -932,11 +932,11 @@ var sisbot = {
 			}
 		} else if (cb) cb('No Connection', null);
 	},
-  _delayed_home: function(data, cb) {
+    _delayed_home: function(data, cb) {
     var self = this;
 
     //
-    if (this._validateConnection()) {
+		if (this._validateConnection()) {
       var thHome = self.plotter.getThetaHome();
 			
       var rhoHome = self.plotter.getRhoHome();
@@ -944,14 +944,14 @@ var sisbot = {
       logEvent(1, "Sensor Values", thHome, rhoHome);
 			console.log("Sensor Values", thHome, rhoHome);
 			//testing this:
-			thHome = false;
-			rhoHome = false;
-			console.log("setting homes false here");
+			//thHome = false;
+			//rhoHome = false;
+		//	console.log("setting homes false here");
 
-      var skip_move_out_if_sensors_at_home = true;
+     var skip_move_out_if_sensors_at_home = false;
 
-      ///////////////////// && !skip_move_out_if_sensors_at_home
-      if (thHome && rhoHome ) {
+      /////////////////////
+      if (thHome && rhoHome && skip_move_out_if_sensors_at_home) {
         logEvent(1, "DEAD RECKONING Home Successful");
 				console.log("DEAD RECKONING Home Successful");
         this._sensored = false;
@@ -971,7 +971,7 @@ var sisbot = {
       } else {
         this._sensored = true; // force sensored home
 
-      	this._moved_out = true; // restore the move out after DR has failed
+     // 	this._moved_out = true; // restore the move out after DR has failed ****************
 
         if (this._moved_out) {
 					console.log("not at home after DR, doing sensored...");
