@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.2', // hotspot to intenet switch, try internet, then try LAN only
+			version	: '1.9.2', // move out after DR regardless of the sensor values.
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
