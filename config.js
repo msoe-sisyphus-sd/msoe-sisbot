@@ -46,7 +46,7 @@ var config = {
 			failed_home_rho: 0.2,
 			failed_home_th: 1.570796,
 			auto_home_rho: 0.0185, //.25" for r=13.5"
- 			auto_home_th: 0.0417, //.25" for 6" diam falcon
+ 			auto_home_th: 0.106, //.5" for 6" diam falcon
       auto_track_start_rho: true, // move to track start rho if non-continuous
 			max_rand_retries: 10,
 			check_internet_interval: 1800000, // every thirty minutes, // 1800000 once every half hour, confirm an internet connection
