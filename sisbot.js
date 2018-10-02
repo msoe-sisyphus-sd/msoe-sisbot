@@ -936,7 +936,7 @@ var sisbot = {
     var self = this;
 
     //
-		if (this._validateConnection()) {
+    if (this._validateConnection()) {
       var thHome = self.plotter.getThetaHome();
 			
       var rhoHome = self.plotter.getRhoHome();
@@ -950,8 +950,8 @@ var sisbot = {
 
       var skip_move_out_if_sensors_at_home = true;
 
-      /////////////////////
-      if (thHome && rhoHome && !skip_move_out_if_sensors_at_home) {
+      ///////////////////// && !skip_move_out_if_sensors_at_home
+      if (thHome && rhoHome ) {
         logEvent(1, "DEAD RECKONING Home Successful");
 				console.log("DEAD RECKONING Home Successful");
         this._sensored = false;
@@ -971,7 +971,7 @@ var sisbot = {
       } else {
         this._sensored = true; // force sensored home
 
-      	this._moved_out = false; // restore the move out after DR has failed
+      	this._moved_out = true; // restore the move out after DR has failed
 
         if (this._moved_out) {
 					console.log("not at home after DR, doing sensored...");
