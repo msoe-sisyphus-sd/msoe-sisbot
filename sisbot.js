@@ -944,14 +944,12 @@ var sisbot = {
       logEvent(1, "Sensor Values", thHome, rhoHome);
 			console.log("Sensor Values", thHome, rhoHome);
 			//testing this:
-			//thHome = false;
-			//rhoHome = false;
-		//	console.log("setting homes false here");
-
-     var skip_move_out_if_sensors_at_home = false;
+			thHome = false;
+			rhoHome = false;
+			console.log("setting homes false here");
 
       /////////////////////
-      if (thHome && rhoHome && skip_move_out_if_sensors_at_home) {
+      if (thHome && rhoHome) {
         logEvent(1, "DEAD RECKONING Home Successful");
 				console.log("DEAD RECKONING Home Successful");
         this._sensored = false;
@@ -971,7 +969,7 @@ var sisbot = {
       } else {
         this._sensored = true; // force sensored home
 
-     // 	this._moved_out = true; // restore the move out after DR has failed ****************
+/*****/	this._moved_out = true; // inelegant way to get rid of move out (for now)
 
         if (this._moved_out) {
 					console.log("not at home after DR, doing sensored...");
@@ -987,11 +985,11 @@ var sisbot = {
             thvmax: 0.5
           };
           if (thHome == true) {
-            logEvent(1, "Homing... Failed rho after DR, Fix rho");
+            logEvent(1, "Homing... Fix theta and rho");
             track_obj.verts.push({th:self.config.auto_home_th, r:self.config.auto_home_rho});
           } else {
-            logEvent(1, "Homing... Failed Theta after DR, Fix theta and rho");
-            track_obj.verts.push({th:self.config.auto_home_th, r:self.config.auto_home_rho});
+            logEvent(1, "Homing... Fix rho");
+            track_obj.verts.push({th:0, r:self.config.auto_home_rho});
           }
           self.plotter.playTrack(track_obj);
         }
@@ -999,6 +997,30 @@ var sisbot = {
       }
     } else if (cb) cb('No Connection', null);
   },
+	add_playlist: function(data, cb) {
+		logEvent(1, "Sisbot Add Playlist", data);
+
+		// save playlist
+		var new_playlist = new Playlist(data);
+		var playlist = this.collection.add(new_playlist, {merge: true});
+		playlist.collection = this.collection;
+		playlist.config = this.config;
+		playlist.set_shuffle({ is_shuffle: playlist.get('is_shuffle') }); // update sorted list, tracks objects
+
+		// add to current_state
+		var playlists = this.current_state.get("playlist_ids");
+		if (playlists.indexOf(playlist.get("id")) < 0) {
+			playlists.push(playlist.get("id"));
+			this.current_state.set("playlist_ids", playlists);
+		}
+
+		this.save(null, null);
+
+		if (cb) cb(null, [playlist.toJSON(), this.current_state.toJSON()]); // send back current_state and the playlist
+
+		// tell all connected devices
+		self.socket_update([playlist.toJSON(), this.current_state.toJSON()]);
+	},
 	add_playlist: function(data, cb) {
 		logEvent(1, "Sisbot Add Playlist", data);
 
