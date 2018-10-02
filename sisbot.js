@@ -1023,6 +1023,30 @@ var sisbot = {
 		// tell all connected devices
 		self.socket_update([playlist.toJSON(), this.current_state.toJSON()]);
 	},
+	add_playlist: function(data, cb) {
+		logEvent(1, "Sisbot Add Playlist", data);
+
+		// save playlist
+		var new_playlist = new Playlist(data);
+		var playlist = this.collection.add(new_playlist, {merge: true});
+		playlist.collection = this.collection;
+		playlist.config = this.config;
+		playlist.set_shuffle({ is_shuffle: playlist.get('is_shuffle') }); // update sorted list, tracks objects
+
+		// add to current_state
+		var playlists = this.current_state.get("playlist_ids");
+		if (playlists.indexOf(playlist.get("id")) < 0) {
+			playlists.push(playlist.get("id"));
+			this.current_state.set("playlist_ids", playlists);
+		}
+
+		this.save(null, null);
+
+		if (cb) cb(null, [playlist.toJSON(), this.current_state.toJSON()]); // send back current_state and the playlist
+
+		// tell all connected devices
+		self.socket_update([playlist.toJSON(), this.current_state.toJSON()]);
+	},
 	remove_playlist: function(data, cb) {
 		if (data.type != 'playlist') {
 			if (cb) cb("Wrong data type", null);
