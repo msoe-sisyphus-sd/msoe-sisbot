@@ -704,9 +704,13 @@ var sisbot = {
 		// logEvent(1, "Sisbot Connect", data);
 		if (cb) cb(null, this.collection.toJSON());
 	},
-	state: function(data, cb) {
-		// logEvent(1, "Sisbot state");
-		var return_objs = [this.current_state.toJSON()];
+state: function(data, cb) {
+    //logEvent(1, "Sisbot state");
+    var ret_state = this.current_state.toJSON();
+    delete ret_state.wifi_password;
+    delete ret_state.wifi_network;
+
+    var return_objs = [ret_state];
 
 		var playlist_id = this.current_state.get('active_playlist_id');
 		if (playlist_id != 'false') return_objs.push(this.collection.get(playlist_id).toJSON());

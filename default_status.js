@@ -815,148 +815,59 @@ module.exports = [{
   "is_shuffle": "false",
   "active_track_index": -1,
   "active_track_id": "false",
-  "tracks": [{
-    "id": "2CBDAE96-EC22-48B4-A369-BFC624463C5F",
-    "vel": 3,
-    "accel": 0.5,
-    "thvmax": 1,
-    "firstR": 0,
-    "lastR": 1,
-    "name": "Erase",
-    "_index": 0,
-    "reversed": "false"
-  }, {
-    "id": "cfca6c0c-0d04-4fbc-a78b-3d031fd6434f",
-    "vel": 1,
-    "accel": 0.5,
-    "thvmax": 1,
-    "firstR": 1,
-    "lastR": 0,
-    "name": "Sailboat2 ",
-    "_index": 1,
-    "reversed": "false"
-  }, {
-    "id": "2CBDAE96-EC22-48B4-A369-BFC624463C5F",
-    "vel": 3,
-    "accel": 0.5,
-    "thvmax": 1,
-    "firstR": 0,
-    "lastR": 1,
-    "name": "Erase",
-    "_index": 2,
-    "reversed": "false"
-  }, {
-    "id": "f36a4a58-07fb-4a7b-915f-916e6e5be06f",
-    "vel": 1,
-    "accel": 0.5,
-    "thvmax": 1,
-    "firstR": 1,
-    "lastR": 1,
-    "name": "Salv2b",
-    "_index": 3,
-    "reversed": "false"
-  }, {
-    "id": "2CBDAE96-EC22-48B4-A369-BFC624463C5F",
-    "vel": 3,
-    "accel": 0.5,
-    "thvmax": 1,
-    "firstR": 1,
-    "lastR": 0,
-    "name": "Erase",
-    "_index": 4,
-    "reversed": "true"
-  }, {
-    "id": "2CBDAE96-EC22-48B4-A369-BFC624463C5F",
-    "vel": 3,
-    "accel": 0.5,
-    "thvmax": 1,
-    "firstR": 0,
-    "lastR": 1,
-    "name": "Erase",
-    "_index": 5,
-    "reversed": "false"
-  }, {
-    "id": "3ab7f7b3-55a5-4055-b94f-e2e8fb4e5234",
-    "vel": 1,
-    "accel": 0.5,
-    "thvmax": 1,
-    "firstR": 1,
-    "lastR": 1,
-    "name": "snowboarder1$",
-    "_index": 6,
-    "reversed": "false"
-  }, {
-    "id": "2CBDAE96-EC22-48B4-A369-BFC624463C5F",
-    "vel": 3,
-    "accel": 0.5,
-    "thvmax": 1,
-    "firstR": 1,
-    "lastR": 0,
-    "name": "Erase",
-    "_index": 7,
-    "reversed": "true"
-  }, {
-    "id": "2CBDAE96-EC22-48B4-A369-BFC624463C5F",
-    "vel": 3,
-    "accel": 0.5,
-    "thvmax": 1,
-    "firstR": 0,
-    "lastR": 1,
-    "name": "Erase",
-    "_index": 8,
-    "reversed": "false"
-  }, {
-    "id": "19aa381c-5856-4e3c-8ee1-81f61d44d8ca",
-    "vel": 1,
-    "accel": 0.5,
-    "thvmax": 1,
-    "firstR": 1,
-    "lastR": 1,
-    "name": "faces1b$",
-    "_index": 9,
-    "reversed": "false"
-  }, {
-    "id": "2CBDAE96-EC22-48B4-A369-BFC624463C5F",
-    "vel": 3,
-    "accel": 0.5,
-    "thvmax": 1,
-    "firstR": 1,
-    "lastR": 0,
-    "name": "Erase",
-    "_index": 10,
-    "reversed": "true"
-  }, {
-    "id": "2CBDAE96-EC22-48B4-A369-BFC624463C5F",
-    "vel": 3,
-    "accel": 0.5,
-    "thvmax": 1,
-    "firstR": 0,
-    "lastR": 1,
-    "name": "Erase",
-    "_index": 11,
-    "reversed": "false"
-  }, {
-    "id": "c136f436-6962-47e6-8cae-8f35294dbfff",
-    "vel": 1,
-    "accel": 0.5,
-    "thvmax": 1,
-    "firstR": 1,
-    "lastR": 1,
-    "name": "serpent1$",
-    "_index": 12,
-    "reversed": "false"
-  }, {
-    "id": "2CBDAE96-EC22-48B4-A369-BFC624463C5F",
-    "vel": 3,
-    "accel": 0.5,
-    "thvmax": 1,
-    "firstR": 1,
-    "lastR": 0,
-    "name": "Erase",
-    "_index": 13,
-    "reversed": "true"
-  }],
-  "sorted_tracks": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+  "tracks": [
+     {
+      "id": "attach",
+      "type": "track",
+      "name": "Attach",
+      "default_vel": 1,
+      "default_accel": 0.5,
+      "default_thvmax": 1
+    },
+    {
+      "id": "2B34822B-0A27-4398-AE19-23A3C83F1220",
+      "vel": 1,
+      "accel": 0.5,
+      "thvmax": 1,
+      "name": "Sine",
+      "_index": 2,
+      "firstR": 0,
+      "lastR": 0,
+      "reversed": "false",
+      "start": 0
+    },
+    {
+      "id": "detach",
+      "type": "track",
+      "name": "Detach",
+      "default_vel": 1,
+      "default_accel": 0.5,
+      "default_thvmax": 1
+    },
+    {
+      "id": "cfca6c0c-0d04-4fbc-a78b-3d031fd6434f",
+      "type": "track",
+      "created_by_name": "Sisyphus Industries",
+      "name": "Sailboat2 ",
+      "default_vel": 1,
+      "default_accel": 0.5,
+      "default_thvmax": 1
+    },
+    {
+      "id": "93A90B6B-EAEE-48A3-9742-C688235D837D",
+      "vel": 1,
+      "accel": 0.5,
+      "thvmax": 1,
+      "name": "Circam 2S",
+      "_index": 3,
+      "firstR": 1,
+      "lastR": 0,
+      "reversed": "true",
+      "reversible": "true",
+      "start": 0
+    }
+  ],
+  "sorted_tracks": [0, 1, 2, 3, 4],
   "history_id": "0621722c-3e58-4e44-aae9-b28488549e16",
   "is_saved": "true",
   "created_at": "2017-08-17 14:44:47",
