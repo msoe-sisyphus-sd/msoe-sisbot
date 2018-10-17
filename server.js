@@ -69,8 +69,27 @@ var app = function(given_config,ansible) {
 		endpoint = req.params.endpoint;
 
 
-		logEvent(1, "Sisbot POST recieved to service " + service + " endpoint " + endpoint);
 
+    var host = req.headers['host'];
+
+    logEvent(1, "Sisbot POST recieved to service " + service + " endpoint " + endpoint + " host " + host );
+    //var hdr = JSON.stringify(req.headers);
+    //logEvent(1, "Headers for HOST were " + hdr);
+
+    var hip = host.split('.');
+    var oct2 = parseInt(hip[1]);
+
+    if (hip[0] == "10"  || (hip[0] == "192" && hip[1] == "168")  || (hip[0] == "172" && oct2 > 15 && oct2 < 32) )
+    {
+      logEvent(1, "POST host " + host + " is whitelisted");
+    }
+    else
+    {
+    	// PROBLEM -- lookups via BONJOIR will have names
+      logEvent(1, "POST host " + host + " is DENIED");
+      //res.status(401).send({ error: "host " + host + " is not whitelisted" });
+      //return;
+    }
 
 
 		var data = (_.isString(req.body.data)) ? JSON.parse(req.body.data) : req.body.data;

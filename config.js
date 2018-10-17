@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.6', // reverse changes to move out until further testing
+			version	: '1.9.7', // detect host so we could cross check for dns rewrite attacks
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -38,6 +38,7 @@ var config = {
 			sisbot_config : which_cson,
 			sisbot_state : 'status.json',
 			serial_path: '/dev/ttyACM0',
+			arduino_serial_path: '/dev/ttyACM1',
 			autoplay: true,
 			skip_incompatible: true,
 			min_speed: 0.15,
