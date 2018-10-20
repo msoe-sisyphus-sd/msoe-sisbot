@@ -1,0 +1,9 @@
+#
+# copy to  /etc/udev/rules.d/
+# sudo udevadm trigger
+# look for the drivers with the filename matching SYMLINK in /dev directory
+#     if the arduino is plugged in, then you'll get /dev/ttyUSB_arduino
+#
+SUBSYSTEM=="tty", ATTRS{idVendor}=="04d8", SYMLINK+="ttyUSB_sbb"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", SYMLINK+="ttyUSB_arduino"
+
