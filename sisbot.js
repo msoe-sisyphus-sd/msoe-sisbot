@@ -18,7 +18,6 @@ var io 			= require('socket.io');
 var moment 		= require('moment');
 var log4js    = require('log4js');
 
-
 /**************************** Logging *********************************************/
 log4js.configure({
   appenders: { sisbot: { type: 'file', filename: 'sisbot.log' } },
@@ -97,6 +96,7 @@ var sisbot = {
 	config: {},
 	ansible: null,
 	serial: null,
+  arduino_serial: null,
 	plotter: plotter,
 	socket_update: null,
 
@@ -481,6 +481,8 @@ var sisbot = {
 		// connect
 		this._connect();
 
+    this._connect_ard();
+
 		// wifi connect
 		if (this.current_state.get("is_hotspot") == "false") {
 			// this.current_state.set("is_internet_connected", "false"); // assume false, so sockets connect
@@ -631,9 +633,90 @@ var sisbot = {
 
 		this._connectionError(service);
 	},
+
+  /***************************** Arduino ************************/
+  _connect_ard: function() {
+    logEvent(1, 'ARD_SERIAL connecting');
+    if (this.arduino_serial && this.arduino_serial.isOpen()) return true;
+    if (this.config.serial_path == "false") return true;
+
+    var self = this;
+
+    logEvent(1, 'ARD_SERIAL creating');
+    try
+    {
+      if (!fs.existsSync(this.config.arduino_serial_path))
+      {
+        logEvent(1, 'No Arduino driver at ' + this.config.arduino_serial_path);
+        this.arduino_serial = null;
+        return false;
+      }
+      this.arduino_serial = new SerialPort(this.config.arduino_serial_path, {
+              baudRate: 9600, autoOpen: false }, false);
+    } catch (err) {
+      logEvent(1,'Error creating ARD_SERIAL at ' + this.config.arduino_serial_path);
+      logEvent(1, err.message);
+      return;
+    }
+    logEvent(1, 'ARD_SERIAL created');
+    try 
+    {
+      self = this;
+      this.arduino_serial.open(function (error) {
+        console.info('Serial: connected!');
+        self.arduino_serial.on('data', self._receive_arduino_serial_replies);
+        self.plotter.useSerial(self.arduino_serial);
+        logEvent(1, 'ARD_SERIAL opened');
+      });
+    } catch(err) {
+      console.error('Connect err', err);
+    }
+  },
+
+  arduinoWrite: function(data, cb) {
+    logEvent(1, 'ARD_SERIAL:',data.value);
+    //this.serial.write(command+'\r');
+
+    if (typeof this.arduino_serial === 'undefined' || this.arduino_serial === null) {
+      logEvent(1, 'arduinoWrite: FAIL Arduino driver did not exist at bootup');
+      errv = {"fail":"Arduino device driver did not exist at bootup time"}
+      resp = errv;
+      if (cb) cb(errv,resp);
+      return;
+    }
+    var rval = {};
+    var errv = null;
+    try 
+    {
+      var sout = "" + data.value;
+      this.arduino_serial.write(sout);
+      logEvent(1, 'ARD_SERIAL write done:',data.value);
+      rval.arduino_send = data.value;
+    } catch(err) {
+      console.error('Arduino write err', err);
+      logEvent(1, 'ARD_SERIAL write err:' + err);
+      rval.arduino_send_err = err;
+      errv = {"err":"Arduino write threw an error"}
+    }
+
+    if (cb) cb(errv, rval);
+
+  },
+  
+
+  _receive_arduino_serial_replies: function(data)
+  {
+    //data = String(data).replace(/(\r\n|\n|\r)/gm,"");
+    console.info('Serial from Arduino: ' + data);
+    for (var i  = 0 , len = data.length; i < len; i++) {
+      logEvent(1, 'ARD_SERIAL - ' + String.fromCharCode(data[i]));
+    }
+    //logEvent(1, 'ARD_SERIAL received:', data);
+  },
+
 	/***************************** Plotter ************************/
 	_connect: function() {
-    	if (this.serial && this.serial.isOpen()) return true;
+    if (this.serial && this.serial.isOpen()) return true;
 
 		var self = this;
 		//logEvent(1, "Serial Connect", this.config.serial_path);

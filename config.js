@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.7', // detect host so we could cross check for dns rewrite attacks
+			version	: '1.9.8', // added communications to Arduino
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -37,8 +37,8 @@ var config = {
 			receiver : true, // receive messages from cloud
 			sisbot_config : which_cson,
 			sisbot_state : 'status.json',
-			serial_path: '/dev/ttyACM0',
-			arduino_serial_path: '/dev/ttyACM1',
+			serial_path: '/dev/ttyUSB_sbb',
+			arduino_serial_path: '/dev/ttyUSB_arduino',
 			autoplay: true,
 			skip_incompatible: true,
 			min_speed: 0.15,
