@@ -52,6 +52,7 @@ var miMax, thAccum=0, rAccum=0;
 var pauseRequest= false;
 
 var sp // serial port
+var sp_ard // arduino serial port
 
 var paused = true;
 //pars stored for pause/resume:
@@ -993,6 +994,12 @@ module.exports = {
 
 		checkPhoto(); //start ambient light sensing
 
+  },
+
+  useSerialArd: function (ard_serial)
+  {
+    sp_ard = ard_serial;
+    logEvent(1, '#aduinoSerial', sp_ard.path, 'isOpen:', sp_ard.isOpen());
   },
 
   // Returns the current state of the machine activity.

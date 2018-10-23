@@ -665,6 +665,7 @@ var sisbot = {
       this.arduino_serial.open(function (error) {
         console.info('Serial: connected!');
         self.arduino_serial.on('data', self._receive_arduino_serial_replies);
+        self.plotter.useSerial(self.arduino_serial);
         logEvent(1, 'ARD_SERIAL opened');
       });
     } catch(err) {

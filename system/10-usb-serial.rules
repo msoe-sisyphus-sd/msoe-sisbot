@@ -6,4 +6,5 @@
 #
 SUBSYSTEM=="tty", ATTRS{idVendor}=="04d8", SYMLINK+="ttyUSB_sbb"
 SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", SYMLINK+="ttyUSB_arduino"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", SYMLINK+="ttyUSB_arduino"
 
