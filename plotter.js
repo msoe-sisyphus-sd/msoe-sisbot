@@ -1000,6 +1000,10 @@ module.exports = {
   {
     sp_ard = ard_serial;
     logEvent(1, '#aduinoSerial', sp_ard.path, 'isOpen:', sp_ard.isOpen());
+
+    // This worked.
+    // setTimeout(function() { sp_ard.write("A=101\r"); } , 3000);
+    // Unlike SBB, You have to sleep a bit after open() before you talk the arduino.
   },
 
   // Returns the current state of the machine activity.
