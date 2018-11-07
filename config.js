@@ -37,8 +37,7 @@ var config = {
 			receiver : true, // receive messages from cloud
 			sisbot_config : which_cson,
 			sisbot_state : 'status.json',
-			serial_path: '/dev/ttyUSB_sbb',
-			arduino_serial_path: '/dev/ttyUSB_arduino',
+			serial_path: '/dev/ttyACM0',
 			autoplay: true,
 			skip_incompatible: true,
 			min_speed: 0.15,

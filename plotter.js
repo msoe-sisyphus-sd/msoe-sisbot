@@ -52,7 +52,6 @@ var miMax, thAccum=0, rAccum=0;
 var pauseRequest= false;
 
 var sp // serial port
-var sp_ard // arduino serial port
 
 var paused = true;
 //pars stored for pause/resume:
@@ -994,16 +993,6 @@ module.exports = {
 
 		checkPhoto(); //start ambient light sensing
 
-  },
-
-  useSerialArd: function (ard_serial)
-  {
-    sp_ard = ard_serial;
-    logEvent(1, '#aduinoSerial', sp_ard.path, 'isOpen:', sp_ard.isOpen());
-
-    // This worked.
-    // setTimeout(function() { sp_ard.write("A=101\r"); } , 3000);
-    // Unlike SBB, You have to sleep a bit after open() before you talk the arduino.
   },
 
   // Returns the current state of the machine activity.
