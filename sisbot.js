@@ -828,11 +828,40 @@ state: function(data, cb) {
 			if (cb) cb('Another save in process, try again', null);
 		}
 	},
+  _playing_track_cannot_be_interrupted: function()
+  {
+    var must_not_interrupt = false;
+
+    if (this.current_state.get('state') == "playing")
+    {
+      var theTrack = this.current_state.get('active_track');
+      if (theTrack != undefined && theTrack != null)
+      {
+        if (theTrack.name.toLowerCase().indexOf('attach') == 0)
+        {
+          must_not_interrupt = true;
+        }
+        if (theTrack.name.toLowerCase().indexOf('detach') == 0)
+        {
+          must_not_interrupt = true;
+        }
+      }        
+    }
+    return must_not_interrupt;
+  },
 	play: function(data, cb) {
 		var self = this;
 
 		if (this._validateConnection()) {
   		logEvent(1, "Sisbot Play", data);
+
+      if ( true == this._playing_track_cannot_be_interrupted )
+      {
+        logEvent(1,"Sisbot Play REFUSED to interrupt attach / detach track");
+        if (cb) cb('Cannot Interrupt Attach Detach', null);
+        return;
+      }
+
 			if (this._paused) this.current_state.set("state", "playing");
 			this._paused = false;
 
@@ -877,6 +906,14 @@ state: function(data, cb) {
 	pause: function(data, cb) {
 		if (this._validateConnection()) {
   		logEvent(1, "Sisbot Pause", data);
+
+      if ( true == this._playing_track_cannot_be_interrupted )
+      {
+        logEvent(1,"Sisbot Pause REFUSED to interrupt attach / detach track");
+        if (cb) cb('Cannot Interrupt Attach Detach', null);
+        return;
+      }
+
 			this._paused = true;
 			this.current_state.set("state", "paused");
 			plotter.pause();
