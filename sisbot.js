@@ -115,7 +115,7 @@ var sisbot = {
   _sensored: true, // use a sensored home
   _home_delay: 0,
 	_moved_out: false, // small ball adjustment before homing
-	_attach_track: false, // for tables with multiple balls
+	_attach_track: false, // for tables with multiple balls	
 	_detach_track: false, // for tables with multiple balls
 	_detach_first: false, // for tables with multiple balls, after first home
 	_move_to_rho: 0,
@@ -828,8 +828,7 @@ state: function(data, cb) {
 			if (cb) cb('Another save in process, try again', null);
 		}
 	},
-  _playing_track_cannot_be_interrupted: function()
-  {
+  _playing_track_cannot_be_interrupted: function() { 
     var must_not_interrupt = false;
 
     if (this.current_state.get('state') == "playing")
@@ -846,19 +845,22 @@ state: function(data, cb) {
           must_not_interrupt = true;
         }
       }        
-    }
-    return must_not_interrupt;
+	}
+	logEvent(1, "must_not_interrupt = " + must_not_interrupt);
+	return must_not_interrupt;
+	
   },
 	play: function(data, cb) {
+		
 		var self = this;
 
 		if (this._validateConnection()) {
   		logEvent(1, "Sisbot Play", data);
 
-      if ( true == this._playing_track_cannot_be_interrupted )
-      {
+      if ( true == this._playing_track_cannot_be_interrupted() )
+      {  
         logEvent(1,"Sisbot Play REFUSED to interrupt attach / detach track");
-        if (cb) cb('Cannot Interrupt Attach Detach', null);
+        if (cb) cb('Cannot Interrupt Track whilst playing "Attach" or "Detach" ', null);
         return;
       }
 
@@ -907,10 +909,10 @@ state: function(data, cb) {
 		if (this._validateConnection()) {
   		logEvent(1, "Sisbot Pause", data);
 
-      if ( true == this._playing_track_cannot_be_interrupted )
+      if ( true == this._playing_track_cannot_be_interrupted() )
       {
         logEvent(1,"Sisbot Pause REFUSED to interrupt attach / detach track");
-        if (cb) cb('Cannot Interrupt Attach Detach', null);
+        if (cb) cb('Cannot Interrupt Track whilst playing "Attach" or "Detach"', null);
         return;
       }
 
@@ -922,6 +924,14 @@ state: function(data, cb) {
 	},
 	home: function(data, cb) {
 		var self = this;
+
+
+		if ( true == this._playing_track_cannot_be_interrupted() )
+		{  
+		  logEvent(1,"Sisbot Play REFUSED to interrupt attach / detach track");
+		  if (cb) cb(' Cannot Interrupt Track whilst playing "Attach" or "Detach" ', null);
+		  return;
+		}
 
 		if (this._validateConnection()) {
 	    logEvent(1, "Sisbot Home", data);
@@ -1371,6 +1381,13 @@ state: function(data, cb) {
     },
     /*********************** PLAYLIST *****************************************/
 	set_playlist: function(data, cb) {
+		
+		if ( true == this._playing_track_cannot_be_interrupted() )
+		{  
+		  logEvent(1,"Sisbot Play REFUSED to interrupt attach / detach track");
+		  if (cb) cb('Cannot Interrupt Track whilst playing "Attach" or "Detach"', null);
+		  return;
+		}
 		logEvent(1, "Sisbot Set Playlist", data);
 
 		if (data == undefined || data == null) {
@@ -1463,7 +1480,13 @@ state: function(data, cb) {
 		var track = this.collection.add(new_track, {merge: true});
 		track.collection = this.collection;
 		track.config = this.config;
-
+		//making sure Attach and Detach track are not interrupted
+		if ( true == this._playing_track_cannot_be_interrupted() )
+		{  
+		  logEvent(1,"Sisbot Play REFUSED to interrupt attach / detach track");
+		  if (cb) cb('Cannot Interrupt Track whilst playing "Attach" or "Detach"', null);
+		  return;
+		}
 		// don't change, this is already playing
 		if (track.get('id') == this.current_state.get("active_track").id && this.current_state.get('state') == "playing") {
 			if (cb) return cb('already playing', null);
