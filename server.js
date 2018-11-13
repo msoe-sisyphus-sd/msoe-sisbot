@@ -67,33 +67,29 @@ var app = function(given_config,ansible) {
 	static.post('/:service/:endpoint', function(req, res) {
 		service = req.params.service;
 		endpoint = req.params.endpoint;
-
-
-
-    var host = req.headers['host'];
-
-    logEvent(1, "Sisbot POST recieved to service " + service + " endpoint " + endpoint + " host " + host );
-    //var hdr = JSON.stringify(req.headers);
-    //logEvent(1, "Headers for HOST were " + hdr);
-
-    var hip = host.split('.');
-    var oct2 = parseInt(hip[1]);
-
-    if (hip[0] == "10"  || (hip[0] == "192" && hip[1] == "168")  || (hip[0] == "172" && oct2 > 15 && oct2 < 32) )
-    {
-      logEvent(1, "POST host " + host + " is whitelisted");
-    }
-    else
-    {
-    	// PROBLEM -- lookups via BONJOIR will have names
-      logEvent(1, "POST host " + host + " is DENIED");
-      //res.status(401).send({ error: "host " + host + " is not whitelisted" });
-      //return;
-    }
-
-
+		var host = req.headers['host'];
+		var hostSplit = host.split('.');
+		var parseInter = parseInt(hostSplit[1]);
 		var data = (_.isString(req.body.data)) ? JSON.parse(req.body.data) : req.body.data;
 		data = data.data;
+		logEvent(1, "Sisbot POST received to service " + service + " endpoint " + endpoint + " host " + host );
+		//var hdr = JSON.stringify(req.headers);
+		//logEvent(1, "Headers for HOST were " + hdr);
+			
+		if ((hostSplit[0] == "10")  || (hostSplit[0] == "192" && hostSplit[1] == "168")  || (hostSplit[0] == "172" && parseInter > 15 && parseInter < 32) || (hostSplit[1] === 'local')) 
+		{
+			logEvent(1, "POST host " + host + " is white-listed");
+		}
+		else
+		{
+				// PROBLEM -- lookups via BONJOUR will have names
+			logEvent(1, "POST host " + host + " is DENIED");
+			res.status(401).send({ error: "host " + host + " is not white-listed" });
+			return;
+		}
+
+
+		
 
 		// TODO: remove add_track as well, or at least don't log the verts
 		if (endpoint != "state") {
