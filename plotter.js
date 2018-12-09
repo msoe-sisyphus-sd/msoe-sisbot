@@ -1004,8 +1004,13 @@ module.exports = {
 		sp.write('AC,1,1\r'); // turn on analog channel 1 for current reading R
 		sp.write('PD,B,3,1\r'); //set analog pin to input
 		sp.write('AC,9,1\r'); // turn on analog channel 9 for reading photosensor
+		
+		sp.write('AC,8,0\r'); // turn off analog channel 8 for servo enable line
+		sp.write('AC,10,0\r'); // turn off analog channel 10 for servo enable line
+		sp.write('PD,B,1,0\r'); //set B1 to output for Rho enable
+		sp.write('PD,B,2,0\r'); //set B2 to output for Theta enable
+		
 		sp.write("SE,1,100\r"); //turn on low lighting
-
 
 		checkPhoto(); //start ambient light sensing
 
