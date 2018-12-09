@@ -2222,7 +2222,28 @@ state: function(data, cb) {
 		} else if (cb) cb('No logs found', null);
 	},
 	/* ------------------------------------------ */
-	install_updates: function(data, cb) {
+  install_updates: function(data, cb) {
+
+    logEvent(1, "Sisbot Install Updates WRAPPER", data);
+    if (IS_SERVO)
+    {
+      var homedata = {
+        _autoplay : false,
+        clear_tracks: true
+      };
+
+      logEvent(1, "SERVO so calling Home() first", data);      
+      this.home(homedata, function() {
+        logEvent(1, "SERVO done Home() now calling _install_updates");
+        _install_updates(data,cb);
+      });
+
+      return;
+    }
+      
+    _install_updates(data, cb);
+  },
+  _install_updates: function(data, cb) {
 		var self = this;
 		logEvent(1, "Sisbot Install Updates", data);
 		if (this.current_state.get("is_internet_connected") != "true") {
@@ -2320,7 +2341,31 @@ state: function(data, cb) {
 		});
 		ping.send(); // or ping.start();
 	},
-	factory_reset: function(data, cb) {
+
+  factory_reset: function(data, cb) {
+
+    // call home, then do the reset
+    debugger;
+
+    if (IS_SERVO)
+    {
+      var homedata = {
+        _autoplay : false,
+        clear_tracks: true
+      };
+
+      this.home(homedata, function() {
+        _factory_reset(data,cb);
+      });
+
+      return;
+    }
+      
+    _factory_reset(data, cb);
+
+  },
+
+	_factory_reset: function(data, cb) {
 		logEvent(1, "Sisbot Factory Reset", data);
 		this.current_state.set({is_available: "false", reason_unavailable: "resetting"});
 		if (cb) cb(null, this.current_state.toJSON());
@@ -2332,7 +2377,27 @@ state: function(data, cb) {
 			logEvent(1, "child process exited with code",code);
 		});
 	},
-	restart: function(data,cb) {
+
+  restart: function(data,cb) {
+    if (IS_SERVO)
+    {
+      var homedata = {
+        _autoplay : false,
+        clear_tracks: true
+      };
+
+      this.home(homedata, function() {
+        _restart(data,cb);
+      });
+
+      return;
+    }
+      
+    _restart(data, cb);
+
+  },
+
+	_restart: function(data,cb) {
 		logEvent(1, "Sisbot Restart", data);
 		this.current_state.set({is_available: "false", reason_unavailable: "restarting"});
 		if (cb) cb(null, this.current_state.toJSON());
@@ -2344,7 +2409,25 @@ state: function(data, cb) {
 		  logEvent(1, "child process exited with code",code);
 		});
 	},
-	reboot: function(data,cb) {
+  reboot: function(data,cb) {
+    if (IS_SERVO)
+    {
+      var homedata = {
+        _autoplay : false,
+        clear_tracks: true
+      };
+
+      this.home(homedata, function() {
+        _reboot(data,cb);
+      });
+
+      return;
+    }
+      
+    _reboot(data, cb);
+
+  },
+  _reboot: function(data,cb) {
 		logEvent(1, "Sisbot Reboot", data);
 		this.current_state.set({is_available: "false", reason_unavailable: "rebooting"});
 		this.socket_update(this.current_state.toJSON());

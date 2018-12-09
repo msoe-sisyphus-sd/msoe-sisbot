@@ -1,4 +1,8 @@
 
+# 2018-12-07, 1.10.9
+  - if Servo table, go Home before doing install_updates, factory_reset, reboot, or restart
+  
+
 # 2018-12-06, 1.10.8
   - turn off sensored Rho for Servo tables
     - 2 ball tables, avoid t-boning the catcher instead of locking into it during parking, later sometimes getting two balls on one magnet.

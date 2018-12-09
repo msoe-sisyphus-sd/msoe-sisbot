@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.8', // don't do sensored Rho for Servo tables.  Reduce internet_check_time
+			version	: '1.9.9', // Go home first on Servo before 
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
