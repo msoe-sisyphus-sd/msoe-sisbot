@@ -18,9 +18,6 @@ var io 			= require('socket.io');
 var moment 		= require('moment');
 var log4js    = require('log4js');
 
-var IS_SERVO;
-
-
 /**************************** Logging *********************************************/
 log4js.configure({
   appenders: { sisbot: { type: 'file', filename: 'sisbot.log' } },
@@ -111,6 +108,8 @@ var sisbot = {
 	connectionErrors: 0,
 	error_messages: [],
 
+  isServo: false,
+
 	_paused: false,
 	_play_next: false,
 	_autoplay: false,
@@ -175,10 +174,8 @@ var sisbot = {
 
     var cson_config = CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config);
       
-  	IS_SERVO = cson_config.isServo;
-  	console.log();
-  	console.log("IS_SERVO: " + IS_SERVO);
-  	console.log();
+  	this.isServo = cson_config.isServo;
+  	logEvent(1, "IS_SERVO: " + this.isServo);
 	
     //var tracks = this.current_state.get("track_ids");
     var tracks = [];
