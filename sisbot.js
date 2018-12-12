@@ -173,9 +173,9 @@ var sisbot = {
 		}
 
     var cson_config = CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config);
-      
-  	this.isServo = cson_config.isServo;
-  	logEvent(1, "IS_SERVO: " + this.isServo);
+     
+  	this.isServo =  (typeof cson_config.isServo === 'undefined') ? false : cson_config.isServo; 
+  	logEvent(1, "this.isServo: " + this.isServo);
 	
     //var tracks = this.current_state.get("track_ids");
     var tracks = [];
@@ -957,7 +957,7 @@ state: function(data, cb) {
 
    
     	var skip_move_out_if_sensors_at_home = false;
-    	if (IS_SERVO) skip_move_out_if_sensors_at_home = true;
+    	if (this.isServo) skip_move_out_if_sensors_at_home = true;
 	 
 
       /////////////////////
@@ -982,7 +982,7 @@ state: function(data, cb) {
         this._sensored = true; // force sensored home
 
         // 	this._moved_out = true; // restore the move out after DR has failed ****************
-	      if (IS_SERVO == true) this._moved_out = true; // no move out for servo tables
+	      if (this.isServo == true) this._moved_out = true; // no move out for servo tables
 		
         if (this._moved_out) {
 					console.log("not at home after DR, doing sensored...");
@@ -2222,23 +2222,45 @@ state: function(data, cb) {
   install_updates: function(data, cb) {
 
     logEvent(1, "Sisbot Install Updates WRAPPER", data);
-    if (IS_SERVO)
+    if (this.isServo)
     {
       var homedata = {
-        _autoplay : false,
+        stop : true,
         clear_tracks: true
       };
 
-      logEvent(1, "SERVO so calling Home() first", data);      
-      this.home(homedata, function() {
-        logEvent(1, "SERVO done Home() now calling _install_updates");
-        // _install_updates(data,cb);
-      });
+      logEvent(1, "SERVO so calling Home() first");  
+      self = this;    
+      this.home(homedata, null);
+      logEvent(1, "next call wait_for_home");  
+      
+      //this._wait_for_home(data, cb, _install_updates);
+      this._say_stuff();
 
       return;
     }
       
     _install_updates(data, cb);
+  },
+  _say_stuff: function()
+  {
+    logEvent(1, "say stuff ");
+  },
+  _wait_for_home: function(data, cb, after_home_call_this)
+  {
+    logEvent(1, "Waiting for home, current state = ", this.current_state.get("state"));
+    if (this.current_state.get("state") == "waiting")
+    {
+      logEvent(1, "Waiting for home, state is waiting, call next thing ");
+      after_home_call_this(data,cb);
+      // cancel the timeout?
+    }
+    else
+    {
+      setTimeout(function() {
+             this._wait_for_home(data, cb, after_home_call_this);
+      }, 500); // wait a half second
+    }
   },
   _install_updates: function(data, cb) {
 		var self = this;
@@ -2339,30 +2361,30 @@ state: function(data, cb) {
 		ping.send(); // or ping.start();
 	},
 
-  factory_reset: function(data, cb) {
+  // factory_reset: function(data, cb) {
 
-    // call home, then do the reset
-    debugger;
+  //   // call home, then do the reset
+  //   debugger;
 
-    if (IS_SERVO)
-    {
-      var homedata = {
-        _autoplay : false,
-        clear_tracks: true
-      };
+  //   if (this.isServo)
+  //   {
+  //     var homedata = {
+  //       _autoplay : false,
+  //       clear_tracks: true
+  //     };
 
-      this.home(homedata, function() {
-        _factory_reset(data,cb);
-      });
+  //     this.home(homedata, function() {
+  //       _factory_reset(data,cb);
+  //     });
 
-      return;
-    }
+  //     return;
+  //   }
       
-    _factory_reset(data, cb);
+  //   _factory_reset(data, cb);
 
-  },
+  // },
 
-	_factory_reset: function(data, cb) {
+	factory_reset: function(data, cb) {
 		logEvent(1, "Sisbot Factory Reset", data);
 		this.current_state.set({is_available: "false", reason_unavailable: "resetting"});
 		if (cb) cb(null, this.current_state.toJSON());
@@ -2375,26 +2397,26 @@ state: function(data, cb) {
 		});
 	},
 
-  restart: function(data,cb) {
-    if (IS_SERVO)
-    {
-      var homedata = {
-        _autoplay : false,
-        clear_tracks: true
-      };
+  // restart: function(data,cb) {
+  //   if (this.isServo)
+  //   {
+  //     var homedata = {
+  //       _autoplay : false,
+  //       clear_tracks: true
+  //     };
 
-      this.home(homedata, function() {
-        _restart(data,cb);
-      });
+  //     this.home(homedata, function() {
+  //       _restart(data,cb);
+  //     });
 
-      return;
-    }
+  //     return;
+  //   }
       
-    _restart(data, cb);
+  //   _restart(data, cb);
 
-  },
+  // },
 
-	_restart: function(data,cb) {
+	restart: function(data,cb) {
 		logEvent(1, "Sisbot Restart", data);
 		this.current_state.set({is_available: "false", reason_unavailable: "restarting"});
 		if (cb) cb(null, this.current_state.toJSON());
@@ -2406,25 +2428,25 @@ state: function(data, cb) {
 		  logEvent(1, "child process exited with code",code);
 		});
 	},
-  reboot: function(data,cb) {
-    if (IS_SERVO)
-    {
-      var homedata = {
-        _autoplay : false,
-        clear_tracks: true
-      };
+  // reboot: function(data,cb) {
+  //   if (this.isServo)
+  //   {
+  //     var homedata = {
+  //       _autoplay : false,
+  //       clear_tracks: true
+  //     };
 
-      this.home(homedata, function() {
-        _reboot(data,cb);
-      });
+  //     this.home(homedata, function() {
+  //       _reboot(data,cb);
+  //     });
 
-      return;
-    }
+  //     return;
+  //   }
       
-    _reboot(data, cb);
+  //   _reboot(data, cb);
 
-  },
-  _reboot: function(data,cb) {
+  // },
+  reboot: function(data,cb) {
 		logEvent(1, "Sisbot Reboot", data);
 		this.current_state.set({is_available: "false", reason_unavailable: "rebooting"});
 		this.socket_update(this.current_state.toJSON());
