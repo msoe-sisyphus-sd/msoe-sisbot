@@ -2235,32 +2235,32 @@ state: function(data, cb) {
       logEvent(1, "next call wait_for_home");  
       
       //this._wait_for_home(data, cb, _install_updates);
-      this._say_stuff();
+      self = this;
+      setTimeout(function() {
+             self._wait_for_home(self.data, self.cb, self._install_updates);
+      }, 4000)
 
       return;
     }
-      
-    _install_updates(data, cb);
+    logEvent(1, "no servo, call _install_updates directly");      
+    this._install_updates(data, cb);
   },
-  _say_stuff: function()
+  _wait_for_home: function(data, cb, funcptr)
   {
-    logEvent(1, "say stuff ");
-  },
-  _wait_for_home: function(data, cb, after_home_call_this)
-  {
-    logEvent(1, "Waiting for home, current state = ", this.current_state.get("state"));
+    logEvent(1, "Waiting for home, current state = ", this.current_state.get("state"));    
     if (this.current_state.get("state") == "waiting")
     {
-      logEvent(1, "Waiting for home, state is waiting, call next thing ");
-      after_home_call_this(data,cb);
-      // cancel the timeout?
+      logEvent(1, "DONE WAITING -----------> for home, call next thing ");
+      this._install_updates(data, cb);
     }
     else
     {
+      self = this;
+      logEvent(1, "Not home, try again");
       setTimeout(function() {
-             this._wait_for_home(data, cb, after_home_call_this);
-      }, 500); // wait a half second
-    }
+             self._wait_for_home();
+      }, 1000); // wait a second
+    }    
   },
   _install_updates: function(data, cb) {
 		var self = this;
@@ -2276,9 +2276,10 @@ state: function(data, cb) {
 		// send response first
 		if (cb) cb(null, this.current_state.toJSON());
 
+    logEvent(1, "Sisbot running update script update.sh");
 		exec('/home/pi/sisbot-server/sisbot/update.sh '+this.config.service_branches.sisbot+' '+this.config.service_branches.app+' '+this.config.service_branches.proxy+' false > /home/pi/sisbot-server/update.log', (error, stdout, stderr) => {
 			self.current_state.set({installing_updates: 'false'});
-		  	if (error) {
+		  if (error) {
 				// if (cb) cb(error, null);
 				return logEvent(2, 'exec error:',error);
 			}
