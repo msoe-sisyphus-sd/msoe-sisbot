@@ -2235,7 +2235,7 @@ state: function(data, cb) {
       logEvent(1, "SERVO so calling Home() first", data);      
       this.home(homedata, function() {
         logEvent(1, "SERVO done Home() now calling _install_updates");
-        _install_updates(data,cb);
+        // _install_updates(data,cb);
       });
 
       return;
