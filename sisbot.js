@@ -757,7 +757,29 @@ state: function(data, cb) {
 
 		if (cb) cb(null, this.current_state.toJSON());
 	},
-	set_hostname: function(data,cb) {
+  set_hostname: function(data,cb) {
+    if (this.isServo)
+    {
+      var homedata = {
+        stop : true,
+        clear_tracks: true
+      };
+
+      logEvent(1, "SERVO so calling Home() first");  
+      self = this;    
+      this.home(homedata, null);
+      logEvent(1, "next call wait_for_home");  
+      
+      self = this;
+      setTimeout(function() {
+        logEvent(1, "calling _install_updates pointer is = ", typeof self._install_updates);
+        self._wait_for_home(self.data, self.cb, self._set_hostname, self);
+      }, 4000);
+
+      return;
+    }
+  },
+  _set_hostname: function(data,cb) {
 		var self = this;
 
 		logEvent(1, "Sisbot Set Hostname", data, process.platform);
@@ -2260,7 +2282,7 @@ state: function(data, cb) {
     else
     {
       var self = this;
-      // logEvent(1, "Not home, try again");
+      logEvent(1, "Not home, try again");
       setTimeout(function(data, cb, fptr, this2) {
         
         // logEvent(1, "_wait_for_home callback self.funcptr = ", typeof fptr);
@@ -2367,30 +2389,37 @@ state: function(data, cb) {
 		ping.send(); // or ping.start();
 	},
 
-  // factory_reset: function(data, cb) {
+  factory_reset: function(data, cb) {
 
-  //   // call home, then do the reset
-  //   debugger;
+    // call home, then do the reset
+    debugger;
 
-  //   if (this.isServo)
-  //   {
-  //     var homedata = {
-  //       _autoplay : false,
-  //       clear_tracks: true
-  //     };
+    if (this.isServo)
+    {
+      var homedata = {
+        stop : true,
+        clear_tracks: true
+      };
 
-  //     this.home(homedata, function() {
-  //       _factory_reset(data,cb);
-  //     });
-
-  //     return;
-  //   }
+      logEvent(1, "SERVO so calling Home() first");  
+      self = this;    
+      this.home(homedata, null);
+      logEvent(1, "next call wait_for_home");  
       
-  //   _factory_reset(data, cb);
+      self = this;
+      setTimeout(function() {
+        logEvent(1, "calling _install_updates pointer is = ", typeof self._install_updates);
+        self._wait_for_home(self.data, self.cb, self._factory_reset, self);
+      }, 4000);
 
-  // },
+      return;
+    }
+      
+    _factory_reset(data, cb);
 
-	factory_reset: function(data, cb) {
+  },
+
+	_factory_reset: function(data, cb) {
 		logEvent(1, "Sisbot Factory Reset", data);
 		this.current_state.set({is_available: "false", reason_unavailable: "resetting"});
 		if (cb) cb(null, this.current_state.toJSON());
@@ -2403,26 +2432,34 @@ state: function(data, cb) {
 		});
 	},
 
-  // restart: function(data,cb) {
-  //   if (this.isServo)
-  //   {
-  //     var homedata = {
-  //       _autoplay : false,
-  //       clear_tracks: true
-  //     };
+  restart: function(data,cb) {
 
-  //     this.home(homedata, function() {
-  //       _restart(data,cb);
-  //     });
+    if (this.isServo)
+    {
+      var homedata = {
+        stop : true,
+        clear_tracks: true
+      };
 
-  //     return;
-  //   }
+      logEvent(1, "SERVO so calling Home() first");  
+      self = this;    
+      this.home(homedata, null);
+      logEvent(1, "next call wait_for_home");  
       
-  //   _restart(data, cb);
+      self = this;
+      setTimeout(function() {
+        logEvent(1, "calling _install_updates pointer is = ", typeof self._install_updates);
+        self._wait_for_home(self.data, self.cb, self._restart, self);
+      }, 4000);
 
-  // },
+      return;
+    }
+      
+    _restart(data, cb);
 
-	restart: function(data,cb) {
+  },
+
+	_restart: function(data,cb) {
 		logEvent(1, "Sisbot Restart", data);
 		this.current_state.set({is_available: "false", reason_unavailable: "restarting"});
 		if (cb) cb(null, this.current_state.toJSON());
@@ -2434,25 +2471,33 @@ state: function(data, cb) {
 		  logEvent(1, "child process exited with code",code);
 		});
 	},
-  // reboot: function(data,cb) {
-  //   if (this.isServo)
-  //   {
-  //     var homedata = {
-  //       _autoplay : false,
-  //       clear_tracks: true
-  //     };
-
-  //     this.home(homedata, function() {
-  //       _reboot(data,cb);
-  //     });
-
-  //     return;
-  //   }
-      
-  //   _reboot(data, cb);
-
-  // },
   reboot: function(data,cb) {
+
+    if (this.isServo)
+    {
+      var homedata = {
+        stop : true,
+        clear_tracks: true
+      };
+
+      logEvent(1, "SERVO so calling Home() first");  
+      self = this;    
+      this.home(homedata, null);
+      logEvent(1, "next call wait_for_home");  
+      
+      self = this;
+      setTimeout(function() {
+        logEvent(1, "calling _install_updates pointer is = ", typeof self._install_updates);
+        self._wait_for_home(self.data, self.cb, self._reboot, self);
+      }, 4000);
+
+      return;
+    }
+      
+    _reboot(data, cb);
+
+  },
+  _reboot: function(data,cb) {
 		logEvent(1, "Sisbot Reboot", data);
 		this.current_state.set({is_available: "false", reason_unavailable: "rebooting"});
 		this.socket_update(this.current_state.toJSON());
