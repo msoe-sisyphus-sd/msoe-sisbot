@@ -2395,7 +2395,7 @@ state: function(data, cb) {
 
   factory_reset: function(data, cb) {
 
-    if (this.isServo && homeFirst)
+    if (this.isServo && this.homeFirst)
     {
       var homedata = {
         stop : true,
@@ -2474,7 +2474,7 @@ state: function(data, cb) {
 	},
   reboot: function(data,cb) {
 
-    if (this.isServo  && homeFirst)
+    if (this.isServo  && this.homeFirst)
     {
       var homedata = {
         stop : true,
