@@ -1007,8 +1007,11 @@ module.exports = {
 		
 		sp.write('AC,8,0\r'); // turn off analog channel 8 for servo enable line
 		sp.write('AC,10,0\r'); // turn off analog channel 10 for servo enable line
-		sp.write('PD,B,1,0\r'); //set B1 to output for Rho enable
-		sp.write('PD,B,2,0\r'); //set B2 to output for Theta enable
+		sp.write('PD,B,1,0\r'); //set B1 to output for Rho en/disable
+		sp.write('PD,B,2,0\r'); //set B2 to output for Theta en/disable
+		
+		sp.write('PO,B,1,1\r'); //set B1 high to enable Rho
+		sp.write('PO,B,2,1\r'); //set B2 high to enable Theta
 		
 		sp.write("SE,1,100\r"); //turn on low lighting
 
