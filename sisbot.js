@@ -109,6 +109,7 @@ var sisbot = {
 	error_messages: [],
 
   isServo: false,
+  homeFirst: false,
 
 	_paused: false,
 	_play_next: false,
@@ -175,8 +176,10 @@ var sisbot = {
     var cson_config = CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config);
      
   	this.isServo =  (typeof cson_config.isServo === 'undefined') ? false : cson_config.isServo; 
-  	logEvent(1, "this.isServo: " + this.isServo);
-	
+    logEvent(1, "this.isServo: " + this.isServo);
+    this.homeFirst = (typeof cson_config.homeFirst === 'undefined') ? false : cson_config.homeFirst; 
+    logEvent(1, "this.homeFirst: " + this.homeFirst);
+
     //var tracks = this.current_state.get("track_ids");
     var tracks = [];
     //var playlists = this.current_state.get("playlist_ids");
@@ -758,14 +761,14 @@ state: function(data, cb) {
 		if (cb) cb(null, this.current_state.toJSON());
 	},
   set_hostname: function(data,cb) {
-    if (this.isServo)
+    if (this.isServo && this.homeFirst)
     {
       var homedata = {
         stop : true,
         clear_tracks: true
       };
 
-      logEvent(1, "SERVO so calling Home() first");  
+      logEvent(1, "set_hostname, SERVO so calling Home() first");  
       self = this;    
       this.home(homedata, null);
       logEvent(1, "next call wait_for_home");  
@@ -778,6 +781,7 @@ state: function(data, cb) {
 
       return;
     }
+    _set_hostname(data,cb);
   },
   _set_hostname: function(data,cb) {
 		var self = this;
@@ -798,7 +802,7 @@ state: function(data, cb) {
 					self.save(null, null);
 
 					// restart
-					self.reboot(null, cb);
+					self._reboot(null, cb);
 				});
 			} else { // don't prompt for hostname again
 				self.current_state.set({hostname_prompt: "true"});
@@ -2244,14 +2248,14 @@ state: function(data, cb) {
   install_updates: function(data, cb) {
 
     logEvent(1, "Sisbot Install Updates WRAPPER", data);
-    if (this.isServo)
+    if (this.isServo && this.homeFirst)
     {
       var homedata = {
         stop : true,
         clear_tracks: true
       };
 
-      logEvent(1, "SERVO so calling Home() first");  
+      logEvent(1, "install_updates, SERVO so calling Home() first");  
       self = this;    
       this.home(homedata, null);
       logEvent(1, "next call wait_for_home");  
@@ -2314,7 +2318,7 @@ state: function(data, cb) {
 
 			self.save(null, null);
 
-			self.reboot(null,null);
+  		self._reboot(null,null);
 		});
 	},
 	local_sisbots: function(data, cb) {
@@ -2391,17 +2395,14 @@ state: function(data, cb) {
 
   factory_reset: function(data, cb) {
 
-    // call home, then do the reset
-    debugger;
-
-    if (this.isServo)
+    if (this.isServo && homeFirst)
     {
       var homedata = {
         stop : true,
         clear_tracks: true
       };
 
-      logEvent(1, "SERVO so calling Home() first");  
+      logEvent(1, "factory_reset SERVO so calling Home() first");  
       self = this;    
       this.home(homedata, null);
       logEvent(1, "next call wait_for_home");  
@@ -2434,14 +2435,14 @@ state: function(data, cb) {
 
   restart: function(data,cb) {
 
-    if (this.isServo)
+    if (this.isServo && this.homeFirst)
     {
       var homedata = {
         stop : true,
         clear_tracks: true
       };
 
-      logEvent(1, "SERVO so calling Home() first");  
+      logEvent(1, "restart, SERVO so calling Home() first");  
       self = this;    
       this.home(homedata, null);
       logEvent(1, "next call wait_for_home");  
@@ -2473,14 +2474,14 @@ state: function(data, cb) {
 	},
   reboot: function(data,cb) {
 
-    if (this.isServo)
+    if (this.isServo  && homeFirst)
     {
       var homedata = {
         stop : true,
         clear_tracks: true
       };
 
-      logEvent(1, "SERVO so calling Home() first");  
+      logEvent(1, "reboot, SERVO so calling Home() first");  
       self = this;    
       this.home(homedata, null);
       logEvent(1, "next call wait_for_home");  
