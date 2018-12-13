@@ -2234,32 +2234,38 @@ state: function(data, cb) {
       this.home(homedata, null);
       logEvent(1, "next call wait_for_home");  
       
-      //this._wait_for_home(data, cb, _install_updates);
       self = this;
       setTimeout(function() {
-             self._wait_for_home(self.data, self.cb, self._install_updates);
-      }, 4000)
+        logEvent(1, "calling _install_updates pointer is = ", typeof self._install_updates);
+        self._wait_for_home(self.data, self.cb, self._install_updates, self);
+      }, 4000);
 
       return;
     }
+
     logEvent(1, "no servo, call _install_updates directly");      
     this._install_updates(data, cb);
   },
-  _wait_for_home: function(data, cb, funcptr)
+  _wait_for_home: function(data, cb, funcptr, this2)
   {
     logEvent(1, "Waiting for home, current state = ", this.current_state.get("state"));    
+    logEvent(1, "_wait_for_home funcptr = ", typeof funcptr);
     if (this.current_state.get("state") == "waiting")
     {
       logEvent(1, "DONE WAITING -----------> for home, call next thing ");
-      this._install_updates(data, cb);
+      logEvent(1, "_wait_for_home pointer is = ", typeof funcptr);
+      //this._install_updates(data, cb);
+      funcptr.call(this2, data, cb);
     }
     else
     {
-      self = this;
+      var self = this;
       logEvent(1, "Not home, try again");
-      setTimeout(function() {
-             self._wait_for_home();
-      }, 1000); // wait a second
+      setTimeout(function(data, cb, fptr, this2) {
+        
+        logEvent(1, "_wait_for_home callback self.funcptr = ", typeof fptr);
+        self._wait_for_home(data, cb, fptr, this2);
+      }, 1000,self.data, self.cb, self._install_updates, self); // wait a second
     }    
   },
   _install_updates: function(data, cb) {
@@ -2280,7 +2286,6 @@ state: function(data, cb) {
 		exec('/home/pi/sisbot-server/sisbot/update.sh '+this.config.service_branches.sisbot+' '+this.config.service_branches.app+' '+this.config.service_branches.proxy+' false > /home/pi/sisbot-server/update.log', (error, stdout, stderr) => {
 			self.current_state.set({installing_updates: 'false'});
 		  if (error) {
-				// if (cb) cb(error, null);
 				return logEvent(2, 'exec error:',error);
 			}
 			logEvent(1, "Install complete");
