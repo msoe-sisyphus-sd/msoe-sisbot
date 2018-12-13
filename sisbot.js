@@ -2248,22 +2248,22 @@ state: function(data, cb) {
   },
   _wait_for_home: function(data, cb, funcptr, this2)
   {
-    logEvent(1, "Waiting for home, current state = ", this.current_state.get("state"));    
-    logEvent(1, "_wait_for_home funcptr = ", typeof funcptr);
+    // logEvent(1, "Waiting for home, current state = ", this.current_state.get("state"));    
+    // logEvent(1, "_wait_for_home funcptr = ", typeof funcptr);
     if (this.current_state.get("state") == "waiting")
     {
-      logEvent(1, "DONE WAITING -----------> for home, call next thing ");
-      logEvent(1, "_wait_for_home pointer is = ", typeof funcptr);
+      logEvent(1, "done waiting for servo to go home, call the next function");
+      // logEvent(1, "_wait_for_home pointer is = ", typeof funcptr);
       //this._install_updates(data, cb);
       funcptr.call(this2, data, cb);
     }
     else
     {
       var self = this;
-      logEvent(1, "Not home, try again");
+      // logEvent(1, "Not home, try again");
       setTimeout(function(data, cb, fptr, this2) {
         
-        logEvent(1, "_wait_for_home callback self.funcptr = ", typeof fptr);
+        // logEvent(1, "_wait_for_home callback self.funcptr = ", typeof fptr);
         self._wait_for_home(data, cb, fptr, this2);
       }, 1000,self.data, self.cb, self._install_updates, self); // wait a second
     }    
