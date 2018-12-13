@@ -993,21 +993,29 @@ module.exports = {
 
 	// The serial port connection is negotiated elsewhere. This method takes that
 	// serial port object and saves it for communication with the bot.
-	useSerial: function(serial) {
-		sp = serial;
-		logEvent(1, '#useSerial', sp.path, 'isOpen:', sp.isOpen());
+  useSerial: function(serial) {
+    sp = serial;
+    logEvent(1, '#useSerial', sp.path, 'isOpen:', sp.isOpen());
 
-		sp.on('data', parseReceivedSerialData);
-		sp.write('CU,1,0\r'); // turn off EBB sending "OK"s
+    sp.on('data', parseReceivedSerialData);
+    sp.write('CU,1,0\r'); // turn off EBB sending "OK"s
 
-		sp.write('AC,0,1\r'); // turn on analog channel 0 for current reading Theta
-		sp.write('AC,1,1\r'); // turn on analog channel 1 for current reading R
-		sp.write('PD,B,3,1\r'); //set analog pin to input
-		sp.write('AC,9,1\r'); // turn on analog channel 9 for reading photosensor
-		sp.write("SE,1,100\r"); //turn on low lighting
+    sp.write('AC,0,1\r'); // turn on analog channel 0 for current reading Theta
+    sp.write('AC,1,1\r'); // turn on analog channel 1 for current reading R
+    sp.write('PD,B,3,1\r'); //set analog pin to input
+    sp.write('AC,9,1\r'); // turn on analog channel 9 for reading photosensor
+    
+    sp.write('AC,8,0\r'); // turn off analog channel 8 for servo enable line
+    sp.write('AC,10,0\r'); // turn off analog channel 10 for servo enable line
+    sp.write('PD,B,1,0\r'); //set B1 to output for Rho en/disable
+    sp.write('PD,B,2,0\r'); //set B2 to output for Theta en/disable
+    
+    sp.write('PO,B,1,1\r'); //set B1 high to enable Rho
+    sp.write('PO,B,2,1\r'); //set B2 high to enable Theta
+    
+    sp.write("SE,1,100\r"); //turn on low lighting
 
-
-		checkPhoto(); //start ambient light sensing
+    checkPhoto(); //start ambient light sensing
 
   },
 
