@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.11', // get Bruce's plotter settings for new servo hardware into production
+			version	: '1.9.12', // sleep servo on startup, wait servo before checking faults
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

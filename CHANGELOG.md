@@ -1,7 +1,19 @@
 
+
+# 2018-12-13 1.10.12
+  - sleep servo when sisbot first wakes up.  The servo can take a long time to do the new hardware based home.  Sisbot was jumping in too early and starting to play a track, causing the bot to lose track of where it really was
+  - servo don't check for faults right away.  It takes some time before the setting of the enable pins to the new V2 servos take effect.  Before they take effect the SBB will report back servo faults, but it's not true as you can see on the motor lights there is no fault.  
+  So after boot wait before starting to check
+
+# 2018-12-11 1.10.11
+  - incorporate new code to set the enable pins on V2 servos
+
+# 2018-12-07, 1.10.10
+  - this number was skipped
+
 # 2018-12-07, 1.10.9
   - if Servo table, go Home before doing install_updates, factory_reset, reboot, or restart
-  
+  - This change was not ready and had to be rolled back out of the code to help meet year end shipping goals.
 
 # 2018-12-06, 1.10.8
   - turn off sensored Rho for Servo tables
