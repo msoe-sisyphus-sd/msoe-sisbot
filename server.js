@@ -85,10 +85,16 @@ var app = function(given_config,ansible) {
     }
     else
     {
-    	// PROBLEM -- lookups via BONJOIR will have names
-      logEvent(1, "POST host " + host + " is DENIED");
-      //res.status(401).send({ error: "host " + host + " is not whitelisted" });
-      //return;
+      if (host.match("\.local$") != null)
+      {
+         logEvent(1, "POST from bonjour is whitelisted " + host);
+      }
+      else 
+      {
+        logEvent(1, "POST host " + host + " is DENIED");
+        res.status(401).send({ error: "host " + host + " is not whitelisted" });
+        return;
+      }
     }
 
 
@@ -140,7 +146,7 @@ var app = function(given_config,ansible) {
 
 	function socket_update(data) {
 		if (data != null) {
-			logEvent(1, "socket_update()  data=", data);
+			//logEvent(1, "socket_update()  data=", data);
 			_.each(sockets, function(socket, id) {
 				if (data == "disconnect") {
 					socket.disconnect(true);
