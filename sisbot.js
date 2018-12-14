@@ -19,6 +19,7 @@ var moment 		= require('moment');
 var log4js    = require('log4js');
 
 var IS_SERVO;
+var _servo_needs_initial_sleep = false;
 
 
 /**************************** Logging *********************************************/
@@ -126,6 +127,8 @@ var sisbot = {
 
 	_thumbnail_queue: [],
 
+  _servo_needs_initial_sleep: false,
+
 	_internet_check: 0,
 	_internet_retries: 0,
   _internet_lanonly_check: false,
@@ -179,6 +182,10 @@ var sisbot = {
   	console.log();
   	console.log("IS_SERVO: " + IS_SERVO);
   	console.log();
+    if (IS_SERVO)
+    {
+      _servo_needs_initial_sleep = true;
+    }
 	
     //var tracks = this.current_state.get("track_ids");
     var tracks = [];
@@ -456,11 +463,31 @@ var sisbot = {
 
             self.current_state.set('repeat_current', 'true'); // don't step over wanted first track
 
-						self._play_track(track.toJSON(), null);
+            if (_servo_needs_initial_sleep)
+            {
+              _servo_needs_initial_sleep = false;
+              logEvent(1, "Servo needs initial sleep");
+              setTimeout(function(track, self){  self._play_track(track.toJSON(), null); }, 15000, track, self);
+            }
+            else
+            {
+  						self._play_track(track.toJSON(), null);
+            }
 
 						self._detach_first = false;
 					} else if (self.current_state.get('active_track').id != "false") {
-            self._play_given_track(self.current_state.get('active_track'));
+            if (_servo_needs_initial_sleep)
+            {
+              _servo_needs_initial_sleep = false;
+              logEvent(1, "Servo needs initial sleep 2");
+              setTimeout(function(self){ self._play_given_track(self.current_state.get('active_track'));
+; }, 15000,  self);
+            }
+            else
+            {
+              self._play_given_track(self.current_state.get('active_track'));
+            }
+
 					}
 				}
 			}

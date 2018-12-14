@@ -35,6 +35,8 @@ var useFaultSensors = 0; // True if the bot has sensors. Otherwise the current p
 
 //var faultActiveState = 1;
 
+
+
 var STATUS = 'waiting'; //vs. playing, homing
 var options = {  //user commands available
   pause : false,
@@ -105,6 +107,7 @@ var maR;     //R current
 var Vm;      //motor voltage
 
 var IS_SERVO;
+var servo_wait_before_faulting = false;
 
 }
 
@@ -889,21 +892,28 @@ function parseReceivedSerialData(data) {
 				//console.log(  "Rho fault pin = " + (num & 1));
 				//console.log(  "Th home pin = " + (num & 4));
 			if (useFaultSensors)
-			{
+			{        
 				var thFaultState, rFaultState;
 				var thHomeState, rHomeState;
-				if ((num & 2) > 0) {thFaultState = 1;} else {thFaultState = 0;}
-				if ((num & 1) > 0) {rFaultState = 1;} else {rFaultState = 0;}
-        			if (thFaultState == faultActiveState && rFaultState == faultActiveState) {
-					logEvent(2, "Theta and Rho faulted!");
-					onServoThRhoFault();
-				} else if (thFaultState == faultActiveState) {
-					logEvent(2, "Theta faulted!");
-					onServoThFault();
-				} else if (rFaultState == faultActiveState) {
-					logEvent(2, "Rho faulted!");
-					onServoRhoFault();
-				}
+        if (servo_wait_before_faulting)
+        {
+          logEvent(2, "NOT checking faults yet, servo needs more time first");
+        }
+        else
+        {
+  				if ((num & 2) > 0) {thFaultState = 1;} else {thFaultState = 0;}
+  				if ((num & 1) > 0) {rFaultState = 1;} else {rFaultState = 0;}
+          			if (thFaultState == faultActiveState && rFaultState == faultActiveState) {
+  					logEvent(2, "Theta and Rho faulted!");
+  					onServoThRhoFault();
+  				} else if (thFaultState == faultActiveState) {
+  					logEvent(2, "Theta faulted!");
+  					onServoThFault();
+  				} else if (rFaultState == faultActiveState) {
+  					logEvent(2, "Rho faulted!");
+  					onServoRhoFault();
+  				}
+        }
 			}
 				if ((num & 4) > 0) {thHomeState = 1;} else {thHomeState = 0;}
 				if (thHomeState == homingThHitState) {
@@ -991,10 +1001,21 @@ module.exports = {
   },
 
 
+  allowFaultChecking()
+  {
+    servo_wait_before_faulting = false;
+  },
+
 	// The serial port connection is negotiated elsewhere. This method takes that
 	// serial port object and saves it for communication with the bot.
   useSerial: function(serial) {
     sp = serial;
+
+    if (IS_SERVO)
+    {
+      servo_wait_before_faulting = true;
+      setTimeout(function(this2){  this2.allowFaultChecking(); }, 15000, this);
+    }
     logEvent(1, '#useSerial', sp.path, 'isOpen:', sp.isOpen());
 
     sp.on('data', parseReceivedSerialData);
