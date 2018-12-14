@@ -20,7 +20,7 @@ var log4js    = require('log4js');
 
 var IS_SERVO;
 var _servo_needs_initial_sleep = false;
-
+var _servo_initial_sleep_msec  = 40000;  // 4 foot servo, worst case positioning plus the occational slow walk for hardware home
 
 /**************************** Logging *********************************************/
 log4js.configure({
@@ -186,7 +186,10 @@ var sisbot = {
     {
       _servo_needs_initial_sleep = true;
     }
-	
+
+    _servo_initial_sleep_msec =  (typeof cson_config._servo_initial_sleep_msec === 'undefined') ? 40000 : cson_config._servo_initial_sleep_msec; 
+	 logEvent(1,"servo initial sleep msec = " , _servo_initial_sleep_msec)
+
     //var tracks = this.current_state.get("track_ids");
     var tracks = [];
     //var playlists = this.current_state.get("playlist_ids");
