@@ -467,7 +467,7 @@ var sisbot = {
             {
               _servo_needs_initial_sleep = false;
               logEvent(1, "Servo needs initial sleep");
-              setTimeout(function(track, self){  self._play_track(track.toJSON(), null); }, 15000, track, self);
+              setTimeout(function(track, self){  self._play_track(track.toJSON(), null); }, 20000, track, self);
             }
             else
             {
@@ -481,7 +481,7 @@ var sisbot = {
               _servo_needs_initial_sleep = false;
               logEvent(1, "Servo needs initial sleep 2");
               setTimeout(function(self){ self._play_given_track(self.current_state.get('active_track'));
-; }, 15000,  self);
+; }, 20000,  self);
             }
             else
             {
