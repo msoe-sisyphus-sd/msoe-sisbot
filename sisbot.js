@@ -18,6 +18,10 @@ var io 			= require('socket.io');
 var moment 		= require('moment');
 var log4js    = require('log4js');
 
+var IS_SERVO;
+var _servo_needs_initial_sleep = false;
+var _servo_initial_sleep_msec  = 40000;  // 4 foot servo, worst case positioning plus the occational slow walk for hardware home
+
 /**************************** Logging *********************************************/
 log4js.configure({
   appenders: { sisbot: { type: 'file', filename: 'sisbot.log' } },
@@ -115,13 +119,15 @@ var sisbot = {
   _sensored: true, // use a sensored home
   _home_delay: 0,
 	_moved_out: false, // small ball adjustment before homing
-	_attach_track: false, // for tables with multiple balls	
+	_attach_track: false, // for tables with multiple balls
 	_detach_track: false, // for tables with multiple balls
 	_detach_first: false, // for tables with multiple balls, after first home
 	_move_to_rho: 0,
 	_saving: false,
 
 	_thumbnail_queue: [],
+
+  _servo_needs_initial_sleep: false,
 
 	_internet_check: 0,
 	_internet_retries: 0,
@@ -171,7 +177,18 @@ var sisbot = {
 		}
 
     var cson_config = CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config);
+      
+  	IS_SERVO = cson_config.isServo;
+  	console.log();
+  	console.log("IS_SERVO: " + IS_SERVO);
+  	console.log();
+    if (IS_SERVO)
+    {
+      _servo_needs_initial_sleep = true;
+    }
 
+    _servo_initial_sleep_msec =  (typeof cson_config._servo_initial_sleep_msec === 'undefined') ? 40000 : cson_config._servo_initial_sleep_msec; 
+	 logEvent(1,"servo initial sleep msec = " , _servo_initial_sleep_msec)
 
     //var tracks = this.current_state.get("track_ids");
     var tracks = [];
@@ -449,11 +466,31 @@ var sisbot = {
 
             self.current_state.set('repeat_current', 'true'); // don't step over wanted first track
 
-						self._play_track(track.toJSON(), null);
+            if (_servo_needs_initial_sleep)
+            {
+              _servo_needs_initial_sleep = false;
+              logEvent(1, "Servo needs initial sleep");
+              setTimeout(function(track, self){  self._play_track(track.toJSON(), null); }, 40000, track, self);
+            }
+            else
+            {
+  						self._play_track(track.toJSON(), null);
+            }
 
 						self._detach_first = false;
 					} else if (self.current_state.get('active_track').id != "false") {
-            self._play_given_track(self.current_state.get('active_track'));
+            if (_servo_needs_initial_sleep)
+            {
+              _servo_needs_initial_sleep = false;
+              logEvent(1, "Servo needs initial sleep 2");
+              setTimeout(function(self){ self._play_given_track(self.current_state.get('active_track'));
+; }, 40000,  self);
+            }
+            else
+            {
+              self._play_given_track(self.current_state.get('active_track'));
+            }
+
 					}
 				}
 			}
@@ -630,10 +667,9 @@ var sisbot = {
 
 		this._connectionError(service);
 	},
-
 	/***************************** Plotter ************************/
 	_connect: function() {
-    if (this.serial && this.serial.isOpen()) return true;
+    	if (this.serial && this.serial.isOpen()) return true;
 
 		var self = this;
 		//logEvent(1, "Serial Connect", this.config.serial_path);
@@ -828,42 +864,11 @@ state: function(data, cb) {
 			if (cb) cb('Another save in process, try again', null);
 		}
 	},
-  _playing_track_cannot_be_interrupted: function() { 
-    var must_not_interrupt = false;
-
-    if (this.current_state.get('state') == "playing")
-    {
-      var theTrack = this.current_state.get('active_track');
-      if (theTrack != undefined && theTrack != null)
-      {
-        if (theTrack.name.toLowerCase().indexOf('attach') == 0)
-        {
-          must_not_interrupt = true;
-        }
-        if (theTrack.name.toLowerCase().indexOf('detach') == 0)
-        {
-          must_not_interrupt = true;
-        }
-      }        
-	}
-	logEvent(1, "must_not_interrupt = " + must_not_interrupt);
-	return must_not_interrupt;
-	
-  },
 	play: function(data, cb) {
-		
 		var self = this;
 
 		if (this._validateConnection()) {
   		logEvent(1, "Sisbot Play", data);
-
-      if ( true == this._playing_track_cannot_be_interrupted() )
-      {  
-        logEvent(1,"Sisbot Play REFUSED to interrupt attach / detach track");
-        if (cb) cb('Cannot Interrupt Track whilst playing "Attach" or "Detach" ', null);
-        return;
-      }
-
 			if (this._paused) this.current_state.set("state", "playing");
 			this._paused = false;
 
@@ -908,14 +913,6 @@ state: function(data, cb) {
 	pause: function(data, cb) {
 		if (this._validateConnection()) {
   		logEvent(1, "Sisbot Pause", data);
-
-      if ( true == this._playing_track_cannot_be_interrupted() )
-      {
-        logEvent(1,"Sisbot Pause REFUSED to interrupt attach / detach track");
-        if (cb) cb('Cannot Interrupt Track whilst playing "Attach" or "Detach"', null);
-        return;
-      }
-
 			this._paused = true;
 			this.current_state.set("state", "paused");
 			plotter.pause();
@@ -924,14 +921,6 @@ state: function(data, cb) {
 	},
 	home: function(data, cb) {
 		var self = this;
-
-
-		if ( true == this._playing_track_cannot_be_interrupted() )
-		{  
-		  logEvent(1,"Sisbot Play REFUSED to interrupt attach / detach track");
-		  if (cb) cb(' Cannot Interrupt Track whilst playing "Attach" or "Detach" ', null);
-		  return;
-		}
 
 		if (this._validateConnection()) {
 	    logEvent(1, "Sisbot Home", data);
@@ -983,7 +972,7 @@ state: function(data, cb) {
 			}
 		} else if (cb) cb('No Connection', null);
 	},
-    _delayed_home: function(data, cb) {
+  _delayed_home: function(data, cb) {
     var self = this;
 
     //
@@ -997,9 +986,12 @@ state: function(data, cb) {
 			//testing this:
 			//thHome = false;
 			//rhoHome = false;
-		//	console.log("setting homes false here");
+      //	console.log("setting homes false here");
 
-     var skip_move_out_if_sensors_at_home = false;
+   
+    	var skip_move_out_if_sensors_at_home = false;
+    	if (IS_SERVO) skip_move_out_if_sensors_at_home = true;
+	 
 
       /////////////////////
       if (thHome && rhoHome && skip_move_out_if_sensors_at_home) {
@@ -1022,8 +1014,9 @@ state: function(data, cb) {
       } else {
         this._sensored = true; // force sensored home
 
-     // 	this._moved_out = true; // restore the move out after DR has failed ****************
-
+        // 	this._moved_out = true; // restore the move out after DR has failed ****************
+	      if (IS_SERVO == true) this._moved_out = true; // no move out for servo tables
+		
         if (this._moved_out) {
 					console.log("not at home after DR, doing sensored...");
           self.plotter.home();
@@ -1037,18 +1030,22 @@ state: function(data, cb) {
             accel: 0.5,
             thvmax: 0.5
           };
-          if (thHome == true) {
-            logEvent(1, "Homing... Failed rho after DR, Fix rho");
-            track_obj.verts.push({th:self.config.auto_home_th, r:self.config.auto_home_rho});
+          
+		 
+    		  if (thHome == true) {
+              logEvent(1, "Homing... Failed rho after DR, Fix rho");
+              track_obj.verts.push({th:self.config.auto_home_th, r:self.config.auto_home_rho});
           } else {
             logEvent(1, "Homing... Failed Theta after DR, Fix theta and rho");
             track_obj.verts.push({th:self.config.auto_home_th, r:self.config.auto_home_rho});
           }
-          self.plotter.playTrack(track_obj);
+          
+     		  self.plotter.playTrack(track_obj);
         }
         if (cb)	cb(null, this.current_state.toJSON());
-      }
-    } else if (cb) cb('No Connection', null);
+      }  // else sensored home
+    } // if a validated connection
+    else if (cb) cb('No Connection', null);
   },
 	add_playlist: function(data, cb) {
 		logEvent(1, "Sisbot Add Playlist", data);
@@ -1381,13 +1378,6 @@ state: function(data, cb) {
     },
     /*********************** PLAYLIST *****************************************/
 	set_playlist: function(data, cb) {
-		
-		if ( true == this._playing_track_cannot_be_interrupted() )
-		{  
-		  logEvent(1,"Sisbot Play REFUSED to interrupt attach / detach track");
-		  if (cb) cb('Cannot Interrupt Track whilst playing "Attach" or "Detach"', null);
-		  return;
-		}
 		logEvent(1, "Sisbot Set Playlist", data);
 
 		if (data == undefined || data == null) {
@@ -1480,13 +1470,7 @@ state: function(data, cb) {
 		var track = this.collection.add(new_track, {merge: true});
 		track.collection = this.collection;
 		track.config = this.config;
-		//making sure Attach and Detach track are not interrupted
-		if ( true == this._playing_track_cannot_be_interrupted() )
-		{  
-		  logEvent(1,"Sisbot Play REFUSED to interrupt attach / detach track");
-		  if (cb) cb('Cannot Interrupt Track whilst playing "Attach" or "Detach"', null);
-		  return;
-		}
+
 		// don't change, this is already playing
 		if (track.get('id') == this.current_state.get("active_track").id && this.current_state.get('state') == "playing") {
 			if (cb) return cb('already playing', null);
@@ -1896,53 +1880,58 @@ state: function(data, cb) {
 						self.socket_update(self.current_state.toJSON());
 
 						// TODO: only post if IP address changed
-                        self._post_state_to_cloud();
-					} else {
+            self._post_state_to_cloud();
+					} else {  // internet / LAN not found
 						self._internet_retries++;
-						if (self._internet_retries < self.config.internet_retries) {
-                            append_log('Internet retry: ' + self.config.retry_internet_interval);
+						if (self._internet_retries < self.config.internet_retries) 
+            {
+              // try again since we haven't hit max tries
+              append_log('Internet retry: ' + self.config.retry_internet_interval);
 							self._query_internet(self.config.retry_internet_interval);
-						} else {
+						} 
+            else {
               if (self._internet_lanonly_check == false)
               {
+                // if we hit max tries for internet,  try fallback mode for LAN w/o internet
                 self._internet_lanonly_check = true;
                 self._internet_retries = 0;
                 self._query_internet(self.config.retry_internet_interval);
                 return;
               }
+              // we failed both Internet and LAN fallback tries.  No more trying.
 							logEvent(2, "Internet not connected, reverting to hotspot.");
-                            append_log('Internet not connected, reverting to hotspot: ');
+              append_log('Internet not connected, reverting to hotspot: ');
 							self.current_state.set({ wifi_error: "true" });
 							self.reset_to_hotspot(null,null);
-						}
-					}
-				});
-			}, time_to_check);
-		}
+						} // else LAN mode not found
+					} // internet / LAN not found
+				});  // validate_internet callback function close
+			}, time_to_check);  // _internet_check SetTimeout close
+		}  // if is_hotspot close
 	},
-    _post_state_to_cloud: function () {
-        // THIS IS HELPFUL FOR ANDROID DEVICES
-        var self = this;
+  _post_state_to_cloud: function () {
+    // THIS IS HELPFUL FOR ANDROID DEVICES
+    var self = this;
 
-        // logEvent(1, 'LETS TRY AND GET TO CLOUD', this.current_state.toJSON());
+    // logEvent(1, 'LETS TRY AND GET TO CLOUD', this.current_state.toJSON());
 		var state = this.current_state.toJSON();
 		delete state.wifi_password;
 		delete state.wifi_network;
 
-        request.post('https://api.sisyphus.withease.io/sisbot_state/' + this.current_state.id, {
-                form: {
-                    data: state
-                }
-            },
-            function on_resp(error, response, body) {
-                if (!error && response.statusCode == 200) {
-                    logEvent(1, "Post to cloud", body);
-                } else {
-                    if (response) logEvent(2, "Request Not found:", response.statusCode);
-                }
-            }
-        );
-    },
+    request.post('https://api.sisyphus.withease.io/sisbot_state/' + this.current_state.id, {
+        form: {
+            data: state
+        }
+      },
+      function on_resp(error, response, body) {
+        if (!error && response.statusCode == 200) {
+            logEvent(1, "Post to cloud", body);
+        } else {
+            if (response) logEvent(2, "Request Not found:", response.statusCode);
+        }
+      }
+    );  // close request.post args list
+  },
 	get_wifi: function(data, cb) {
 		logEvent(1, "Sisbot get wifi", data);
 		iwlist.scan(data, cb);

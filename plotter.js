@@ -32,9 +32,10 @@ var homingRHitState; // The value the sensor reports when triggered. 0 or 1.
 var useFaultSensors = 0; // True if the bot has sensors. Otherwise the current position is considered home.
 //var faultThPin = "D,1"; // SBB board pin for homing theta sensor
 //var faultRPin = "D,0"; // SBB board pin for homing rho sensor
-//var faultThActiveState = 1; // The value the sensor reports when triggered. 0 or 1.
-//var faultRActiveState = 1; // The value the sensor reports when triggered. 0 or 1.
-faultActiveState = 1;
+
+//var faultActiveState = 1;
+
+
 
 var STATUS = 'waiting'; //vs. playing, homing
 var options = {  //user commands available
@@ -104,6 +105,9 @@ var certain = 4;
 var maTheta; //Theta current
 var maR;     //R current
 var Vm;      //motor voltage
+
+var IS_SERVO;
+var servo_wait_before_faulting = false;
 
 }
 
@@ -596,7 +600,19 @@ function goThetaHome() {
 function goRhoHome() {
   var rhoHomingStr, rhoHomeQueryStr = "PI," + homingRPin + "\r";
 	//R home pin C6
-
+	
+	
+  if (IS_SERVO) {//skip sensored homing RHO:
+	  
+	  console.log();
+	  console.log("rAccum= " + rAccum);
+	  console.log();
+	  
+  	rAccum = 0;
+  	photoTimeout = setTimeout(checkPhoto, photoMsec); //restart photosensing for autodim
+  	setStatus('waiting');
+    return;
+  }
 	WAITING_RHO_HOMED = true;
 
   if (pauseRequest) {
@@ -776,6 +792,7 @@ function parseReceivedSerialData(data) {
   var parts;
 	//remove any line breaks in string:
 	data = String(data).replace(/(\r\n|\n|\r)/gm,"");
+	//console.log("from SBB: " + data);
 
   // if (config.debug) logEvent(1, "in " + data);
   parts = String(data).split(',');
@@ -875,21 +892,28 @@ function parseReceivedSerialData(data) {
 				//console.log(  "Rho fault pin = " + (num & 1));
 				//console.log(  "Th home pin = " + (num & 4));
 			if (useFaultSensors)
-			{
+			{        
 				var thFaultState, rFaultState;
 				var thHomeState, rHomeState;
-				if ((num & 2) > 0) {thFaultState = 1;} else {thFaultState = 0;}
-				if ((num & 1) > 0) {rFaultState = 1;} else {rFaultState = 0;}
-        			if (thFaultState == faultActiveState && rFaultState == faultActiveState) {
-					logEvent(2, "Theta and Rho faulted!");
-					onServoThRhoFault();
-				} else if (thFaultState == faultActiveState) {
-					logEvent(2, "Theta faulted!");
-					onServoThFault();
-				} else if (rFaultState == faultActiveState) {
-					logEvent(2, "Rho faulted!");
-					onServoRhoFault();
-				}
+        if (servo_wait_before_faulting)
+        {
+          logEvent(2, "NOT checking faults yet, servo needs more time first");
+        }
+        else
+        {
+  				if ((num & 2) > 0) {thFaultState = 1;} else {thFaultState = 0;}
+  				if ((num & 1) > 0) {rFaultState = 1;} else {rFaultState = 0;}
+          			if (thFaultState == faultActiveState && rFaultState == faultActiveState) {
+  					logEvent(2, "Theta and Rho faulted!");
+  					onServoThRhoFault();
+  				} else if (thFaultState == faultActiveState) {
+  					logEvent(2, "Theta faulted!");
+  					onServoThFault();
+  				} else if (rFaultState == faultActiveState) {
+  					logEvent(2, "Rho faulted!");
+  					onServoRhoFault();
+  				}
+        }
 			}
 				if ((num & 4) > 0) {thHomeState = 1;} else {thHomeState = 0;}
 				if (thHomeState == homingThHitState) {
@@ -925,7 +949,6 @@ var onFinishTrack = function() {};
 // Called when the plotter state changes from/to any of waiting, homing, or playing.
 var onStateChanged = function() {};
 
-// Called when theta fault detected
 var onServoThFault = function() {};
 
 // Called when rho fault detected
@@ -955,7 +978,7 @@ module.exports = {
     homingThPin = config.homingThPin;
 
     HOMETHSTEPS = config.homingThSteps * thDirSign;
-	HOMERSTEPS = config.homingRSteps;
+    HOMERSTEPS = config.homingRSteps;
 
     homingThHitState = parseInt(config.homingThHitState, 10)
     homingRHitState = parseInt(config.homingRHitState, 10)
@@ -965,33 +988,55 @@ module.exports = {
     thSPRad = thSPRev / (2* Math.PI);
 
     THETA_HOME_MAX =  Math.round(thSPRev * 1.03 / HOMETHSTEPS);//3% extra
-	// logEvent(1, 'T H MAX= '+THETA_HOME_MAX);
+    // logEvent(1, 'T H MAX= '+THETA_HOME_MAX);
     RHO_HOME_MAX =  Math.round(rSPInch * (plotRadius + 0.25) / HOMERSTEPS);// 1/4" extra
 
-	// Servo values
-	if (config.isServo)				useFaultSensors = config.isServo;
-	if (config.faultActiveState)	faultActiveState = config.faultActiveState;
-	if (config.twoBallEnabled)		twoBallEnabled = config.twoBallEnabled;
+    // Servo values
+  	if (config.isServo) {
+    	useFaultSensors = config.isServo;
+    	IS_SERVO = config.isServo;	
+  	}
+  	if (config.faultActiveState)	faultActiveState = config.faultActiveState;
+  	if (config.twoBallEnabled)		twoBallEnabled = config.twoBallEnabled;
   },
 
 
+  allowFaultChecking()
+  {
+    servo_wait_before_faulting = false;
+  },
+
 	// The serial port connection is negotiated elsewhere. This method takes that
 	// serial port object and saves it for communication with the bot.
-	useSerial: function(serial) {
-		sp = serial;
-		logEvent(1, '#useSerial', sp.path, 'isOpen:', sp.isOpen());
+  useSerial: function(serial) {
+    sp = serial;
 
-		sp.on('data', parseReceivedSerialData);
-		sp.write('CU,1,0\r'); // turn off EBB sending "OK"s
+    if (IS_SERVO)
+    {
+      servo_wait_before_faulting = true;
+      setTimeout(function(this2){  this2.allowFaultChecking(); }, 15000, this);
+    }
+    logEvent(1, '#useSerial', sp.path, 'isOpen:', sp.isOpen());
 
-		sp.write('AC,0,1\r'); // turn on analog channel 0 for current reading Theta
-		sp.write('AC,1,1\r'); // turn on analog channel 1 for current reading R
-		sp.write('PD,B,3,1\r'); //set analog pin to input
-		sp.write('AC,9,1\r'); // turn on analog channel 9 for reading photosensor
-		sp.write("SE,1,100\r"); //turn on low lighting
+    sp.on('data', parseReceivedSerialData);
+    sp.write('CU,1,0\r'); // turn off EBB sending "OK"s
 
+    sp.write('AC,0,1\r'); // turn on analog channel 0 for current reading Theta
+    sp.write('AC,1,1\r'); // turn on analog channel 1 for current reading R
+    sp.write('PD,B,3,1\r'); //set analog pin to input
+    sp.write('AC,9,1\r'); // turn on analog channel 9 for reading photosensor
+    
+    sp.write('AC,8,0\r'); // turn off analog channel 8 for servo enable line
+    sp.write('AC,10,0\r'); // turn off analog channel 10 for servo enable line
+    sp.write('PD,B,1,0\r'); //set B1 to output for Rho en/disable
+    sp.write('PD,B,2,0\r'); //set B2 to output for Theta en/disable
+    
+    sp.write('PO,B,1,1\r'); //set B1 high to enable Rho
+    sp.write('PO,B,2,1\r'); //set B2 high to enable Theta
+    
+    sp.write("SE,1,100\r"); //turn on low lighting
 
-		checkPhoto(); //start ambient light sensing
+    checkPhoto(); //start ambient light sensing
 
   },
 
