@@ -1,14 +1,4 @@
 
-# 2018-12-07, 1.10.9
-  - if Servo table, go Home before doing install_updates, factory_reset, reboot, or restart
-  
-
-# 2018-12-06, 1.10.8
-  - turn off sensored Rho for Servo tables
-    - 2 ball tables, avoid t-boning the catcher instead of locking into it during parking, later sometimes getting two balls on one magnet.
-  - change check_internet_interval to 1 minute instead of 30 minutes
-    - fixes problems where sisbot was not on LAN and not putting up hotspot for up to 30 minutes.   If a sisbot has no clients connected to it (no browser, no phone) and the LAN connection is lost (dropped LAN, LAN changed passwords, etc), it was not discovering this for 30 minutes and therefore was not on LAN and was not putting up a hotspot.   Lowering this to 1 minute will cause the sisbot to discover the missing LAN and then put up its hotspot more quickly.
-
 # 2018-10-17, 1.10.7
   - security fixes related to DNS rewrite attacks
     - do not put wifi ssid or password into any replies to connected clients

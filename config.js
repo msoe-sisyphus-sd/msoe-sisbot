@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.9', // Go home first on Servo before 
+			version	: '1.10.7', // moveout after homing, security fixes from dns rewrite attacks
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -50,9 +50,7 @@ var config = {
  			auto_home_th: 0.106, //.5" for 6" diam falcon
       auto_track_start_rho: true, // move to track start rho if non-continuous
 			max_rand_retries: 10,
-			check_internet_interval: 60000, // every minute. 
-			// check_internet_interval Changed because dropped LAN or changed wifi will not be detected by a bot for this long (used to be 30 minutes)
-			// unless the bot has a web or phone client connected to it before the LAN drops 
+			check_internet_interval: 1800000, // every thirty minutes, // 1800000 once every half hour, confirm an internet connection
 			internet_retries: 5, // retry # of times before resetting to hotspot
 			retry_internet_interval: 3000, // three seconds later
 			wifi_error_retry_interval: 60000, // one minute

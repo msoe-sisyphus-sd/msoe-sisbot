@@ -18,8 +18,6 @@ var io 			= require('socket.io');
 var moment 		= require('moment');
 var log4js    = require('log4js');
 
-var IS_SERVO;
-
 
 /**************************** Logging *********************************************/
 log4js.configure({
@@ -174,12 +172,8 @@ var sisbot = {
 		}
 
     var cson_config = CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config);
-      
-  	IS_SERVO = cson_config.isServo;
-  	console.log();
-  	console.log("IS_SERVO: " + IS_SERVO);
-  	console.log();
-	
+
+
     //var tracks = this.current_state.get("track_ids");
     var tracks = [];
     //var playlists = this.current_state.get("playlist_ids");
@@ -942,7 +936,7 @@ state: function(data, cb) {
 			}
 		} else if (cb) cb('No Connection', null);
 	},
-  _delayed_home: function(data, cb) {
+    _delayed_home: function(data, cb) {
     var self = this;
 
     //
@@ -956,12 +950,9 @@ state: function(data, cb) {
 			//testing this:
 			//thHome = false;
 			//rhoHome = false;
-      //	console.log("setting homes false here");
+		//	console.log("setting homes false here");
 
-   
-    	var skip_move_out_if_sensors_at_home = false;
-    	if (IS_SERVO) skip_move_out_if_sensors_at_home = true;
-	 
+     var skip_move_out_if_sensors_at_home = false;
 
       /////////////////////
       if (thHome && rhoHome && skip_move_out_if_sensors_at_home) {
@@ -984,9 +975,8 @@ state: function(data, cb) {
       } else {
         this._sensored = true; // force sensored home
 
-        // 	this._moved_out = true; // restore the move out after DR has failed ****************
-	      if (IS_SERVO == true) this._moved_out = true; // no move out for servo tables
-		
+     // 	this._moved_out = true; // restore the move out after DR has failed ****************
+
         if (this._moved_out) {
 					console.log("not at home after DR, doing sensored...");
           self.plotter.home();
@@ -1000,22 +990,18 @@ state: function(data, cb) {
             accel: 0.5,
             thvmax: 0.5
           };
-          
-		 
-    		  if (thHome == true) {
-              logEvent(1, "Homing... Failed rho after DR, Fix rho");
-              track_obj.verts.push({th:self.config.auto_home_th, r:self.config.auto_home_rho});
+          if (thHome == true) {
+            logEvent(1, "Homing... Failed rho after DR, Fix rho");
+            track_obj.verts.push({th:self.config.auto_home_th, r:self.config.auto_home_rho});
           } else {
             logEvent(1, "Homing... Failed Theta after DR, Fix theta and rho");
             track_obj.verts.push({th:self.config.auto_home_th, r:self.config.auto_home_rho});
           }
-          
-     		  self.plotter.playTrack(track_obj);
+          self.plotter.playTrack(track_obj);
         }
         if (cb)	cb(null, this.current_state.toJSON());
-      }  // else sensored home
-    } // if a validated connection
-    else if (cb) cb('No Connection', null);
+      }
+    } else if (cb) cb('No Connection', null);
   },
 	add_playlist: function(data, cb) {
 		logEvent(1, "Sisbot Add Playlist", data);
@@ -1850,58 +1836,53 @@ state: function(data, cb) {
 						self.socket_update(self.current_state.toJSON());
 
 						// TODO: only post if IP address changed
-            self._post_state_to_cloud();
-					} else {  // internet / LAN not found
+                        self._post_state_to_cloud();
+					} else {
 						self._internet_retries++;
-						if (self._internet_retries < self.config.internet_retries) 
-            {
-              // try again since we haven't hit max tries
-              append_log('Internet retry: ' + self.config.retry_internet_interval);
+						if (self._internet_retries < self.config.internet_retries) {
+                            append_log('Internet retry: ' + self.config.retry_internet_interval);
 							self._query_internet(self.config.retry_internet_interval);
-						} 
-            else {
+						} else {
               if (self._internet_lanonly_check == false)
               {
-                // if we hit max tries for internet,  try fallback mode for LAN w/o internet
                 self._internet_lanonly_check = true;
                 self._internet_retries = 0;
                 self._query_internet(self.config.retry_internet_interval);
                 return;
               }
-              // we failed both Internet and LAN fallback tries.  No more trying.
 							logEvent(2, "Internet not connected, reverting to hotspot.");
-              append_log('Internet not connected, reverting to hotspot: ');
+                            append_log('Internet not connected, reverting to hotspot: ');
 							self.current_state.set({ wifi_error: "true" });
 							self.reset_to_hotspot(null,null);
-						} // else LAN mode not found
-					} // internet / LAN not found
-				});  // validate_internet callback function close
-			}, time_to_check);  // _internet_check SetTimeout close
-		}  // if is_hotspot close
+						}
+					}
+				});
+			}, time_to_check);
+		}
 	},
-  _post_state_to_cloud: function () {
-    // THIS IS HELPFUL FOR ANDROID DEVICES
-    var self = this;
+    _post_state_to_cloud: function () {
+        // THIS IS HELPFUL FOR ANDROID DEVICES
+        var self = this;
 
-    // logEvent(1, 'LETS TRY AND GET TO CLOUD', this.current_state.toJSON());
+        // logEvent(1, 'LETS TRY AND GET TO CLOUD', this.current_state.toJSON());
 		var state = this.current_state.toJSON();
 		delete state.wifi_password;
 		delete state.wifi_network;
 
-    request.post('https://api.sisyphus.withease.io/sisbot_state/' + this.current_state.id, {
-        form: {
-            data: state
-        }
-      },
-      function on_resp(error, response, body) {
-        if (!error && response.statusCode == 200) {
-            logEvent(1, "Post to cloud", body);
-        } else {
-            if (response) logEvent(2, "Request Not found:", response.statusCode);
-        }
-      }
-    );  // close request.post args list
-  },
+        request.post('https://api.sisyphus.withease.io/sisbot_state/' + this.current_state.id, {
+                form: {
+                    data: state
+                }
+            },
+            function on_resp(error, response, body) {
+                if (!error && response.statusCode == 200) {
+                    logEvent(1, "Post to cloud", body);
+                } else {
+                    if (response) logEvent(2, "Request Not found:", response.statusCode);
+                }
+            }
+        );
+    },
 	get_wifi: function(data, cb) {
 		logEvent(1, "Sisbot get wifi", data);
 		iwlist.scan(data, cb);
@@ -2222,28 +2203,7 @@ state: function(data, cb) {
 		} else if (cb) cb('No logs found', null);
 	},
 	/* ------------------------------------------ */
-  install_updates: function(data, cb) {
-
-    logEvent(1, "Sisbot Install Updates WRAPPER", data);
-    if (IS_SERVO)
-    {
-      var homedata = {
-        _autoplay : false,
-        clear_tracks: true
-      };
-
-      logEvent(1, "SERVO so calling Home() first", data);      
-      this.home(homedata, function() {
-        logEvent(1, "SERVO done Home() now calling _install_updates");
-        _install_updates(data,cb);
-      });
-
-      return;
-    }
-      
-    _install_updates(data, cb);
-  },
-  _install_updates: function(data, cb) {
+	install_updates: function(data, cb) {
 		var self = this;
 		logEvent(1, "Sisbot Install Updates", data);
 		if (this.current_state.get("is_internet_connected") != "true") {
@@ -2341,31 +2301,7 @@ state: function(data, cb) {
 		});
 		ping.send(); // or ping.start();
 	},
-
-  factory_reset: function(data, cb) {
-
-    // call home, then do the reset
-    debugger;
-
-    if (IS_SERVO)
-    {
-      var homedata = {
-        _autoplay : false,
-        clear_tracks: true
-      };
-
-      this.home(homedata, function() {
-        _factory_reset(data,cb);
-      });
-
-      return;
-    }
-      
-    _factory_reset(data, cb);
-
-  },
-
-	_factory_reset: function(data, cb) {
+	factory_reset: function(data, cb) {
 		logEvent(1, "Sisbot Factory Reset", data);
 		this.current_state.set({is_available: "false", reason_unavailable: "resetting"});
 		if (cb) cb(null, this.current_state.toJSON());
@@ -2377,27 +2313,7 @@ state: function(data, cb) {
 			logEvent(1, "child process exited with code",code);
 		});
 	},
-
-  restart: function(data,cb) {
-    if (IS_SERVO)
-    {
-      var homedata = {
-        _autoplay : false,
-        clear_tracks: true
-      };
-
-      this.home(homedata, function() {
-        _restart(data,cb);
-      });
-
-      return;
-    }
-      
-    _restart(data, cb);
-
-  },
-
-	_restart: function(data,cb) {
+	restart: function(data,cb) {
 		logEvent(1, "Sisbot Restart", data);
 		this.current_state.set({is_available: "false", reason_unavailable: "restarting"});
 		if (cb) cb(null, this.current_state.toJSON());
@@ -2409,25 +2325,7 @@ state: function(data, cb) {
 		  logEvent(1, "child process exited with code",code);
 		});
 	},
-  reboot: function(data,cb) {
-    if (IS_SERVO)
-    {
-      var homedata = {
-        _autoplay : false,
-        clear_tracks: true
-      };
-
-      this.home(homedata, function() {
-        _reboot(data,cb);
-      });
-
-      return;
-    }
-      
-    _reboot(data, cb);
-
-  },
-  _reboot: function(data,cb) {
+	reboot: function(data,cb) {
 		logEvent(1, "Sisbot Reboot", data);
 		this.current_state.set({is_available: "false", reason_unavailable: "rebooting"});
 		this.socket_update(this.current_state.toJSON());
