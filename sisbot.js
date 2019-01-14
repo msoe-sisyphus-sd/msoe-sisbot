@@ -109,7 +109,7 @@ var sisbot = {
 	error_messages: [],
 
   isServo: false,
-  homeFirst: false,
+  homeFirst: true,
 
 	_paused: false,
 	_play_next: false,
@@ -177,7 +177,7 @@ var sisbot = {
      
     this.isServo =  (typeof cson_config.isServo === 'undefined') ? false : cson_config.isServo; 
     logEvent(1, "this.isServo: " + this.isServo);
-    this.homeFirst = (typeof cson_config.homeFirst === 'undefined') ? false : cson_config.homeFirst; 
+    this.homeFirst = (typeof cson_config.homeFirst === 'undefined') ? true : cson_config.homeFirst; 
     logEvent(1, "this.homeFirst: " + this.homeFirst);
 
 
