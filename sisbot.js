@@ -784,7 +784,7 @@ state: function(data, cb) {
       setTimeout(function() {
         logEvent(1, "calling wait_for_home data is = ", data);
         self._wait_for_home(data, cb, self._set_hostname, self);
-      }, 4000);
+      }, 50);
 
       return;
     }
