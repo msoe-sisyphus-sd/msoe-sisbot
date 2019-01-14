@@ -265,7 +265,7 @@ var sisbot = {
 		if (this.current_state.get('hostname') != clean_hostname+'.local') {
       logEvent(1,"need to set hostname");
 
-			self.set_hostname({hostname: clean_hostname}, null);
+			self._set_hostname({hostname: clean_hostname}, null);
 			logEvent(2, "Fix incorrect hostname");
 			return; // stop here
 		}
