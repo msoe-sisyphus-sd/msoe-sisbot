@@ -782,7 +782,7 @@ state: function(data, cb) {
       
       self = this;
       setTimeout(function() {
-        logEvent(1, "calling _install_updates pointer is = ", typeof self._install_updates);
+        logEvent(1, "calling wait_for_home pointer is = ", typeof self._set_hostname);
         self._wait_for_home(self.data, self.cb, self._set_hostname, self);
       }, 4000);
 
@@ -2301,7 +2301,7 @@ state: function(data, cb) {
         
         // logEvent(1, "_wait_for_home callback self.funcptr = ", typeof fptr);
         self._wait_for_home(data, cb, fptr, this2);
-      }, 1000,self.data, self.cb, self._install_updates, self); // wait a second
+      }, 1000, data, cb, funcptr, this2); // wait a second
     }    
   },
   _install_updates: function(data, cb) {
