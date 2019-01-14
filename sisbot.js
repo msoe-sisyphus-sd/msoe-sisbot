@@ -2296,7 +2296,7 @@ state: function(data, cb) {
     else
     {
       var self = this;
-      logEvent(1, "Not home, try again");
+      logEvent(1, "Not home, try again data = ", data);
       setTimeout(function(data, cb, fptr, this2) {
         
         // logEvent(1, "_wait_for_home callback self.funcptr = ", typeof fptr);
