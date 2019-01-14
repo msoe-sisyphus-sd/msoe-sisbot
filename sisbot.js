@@ -2273,8 +2273,8 @@ state: function(data, cb) {
       self = this;
       setTimeout(function() {
         logEvent(1, "calling _install_updates pointer is = ", typeof self._install_updates);
-        self._wait_for_home(self.data, self.cb, self._install_updates, self);
-      }, 4000);
+        self._wait_for_home(data, cb,  self._install_updates, self);
+      }, 50);
 
       return;
     }
@@ -2420,9 +2420,9 @@ state: function(data, cb) {
       self = this;
       setTimeout(function() {
         logEvent(1, "calling _install_updates pointer is = ", typeof self._install_updates);
-        self._wait_for_home(self.data, self.cb, self._factory_reset, self);
-      }, 4000);
-
+        self._wait_for_home(data, cb, self._factory_reset, self);
+      }, 50);
+      // if wait is too long, home is done and you've moved away againby the time you check
       return;
     }
       
@@ -2460,8 +2460,8 @@ state: function(data, cb) {
       self = this;
       setTimeout(function() {
         logEvent(1, "calling _install_updates pointer is = ", typeof self._install_updates);
-        self._wait_for_home(self.data, self.cb, self._restart, self);
-      }, 4000);
+        self._wait_for_home(data, cb, self._restart, self);
+      }, 50);
 
       return;
     }
@@ -2499,8 +2499,8 @@ state: function(data, cb) {
       self = this;
       setTimeout(function() {
         logEvent(1, "calling _install_updates pointer is = ", typeof self._install_updates);
-        self._wait_for_home(self.data, self.cb, self._reboot, self);
-      }, 4000);
+        self._wait_for_home(data, cb, self._reboot, self);
+      }, 50);
 
       return;
     }
