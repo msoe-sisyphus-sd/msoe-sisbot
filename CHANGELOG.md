@@ -1,4 +1,7 @@
 
+# 2018-01-15 1.10.13
+  - new hardware change on SBB's.  No longer need to sleep servo's when sisbot wakes up.
+  - finishing up code started in 1.10.9 for servo's to send ball to home before doing install_updates, factory_reset, table_rename, reboot, or restart
 
 # 2018-12-13 1.10.12
   - sleep servo when sisbot first wakes up.  The servo can take a long time to do the new hardware based home.  Sisbot was jumping in too early and starting to play a track, causing the bot to lose track of where it really was
@@ -6,7 +9,7 @@
   So after boot wait before starting to check
 
 # 2018-12-11 1.10.11
-  - incorporate new code to set the enable pins on V2 servos
+  - incorporate Bruces new code to set the enable pins on V2 servos
 
 # 2018-12-07, 1.10.10
   - this number was skipped

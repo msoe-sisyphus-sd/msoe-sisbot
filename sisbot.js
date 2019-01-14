@@ -110,8 +110,6 @@ var sisbot = {
 
   isServo: false,
   homeFirst: false,
-  _servo_needs_initial_sleep: false,
-  _servo_initial_sleep_msec: 40000,  // 4 foot servo, worst case positioning plus the occational slow walk for hardware home
 
 	_paused: false,
 	_play_next: false,
@@ -181,14 +179,6 @@ var sisbot = {
     logEvent(1, "this.isServo: " + this.isServo);
     this.homeFirst = (typeof cson_config.homeFirst === 'undefined') ? false : cson_config.homeFirst; 
     logEvent(1, "this.homeFirst: " + this.homeFirst);
-
-    if (this.isServo)
-    {
-      this._servo_needs_initial_sleep = true;
-    }
-
-    this._servo_initial_sleep_msec =  (typeof cson_config._servo_initial_sleep_msec === 'undefined') ? 40000 : cson_config._servo_initial_sleep_msec; 
-    logEvent(1,"servo initial sleep msec = " , this._servo_initial_sleep_msec)
 
 
     //var tracks = this.current_state.get("track_ids");
@@ -471,31 +461,11 @@ var sisbot = {
 
             self.current_state.set('repeat_current', 'true'); // don't step over wanted first track
 
-            if (this._servo_needs_initial_sleep)
-            {
-              this._servo_needs_initial_sleep = false;
-              logEvent(1, "Servo needs initial sleep");
-              setTimeout(function(track, self){  self._play_track(track.toJSON(), null); }, 40000, track, self);
-            }
-            else
-            {
-              self._play_track(track.toJSON(), null);
-            }
+            self._play_track(track.toJSON(), null);
 
             self._detach_first = false;
           } else if (self.current_state.get('active_track').id != "false") {
-            if (this._servo_needs_initial_sleep)
-            {
-              this._servo_needs_initial_sleep = false;
-              logEvent(1, "Servo needs initial sleep 2");
-              setTimeout(function(self){ self._play_given_track(self.current_state.get('active_track'));
-; }, 40000,  self);
-            }
-            else
-            {
-              self._play_given_track(self.current_state.get('active_track'));
-            }
-
+            self._play_given_track(self.current_state.get('active_track'));
           }
         }
       }

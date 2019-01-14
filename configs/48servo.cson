@@ -14,7 +14,6 @@ jogStepsTheta: 50
 jogStepsRadius: 100
 
 isServo: true
-_servo_initial_sleep_msec: 39000
 faultActiveState: 1
 twoBallEnabled: true
 attach_track: '0 0,-0.6 0,-0.6 -0.0526,0 -0.0526,-0.6 -0.0526,-0.6 0,0 0' # set table specific attach verts
