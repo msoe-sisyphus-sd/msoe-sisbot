@@ -783,7 +783,7 @@ state: function(data, cb) {
       self = this;
       setTimeout(function() {
         logEvent(1, "calling wait_for_home data is = ", data);
-        self._wait_for_home(data, cb, self._set_hostname, self);
+        self._wait_for_home(data, cb, self._set_hostname, self, false);
       }, 50);
 
       return;
@@ -2273,7 +2273,7 @@ state: function(data, cb) {
       self = this;
       setTimeout(function() {
         logEvent(1, "calling _install_updates pointer is = ", typeof self._install_updates);
-        self._wait_for_home(data, cb,  self._install_updates, self);
+        self._wait_for_home(data, cb,  self._install_updates, self, false);
       }, 50);
 
       return;
@@ -2282,9 +2282,29 @@ state: function(data, cb) {
     logEvent(1, "no servo, call _install_updates directly");      
     this._install_updates(data, cb);
   },
-  _wait_for_home: function(data, cb, funcptr, this2)
+  _wait_for_home: function(data, cb, funcptr, this2, saw_homing)
   {
-    // logEvent(1, "Waiting for home, current state = ", this.current_state.get("state"));    
+    // logEvent(1, "Waiting for home, current state = ", this.current_state.get("state"));   
+
+    if (saw_homing == false)
+    {
+      if (this.current_state.get("state") == "homing")
+      {
+        saw_homing = true;
+      }      
+
+      var self = this;
+      logEvent(1, "wait_for_home wait to see homing = ", saw_homing);
+      setTimeout(function(data, cb, fptr, this2, saw_homing) {
+        
+        // logEvent(1, "_wait_for_home callback self.funcptr = ", typeof fptr);
+        self._wait_for_home(data, cb, fptr, this2, saw_homing);
+      }, 1000, data, cb, funcptr, this2, saw_homing); // wait a second
+    } 
+
+
+
+
     logEvent(1, "_wait_for_home data = ", data);
     if (this.current_state.get("state") == "waiting")
     {
@@ -2296,12 +2316,12 @@ state: function(data, cb) {
     else
     {
       var self = this;
-      logEvent(1, "Not home, try again data = ", data);
-      setTimeout(function(data, cb, fptr, this2) {
+      logEvent(1, "wait_for_home seen homing, waiting for state waiting = ", data);
+      setTimeout(function(data, cb, fptr, this2, saw_homing) {
         
         // logEvent(1, "_wait_for_home callback self.funcptr = ", typeof fptr);
-        self._wait_for_home(data, cb, fptr, this2);
-      }, 1000, data, cb, funcptr, this2); // wait a second
+        self._wait_for_home(data, cb, fptr, this2, saw_homing);
+      }, 1000, data, cb, funcptr, this2, saw_homing); // wait a second
     }    
   },
   _install_updates: function(data, cb) {
@@ -2420,7 +2440,7 @@ state: function(data, cb) {
       self = this;
       setTimeout(function() {
         logEvent(1, "calling _install_updates pointer is = ", typeof self._install_updates);
-        self._wait_for_home(data, cb, self._factory_reset, self);
+        self._wait_for_home(data, cb, self._factory_reset, self, false);
       }, 50);
       // if wait is too long, home is done and you've moved away againby the time you check
       return;
@@ -2460,7 +2480,7 @@ state: function(data, cb) {
       self = this;
       setTimeout(function() {
         logEvent(1, "calling _install_updates pointer is = ", typeof self._install_updates);
-        self._wait_for_home(data, cb, self._restart, self);
+        self._wait_for_home(data, cb, self._restart, self, false);
       }, 50);
 
       return;
@@ -2499,7 +2519,7 @@ state: function(data, cb) {
       self = this;
       setTimeout(function() {
         logEvent(1, "calling _install_updates pointer is = ", typeof self._install_updates);
-        self._wait_for_home(data, cb, self._reboot, self);
+        self._wait_for_home(data, cb, self._reboot, self, false);
       }, 50);
 
       return;
