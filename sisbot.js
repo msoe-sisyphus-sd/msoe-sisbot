@@ -2300,6 +2300,7 @@ state: function(data, cb) {
         // logEvent(1, "_wait_for_home callback self.funcptr = ", typeof fptr);
         self._wait_for_home(data, cb, fptr, this2, saw_homing);
       }, 1000, data, cb, funcptr, this2, saw_homing); // wait a second
+      return;
     } 
 
 
