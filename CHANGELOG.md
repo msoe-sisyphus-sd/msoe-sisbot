@@ -1,4 +1,30 @@
 
+
+# 2018-01-15 1.10.13
+  - new hardware change on SBB's.  No longer need to sleep servo's when sisbot wakes up.  The sleep on wake up code from 1.10.12 was removed.
+  - finishing up code started in 1.10.9 for servo's to send ball to home before doing install_updates, factory_reset, table_rename, reboot, or restart.  These operations reset the PI but don't cycle power on the SBB so the SBB autohome does not kick in and the sisbot can end up not knowing where the ball is after soft reboot which will result in eventual RHO fault for servo tables.  Going home before soft reboot will fix this issue.
+
+# 2018-12-13 1.10.12
+  - sleep servo when sisbot first wakes up.  The servo can take a long time to do the new hardware based home.  Sisbot was jumping in too early and starting to play a track, causing the bot to lose track of where it really was.
+  - servo don't check for faults right away.  It takes some time before the setting of the enable pins to the new V2 servos take effect.  Before they take effect the SBB will report back servo faults, but it's not true as you can see on the motor lights there is no fault.  
+  So after boot wait before starting to check
+
+# 2018-12-11 1.10.11
+  - incorporate Bruces new code to set the enable pins on V2 servos
+
+# 2018-12-07, 1.10.10
+  - this number was skipped
+
+# 2018-12-07, 1.10.9
+  - if Servo table, go Home before doing install_updates, factory_reset, reboot, or restart
+  - This change was not ready and had to be rolled back out of the code to help meet year end shipping goals.
+
+# 2018-12-06, 1.10.8
+  - turn off sensored Rho for Servo tables
+    - 2 ball tables, avoid t-boning the catcher instead of locking into it during parking, later sometimes getting two balls on one magnet.
+  - change check_internet_interval to 1 minute instead of 30 minutes
+    - fixes problems where sisbot was not on LAN and not putting up hotspot for up to 30 minutes.   If a sisbot has no clients connected to it (no browser, no phone) and the LAN connection is lost (dropped LAN, LAN changed passwords, etc), it was not discovering this for 30 minutes and therefore was not on LAN and was not putting up a hotspot.   Lowering this to 1 minute will cause the sisbot to discover the missing LAN and then put up its hotspot more quickly.
+
 # 2018-10-17, 1.10.7
   - security fixes related to DNS rewrite attacks
     - do not put wifi ssid or password into any replies to connected clients

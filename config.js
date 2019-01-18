@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.10.7', // moveout after homing, security fixes from dns rewrite attacks
+			version	: '1.10.13', // servo go home before operations that restart node
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
