@@ -34,7 +34,7 @@ var useFaultSensors = 0; // True if the bot has sensors. Otherwise the current p
 //var faultRPin = "D,0"; // SBB board pin for homing rho sensor
 //var faultThActiveState = 1; // The value the sensor reports when triggered. 0 or 1.
 //var faultRActiveState = 1; // The value the sensor reports when triggered. 0 or 1.
-faultActiveState = 1;
+var faultActiveState = 1;
 
 
 
