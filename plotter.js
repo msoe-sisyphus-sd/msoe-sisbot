@@ -979,7 +979,7 @@ module.exports = {
     homingThPin = config.homingThPin;
 
     HOMETHSTEPS = config.homingThSteps * thDirSign;
-	HOMERSTEPS = config.homingRSteps;
+	  HOMERSTEPS = config.homingRSteps;
 
     homingThHitState = parseInt(config.homingThHitState, 10)
     homingRHitState = parseInt(config.homingRHitState, 10)
@@ -989,13 +989,16 @@ module.exports = {
     thSPRad = thSPRev / (2* Math.PI);
 
     THETA_HOME_MAX =  Math.round(thSPRev * 1.03 / HOMETHSTEPS);//3% extra
-	// logEvent(1, 'T H MAX= '+THETA_HOME_MAX);
+	  // logEvent(1, 'T H MAX= '+THETA_HOME_MAX);
     RHO_HOME_MAX =  Math.round(rSPInch * (plotRadius + 0.25) / HOMERSTEPS);// 1/4" extra
 
-	// Servo values
-	if (config.isServo)				useFaultSensors = config.isServo;
-	if (config.faultActiveState)	faultActiveState = config.faultActiveState;
-	if (config.twoBallEnabled)		twoBallEnabled = config.twoBallEnabled;
+    // Servo values
+    if (config.isServo) {
+      useFaultSensors = config.isServo;
+      IS_SERVO = config.isServo;  
+    }
+    if (config.faultActiveState)  faultActiveState = config.faultActiveState;
+    if (config.twoBallEnabled)    twoBallEnabled = config.twoBallEnabled;
   },
 
 
