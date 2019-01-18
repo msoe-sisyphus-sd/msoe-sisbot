@@ -602,7 +602,18 @@ function goThetaHome() {
 function goRhoHome() {
   var rhoHomingStr, rhoHomeQueryStr = "PI," + homingRPin + "\r";
 	//R home pin C6
-
+  
+  if (IS_SERVO) {//skip sensored homing RHO:
+    
+    console.log();
+    console.log("rAccum= " + rAccum);
+    console.log();
+    
+    rAccum = 0;
+    photoTimeout = setTimeout(checkPhoto, photoMsec); //restart photosensing for autodim
+    setStatus('waiting');
+    return;
+  } 
 	WAITING_RHO_HOMED = true;
 
   if (pauseRequest) {
