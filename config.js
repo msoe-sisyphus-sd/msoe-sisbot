@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.13', // servo go home before operations that restart node
+			version	: '1.9.14', // playing   pause -> play lockout timer to prevent squeel and loss of location
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

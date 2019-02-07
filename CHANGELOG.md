@@ -1,3 +1,5 @@
+# 2018-02-07 1.10.14
+  - If sisbot is playing, and then pause and play are hit very quickly in sucession.  Do not act on the play if it has been less than 3 seconds since the pause was sent.  This value can be configured in the cson files with the variable pause_play_lockout_msec.  A value of 4000 would be 4 seconds.
 
 # 2018-01-15 1.10.13
   - new hardware change on SBB's.  No longer need to sleep servo's when sisbot wakes up.  The sleep on wake up code from 1.10.12 was removed.
