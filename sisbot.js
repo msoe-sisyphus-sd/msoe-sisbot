@@ -181,7 +181,7 @@ var sisbot = {
     this.homeFirst = (typeof cson_config.homeFirst === 'undefined') ? true : cson_config.homeFirst; 
     logEvent(1, "this.homeFirst: " + this.homeFirst);
 
-    this.pause_play_lockout_msec = (typeof cson_config.pause_play_lockout_msec === 'undefined') ? 100 : cson_config.pause_play_lockout_msec; 
+    this.pause_play_lockout_msec = (typeof cson_config.pause_play_lockout_msec === 'undefined') ? 3000 : cson_config.pause_play_lockout_msec; 
 
     //var tracks = this.current_state.get("track_ids");
     var tracks = [];
