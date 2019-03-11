@@ -33,7 +33,7 @@ var useFaultSensors = 0; // True if the bot has sensors. Otherwise the current p
 //var faultThPin = "D,1"; // SBB board pin for homing theta sensor
 //var faultRPin = "D,0"; // SBB board pin for homing rho sensor
 
-//var faultActiveState = 1;
+var faultActiveState = 1;
 
 
 
