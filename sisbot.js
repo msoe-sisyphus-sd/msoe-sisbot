@@ -299,8 +299,6 @@ var sisbot = {
 			factory_resetting: "false",
 			factory_resetting_error: "",
 			installed_updates: "false",
-			brightness: 0.5,
-			speed: 0.2,
 			is_internet_connected: "false",
 			software_version: this.config.version
 		});
