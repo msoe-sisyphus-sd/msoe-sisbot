@@ -112,6 +112,7 @@ var sisbot = {
   homeFirst: true,
 
 	_paused: false,
+  _pause_timestamp: null,
 	_play_next: false,
 	_autoplay: false,
 	_home_next: false,
@@ -179,6 +180,8 @@ var sisbot = {
     logEvent(1, "this.isServo: " + this.isServo);
     this.homeFirst = (typeof cson_config.homeFirst === 'undefined') ? true : cson_config.homeFirst; 
     logEvent(1, "this.homeFirst: " + this.homeFirst);
+
+    this.pause_play_lockout_msec = (typeof cson_config.pause_play_lockout_msec === 'undefined') ? 3000 : cson_config.pause_play_lockout_msec; 
 
     //var tracks = this.current_state.get("track_ids");
     var tracks = [];
@@ -296,8 +299,6 @@ var sisbot = {
 			factory_resetting: "false",
 			factory_resetting_error: "",
 			installed_updates: "false",
-			brightness: 0.5,
-			speed: 0.2,
 			is_internet_connected: "false",
 			software_version: this.config.version
 		});
@@ -871,6 +872,13 @@ state: function(data, cb) {
 
 		if (this._validateConnection()) {
   		logEvent(1, "Sisbot Play", data);
+      if (this._pause_timestamp != null && (Date.now() - this._pause_timestamp) < this.pause_play_lockout_msec)
+      {
+        logEvent(1,"Sisbot refused to Play, Still in lockout time window after a Pause command");
+        if (cb) cb('Still waiting for Pause to complete', null);
+        return;
+      }
+
 			if (this._paused) this.current_state.set("state", "playing");
 			this._paused = false;
 
@@ -916,6 +924,7 @@ state: function(data, cb) {
 		if (this._validateConnection()) {
   		logEvent(1, "Sisbot Pause", data);
 			this._paused = true;
+      this._pause_timestamp = Date.now();
 			this.current_state.set("state", "paused");
 			plotter.pause();
 			if (cb)	cb(null, this.current_state.toJSON());

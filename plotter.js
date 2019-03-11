@@ -32,8 +32,6 @@ var homingRHitState; // The value the sensor reports when triggered. 0 or 1.
 var useFaultSensors = 0; // True if the bot has sensors. Otherwise the current position is considered home.
 //var faultThPin = "D,1"; // SBB board pin for homing theta sensor
 //var faultRPin = "D,0"; // SBB board pin for homing rho sensor
-//var faultThActiveState = 1; // The value the sensor reports when triggered. 0 or 1.
-//var faultRActiveState = 1; // The value the sensor reports when triggered. 0 or 1.
 var faultActiveState = 1;
 
 
