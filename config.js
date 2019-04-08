@@ -1,8 +1,8 @@
-var fs				= require('fs');
-var _           	= require('underscore');
-var uuid			= require('uuid');
-var which_cson  	= 'default.cson';
-var default_status 	= require('./default_status.js');
+var fs				      = require('fs');
+var _               = require('underscore');
+var uuid			      = require('uuid');
+var which_cson      = 'default.cson';
+var default_status  = require('./default_status.js');
 
 if (process.env.NODE_ENV.indexOf('dev') == -1) {
     var which_cson  = require('/home/pi/sisbot-server/sisbot/configs/whichcson.js');
@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.14', // playing   pause -> play lockout timer to prevent squeel and loss of location
+			version	: '1.9.15', // thumbnail_preview_generate error returned when no coordinates given
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -50,9 +50,9 @@ var config = {
  			auto_home_th: 0.106, //.5" for 6" diam falcon
       auto_track_start_rho: true, // move to track start rho if non-continuous
 			max_rand_retries: 10,
-			check_internet_interval: 60000, // every minute. 
+			check_internet_interval: 60000, // every minute.
 			// check_internet_interval Changed because dropped LAN or changed wifi will not be detected by a bot for this long (used to be 30 minutes)
-			// unless the bot has a web or phone client connected to it before the LAN drops 
+			// unless the bot has a web or phone client connected to it before the LAN drops
 			internet_retries: 5, // retry # of times before resetting to hotspot
 			retry_internet_interval: 3000, // three seconds later
 			wifi_error_retry_interval: 60000, // one minute
