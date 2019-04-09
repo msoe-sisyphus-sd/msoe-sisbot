@@ -178,10 +178,10 @@ var sisbot = {
 
     this.isServo =  (typeof cson_config.isServo === 'undefined') ? false : cson_config.isServo; 
     logEvent(1, "this.isServo: " + this.isServo);
-    this.homeFirst = (typeof cson_config.homeFirst === 'undefined') ? true : cson_config.homeFirst; 
+    this.homeFirst = (typeof cson_config.homeFirst === 'undefined') ? true : cson_config.homeFirst;
     logEvent(1, "this.homeFirst: " + this.homeFirst);
 
-    this.pause_play_lockout_msec = (typeof cson_config.pause_play_lockout_msec === 'undefined') ? 3000 : cson_config.pause_play_lockout_msec; 
+    this.pause_play_lockout_msec = (typeof cson_config.pause_play_lockout_msec === 'undefined') ? 3000 : cson_config.pause_play_lockout_msec;
 
     //var tracks = this.current_state.get("track_ids");
     var tracks = [];
@@ -246,7 +246,7 @@ var sisbot = {
 					logEvent(1, "Unknown:", obj);
 					self.collection.add(obj);
 			}
-      
+
 
 
 		});
@@ -258,7 +258,7 @@ var sisbot = {
     this.current_state.set("track_ids", tracks);
     logEvent(1,"done setting track_ids");
     this.current_state.set("playlist_ids", playlists);
-    
+
 
 		// make sure the hostname is correct
 		var regex = /^[^a-zA-Z]*/; // make sure first character is a-z
@@ -775,11 +775,11 @@ state: function(data, cb) {
         clear_tracks: true
       };
 
-      logEvent(1, "set_hostname, SERVO so calling Home() first");  
-      self = this;    
+      logEvent(1, "set_hostname, SERVO so calling Home() first");
+      self = this;
       this.home(homedata, null);
-      logEvent(1, "next call wait_for_home");  
-      
+      logEvent(1, "next call wait_for_home");
+
       self = this;
       setTimeout(function() {
         logEvent(1, "calling wait_for_home data is = ", data);
@@ -989,9 +989,9 @@ state: function(data, cb) {
     //
 		if (this._validateConnection()) {
       var thHome = self.plotter.getThetaHome();
-			
+
       var rhoHome = self.plotter.getRhoHome();
-			
+
       logEvent(1, "Sensor Values", thHome, rhoHome);
 			console.log("Sensor Values", thHome, rhoHome);
 			//testing this:
@@ -1262,9 +1262,11 @@ state: function(data, cb) {
 			self.thumbnail_generate({id: all_tracks.pop()}, gen_next_track);
 	},
 	thumbnail_preview_generate: function(data, cb) {
-		logEvent(1, "Thumbnail preview", data.name);
+		logEvent(1, "Thumbnail preview", _.keys(data));
 
-        var self = this;
+    if (!data.raw_coors) return cb('No Coordinates found', null);
+
+    var self = this;
 
 		// add to front of queue
 		if (self._thumbnail_queue.length == 0) self._thumbnail_queue.push(data);
@@ -1285,8 +1287,8 @@ state: function(data, cb) {
 	},
   thumbnail_generate: function(data, cb) {
 		logEvent(1, "Thumbnail generate", data.id);
-        // @id
-        var self = this;
+    // @id
+    var self = this;
 		var coordinates = [];
 
 		if (data.id != 'preview') {
@@ -1331,55 +1333,55 @@ state: function(data, cb) {
         });
     },
     _thumbnails_generate: function(data, cb) {
-        // id, host_url, raw_coors, dimensions
+      // id, host_url, raw_coors, dimensions
 
-        var thumbs_dir = this.config.base_dir + '/' + this.config.folders.cloud + '/img/tracks';
-        var thumbs_file = thumbs_dir + '/' + data.id + '_' + data.dimensions + '.png';
+      var thumbs_dir = this.config.base_dir + '/' + this.config.folders.cloud + '/img/tracks';
+      var thumbs_file = thumbs_dir + '/' + data.id + '_' + data.dimensions + '.png';
 
-        var opts = {
-            siteType: 'html',
-            renderDelay: 2500,
-            captureSelector: '.print',
-            screenSize: {
-                width: data.dimensions + 16,
-                height: data.dimensions
-            },
-            phantomPath: '/home/pi/phantomjs/bin/phantomjs',
-            userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_4) AppleWebKit/600.7.12 (KHTML, like Gecko) Version/8.0.7 Safari/600.7.12',
-            shotSize: {
-                width: 'window',
-                height: 'window'
-            }
-        };
+      var opts = {
+        siteType: 'html',
+        renderDelay: 2500,
+        captureSelector: '.print',
+        screenSize: {
+          width: data.dimensions + 16,
+          height: data.dimensions
+        },
+        phantomPath: '/home/pi/phantomjs/bin/phantomjs',
+        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_4) AppleWebKit/600.7.12 (KHTML, like Gecko) Version/8.0.7 Safari/600.7.12',
+        shotSize: {
+          width: 'window',
+          height: 'window'
+        }
+      };
 
-        var base_url = 'http://' + this.current_state.get('local_ip') + ':' + this.config.servers.app.port + '/';
-        var html = '<html><!DOCTYPE html>\
-        <head>\
-            <meta charset="utf-8" />\
-            <meta name="format-detection" content="telephone=no" />\
-            <meta name="msapplication-tap-highlight" content="no" />\
-            <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1" />\
-            <meta charset="utf-8">\
-            <meta http-equiv="X-UA-Compatible" content="IE=edge">\
-            <meta name="viewport" content="width=device-width, initial-scale=1">\
-            <meta name="google" value="notranslate">\
-            <title>Ease</title>\
-            <base href="' + base_url + '" />\
-            <script src="js/libs/lib.jquery.min.js"></script>\
-            <script src="js/libs/lib.underscore.min.js"></script>\
-            <script src="js/libs/lib.d3.min.js"></script>\
-            <script src="js/libs/lib.gen_thumbnails.js"></script>\
-        </head><body><div class="print">\
-                        <div class="d3" data-coors="' + data.raw_coors + '" data-dimensions="' + data.dimensions + '"></div>\
-                </div></body></html>';
+      var base_url = 'http://' + this.current_state.get('local_ip') + ':' + this.config.servers.app.port + '/';
+      var html = '<html><!DOCTYPE html>\
+      <head>\
+          <meta charset="utf-8" />\
+          <meta name="format-detection" content="telephone=no" />\
+          <meta name="msapplication-tap-highlight" content="no" />\
+          <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1" />\
+          <meta charset="utf-8">\
+          <meta http-equiv="X-UA-Compatible" content="IE=edge">\
+          <meta name="viewport" content="width=device-width, initial-scale=1">\
+          <meta name="google" value="notranslate">\
+          <title>Ease</title>\
+          <base href="' + base_url + '" />\
+          <script src="js/libs/lib.jquery.min.js"></script>\
+          <script src="js/libs/lib.underscore.min.js"></script>\
+          <script src="js/libs/lib.d3.min.js"></script>\
+          <script src="js/libs/lib.gen_thumbnails.js"></script>\
+      </head><body><div class="print">\
+                      <div class="d3" data-coors="' + data.raw_coors + '" data-dimensions="' + data.dimensions + '"></div>\
+              </div></body></html>';
 
-        logEvent(1, '#### MAKE WEBSHOT', thumbs_file, base_url);
+      logEvent(1, '#### MAKE WEBSHOT', thumbs_file, base_url);
 
-        webshot(html, thumbs_file, opts, function(err) {
-	        logEvent(1, '#### WEBSHOT FINISHED', thumbs_file, err);
+      webshot(html, thumbs_file, opts, function(err) {
+      logEvent(1, '#### WEBSHOT FINISHED', thumbs_file, err);
 			if (data.cb) data.cb(err, { 'id':data.id });
-            if (cb) cb(err, null);
-        });
+        if (cb) cb(err, null);
+      });
     },
     /*********************** PLAYLIST *****************************************/
 	set_playlist: function(data, cb) {
@@ -1888,10 +1890,14 @@ state: function(data, cb) {
                         self._post_state_to_cloud();
 					} else {
 						self._internet_retries++;
-						if (self._internet_retries < self.config.internet_retries) {
-                            append_log('Internet retry: ' + self.config.retry_internet_interval);
+
+						if (self._internet_retries < self.config.internet_retries)
+            {
+              // try again since we haven't hit max tries
+              append_log('Internet retry: ' + self.config.retry_internet_interval);
 							self._query_internet(self.config.retry_internet_interval);
-						} else {
+						}
+            else {
               if (self._internet_lanonly_check == false)
               {
                 self._internet_lanonly_check = true;
@@ -2262,11 +2268,11 @@ state: function(data, cb) {
         clear_tracks: true
       };
 
-      logEvent(1, "install_updates, SERVO so calling Home() first");  
-      self = this;    
+      logEvent(1, "install_updates, SERVO so calling Home() first");
+      self = this;
       this.home(homedata, null);
-      logEvent(1, "next call wait_for_home");  
-      
+      logEvent(1, "next call wait_for_home");
+
       self = this;
       setTimeout(function() {
         logEvent(1, "calling _install_updates pointer is = ", typeof self._install_updates);
@@ -2276,19 +2282,19 @@ state: function(data, cb) {
       return;
     }
 
-    logEvent(1, "no servo, call _install_updates directly");      
+    logEvent(1, "no servo, call _install_updates directly");
     this._install_updates(data, cb);
   },
   _wait_for_home: function(data, cb, funcptr, this2, saw_homing)
   {
-    // logEvent(1, "Waiting for home, current state = ", this.current_state.get("state"));   
+    // logEvent(1, "Waiting for home, current state = ", this.current_state.get("state"));
 
     if (saw_homing == false)
     {
       if (this.current_state.get("state") == "homing")
       {
         saw_homing = true;
-      }      
+      }
 
       var self = this;
       logEvent(1, "_wait_for_home waiting to see homing");
@@ -2297,7 +2303,7 @@ state: function(data, cb) {
         self._wait_for_home(data, cb, fptr, this2, saw_homing);
       }, 1000, data, cb, funcptr, this2, saw_homing); // wait a second
       return;
-    } 
+    }
 
     if (this.current_state.get("state") == "waiting")
     {
@@ -2309,9 +2315,10 @@ state: function(data, cb) {
       var self = this;
       logEvent(1, "_wait_for_home, waiting for state waiting = ", data);
       setTimeout(function(data, cb, fptr, this2, saw_homing) {
+        // logEvent(1, "_wait_for_home callback self.funcptr = ", typeof fptr);
         self._wait_for_home(data, cb, fptr, this2, saw_homing);
       }, 1000, data, cb, funcptr, this2, saw_homing); // wait a second
-    }    
+    }
   },
   _install_updates: function(data, cb) {
 		var self = this;
@@ -2420,11 +2427,11 @@ state: function(data, cb) {
         clear_tracks: true
       };
 
-      logEvent(1, "factory_reset SERVO so calling Home() first");  
-      self = this;    
+      logEvent(1, "factory_reset SERVO so calling Home() first");
+      self = this;
       this.home(homedata, null);
-      logEvent(1, "next call wait_for_home");  
-      
+      logEvent(1, "next call wait_for_home");
+
       self = this;
       setTimeout(function() {
         logEvent(1, "calling _install_updates pointer is = ", typeof self._install_updates);
@@ -2433,7 +2440,7 @@ state: function(data, cb) {
       // if wait is too long, home is done and you've moved away againby the time you check
       return;
     }
-      
+
     this._factory_reset(data, cb);
 
   },
@@ -2459,11 +2466,11 @@ state: function(data, cb) {
         clear_tracks: true
       };
 
-      logEvent(1, "restart, SERVO so calling Home() first");  
-      self = this;    
+      logEvent(1, "restart, SERVO so calling Home() first");
+      self = this;
       this.home(homedata, null);
-      logEvent(1, "next call wait_for_home");  
-      
+      logEvent(1, "next call wait_for_home");
+
       self = this;
       setTimeout(function() {
         logEvent(1, "calling _install_updates pointer is = ", typeof self._install_updates);
@@ -2472,7 +2479,7 @@ state: function(data, cb) {
 
       return;
     }
-      
+
     this._restart(data, cb);
 
   },
@@ -2498,11 +2505,11 @@ state: function(data, cb) {
         clear_tracks: true
       };
 
-      logEvent(1, "reboot, SERVO so calling Home() first");  
-      self = this;    
+      logEvent(1, "reboot, SERVO so calling Home() first");
+      self = this;
       this.home(homedata, null);
-      logEvent(1, "next call wait_for_home");  
-      
+      logEvent(1, "next call wait_for_home");
+
       self = this;
       setTimeout(function() {
         logEvent(1, "calling _install_updates pointer is = ", typeof self._install_updates);
@@ -2511,7 +2518,7 @@ state: function(data, cb) {
 
       return;
     }
-      
+
     this._reboot(data, cb);
 
   },
