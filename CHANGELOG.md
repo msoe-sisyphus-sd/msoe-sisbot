@@ -1,10 +1,12 @@
+# 2019-04-09 1.10.14
+  - thumbnail_preview_generate error returned when no coordinates given
 
-# 2018-02-07 1.10.14
+# 2019-02-07 1.10.14
   - If sisbot is playing, and then pause and play are hit very quickly in sucession.  Do not act on the play if it has been less than 3 seconds since the pause was sent.  This value can be configured in the cson files with the variable pause_play_lockout_msec.  A value of 4000 would be 4 seconds.
   - Don't over write speed and brightness on restart.
   
 
-# 2018-01-15 1.10.13
+# 2019-01-15 1.10.13
   - new hardware change on SBB's.  No longer need to sleep servo's when sisbot wakes up.  The sleep on wake up code from 1.10.12 was removed.
   - finishing up code started in 1.10.9 for servo's to send ball to home before doing install_updates, factory_reset, table_rename, reboot, or restart.  These operations reset the PI but don't cycle power on the SBB so the SBB autohome does not kick in and the sisbot can end up not knowing where the ball is after soft reboot which will result in eventual RHO fault for servo tables.  Going home before soft reboot will fix this issue.
 
