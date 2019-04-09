@@ -1,5 +1,6 @@
 # 2019-04-09 1.10.14
   - thumbnail_preview_generate error returned when no coordinates given
+  - testing keys with Matt
 
 # 2019-02-07 1.10.14
   - If sisbot is playing, and then pause and play are hit very quickly in sucession.  Do not act on the play if it has been less than 3 seconds since the pause was sent.  This value can be configured in the cson files with the variable pause_play_lockout_msec.  A value of 4000 would be 4 seconds.
