@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.10.15', // thumbnail_preview_generate error returned when no coordinates given
+			version	: '1.9.16', // accel is no longer scaled along with velocity when the speed slider changes (acceleration should stay fixed)
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
