@@ -38,10 +38,13 @@ fi
 cp /home/pi/sisbot-server/sisbot/factory_reset.sh /home/pi/sisbot-server/
 
 # update rc.local
-cp /home/pi/sisbot-server/sisbot/rc.local /etc
+cp /home/pi/sisbot-server/sisbot/rc_check.local /etc/rc.local
 
 # make sure log file location existsSync
 mkdir -p /var/log/sisyphus
+
+# make sure we are on node 8.x.x
+sudo /home/pi/sisbot-server/sisbot/node_update.sh
 
 echo "Upgrade_Finish completed"
 

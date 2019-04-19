@@ -85,7 +85,7 @@ Sisyphus_Characteristic.prototype.onReadRequest = function(offset, callback) {
 /**************************** SISBOT ******************************************/
 
 var SerialPort;
-if (process.env.NODE_ENV.indexOf("dummy") < 0) SerialPort = require('serialport').SerialPort;
+if (process.env.NODE_ENV.indexOf("dummy") < 0) SerialPort = require('serialport');
 
 var plotter = require('./plotter');
 var Sisbot_state = require('./models.sisbot_state');
@@ -330,6 +330,7 @@ var sisbot = {
 		});
 
 		// plotter
+logEvent(1, "Plotter");
     var cson_config = CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config);
   	this.plotter.setConfig(cson_config);
     if (cson_config.max_speed) this.config.max_speed = cson_config.max_speed; // overwrite config.js max_speed if table allows
@@ -644,18 +645,21 @@ var sisbot = {
 	},
 	/***************************** Plotter ************************/
 	_connect: function() {
-    	if (this.serial && this.serial.isOpen()) return true;
+    	if (this.serial && this.serial.isOpen) return true;
 
 		var self = this;
-		//logEvent(1, "Serial Connect", this.config.serial_path);
+		logEvent(1, "Serial Connect", this.config.serial_path);
 		if (this.config.serial_path == "false") return this.current_state.set("is_serial_open","true");
-
- 		this.serial = new SerialPort(this.config.serial_path, {}, false);
-
+		logEvent(1, "Before Serial");
 		try {
+	this.serial = new SerialPort(this.config.serial_path, { autoOpen: false }, function (err) {
+  	  if (err) {
+    	    return console.log('Serial Error: ', err.message)
+	  }
+	});
       	this.serial.open(function (error) {
       	self.plotter.useSerial(self.serial);
-				console.info('Serial: connected!');
+				logEvent(1, 'Serial: connected!', error, self.serial.isOpen);
 
 				self.current_state.set("is_serial_open", "true");
 				self.set_brightness({value:self.current_state.get("brightness")}, null);
@@ -703,7 +707,7 @@ var sisbot = {
 		  logEvent(2, 'Fault state, not a valid connection');
       return false;
     }
-		if (!this.serial || !this.serial.isOpen()) {
+		if (!this.serial || !this.serial.isOpen) {
 		  logEvent(2, 'No serial connection');
 		  this.current_state.set("is_serial_open", "false");
 		  return false;
@@ -983,7 +987,7 @@ state: function(data, cb) {
 			}
 		} else if (cb) cb('No Connection', null);
 	},
-  _delayed_home: function(data, cb) {
+    _delayed_home: function(data, cb) {
     var self = this;
 
     //
@@ -997,12 +1001,10 @@ state: function(data, cb) {
 			//testing this:
 			//thHome = false;
 			//rhoHome = false;
-      //	console.log("setting homes false here");
-
+		//	console.log("setting homes false here");
 
     	var skip_move_out_if_sensors_at_home = false;
     	if (this.isServo) skip_move_out_if_sensors_at_home = true;
-
 
       /////////////////////
       if (thHome && rhoHome && skip_move_out_if_sensors_at_home) {
@@ -1041,22 +1043,18 @@ state: function(data, cb) {
             accel: 0.5,
             thvmax: 0.5
           };
-
-
-    		  if (thHome == true) {
-              logEvent(1, "Homing... Failed rho after DR, Fix rho");
-              track_obj.verts.push({th:self.config.auto_home_th, r:self.config.auto_home_rho});
+          if (thHome == true) {
+            logEvent(1, "Homing... Failed rho after DR, Fix rho");
+            track_obj.verts.push({th:self.config.auto_home_th, r:self.config.auto_home_rho});
           } else {
             logEvent(1, "Homing... Failed Theta after DR, Fix theta and rho");
             track_obj.verts.push({th:self.config.auto_home_th, r:self.config.auto_home_rho});
           }
-
-     		  self.plotter.playTrack(track_obj);
+          self.plotter.playTrack(track_obj);
         }
         if (cb)	cb(null, this.current_state.toJSON());
-      }  // else sensored home
-    } // if a validated connection
-    else if (cb) cb('No Connection', null);
+      }
+    } else if (cb) cb('No Connection', null);
   },
 	add_playlist: function(data, cb) {
 		logEvent(1, "Sisbot Add Playlist", data);
@@ -1268,11 +1266,9 @@ state: function(data, cb) {
 			self.thumbnail_generate({id: all_tracks.pop()}, gen_next_track);
 	},
 	thumbnail_preview_generate: function(data, cb) {
-		logEvent(1, "Thumbnail preview", _.keys(data));
+		logEvent(1, "Thumbnail preview", data.name);
 
-    if (!data.raw_coors) return cb('No Coordinates found', null);
-
-    var self = this;
+        var self = this;
 
 		// add to front of queue
 		if (self._thumbnail_queue.length == 0) self._thumbnail_queue.push(data);
@@ -1293,8 +1289,8 @@ state: function(data, cb) {
 	},
   thumbnail_generate: function(data, cb) {
 		logEvent(1, "Thumbnail generate", data.id);
-    // @id
-    var self = this;
+        // @id
+        var self = this;
 		var coordinates = [];
 
 		if (data.id != 'preview') {
@@ -1339,55 +1335,55 @@ state: function(data, cb) {
         });
     },
     _thumbnails_generate: function(data, cb) {
-      // id, host_url, raw_coors, dimensions
+        // id, host_url, raw_coors, dimensions
 
-      var thumbs_dir = this.config.base_dir + '/' + this.config.folders.cloud + '/img/tracks';
-      var thumbs_file = thumbs_dir + '/' + data.id + '_' + data.dimensions + '.png';
+        var thumbs_dir = this.config.base_dir + '/' + this.config.folders.cloud + '/img/tracks';
+        var thumbs_file = thumbs_dir + '/' + data.id + '_' + data.dimensions + '.png';
 
-      var opts = {
-        siteType: 'html',
-        renderDelay: 2500,
-        captureSelector: '.print',
-        screenSize: {
-          width: data.dimensions + 16,
-          height: data.dimensions
-        },
-        phantomPath: '/home/pi/phantomjs/bin/phantomjs',
-        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_4) AppleWebKit/600.7.12 (KHTML, like Gecko) Version/8.0.7 Safari/600.7.12',
-        shotSize: {
-          width: 'window',
-          height: 'window'
-        }
-      };
+        var opts = {
+            siteType: 'html',
+            renderDelay: 2500,
+            captureSelector: '.print',
+            screenSize: {
+                width: data.dimensions + 16,
+                height: data.dimensions
+            },
+            phantomPath: '/home/pi/phantomjs/bin/phantomjs',
+            userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_4) AppleWebKit/600.7.12 (KHTML, like Gecko) Version/8.0.7 Safari/600.7.12',
+            shotSize: {
+                width: 'window',
+                height: 'window'
+            }
+        };
 
-      var base_url = 'http://' + this.current_state.get('local_ip') + ':' + this.config.servers.app.port + '/';
-      var html = '<html><!DOCTYPE html>\
-      <head>\
-          <meta charset="utf-8" />\
-          <meta name="format-detection" content="telephone=no" />\
-          <meta name="msapplication-tap-highlight" content="no" />\
-          <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1" />\
-          <meta charset="utf-8">\
-          <meta http-equiv="X-UA-Compatible" content="IE=edge">\
-          <meta name="viewport" content="width=device-width, initial-scale=1">\
-          <meta name="google" value="notranslate">\
-          <title>Ease</title>\
-          <base href="' + base_url + '" />\
-          <script src="js/libs/lib.jquery.min.js"></script>\
-          <script src="js/libs/lib.underscore.min.js"></script>\
-          <script src="js/libs/lib.d3.min.js"></script>\
-          <script src="js/libs/lib.gen_thumbnails.js"></script>\
-      </head><body><div class="print">\
-                      <div class="d3" data-coors="' + data.raw_coors + '" data-dimensions="' + data.dimensions + '"></div>\
-              </div></body></html>';
+        var base_url = 'http://' + this.current_state.get('local_ip') + ':' + this.config.servers.app.port + '/';
+        var html = '<html><!DOCTYPE html>\
+        <head>\
+            <meta charset="utf-8" />\
+            <meta name="format-detection" content="telephone=no" />\
+            <meta name="msapplication-tap-highlight" content="no" />\
+            <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1" />\
+            <meta charset="utf-8">\
+            <meta http-equiv="X-UA-Compatible" content="IE=edge">\
+            <meta name="viewport" content="width=device-width, initial-scale=1">\
+            <meta name="google" value="notranslate">\
+            <title>Ease</title>\
+            <base href="' + base_url + '" />\
+            <script src="js/libs/lib.jquery.min.js"></script>\
+            <script src="js/libs/lib.underscore.min.js"></script>\
+            <script src="js/libs/lib.d3.min.js"></script>\
+            <script src="js/libs/lib.gen_thumbnails.js"></script>\
+        </head><body><div class="print">\
+                        <div class="d3" data-coors="' + data.raw_coors + '" data-dimensions="' + data.dimensions + '"></div>\
+                </div></body></html>';
 
-      logEvent(1, '#### MAKE WEBSHOT', thumbs_file, base_url);
+        logEvent(1, '#### MAKE WEBSHOT', thumbs_file, base_url);
 
-      webshot(html, thumbs_file, opts, function(err) {
-      logEvent(1, '#### WEBSHOT FINISHED', thumbs_file, err);
+        webshot(html, thumbs_file, opts, function(err) {
+	        logEvent(1, '#### WEBSHOT FINISHED', thumbs_file, err);
 			if (data.cb) data.cb(err, { 'id':data.id });
-        if (cb) cb(err, null);
-      });
+            if (cb) cb(err, null);
+        });
     },
     /*********************** PLAYLIST *****************************************/
 	set_playlist: function(data, cb) {
@@ -1893,58 +1889,53 @@ state: function(data, cb) {
 						self.socket_update(self.current_state.toJSON());
 
 						// TODO: only post if IP address changed
-            self._post_state_to_cloud();
-					} else {  // internet / LAN not found
+                        self._post_state_to_cloud();
+					} else {
 						self._internet_retries++;
-						if (self._internet_retries < self.config.internet_retries)
-            {
-              // try again since we haven't hit max tries
-              append_log('Internet retry: ' + self.config.retry_internet_interval);
+						if (self._internet_retries < self.config.internet_retries) {
+                            append_log('Internet retry: ' + self.config.retry_internet_interval);
 							self._query_internet(self.config.retry_internet_interval);
-						}
-            else {
+						} else {
               if (self._internet_lanonly_check == false)
               {
-                // if we hit max tries for internet,  try fallback mode for LAN w/o internet
                 self._internet_lanonly_check = true;
                 self._internet_retries = 0;
                 self._query_internet(self.config.retry_internet_interval);
                 return;
               }
-              // we failed both Internet and LAN fallback tries.  No more trying.
 							logEvent(2, "Internet not connected, reverting to hotspot.");
-              append_log('Internet not connected, reverting to hotspot: ');
+                            append_log('Internet not connected, reverting to hotspot: ');
 							self.current_state.set({ wifi_error: "true" });
 							self.reset_to_hotspot(null,null);
-						} // else LAN mode not found
-					} // internet / LAN not found
-				});  // validate_internet callback function close
-			}, time_to_check);  // _internet_check SetTimeout close
-		}  // if is_hotspot close
+						}
+					}
+				});
+			}, time_to_check);
+		}
 	},
-  _post_state_to_cloud: function () {
-    // THIS IS HELPFUL FOR ANDROID DEVICES
-    var self = this;
+    _post_state_to_cloud: function () {
+        // THIS IS HELPFUL FOR ANDROID DEVICES
+        var self = this;
 
-    // logEvent(1, 'LETS TRY AND GET TO CLOUD', this.current_state.toJSON());
+        // logEvent(1, 'LETS TRY AND GET TO CLOUD', this.current_state.toJSON());
 		var state = this.current_state.toJSON();
 		delete state.wifi_password;
 		delete state.wifi_network;
 
-    request.post('https://api.sisyphus.withease.io/sisbot_state/' + this.current_state.id, {
-        form: {
-            data: state
-        }
-      },
-      function on_resp(error, response, body) {
-        if (!error && response.statusCode == 200) {
-            logEvent(1, "Post to cloud", body);
-        } else {
-            if (response) logEvent(2, "Request Not found:", response.statusCode);
-        }
-      }
-    );  // close request.post args list
-  },
+        request.post('https://api.sisyphus.withease.io/sisbot_state/' + this.current_state.id, {
+                form: {
+                    data: state
+                }
+            },
+            function on_resp(error, response, body) {
+                if (!error && response.statusCode == 200) {
+                    logEvent(1, "Post to cloud", body);
+                } else {
+                    if (response) logEvent(2, "Request Not found:", response.statusCode);
+                }
+            }
+        );
+    },
 	get_wifi: function(data, cb) {
 		logEvent(1, "Sisbot get wifi", data);
 		iwlist.scan(data, cb);
@@ -2306,21 +2297,15 @@ state: function(data, cb) {
       var self = this;
       logEvent(1, "_wait_for_home waiting to see homing");
       setTimeout(function(data, cb, fptr, this2, saw_homing) {
-
         // logEvent(1, "_wait_for_home callback self.funcptr = ", typeof fptr);
         self._wait_for_home(data, cb, fptr, this2, saw_homing);
       }, 1000, data, cb, funcptr, this2, saw_homing); // wait a second
       return;
     }
 
-
-
-
     if (this.current_state.get("state") == "waiting")
     {
       logEvent(1, "_wait_for_home done waiting for servo to go home, call the next function with data=", data);
-      // logEvent(1, "_wait_for_home pointer is = ", typeof funcptr);
-      //this._install_updates(data, cb);
       funcptr.call(this2, data, cb);
     }
     else
@@ -2328,8 +2313,6 @@ state: function(data, cb) {
       var self = this;
       logEvent(1, "_wait_for_home, waiting for state waiting = ", data);
       setTimeout(function(data, cb, fptr, this2, saw_homing) {
-
-        // logEvent(1, "_wait_for_home callback self.funcptr = ", typeof fptr);
         self._wait_for_home(data, cb, fptr, this2, saw_homing);
       }, 1000, data, cb, funcptr, this2, saw_homing); // wait a second
     }
@@ -2432,7 +2415,6 @@ state: function(data, cb) {
 		});
 		ping.send(); // or ping.start();
 	},
-
   factory_reset: function(data, cb) {
 
     if (this.isServo && this.homeFirst)
@@ -2472,7 +2454,6 @@ state: function(data, cb) {
 			logEvent(1, "child process exited with code",code);
 		});
 	},
-
   restart: function(data,cb) {
 
     if (this.isServo && this.homeFirst)
