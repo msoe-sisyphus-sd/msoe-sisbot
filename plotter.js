@@ -373,6 +373,7 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg,
     nextMove(mi);
     return;
   }
+  accelSegs = Vball * Voverride * segRate /(2 * Accel); //accel fix for speed slider effect
   //ACCEL/DECEL ---------------------------
   if (!pauseRequest){
     //logEvent(1, ASindex);

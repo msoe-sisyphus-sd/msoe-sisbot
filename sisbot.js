@@ -1892,8 +1892,11 @@ state: function(data, cb) {
                         self._post_state_to_cloud();
 					} else {
 						self._internet_retries++;
-						if (self._internet_retries < self.config.internet_retries) {
-                            append_log('Internet retry: ' + self.config.retry_internet_interval);
+
+						if (self._internet_retries < self.config.internet_retries)
+            {
+              // try again since we haven't hit max tries
+              append_log('Internet retry: ' + self.config.retry_internet_interval);
 							self._query_internet(self.config.retry_internet_interval);
 						} else {
               if (self._internet_lanonly_check == false)
