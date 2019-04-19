@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.18', // update Node to v 8.x.x on update, rc.local fix
+			version	: '1.9.19', // update Node to v 8.x.x on update, node_update.sh fix
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

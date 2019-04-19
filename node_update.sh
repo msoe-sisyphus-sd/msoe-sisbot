@@ -9,13 +9,13 @@ if [${NODE_V:0:3} != "v8."]; then
   echo "Node is not v8.x.x"
 
   # do we have the apt-get package?
-  if [${PKG_NODE_V} = "dpkg-query: no packages found matching nodejs"] {
+  if [${PKG_NODE_V} = "dpkg-query: no packages found matching nodejs"] then
     echo "No nodejs package found"
 
     # install via apt-get
     curl -sL https://deb.nodesource.com/setup_8.x | bash -
     apt-get install -yq nodejs
-  }
+  fi
 
   # remove version in /usr/local
   rm -rf /usr/local/bin/node
