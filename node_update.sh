@@ -2,14 +2,14 @@
 
 # check what version of node is installed/used
 NODE_V="$(node -v)"
-PKG_NODE_V="$(dpkg -l nodejs)"
+PKG_NODE_V="$(dpkg -l nodejs 2>&1)"
 
 # is this node 8?
-if [${NODE_V:0:3} != "v8."]; then
+if [[ $NODE_V != "v8."* ]]; then
   echo "Node is not v8.x.x"
 
   # do we have the apt-get package?
-  if [${PKG_NODE_V} = "dpkg-query: no packages found matching nodejs"] then
+  if [[ $PKG_NODE_V == "dpkg-query: no packages found matching nodejs"* ]]; then
     echo "No nodejs package found"
 
     # install via apt-get
@@ -23,20 +23,26 @@ if [${NODE_V:0:3} != "v8."]; then
   rm -rf /usr/local/include/node
   # rm -rf /usr/local/lib/node_modeles ??
 
-  # delete existing node_modules folders, so they get rebuilt on startup
-  rm -rf /home/pi/sisbot-server/siscloud/node_modules
-  rm -rf /home/pi/sisbot-server/sisbot/node_modules
-  rm -rf /home/pi/sisbot-server/sisproxy/node_modules
-
   # restart pi
   reboot
 else
   echo "$(node -v)"
 
-  # rerun npm install, npm audit fix
+  # delete existing node_modules folders, so they get rebuilt fresh
+  rm -rf /home/pi/sisbot-server/siscloud/node_modules
+  rm -rf /home/pi/sisbot-server/sisbot/node_modules
+  rm -rf /home/pi/sisbot-server/sisproxy/node_modules
+
+  # run npm install
   cd /home/pi/sisbot-server/siscloud && npm install
   cd /home/pi/sisbot-server/sisbot && npm install
   cd /home/pi/sisbot-server/sisproxy && npm install
+
+  # make sure pi user is owner of all files
+  cd /home/pi/sisbot-server/
+  sudo chown -R pi sisbot
+  sudo chown -R pi siscloud
+  sudo chown -R pi sisproxy
 
   # remove this step from startup
   cp /home/pi/sisbot-server/sisbot/rc.local /etc
