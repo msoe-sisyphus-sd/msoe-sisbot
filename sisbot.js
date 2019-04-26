@@ -18,10 +18,6 @@ var io 			= require('socket.io');
 var moment 		= require('moment');
 var log4js    = require('log4js');
 
-var IS_SERVO;
-var _servo_needs_initial_sleep = false;
-var _servo_initial_sleep_msec  = 40000;  // 4 foot servo, worst case positioning plus the occational slow walk for hardware home
-
 /**************************** Logging *********************************************/
 log4js.configure({
   appenders: { sisbot: { type: 'file', filename: 'sisbot.log' } },
@@ -112,7 +108,11 @@ var sisbot = {
 	connectionErrors: 0,
 	error_messages: [],
 
+  isServo: false,
+  homeFirst: true,
+
 	_paused: false,
+  _pause_timestamp: null,
 	_play_next: false,
 	_autoplay: false,
 	_home_next: false,
@@ -126,8 +126,6 @@ var sisbot = {
 	_saving: false,
 
 	_thumbnail_queue: [],
-
-  _servo_needs_initial_sleep: false,
 
 	_internet_check: 0,
 	_internet_retries: 0,
@@ -177,18 +175,13 @@ var sisbot = {
 		}
 
     var cson_config = CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config);
-      
-  	IS_SERVO = cson_config.isServo;
-  	console.log();
-  	console.log("IS_SERVO: " + IS_SERVO);
-  	console.log();
-    if (IS_SERVO)
-    {
-      _servo_needs_initial_sleep = true;
-    }
 
-    _servo_initial_sleep_msec =  (typeof cson_config._servo_initial_sleep_msec === 'undefined') ? 40000 : cson_config._servo_initial_sleep_msec; 
-	 logEvent(1,"servo initial sleep msec = " , _servo_initial_sleep_msec)
+    this.isServo =  (typeof cson_config.isServo === 'undefined') ? false : cson_config.isServo; 
+    logEvent(1, "this.isServo: " + this.isServo);
+    this.homeFirst = (typeof cson_config.homeFirst === 'undefined') ? true : cson_config.homeFirst;
+    logEvent(1, "this.homeFirst: " + this.homeFirst);
+
+    this.pause_play_lockout_msec = (typeof cson_config.pause_play_lockout_msec === 'undefined') ? 3000 : cson_config.pause_play_lockout_msec;
 
     //var tracks = this.current_state.get("track_ids");
     var tracks = [];
@@ -253,7 +246,7 @@ var sisbot = {
 					logEvent(1, "Unknown:", obj);
 					self.collection.add(obj);
 			}
-      
+
 
 
 		});
@@ -265,21 +258,24 @@ var sisbot = {
     this.current_state.set("track_ids", tracks);
     logEvent(1,"done setting track_ids");
     this.current_state.set("playlist_ids", playlists);
-    
+
 
 		// make sure the hostname is correct
 		var regex = /^[^a-zA-Z]*/; // make sure first character is a-z
 		var regex2 = /[^0-9a-zA-Z\-]+/g; // greedy remove all non alpha-numerical or dash chars
 		var clean_hostname = this.current_state.get('name').replace(regex,"").replace(regex2,"");
 		if (this.current_state.get('hostname') != clean_hostname+'.local') {
-			self.set_hostname({hostname: clean_hostname}, null);
+      logEvent(1,"need to set hostname");
+
+			self._set_hostname({hostname: clean_hostname}, null);
 			logEvent(2, "Fix incorrect hostname");
 			return; // stop here
 		}
 
-        // INITIALIZE BLUETOOTH
-        process.env['BLENO_DEVICE_NAME'] = 'sisbot ' + this.current_state.id;
-        ble_obj.initialize(this.current_state.id);
+    // INITIALIZE BLUETOOTH
+    logEvent(1,"bluetooth init");
+    process.env['BLENO_DEVICE_NAME'] = 'sisbot ' + this.current_state.id;
+    ble_obj.initialize(this.current_state.id);
 
 		// force do_not_remind if old Version (1.0)
 		var old_version = +this.current_state.get('software_version');
@@ -287,6 +283,7 @@ var sisbot = {
 			this.current_state.set('do_not_remind', 'false');
 		}
 
+    logEvent(1,"set initial state");
 		// force values on startup
 		this.current_state.set({
 			id: 'pi_'+this.config.pi_serial,
@@ -302,8 +299,6 @@ var sisbot = {
 			factory_resetting: "false",
 			factory_resetting_error: "",
 			installed_updates: "false",
-			brightness: 0.5,
-			speed: 0.2,
 			is_internet_connected: "false",
 			software_version: this.config.version
 		});
@@ -455,45 +450,25 @@ var sisbot = {
 				self._home_next = false; // clear home next
 				self.current_state.set({is_homed: "true", _end_rho: 0}); // reset
 
-				if (newState == 'waiting' && self._autoplay && self.current_state.get('installing_updates') == "false") {
-					// autoplay after first home
-					logEvent(1, "Play next ",self.current_state.get('active_track').name, self.current_state.get('active_track').firstR, "Rho:", self.current_state.get('_end_rho'));
+        if (newState == 'waiting' && self._autoplay && self.current_state.get('installing_updates') == "false") {
+          // autoplay after first home
+          logEvent(1, "Play next ",self.current_state.get('active_track').name, self.current_state.get('active_track').firstR, "Rho:", self.current_state.get('_end_rho'));
 
-					// _detach_first?
-					if (self._detach_first) {
-						var track = self.collection.get('detach'); // detach id is always 'detach'
+          // _detach_first?
+          if (self._detach_first) {
+            var track = self.collection.get('detach'); // detach id is always 'detach'
             logEvent(1, "Detach First", track.toJSON());
 
             self.current_state.set('repeat_current', 'true'); // don't step over wanted first track
 
-            if (_servo_needs_initial_sleep)
-            {
-              _servo_needs_initial_sleep = false;
-              logEvent(1, "Servo needs initial sleep");
-              setTimeout(function(track, self){  self._play_track(track.toJSON(), null); }, 40000, track, self);
-            }
-            else
-            {
-  						self._play_track(track.toJSON(), null);
-            }
+            self._play_track(track.toJSON(), null);
 
-						self._detach_first = false;
-					} else if (self.current_state.get('active_track').id != "false") {
-            if (_servo_needs_initial_sleep)
-            {
-              _servo_needs_initial_sleep = false;
-              logEvent(1, "Servo needs initial sleep 2");
-              setTimeout(function(self){ self._play_given_track(self.current_state.get('active_track'));
-; }, 40000,  self);
-            }
-            else
-            {
-              self._play_given_track(self.current_state.get('active_track'));
-            }
-
-					}
-				}
-			}
+            self._detach_first = false;
+          } else if (self.current_state.get('active_track').id != "false") {
+            self._play_given_track(self.current_state.get('active_track'));
+          }
+        }
+      }
 
 			// play next track after pausing (i.e. new playlist)
 			if (newState == 'waiting' && oldState == 'playing' && !self._paused) {
@@ -790,7 +765,33 @@ state: function(data, cb) {
 
 		if (cb) cb(null, this.current_state.toJSON());
 	},
-	set_hostname: function(data,cb) {
+  set_hostname: function(data,cb) {
+    logEvent(1, "set hostname", data);
+
+    if (this.isServo && this.homeFirst)
+    {
+      var homedata = {
+        stop : true,
+        clear_tracks: true
+      };
+
+      logEvent(1, "set_hostname, SERVO so calling Home() first");
+      self = this;
+      this.home(homedata, null);
+      logEvent(1, "next call wait_for_home");
+
+      self = this;
+      setTimeout(function() {
+        logEvent(1, "calling wait_for_home data is = ", data);
+        self._wait_for_home(data, cb, self._set_hostname, self, false);
+      }, 2000);
+
+      return;
+    }
+    logEvent(1, "not servo set hostname now", data);
+    this._set_hostname(data,cb);
+  },
+  _set_hostname: function(data,cb) {
 		var self = this;
 
 		logEvent(1, "Sisbot Set Hostname", data, process.platform);
@@ -801,15 +802,17 @@ state: function(data, cb) {
       return;
     }
 
+    logEvent(1, "Sisbot Set Hostname checking regex");
 		if (data.hostname.search(ValidHostnameRegex) == 0) {
 			if (data.hostname+'.local' != self.current_state.get('hostname')) { // set new hostname
+        logEvent(1, "Sisbot Set Hostname exec script ", data.hostname);
 				exec('sudo /home/pi/sisbot-server/sisbot/set_hostname.sh "'+data.hostname+'"', (error, stdout, stderr) => {
 					if (error) return console.error('exec error:',error);
 					self.current_state.set({hostname: data.hostname+'.local',hostname_prompt: "true"});
 					self.save(null, null);
 
 					// restart
-					self.reboot(null, cb);
+					self._reboot(null, cb);
 				});
 			} else { // don't prompt for hostname again
 				self.current_state.set({hostname_prompt: "true"});
@@ -869,6 +872,13 @@ state: function(data, cb) {
 
 		if (this._validateConnection()) {
   		logEvent(1, "Sisbot Play", data);
+      if (this._pause_timestamp != null && (Date.now() - this._pause_timestamp) < this.pause_play_lockout_msec)
+      {
+        logEvent(1,"Sisbot refused to Play, Still in lockout time window after a Pause command");
+        if (cb) cb('Still waiting for Pause to complete', null);
+        return;
+      }
+
 			if (this._paused) this.current_state.set("state", "playing");
 			this._paused = false;
 
@@ -914,6 +924,7 @@ state: function(data, cb) {
 		if (this._validateConnection()) {
   		logEvent(1, "Sisbot Pause", data);
 			this._paused = true;
+      this._pause_timestamp = Date.now();
 			this.current_state.set("state", "paused");
 			plotter.pause();
 			if (cb)	cb(null, this.current_state.toJSON());
@@ -972,26 +983,24 @@ state: function(data, cb) {
 			}
 		} else if (cb) cb('No Connection', null);
 	},
-  _delayed_home: function(data, cb) {
+    _delayed_home: function(data, cb) {
     var self = this;
 
     //
 		if (this._validateConnection()) {
       var thHome = self.plotter.getThetaHome();
-			
+
       var rhoHome = self.plotter.getRhoHome();
-			
+
       logEvent(1, "Sensor Values", thHome, rhoHome);
 			console.log("Sensor Values", thHome, rhoHome);
 			//testing this:
 			//thHome = false;
 			//rhoHome = false;
-      //	console.log("setting homes false here");
+		//	console.log("setting homes false here");
 
-   
     	var skip_move_out_if_sensors_at_home = false;
-    	if (IS_SERVO) skip_move_out_if_sensors_at_home = true;
-	 
+    	if (this.isServo) skip_move_out_if_sensors_at_home = true;
 
       /////////////////////
       if (thHome && rhoHome && skip_move_out_if_sensors_at_home) {
@@ -1015,8 +1024,8 @@ state: function(data, cb) {
         this._sensored = true; // force sensored home
 
         // 	this._moved_out = true; // restore the move out after DR has failed ****************
-	      if (IS_SERVO == true) this._moved_out = true; // no move out for servo tables
-		
+	      if (this.isServo == true) this._moved_out = true; // no move out for servo tables
+
         if (this._moved_out) {
 					console.log("not at home after DR, doing sensored...");
           self.plotter.home();
@@ -1030,22 +1039,18 @@ state: function(data, cb) {
             accel: 0.5,
             thvmax: 0.5
           };
-          
-		 
-    		  if (thHome == true) {
-              logEvent(1, "Homing... Failed rho after DR, Fix rho");
-              track_obj.verts.push({th:self.config.auto_home_th, r:self.config.auto_home_rho});
+          if (thHome == true) {
+            logEvent(1, "Homing... Failed rho after DR, Fix rho");
+            track_obj.verts.push({th:self.config.auto_home_th, r:self.config.auto_home_rho});
           } else {
             logEvent(1, "Homing... Failed Theta after DR, Fix theta and rho");
             track_obj.verts.push({th:self.config.auto_home_th, r:self.config.auto_home_rho});
           }
-          
-     		  self.plotter.playTrack(track_obj);
+          self.plotter.playTrack(track_obj);
         }
         if (cb)	cb(null, this.current_state.toJSON());
-      }  // else sensored home
-    } // if a validated connection
-    else if (cb) cb('No Connection', null);
+      }
+    } else if (cb) cb('No Connection', null);
   },
 	add_playlist: function(data, cb) {
 		logEvent(1, "Sisbot Add Playlist", data);
@@ -1257,9 +1262,11 @@ state: function(data, cb) {
 			self.thumbnail_generate({id: all_tracks.pop()}, gen_next_track);
 	},
 	thumbnail_preview_generate: function(data, cb) {
-		logEvent(1, "Thumbnail preview", data.name);
+		logEvent(1, "Thumbnail preview", _.keys(data));
 
-        var self = this;
+    if (!data.raw_coors) return cb('No Coordinates found', null);
+
+    var self = this;
 
 		// add to front of queue
 		if (self._thumbnail_queue.length == 0) self._thumbnail_queue.push(data);
@@ -1280,8 +1287,8 @@ state: function(data, cb) {
 	},
   thumbnail_generate: function(data, cb) {
 		logEvent(1, "Thumbnail generate", data.id);
-        // @id
-        var self = this;
+    // @id
+    var self = this;
 		var coordinates = [];
 
 		if (data.id != 'preview') {
@@ -1326,55 +1333,55 @@ state: function(data, cb) {
         });
     },
     _thumbnails_generate: function(data, cb) {
-        // id, host_url, raw_coors, dimensions
+      // id, host_url, raw_coors, dimensions
 
-        var thumbs_dir = this.config.base_dir + '/' + this.config.folders.cloud + '/img/tracks';
-        var thumbs_file = thumbs_dir + '/' + data.id + '_' + data.dimensions + '.png';
+      var thumbs_dir = this.config.base_dir + '/' + this.config.folders.cloud + '/img/tracks';
+      var thumbs_file = thumbs_dir + '/' + data.id + '_' + data.dimensions + '.png';
 
-        var opts = {
-            siteType: 'html',
-            renderDelay: 2500,
-            captureSelector: '.print',
-            screenSize: {
-                width: data.dimensions + 16,
-                height: data.dimensions
-            },
-            phantomPath: '/home/pi/phantomjs/bin/phantomjs',
-            userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_4) AppleWebKit/600.7.12 (KHTML, like Gecko) Version/8.0.7 Safari/600.7.12',
-            shotSize: {
-                width: 'window',
-                height: 'window'
-            }
-        };
+      var opts = {
+        siteType: 'html',
+        renderDelay: 2500,
+        captureSelector: '.print',
+        screenSize: {
+          width: data.dimensions + 16,
+          height: data.dimensions
+        },
+        phantomPath: '/home/pi/phantomjs/bin/phantomjs',
+        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_4) AppleWebKit/600.7.12 (KHTML, like Gecko) Version/8.0.7 Safari/600.7.12',
+        shotSize: {
+          width: 'window',
+          height: 'window'
+        }
+      };
 
-        var base_url = 'http://' + this.current_state.get('local_ip') + ':' + this.config.servers.app.port + '/';
-        var html = '<html><!DOCTYPE html>\
-        <head>\
-            <meta charset="utf-8" />\
-            <meta name="format-detection" content="telephone=no" />\
-            <meta name="msapplication-tap-highlight" content="no" />\
-            <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1" />\
-            <meta charset="utf-8">\
-            <meta http-equiv="X-UA-Compatible" content="IE=edge">\
-            <meta name="viewport" content="width=device-width, initial-scale=1">\
-            <meta name="google" value="notranslate">\
-            <title>Ease</title>\
-            <base href="' + base_url + '" />\
-            <script src="js/libs/lib.jquery.min.js"></script>\
-            <script src="js/libs/lib.underscore.min.js"></script>\
-            <script src="js/libs/lib.d3.min.js"></script>\
-            <script src="js/libs/lib.gen_thumbnails.js"></script>\
-        </head><body><div class="print">\
-                        <div class="d3" data-coors="' + data.raw_coors + '" data-dimensions="' + data.dimensions + '"></div>\
-                </div></body></html>';
+      var base_url = 'http://' + this.current_state.get('local_ip') + ':' + this.config.servers.app.port + '/';
+      var html = '<html><!DOCTYPE html>\
+      <head>\
+          <meta charset="utf-8" />\
+          <meta name="format-detection" content="telephone=no" />\
+          <meta name="msapplication-tap-highlight" content="no" />\
+          <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1" />\
+          <meta charset="utf-8">\
+          <meta http-equiv="X-UA-Compatible" content="IE=edge">\
+          <meta name="viewport" content="width=device-width, initial-scale=1">\
+          <meta name="google" value="notranslate">\
+          <title>Ease</title>\
+          <base href="' + base_url + '" />\
+          <script src="js/libs/lib.jquery.min.js"></script>\
+          <script src="js/libs/lib.underscore.min.js"></script>\
+          <script src="js/libs/lib.d3.min.js"></script>\
+          <script src="js/libs/lib.gen_thumbnails.js"></script>\
+      </head><body><div class="print">\
+                      <div class="d3" data-coors="' + data.raw_coors + '" data-dimensions="' + data.dimensions + '"></div>\
+              </div></body></html>';
 
-        logEvent(1, '#### MAKE WEBSHOT', thumbs_file, base_url);
+      logEvent(1, '#### MAKE WEBSHOT', thumbs_file, base_url);
 
-        webshot(html, thumbs_file, opts, function(err) {
-	        logEvent(1, '#### WEBSHOT FINISHED', thumbs_file, err);
+      webshot(html, thumbs_file, opts, function(err) {
+      logEvent(1, '#### WEBSHOT FINISHED', thumbs_file, err);
 			if (data.cb) data.cb(err, { 'id':data.id });
-            if (cb) cb(err, null);
-        });
+        if (cb) cb(err, null);
+      });
     },
     /*********************** PLAYLIST *****************************************/
 	set_playlist: function(data, cb) {
@@ -1880,58 +1887,57 @@ state: function(data, cb) {
 						self.socket_update(self.current_state.toJSON());
 
 						// TODO: only post if IP address changed
-            self._post_state_to_cloud();
-					} else {  // internet / LAN not found
+                        self._post_state_to_cloud();
+					} else {
 						self._internet_retries++;
-						if (self._internet_retries < self.config.internet_retries) 
+
+						if (self._internet_retries < self.config.internet_retries)
             {
               // try again since we haven't hit max tries
               append_log('Internet retry: ' + self.config.retry_internet_interval);
 							self._query_internet(self.config.retry_internet_interval);
-						} 
+						}
             else {
               if (self._internet_lanonly_check == false)
               {
-                // if we hit max tries for internet,  try fallback mode for LAN w/o internet
                 self._internet_lanonly_check = true;
                 self._internet_retries = 0;
                 self._query_internet(self.config.retry_internet_interval);
                 return;
               }
-              // we failed both Internet and LAN fallback tries.  No more trying.
 							logEvent(2, "Internet not connected, reverting to hotspot.");
-              append_log('Internet not connected, reverting to hotspot: ');
+                            append_log('Internet not connected, reverting to hotspot: ');
 							self.current_state.set({ wifi_error: "true" });
 							self.reset_to_hotspot(null,null);
-						} // else LAN mode not found
-					} // internet / LAN not found
-				});  // validate_internet callback function close
-			}, time_to_check);  // _internet_check SetTimeout close
-		}  // if is_hotspot close
+						}
+					}
+				});
+			}, time_to_check);
+		}
 	},
-  _post_state_to_cloud: function () {
-    // THIS IS HELPFUL FOR ANDROID DEVICES
-    var self = this;
+    _post_state_to_cloud: function () {
+        // THIS IS HELPFUL FOR ANDROID DEVICES
+        var self = this;
 
-    // logEvent(1, 'LETS TRY AND GET TO CLOUD', this.current_state.toJSON());
+        // logEvent(1, 'LETS TRY AND GET TO CLOUD', this.current_state.toJSON());
 		var state = this.current_state.toJSON();
 		delete state.wifi_password;
 		delete state.wifi_network;
 
-    request.post('https://api.sisyphus.withease.io/sisbot_state/' + this.current_state.id, {
-        form: {
-            data: state
-        }
-      },
-      function on_resp(error, response, body) {
-        if (!error && response.statusCode == 200) {
-            logEvent(1, "Post to cloud", body);
-        } else {
-            if (response) logEvent(2, "Request Not found:", response.statusCode);
-        }
-      }
-    );  // close request.post args list
-  },
+        request.post('https://api.sisyphus.withease.io/sisbot_state/' + this.current_state.id, {
+                form: {
+                    data: state
+                }
+            },
+            function on_resp(error, response, body) {
+                if (!error && response.statusCode == 200) {
+                    logEvent(1, "Post to cloud", body);
+                } else {
+                    if (response) logEvent(2, "Request Not found:", response.statusCode);
+                }
+            }
+        );
+    },
 	get_wifi: function(data, cb) {
 		logEvent(1, "Sisbot get wifi", data);
 		iwlist.scan(data, cb);
@@ -2252,7 +2258,69 @@ state: function(data, cb) {
 		} else if (cb) cb('No logs found', null);
 	},
 	/* ------------------------------------------ */
-	install_updates: function(data, cb) {
+  install_updates: function(data, cb) {
+
+    logEvent(1, "Sisbot Install Updates WRAPPER", data);
+    if (this.isServo && this.homeFirst)
+    {
+      var homedata = {
+        stop : true,
+        clear_tracks: true
+      };
+
+      logEvent(1, "install_updates, SERVO so calling Home() first");
+      self = this;
+      this.home(homedata, null);
+      logEvent(1, "next call wait_for_home");
+
+      self = this;
+      setTimeout(function() {
+        logEvent(1, "calling _install_updates pointer is = ", typeof self._install_updates);
+        self._wait_for_home(data, cb,  self._install_updates, self, false);
+      }, 2000);
+
+      return;
+    }
+
+    logEvent(1, "no servo, call _install_updates directly");
+    this._install_updates(data, cb);
+  },
+  _wait_for_home: function(data, cb, funcptr, this2, saw_homing)
+  {
+    // logEvent(1, "Waiting for home, current state = ", this.current_state.get("state"));
+
+    if (saw_homing == false)
+    {
+      if (this.current_state.get("state") == "homing")
+      {
+        saw_homing = true;
+      }
+
+      var self = this;
+      logEvent(1, "_wait_for_home waiting to see homing");
+      setTimeout(function(data, cb, fptr, this2, saw_homing) {        
+        // logEvent(1, "_wait_for_home callback self.funcptr = ", typeof fptr);
+        self._wait_for_home(data, cb, fptr, this2, saw_homing);
+      }, 1000, data, cb, funcptr, this2, saw_homing); // wait a second
+      return;
+    }
+
+    if (this.current_state.get("state") == "waiting")
+    {
+      logEvent(1, "_wait_for_home done waiting for servo to go home, call the next function with data=", data);
+      funcptr.call(this2, data, cb);
+    }
+    else
+    {
+      var self = this;
+      logEvent(1, "_wait_for_home, waiting for state waiting = ", data);
+      setTimeout(function(data, cb, fptr, this2, saw_homing) {
+        // logEvent(1, "_wait_for_home callback self.funcptr = ", typeof fptr);
+        self._wait_for_home(data, cb, fptr, this2, saw_homing);
+      }, 1000, data, cb, funcptr, this2, saw_homing); // wait a second
+    }
+  },
+  _install_updates: function(data, cb) {
 		var self = this;
 		logEvent(1, "Sisbot Install Updates", data);
 		if (this.current_state.get("is_internet_connected") != "true") {
@@ -2266,17 +2334,17 @@ state: function(data, cb) {
 		// send response first
 		if (cb) cb(null, this.current_state.toJSON());
 
+    logEvent(1, "Sisbot running update script update.sh");
 		exec('/home/pi/sisbot-server/sisbot/update.sh '+this.config.service_branches.sisbot+' '+this.config.service_branches.app+' '+this.config.service_branches.proxy+' false > /home/pi/sisbot-server/update.log', (error, stdout, stderr) => {
 			self.current_state.set({installing_updates: 'false'});
-		  	if (error) {
-				// if (cb) cb(error, null);
+		  if (error) {
 				return logEvent(2, 'exec error:',error);
 			}
 			logEvent(1, "Install complete");
 
 			self.save(null, null);
 
-			self.reboot(null,null);
+  		self._reboot(null,null);
 		});
 	},
 	local_sisbots: function(data, cb) {
@@ -2350,7 +2418,34 @@ state: function(data, cb) {
 		});
 		ping.send(); // or ping.start();
 	},
-	factory_reset: function(data, cb) {
+  factory_reset: function(data, cb) {
+
+    if (this.isServo && this.homeFirst)
+    {
+      var homedata = {
+        stop : true,
+        clear_tracks: true
+      };
+
+      logEvent(1, "factory_reset SERVO so calling Home() first");
+      self = this;
+      this.home(homedata, null);
+      logEvent(1, "next call wait_for_home");
+
+      self = this;
+      setTimeout(function() {
+        logEvent(1, "calling _install_updates pointer is = ", typeof self._install_updates);
+        self._wait_for_home(data, cb, self._factory_reset, self, false);
+      }, 2000);
+      // if wait is too long, home is done and you've moved away againby the time you check
+      return;
+    }
+
+    this._factory_reset(data, cb);
+
+  },
+
+	_factory_reset: function(data, cb) {
 		logEvent(1, "Sisbot Factory Reset", data);
 		this.current_state.set({is_available: "false", reason_unavailable: "resetting"});
 		if (cb) cb(null, this.current_state.toJSON());
@@ -2362,7 +2457,34 @@ state: function(data, cb) {
 			logEvent(1, "child process exited with code",code);
 		});
 	},
-	restart: function(data,cb) {
+  restart: function(data,cb) {
+
+    if (this.isServo && this.homeFirst)
+    {
+      var homedata = {
+        stop : true,
+        clear_tracks: true
+      };
+
+      logEvent(1, "restart, SERVO so calling Home() first");
+      self = this;
+      this.home(homedata, null);
+      logEvent(1, "next call wait_for_home");
+
+      self = this;
+      setTimeout(function() {
+        logEvent(1, "calling _install_updates pointer is = ", typeof self._install_updates);
+        self._wait_for_home(data, cb, self._restart, self, false);
+      }, 2000);
+
+      return;
+    }
+
+    this._restart(data, cb);
+
+  },
+
+	_restart: function(data,cb) {
 		logEvent(1, "Sisbot Restart", data);
 		this.current_state.set({is_available: "false", reason_unavailable: "restarting"});
 		if (cb) cb(null, this.current_state.toJSON());
@@ -2374,7 +2496,33 @@ state: function(data, cb) {
 		  logEvent(1, "child process exited with code",code);
 		});
 	},
-	reboot: function(data,cb) {
+  reboot: function(data,cb) {
+
+    if (this.isServo  && this.homeFirst)
+    {
+      var homedata = {
+        stop : true,
+        clear_tracks: true
+      };
+
+      logEvent(1, "reboot, SERVO so calling Home() first");
+      self = this;
+      this.home(homedata, null);
+      logEvent(1, "next call wait_for_home");
+
+      self = this;
+      setTimeout(function() {
+        logEvent(1, "calling _install_updates pointer is = ", typeof self._install_updates);
+        self._wait_for_home(data, cb, self._reboot, self, false);
+      }, 2000);
+
+      return;
+    }
+
+    this._reboot(data, cb);
+
+  },
+  _reboot: function(data,cb) {
 		logEvent(1, "Sisbot Reboot", data);
 		this.current_state.set({is_available: "false", reason_unavailable: "rebooting"});
 		this.socket_update(this.current_state.toJSON());

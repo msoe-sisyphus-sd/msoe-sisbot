@@ -32,8 +32,7 @@ var homingRHitState; // The value the sensor reports when triggered. 0 or 1.
 var useFaultSensors = 0; // True if the bot has sensors. Otherwise the current position is considered home.
 //var faultThPin = "D,1"; // SBB board pin for homing theta sensor
 //var faultRPin = "D,0"; // SBB board pin for homing rho sensor
-
-//var faultActiveState = 1;
+var faultActiveState = 1;
 
 
 
@@ -105,6 +104,7 @@ var certain = 4;
 var maTheta; //Theta current
 var maR;     //R current
 var Vm;      //motor voltage
+
 
 var IS_SERVO;
 var servo_wait_before_faulting = false;
@@ -373,6 +373,7 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg,
     nextMove(mi);
     return;
   }
+  accelSegs = Vball * Voverride * segRate /(2 * Accel); //accel fix for speed slider effect
   //ACCEL/DECEL ---------------------------
   if (!pauseRequest){
     //logEvent(1, ASindex);
@@ -600,19 +601,18 @@ function goThetaHome() {
 function goRhoHome() {
   var rhoHomingStr, rhoHomeQueryStr = "PI," + homingRPin + "\r";
 	//R home pin C6
-	
-	
+  
   if (IS_SERVO) {//skip sensored homing RHO:
-	  
-	  console.log();
-	  console.log("rAccum= " + rAccum);
-	  console.log();
-	  
-  	rAccum = 0;
-  	photoTimeout = setTimeout(checkPhoto, photoMsec); //restart photosensing for autodim
-  	setStatus('waiting');
+    
+    console.log();
+    console.log("rAccum= " + rAccum);
+    console.log();
+    
+    rAccum = 0;
+    photoTimeout = setTimeout(checkPhoto, photoMsec); //restart photosensing for autodim
+    setStatus('waiting');
     return;
-  }
+  } 
 	WAITING_RHO_HOMED = true;
 
   if (pauseRequest) {
@@ -792,7 +792,6 @@ function parseReceivedSerialData(data) {
   var parts;
 	//remove any line breaks in string:
 	data = String(data).replace(/(\r\n|\n|\r)/gm,"");
-	//console.log("from SBB: " + data);
 
   // if (config.debug) logEvent(1, "in " + data);
   parts = String(data).split(',');
@@ -949,6 +948,7 @@ var onFinishTrack = function() {};
 // Called when the plotter state changes from/to any of waiting, homing, or playing.
 var onStateChanged = function() {};
 
+// Called when theta fault detected
 var onServoThFault = function() {};
 
 // Called when rho fault detected
@@ -978,7 +978,7 @@ module.exports = {
     homingThPin = config.homingThPin;
 
     HOMETHSTEPS = config.homingThSteps * thDirSign;
-    HOMERSTEPS = config.homingRSteps;
+	  HOMERSTEPS = config.homingRSteps;
 
     homingThHitState = parseInt(config.homingThHitState, 10)
     homingRHitState = parseInt(config.homingRHitState, 10)
@@ -988,16 +988,16 @@ module.exports = {
     thSPRad = thSPRev / (2* Math.PI);
 
     THETA_HOME_MAX =  Math.round(thSPRev * 1.03 / HOMETHSTEPS);//3% extra
-    // logEvent(1, 'T H MAX= '+THETA_HOME_MAX);
+	  // logEvent(1, 'T H MAX= '+THETA_HOME_MAX);
     RHO_HOME_MAX =  Math.round(rSPInch * (plotRadius + 0.25) / HOMERSTEPS);// 1/4" extra
 
     // Servo values
-  	if (config.isServo) {
-    	useFaultSensors = config.isServo;
-    	IS_SERVO = config.isServo;	
-  	}
-  	if (config.faultActiveState)	faultActiveState = config.faultActiveState;
-  	if (config.twoBallEnabled)		twoBallEnabled = config.twoBallEnabled;
+    if (config.isServo) {
+      useFaultSensors = config.isServo;
+      IS_SERVO = config.isServo;  
+    }
+    if (config.faultActiveState)  faultActiveState = config.faultActiveState;
+    if (config.twoBallEnabled)    twoBallEnabled = config.twoBallEnabled;
   },
 
 
@@ -1037,7 +1037,6 @@ module.exports = {
     sp.write("SE,1,100\r"); //turn on low lighting
 
     checkPhoto(); //start ambient light sensing
-
   },
 
   // Returns the current state of the machine activity.
