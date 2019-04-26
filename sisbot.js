@@ -25,7 +25,6 @@ log4js.configure({
 });
 const logger = log4js.getLogger('sisbot');
 
-
 /**************************** BLE *********************************************/
 
 var ble_obj = {
@@ -39,8 +38,7 @@ var ble_obj = {
     char: false,
     ip_address: new Buffer([0, 0, 0, 0]),
     update_ip_address: function(ip_address_str) {
-    		logEvent(1, "ble_obj update_ip_address()");
-        logEvent(1, 'Updated IP ADDRESS', ip_address_str, ip_address_str.split('.').map(function(i) {
+        logEvent(1, 'BLE Updated IP ADDRESS', ip_address_str, ip_address_str.split('.').map(function(i) {
             return +i;
         }));
         this.ip_address = new Buffer(ip_address_str.split('.').map(function(i) {
@@ -129,6 +127,7 @@ var sisbot = {
 
 	_internet_check: 0,
 	_internet_retries: 0,
+	_network_retries: 0, // for connecting to known network, cancel after config.wifi_error_retries times
   _internet_lanonly_check: false,
 	_changing_to_wifi: false,
 
@@ -330,7 +329,7 @@ var sisbot = {
 		});
 
 		// plotter
-logEvent(1, "Plotter");
+    logEvent(1, "Plotter");
     var cson_config = CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config);
   	this.plotter.setConfig(cson_config);
     if (cson_config.max_speed) this.config.max_speed = cson_config.max_speed; // overwrite config.js max_speed if table allows
@@ -652,43 +651,43 @@ logEvent(1, "Plotter");
 		if (this.config.serial_path == "false") return this.current_state.set("is_serial_open","true");
 		logEvent(1, "Before Serial");
 		try {
-	this.serial = new SerialPort(this.config.serial_path, { autoOpen: false }, function (err) {
-  	  if (err) {
+      this.serial = new SerialPort(this.config.serial_path, { autoOpen: false }, function (err) {
+    	  if (err) {
     	    return console.log('Serial Error: ', err.message)
-	  }
-	});
-      	this.serial.open(function (error) {
+  	    }
+  	  });
+    	this.serial.open(function (error) {
       	self.plotter.useSerial(self.serial);
-				logEvent(1, 'Serial: connected!', error, self.serial.isOpen);
+  			logEvent(1, 'Serial: connected!', error, self.serial.isOpen);
 
-				self.current_state.set("is_serial_open", "true");
-				self.set_brightness({value:self.current_state.get("brightness")}, null);
-				self.set_speed({value:self.current_state.get("speed")}, null);
+  			self.current_state.set("is_serial_open", "true");
+  			self.set_brightness({value:self.current_state.get("brightness")}, null);
+  			self.set_speed({value:self.current_state.get("speed")}, null);
 
-				if (self.config.autoplay) {
-					//logEvent(1, "Autoplay:", self.current_state.get("default_playlist_id"));
-					if (self.current_state.get("default_playlist_id") != "false" && self.collection.get(self.current_state.get("default_playlist_id"))!=undefined) {
-						var playlist = self.collection.get(self.current_state.get("default_playlist_id"));
-						playlist.set({active_track_id: "false", active_track_index: -1});
-						playlist.reset_tracks(); // start with non-reversed list
-						playlist.set_shuffle({ is_shuffle: "true", start_rho: 0 }); // update order, active tracks indexing
-						playlist.set({active_track_index: 0});
+  			if (self.config.autoplay) {
+  				//logEvent(1, "Autoplay:", self.current_state.get("default_playlist_id"));
+  				if (self.current_state.get("default_playlist_id") != "false" && self.collection.get(self.current_state.get("default_playlist_id"))!=undefined) {
+  					var playlist = self.collection.get(self.current_state.get("default_playlist_id"));
+  					playlist.set({active_track_id: "false", active_track_index: -1});
+  					playlist.reset_tracks(); // start with non-reversed list
+  					playlist.set_shuffle({ is_shuffle: "true", start_rho: 0 }); // update order, active tracks indexing
+  					playlist.set({active_track_index: 0});
 
-						var playlist_obj = playlist.toJSON();
-						logEvent(1, "Playlist Active Index:", playlist_obj.active_track_index);
-						playlist_obj.skip_save = true;
-						playlist_obj.is_current = true; // we already set the randomized pattern
+  					var playlist_obj = playlist.toJSON();
+  					logEvent(1, "Playlist Active Index:", playlist_obj.active_track_index);
+  					playlist_obj.skip_save = true;
+  					playlist_obj.is_current = true; // we already set the randomized pattern
 
-						self.set_playlist(playlist_obj, function(err, resp) {
-							if (err) return logEvent(1, "Set initial playlist", err);
-							self.socket_update(resp);
-						});
-					}
-				}
-			});
-	    } catch(err) {
-	      console.error('Connect err', err);
-	    }
+  					self.set_playlist(playlist_obj, function(err, resp) {
+  						if (err) return logEvent(1, "Set initial playlist", err);
+  						self.socket_update(resp);
+  					});
+  				}
+  			}
+  		});
+    } catch(err) {
+      console.error('Connect err', err);
+    }
 	},
 	// VERSIONS OF CODE
 	latest_software_version: function (data, cb) {
@@ -719,7 +718,7 @@ logEvent(1, "Plotter");
 		// logEvent(1, "Sisbot Connect", data);
 		if (cb) cb(null, this.collection.toJSON());
 	},
-state: function(data, cb) {
+  state: function(data, cb) {
     //logEvent(1, "Sisbot state");
     var ret_state = this.current_state.toJSON();
     delete ret_state.wifi_password;
@@ -772,8 +771,7 @@ state: function(data, cb) {
   set_hostname: function(data,cb) {
     logEvent(1, "set hostname", data);
 
-    if (this.isServo && this.homeFirst)
-    {
+    if (this.isServo && this.homeFirst) {
       var homedata = {
         stop : true,
         clear_tracks: true
@@ -1793,8 +1791,7 @@ state: function(data, cb) {
 		//logEvent(1, "Sisbot validate internet");
 		var self = this;
 
-    if (self._internet_lanonly_check == true)
-    {
+    if (self._internet_lanonly_check == true) {
       exec('route | grep default', (error, stdout, stderr) => {
         //if (error) return console.error('exec error:',error);
 
@@ -1814,16 +1811,12 @@ state: function(data, cb) {
           local_ip: self._getIPAddress()
         });
 
-        setTimeout(function () {
-          self.current_state.set({is_internet_connected: returnValue, local_ip: self._getIPAddress()});
-        }, 10000);
-
         if (cb) cb(null, returnValue);
       });
       return;
     }
 
-		exec('ping -c 1 -W 2 google.com', (error, stdout, stderr) => {
+	  exec('ping -c 1 -W 2 google.com', (error, stdout, stderr) => {
 			//if (error) return console.error('exec error:',error);
 
 			var returnValue = "false";
@@ -1832,15 +1825,6 @@ state: function(data, cb) {
 			// logEvent(1, 'stderr:', stderr);
 
 			logEvent(1, "Internet Connected Check", returnValue, self.current_state.get("local_ip"));
-
-			// if (self.current_state.get("is_internet_connected") != returnValue) {
-				// change hotspot status
-				// if (self.current_state.get("local_ip") == "192.168.42.1") {
-				// 	self.current_state.set("is_hotspot", "true");
-				// } else {
-				// 	self.current_state.set("is_hotspot", "false");
-				// }
-			// }
 
 			// make sure connected to remote
 			if (returnValue == "true" && self.current_state.get("share_log_files") == "true") self._setupAnsible();
@@ -1851,9 +1835,7 @@ state: function(data, cb) {
 				local_ip: self._getIPAddress()
 			});
 
-      setTimeout(function () {
-	      self.current_state.set({is_internet_connected: returnValue, local_ip: self._getIPAddress()});
-      }, 10000);
+      if (returnValue == "true") this._network_retries = 0;
 
 			if (cb) cb(null, returnValue);
 		});
@@ -1866,7 +1848,6 @@ state: function(data, cb) {
 					if (err) return logEvent(2, "Internet check err", err);
 					if (resp == "true") {
 						logEvent(1, "Internet connected.",self.current_state.get("is_internet_connected"));
-            append_log('Internet connected: ' + self.current_state.get("is_internet_connected"));
 
       			self._changing_to_wifi = false;
 						self.current_state.set({
@@ -1889,25 +1870,22 @@ state: function(data, cb) {
 						self.socket_update(self.current_state.toJSON());
 
 						// TODO: only post if IP address changed
-                        self._post_state_to_cloud();
+            self._post_state_to_cloud();
 					} else {
 						self._internet_retries++;
 
-						if (self._internet_retries < self.config.internet_retries)
-            {
+						if (self._internet_retries < self.config.internet_retries) {
               // try again since we haven't hit max tries
-              append_log('Internet retry: ' + self.config.retry_internet_interval);
+							logEvent(2, 'Internet retry: ' + self.config.retry_internet_interval, self._internet_retries);
 							self._query_internet(self.config.retry_internet_interval);
 						} else {
-              if (self._internet_lanonly_check == false)
-              {
+              if (self._internet_lanonly_check == false) {
                 self._internet_lanonly_check = true;
                 self._internet_retries = 0;
                 self._query_internet(self.config.retry_internet_interval);
                 return;
               }
-							logEvent(2, "Internet not connected, reverting to hotspot.");
-                            append_log('Internet not connected, reverting to hotspot: ');
+							logEvent(2, "Internet not connected, reverting to hotspot.", self._network_retries);
 							self.current_state.set({ wifi_error: "true" });
 							self.reset_to_hotspot(null,null);
 						}
@@ -1916,29 +1894,29 @@ state: function(data, cb) {
 			}, time_to_check);
 		}
 	},
-    _post_state_to_cloud: function () {
-        // THIS IS HELPFUL FOR ANDROID DEVICES
-        var self = this;
+  _post_state_to_cloud: function () {
+    // THIS IS HELPFUL FOR ANDROID DEVICES
+    var self = this;
 
-        // logEvent(1, 'LETS TRY AND GET TO CLOUD', this.current_state.toJSON());
+    // logEvent(1, 'LETS TRY AND GET TO CLOUD', this.current_state.toJSON());
 		var state = this.current_state.toJSON();
 		delete state.wifi_password;
 		delete state.wifi_network;
 
-        request.post('https://api.sisyphus.withease.io/sisbot_state/' + this.current_state.id, {
-                form: {
-                    data: state
-                }
-            },
-            function on_resp(error, response, body) {
-                if (!error && response.statusCode == 200) {
-                    logEvent(1, "Post to cloud", body);
-                } else {
-                    if (response) logEvent(2, "Request Not found:", response.statusCode);
-                }
-            }
-        );
-    },
+    request.post('https://api.sisyphus.withease.io/sisbot_state/' + this.current_state.id, {
+        form: {
+          data: state
+        }
+      },
+      function on_resp(error, response, body) {
+        if (!error && response.statusCode == 200) {
+          logEvent(1, "Post to cloud", body);
+        } else {
+          if (response) logEvent(2, "Request Not found:", response.statusCode);
+        }
+      }
+    );
+  },
 	get_wifi: function(data, cb) {
 		logEvent(1, "Sisbot get wifi", data);
 		iwlist.scan(data, cb);
@@ -1981,11 +1959,11 @@ state: function(data, cb) {
 
 				logEvent(1, "Connect To Wifi", data.ssid);
 
-                setTimeout(function () {
-                    exec('sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "'+data.ssid+'" "'+data.psk+'"', (error, stdout, stderr) => {
-    					if (error) return console.error('exec error:',error);
-    				});
-                }, 100);
+        setTimeout(function () {
+          exec('sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "'+data.ssid+'" "'+data.psk+'"', (error, stdout, stderr) => {
+  					if (error) return console.error('exec error:',error);
+  				});
+        }, 100);
 
         self._internet_lanonly_check = false;
 				self._query_internet(8000); // check again in 8 seconds
@@ -2017,6 +1995,7 @@ state: function(data, cb) {
 
 		// make sure we don't throw an error, we wanted to disconnect
 		this._changing_to_wifi = false;
+    this._network_retries = 0;
 
 		// this.save(null, null);
 
@@ -2027,7 +2006,6 @@ state: function(data, cb) {
 		// Use disconnect_wifi if you want to remove old network/password
 		var self = this;
 		logEvent(1, "Sisbot Reset to Hotspot", data);
-        append_log('Sisbot Reset to Hotspot: ' + JSON.stringify(data));
 		clearTimeout(this._internet_check);
 		this._internet_retries = 0; // clear retry count
 
@@ -2040,12 +2018,14 @@ state: function(data, cb) {
 
 		// forget bad network values (from cloud)
 		if (this.current_state.get('wifi_forget') == 'true') {
+	    logEvent(1, "Sisbot Forget Wifi");
 			this.current_state.set({
 				wifi_network: "false",
 				wifi_password: "false",
 				wifi_error: "false", // not an error to remember
 				wifi_forget: "false"
 			});
+      this._network_retries = 0;
 		}
 
 		if (cb) cb(null, this.current_state.toJSON());
@@ -2060,16 +2040,15 @@ state: function(data, cb) {
 		exec('sudo /home/pi/sisbot-server/sisbot/start_hotspot.sh', (error, stdout, stderr) => {
 			if (error) return logEvent(2, 'exec error:',error);
 			logEvent(1, "start_hotspot", stdout);
-            append_log('Start Hotspot: ' + stdout);
 
-            var new_state = {
-                is_available: "true",
-                reason_unavailable: "false",
-                local_ip: self._getIPAddress(),
-                failed_to_connect_to_wifi: (self._changing_to_wifi == true) ? 'true' : 'false'
-            };
+      var new_state = {
+          is_available: "true",
+          reason_unavailable: "false",
+          local_ip: self._getIPAddress(),
+          failed_to_connect_to_wifi: (self._changing_to_wifi == true) ? 'true' : 'false'
+      };
 
-            self._changing_to_wifi = false;
+      self._changing_to_wifi = false;
 			self.current_state.set(new_state);
 
 			self.save(null, null);
@@ -2085,6 +2064,9 @@ state: function(data, cb) {
 	_reconnect_to_wifi: function() {
 		var self = this;
 
+    var wifi_network = self.current_state.get("wifi_network");
+    if (!wifi_network || wifi_network == 'false') return;
+
 		self.get_wifi({ iface: 'wlan0', show_hidden: true }, function(err, resp) {
 			if (err) {
 				logEvent(2, "Wifi list error:", err);
@@ -2092,15 +2074,18 @@ state: function(data, cb) {
 				// try again later
 				self._internet_check = setTimeout(function() {
 					self._reconnect_to_wifi();
-				}, self.config.wifi_error_retry_interval);
+				}, self.config.retry_internet_interval); // wifi_error_retry_interval
 				return;
 			}
 
 			// check if the wanted network is in the list
 			if (resp) {
-				var wifi_network = self.current_state.get("wifi_network");
+
+        // logEvent(1, JSON.stringify(self.current_state.toJSON()));
+        logEvent(1, "Networks found, looking for ", wifi_network);
 				var network_found = false;
 				_.each(resp, function(network_obj) {
+          logEvent(1, "Network", network_obj.ssid);
 					if (network_obj && network_obj.ssid && network_obj.ssid == wifi_network) {
 						logEvent(1, "Found Network", wifi_network, "try to connect");
 						network_found = true;
@@ -2108,16 +2093,27 @@ state: function(data, cb) {
 				});
 
 				if (network_found) { // connect!
-					self.change_to_wifi({
-						ssid: self.current_state.get("wifi_network"),
-						psk: self.current_state.get("wifi_password")
-					}, null);
+          self._network_retries++;
+          if (self._network_retries >= self.config.wifi_error_retries) {
+            // forget wifi if it doesn't work this time
+            logEvent(1, "Last time to try  Wifi");
+  					self.connect_to_wifi({
+  						ssid: self.current_state.get("wifi_network"),
+  						psk: self.current_state.get("wifi_password")
+  					}, null);
+          } else {
+  					self.change_to_wifi({
+  						ssid: self.current_state.get("wifi_network"),
+  						psk: self.current_state.get("wifi_password")
+  					}, null);
+          }
 				} else { // try again later
 					self._internet_check = setTimeout(function() {
 						self._reconnect_to_wifi();
 					}, self.config.wifi_error_retry_interval);
 				}
 			} else { // try again later
+        logEvent(2, "No Networks found");
 				self._internet_check = setTimeout(function() {
 					self._reconnect_to_wifi();
 				}, self.config.wifi_error_retry_interval);
@@ -2262,8 +2258,7 @@ state: function(data, cb) {
   install_updates: function(data, cb) {
 
     logEvent(1, "Sisbot Install Updates WRAPPER", data);
-    if (this.isServo && this.homeFirst)
-    {
+    if (this.isServo && this.homeFirst) {
       var homedata = {
         stop : true,
         clear_tracks: true
@@ -2286,14 +2281,11 @@ state: function(data, cb) {
     logEvent(1, "no servo, call _install_updates directly");
     this._install_updates(data, cb);
   },
-  _wait_for_home: function(data, cb, funcptr, this2, saw_homing)
-  {
+  _wait_for_home: function(data, cb, funcptr, this2, saw_homing) {
     // logEvent(1, "Waiting for home, current state = ", this.current_state.get("state"));
 
-    if (saw_homing == false)
-    {
-      if (this.current_state.get("state") == "homing")
-      {
+    if (saw_homing == false) {
+      if (this.current_state.get("state") == "homing") {
         saw_homing = true;
       }
 
@@ -2306,13 +2298,10 @@ state: function(data, cb) {
       return;
     }
 
-    if (this.current_state.get("state") == "waiting")
-    {
+    if (this.current_state.get("state") == "waiting") {
       logEvent(1, "_wait_for_home done waiting for servo to go home, call the next function with data=", data);
       funcptr.call(this2, data, cb);
-    }
-    else
-    {
+    } else {
       var self = this;
       logEvent(1, "_wait_for_home, waiting for state waiting = ", data);
       setTimeout(function(data, cb, fptr, this2, saw_homing) {
@@ -2420,8 +2409,7 @@ state: function(data, cb) {
 	},
   factory_reset: function(data, cb) {
 
-    if (this.isServo && this.homeFirst)
-    {
+    if (this.isServo && this.homeFirst) {
       var homedata = {
         stop : true,
         clear_tracks: true
@@ -2459,8 +2447,7 @@ state: function(data, cb) {
 	},
   restart: function(data,cb) {
 
-    if (this.isServo && this.homeFirst)
-    {
+    if (this.isServo && this.homeFirst) {
       var homedata = {
         stop : true,
         clear_tracks: true
@@ -2560,12 +2547,6 @@ var logEvent = function() {
     if (arguments[0] == 2 || arguments[0] == '2') line = '\x1b[31m'+line+'\x1b[0m';
 		console.log(line); // !! comment out in master !!
 	} else console.log(arguments);
-}
-
-var append_log = function(line) {
-    // fs.appendFile('travis.log' , line, function (err) {
-    //   if (err) throw err;
-    // });
 }
 
 module.exports = sisbot;

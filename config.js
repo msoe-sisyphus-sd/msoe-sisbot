@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.20', // update Node to v 8.x.x on update, node_update.sh fix
+			version	: '1.9.21', // fixes retrying to connect to a wifi network
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -55,7 +55,8 @@ var config = {
 			// unless the bot has a web or phone client connected to it before the LAN drops
 			internet_retries: 5, // retry # of times before resetting to hotspot
 			retry_internet_interval: 3000, // three seconds later
-			wifi_error_retry_interval: 60000, // one minute
+			wifi_error_retry_interval: 30000, // thirty seconds
+			wifi_error_retries: 3, // retry # of times before resetting to hotspot and forgetting network
 			default_data: default_status,
 			pingTimeout: 1500, // socket pingTimeout
 			pingInterval: 600, // socket pingInterval
