@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.21', // fixes retrying to connect to a wifi network
+			version	: '1.9.22', // add is_servo to sisbot_state
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

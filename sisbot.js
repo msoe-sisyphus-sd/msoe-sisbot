@@ -301,6 +301,7 @@ var sisbot = {
 			is_internet_connected: "false",
 			software_version: this.config.version
 		});
+    if (this.isServo) this.current_state.set('is_servo', 'true');
 		this.current_state.set("local_ip", this._getIPAddress());
 		if (this.current_state.get("local_ip") == "192.168.42.1") {
 			this.current_state.set("is_hotspot", "true");
