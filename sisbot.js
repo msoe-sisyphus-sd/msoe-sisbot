@@ -17,6 +17,7 @@ var bleno 		= require('bleno');
 var io 			= require('socket.io');
 var moment 		= require('moment');
 var log4js    = require('log4js');
+var unix_dg   = require('unix-dgram');
 
 /**************************** Logging *********************************************/
 log4js.configure({
@@ -38,12 +39,10 @@ var ble_obj = {
     char: false,
     ip_address: new Buffer([0, 0, 0, 0]),
     update_ip_address: function(ip_address_str) {
-        logEvent(1, 'BLE Updated IP ADDRESS', ip_address_str, ip_address_str.split('.').map(function(i) {
-            return +i;
-        }));
-        this.ip_address = new Buffer(ip_address_str.split('.').map(function(i) {
-            return +i;
-        }));
+      var new_ip = ip_address_str.split('.').map(function(i) { return +i; });
+      // TODO: don't update/log unless the values are different
+      this.ip_address = new Buffer(new_ip);
+      logEvent(1, 'BLE Updated IP ADDRESS', ip_address_str, new_ip);
     },
     on_state_change: function(state) {
     		logEvent(1, "ble_obj on_state_change()");
@@ -94,6 +93,7 @@ var sisbot = {
 	config: {},
 	ansible: null,
 	serial: null,
+  lcp_socket: null,
 	plotter: plotter,
 	socket_update: null,
 
@@ -493,6 +493,9 @@ var sisbot = {
 		// connect
 		this._connect();
 
+    // position socket
+    this._connect_lcp();
+
 		// wifi connect
 		if (this.current_state.get("is_hotspot") == "false") {
 			// this.current_state.set("is_internet_connected", "false"); // assume false, so sockets connect
@@ -530,7 +533,7 @@ var sisbot = {
 					} else logEvent(2, service_name + " Sisbot Connect Error", err);
 				});
 			}
-  		});
+		});
 	},
 	_teardownAnsible() {
 		var self = this;
@@ -643,6 +646,48 @@ var sisbot = {
 
 		this._connectionError(service);
 	},
+
+  /***************************** Connect PI light controller  program ******************/
+  // _reconnect_lcp: function() {
+  //   this.lcp_socket = unix_dg.createSocket('unix_dgram');
+  //   // this.lcp_socket.bind('/tmp/sisyphus_sockets');
+  //   // this.lcp_socket.on('error', console.error);
+  //   this.plotter.useLCPSocket(this.lcp_socket, this._reconnect_lcp);
+  // },
+
+  _connect_lcp: function() {
+    logEvent(1, 'connecting to light controller program');
+    this.lcp_socket = unix_dg.createSocket('unix_dgram');
+    // this.lcp_socket.bind('/tmp/sisyphus_sockets');
+    // this.lcp_socket.on('error', console.error);
+    this.plotter.useLCPSocket(this.lcp_socket);
+  },
+
+  lcpWrite: function(data, cb) {
+    logEvent(1, 'LCP-write:',data.value);
+
+    if (typeof this.lcp_socket === 'undefined' || this.lcp_socket === null) {
+      logEvent(1, 'lcpWrite: FAIL lcp is not initialized');
+      errv = {"fail":"lcp socket is not initialized"}
+      resp = errv;
+      if (cb) cb(errv,resp);
+      return;
+    }
+    var rval = {};
+    var errv = null;
+    try {
+      message = Buffer(data.value);
+      this.lcp_socket.send(message, 0, message.length, '/tmp/sisyphus_sockets');
+      rval.lcp_send = data.value;
+    } catch(err) {
+      // console.error('LCP write err', err);
+      logEvent(2, 'LCP socket write err:' + err);
+      rval.lcp_send_err = err;
+      errv = {"err":"LCP socket write threw an error"}
+    }
+
+    if (cb) cb(errv, rval);
+  },
 	/***************************** Plotter ************************/
 	_connect: function() {
     	if (this.serial && this.serial.isOpen) return true;
@@ -833,8 +878,8 @@ var sisbot = {
 	},
 	save: function(data, cb) {
 		var self = this;
-		// logEvent(1, "Sisbot Save", data);
 		if (!this._saving) {
+		  if (this.config.debug) logEvent(1, "Sisbot Save", data);
 			this._saving = true;
 
 			var returnObjects = [];
@@ -860,9 +905,37 @@ var sisbot = {
 				});
 			}
 
-			fs.writeFile(this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.sisbot_state, JSON.stringify(this.collection), function(err) {
-				self._saving = false;
-				if (err) return logEvent(2, err);
+      var path = this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.sisbot_state;
+      // save to tmp file
+      fs.writeFile(path+'.tmp', JSON.stringify(this.collection), function(err) {
+				if (err) {
+          self._saving = false;
+          return logEvent(2, err);
+        }
+
+        // double-check integrity of saved file
+        if (fs.existsSync(path+'.tmp')) {
+          var saved_state = fs.readFileSync(path+'.tmp', 'utf8');
+          try {
+            objs = JSON.parse(saved_state);
+
+            // make sure objs is not empty
+            if (_.size(objs) >= 1) {
+              // move tmp file to real location
+          		exec('mv '+path+'.tmp '+path, (error, stdout, stderr) => {
+        			  self._saving = false;
+          			if (error) return logEvent(2, 'save() exec error:',error);
+                if (self.config.debug) logEvent(1, 'Save move complete');
+              });
+            }
+          } catch (err) {
+    			  self._saving = false;
+            return logEvent(3, "!!Blank save state, don't overwrite", err);
+          }
+        } else {
+          self._saving = false;
+          return logEvent(3, "Temp save file missing!");
+        }
 			});
 
 			if (cb) cb(null, returnObjects);
@@ -986,7 +1059,7 @@ var sisbot = {
 			}
 		} else if (cb) cb('No Connection', null);
 	},
-    _delayed_home: function(data, cb) {
+  _delayed_home: function(data, cb) {
     var self = this;
 
     //
@@ -1000,7 +1073,7 @@ var sisbot = {
 			//testing this:
 			//thHome = false;
 			//rhoHome = false;
-		//	console.log("setting homes false here");
+		  //	console.log("setting homes false here");
 
     	var skip_move_out_if_sensors_at_home = false;
     	if (this.isServo) skip_move_out_if_sensors_at_home = true;
@@ -1745,19 +1818,7 @@ var sisbot = {
 		var value = this._clamp(+data.value, 0.0, 1.0);
 		this.current_state.set('brightness', value);
 
-		if (this.current_state.get('is_autodim') == "true") {
-	    	plotter.setBrightness(value);// for autodim
-		} else {
-		    // convert to an integer from 0 - 1023, parabolic scale.
-		    var pwm = Math.pow(2, value * 10) - 1;
-		    pwm = Math.floor(pwm);
-
-		    if (pwm == 0) {
-		      this._serialWrite('SE,0');
-		    } else {
-		      this._serialWrite('SE,1,'+pwm);
-		    }
-		}
+	  plotter.setBrightness(value);
 
 		this.save(null, null);
 

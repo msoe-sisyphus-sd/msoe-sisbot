@@ -34,6 +34,9 @@ else
 	sudo /etc/init.d/ssh restart
 fi
 
+# make sure ntp is enabled
+timedatectl set-ntp true
+
 # fix factory reset issue
 cp /home/pi/sisbot-server/sisbot/factory_reset.sh /home/pi/sisbot-server/
 
