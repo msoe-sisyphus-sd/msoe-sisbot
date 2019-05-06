@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.21', // added is_servo to sisbot model
+			version	: '1.9.22', // change status.json save to mv, ntp fix
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
