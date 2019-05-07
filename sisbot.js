@@ -302,6 +302,7 @@ var sisbot = {
 			is_internet_connected: "false",
 			software_version: this.config.version
 		});
+    if (this.isServo) this.current_state.set('is_servo', 'true');
 		this.current_state.set("local_ip", this._getIPAddress());
 		if (this.current_state.get("local_ip") == "192.168.42.1") {
 			this.current_state.set("is_hotspot", "true");
@@ -834,8 +835,8 @@ state: function(data, cb) {
 	},
 	save: function(data, cb) {
 		var self = this;
-		// logEvent(1, "Sisbot Save", data);
 		if (!this._saving) {
+		  if (this.config.debug) logEvent(1, "Sisbot Save", data);
 			this._saving = true;
 
 			var returnObjects = [];
@@ -861,9 +862,37 @@ state: function(data, cb) {
 				});
 			}
 
-			fs.writeFile(this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.sisbot_state, JSON.stringify(this.collection), function(err) {
-				self._saving = false;
-				if (err) return logEvent(2, err);
+      var path = this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.sisbot_state;
+      // save to tmp file
+      fs.writeFile(path+'.tmp', JSON.stringify(this.collection), function(err) {
+				if (err) {
+          self._saving = false;
+          return logEvent(2, err);
+        }
+
+        // double-check integrity of saved file
+        if (fs.existsSync(path+'.tmp')) {
+          var saved_state = fs.readFileSync(path+'.tmp', 'utf8');
+          try {
+            objs = JSON.parse(saved_state);
+
+            // make sure objs is not empty
+            if (_.size(objs) >= 1) {
+              // move tmp file to real location
+          		exec('mv '+path+'.tmp '+path, (error, stdout, stderr) => {
+        			  self._saving = false;
+          			if (error) return logEvent(2, 'save() exec error:',error);
+                if (self.config.debug) logEvent(1, 'Save move complete');
+              });
+            }
+          } catch (err) {
+    			  self._saving = false;
+            return logEvent(3, "!!Blank save state, don't overwrite", err);
+          }
+        } else {
+          self._saving = false;
+          return logEvent(3, "Temp save file missing!");
+        }
 			});
 
 			if (cb) cb(null, returnObjects);
