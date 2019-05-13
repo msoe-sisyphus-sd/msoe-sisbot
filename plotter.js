@@ -473,9 +473,23 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLOstep
       else {
         // send to socket
         try {
-          inp = "b," + newR + "," + newTh +","+lastPhotoOut;
-          message = Buffer(inp);
-          sp_lcp.send(message, 0, message.length, '/tmp/sisyphus_sockets');
+          var buf1 = Buffer.from('b', 0, 1);
+          var buf2 =  Buffer.alloc(4);
+          buf2.writeFloatBE(newR, 0);
+          var buf3 =  Buffer.alloc(4);
+          buf3.writeFloatBE(newTh, 0);
+          var buf4 =  Buffer.alloc(4);
+          buf4.writeFloatBE(lastPhotoOut, 0);
+          var totalLength = buf1.length + buf2.length + buf3.length + buf4.length;
+
+          // var d = new Date();
+          // var n = d.getMilliseconds();
+          // logEvent(1, "Millis", n);
+
+          // logEvent(1, "Values: ", newR, newTh, lastPhotoOut, "Buffer Length:", totalLength);
+          message = Buffer.concat([buf1, buf2, buf3, buf4], totalLength);
+
+          sp_lcp.send(message, 0, totalLength, '/tmp/sisyphus_sockets');
           // logEvent(1,'LCP ' + inp);
         } catch (err) {
           // logEvent(2,'Error writing to LCP socket ' + err.message);
