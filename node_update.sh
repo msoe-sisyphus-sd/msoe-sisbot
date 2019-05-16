@@ -14,7 +14,7 @@ if [[ $NODE_V != "v8."* ]]; then
 
     # install nodejs via apt-get and -yq yes and quit
     curl -sL https://deb.nodesource.com/setup_8.x | bash -
-    apt-get install -yq nodejs
+    apt-get install -yq nodejs -o Acquire::ForceIPv4=true
   fi
 
   # remove version in /usr/local
