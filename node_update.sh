@@ -2,7 +2,7 @@
 
 # check what version of node is installed/used
 NODE_V="$(node -v)"
-PKG_NODE_V="$(dpkg -l nodejs 2>&1)"
+PKG_NODE_V="$(dpkg -l nodejs 2>&1)" 
 
 # is this node 8?
 if [[ $NODE_V != "v8."* ]]; then
@@ -12,7 +12,7 @@ if [[ $NODE_V != "v8."* ]]; then
   if [[ $PKG_NODE_V == "dpkg-query: no packages found matching nodejs"* ]]; then
     echo "No nodejs package found"
 
-    # install via apt-get
+    # install nodejs via apt-get and -yq yes and quit
     curl -sL https://deb.nodesource.com/setup_8.x | bash -
     apt-get install -yq nodejs
   fi
