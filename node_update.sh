@@ -11,10 +11,12 @@ if [[ $NODE_V != "v8."* ]]; then
   # do we have the apt-get package?
   if [[ $PKG_NODE_V == "dpkg-query: no packages found matching nodejs"* ]]; then
     echo "No nodejs package found"
-
+    echo 'Acquire::ForceIPv4 "true";' | sudo tee /etc/apt/apt.conf.d/99force-ipv4
     # install nodejs via apt-get and -yq yes and quit
     curl -sL https://deb.nodesource.com/setup_8.x | bash -
-    apt-get install -yq nodejs -o Acquire::ForceIPv4=true
+    apt-get install -yq nodejs 
+    
+
   fi
 
   # remove version in /usr/local
