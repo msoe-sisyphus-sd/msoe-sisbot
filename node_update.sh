@@ -13,7 +13,8 @@ if [[ $NODE_V != "v8."* ]]; then
     echo "No nodejs package found"
     echo 'Acquire::ForceIPv4 "true";' | tee /etc/apt/apt.conf.d/99force-ipv4 |
     # install nodejs via apt-get and -yq yes and quit
-    curl -sL https://deb.nodesource.com/setup_8.x | bash - && apt-get install -yq nodejs npm@latest-version
+    curl -sL https://deb.nodesource.com/setup_8.x | bash - 
+    apt-get install -yq nodejs npm update -g
     
 
   fi
