@@ -2311,7 +2311,7 @@ state: function(data, cb) {
 	/* ------------------------------------------ */
 	get_log_file: function(data, cb) {
 		logEvent(1, "Get log file", data);
-		if (this.config.folders.logs) {
+		if (this.config.folders.logs && typeof data.filename !== 'undefined') {
 			if (/([.]{2}\/)/g.test(data.filename)) { // make sure we are not trying to leave the folder
 				if (cb) cb('Invalid characters', null);
 			} else if (fs.existsSync(this.config.folders.logs+data.filename.toLowerCase()+'.log')) {
@@ -2329,9 +2329,9 @@ state: function(data, cb) {
 				var file = fs.readFileSync(this.config.folders.logs+'proxy.log', 'utf8');
 				if (cb) cb(null, file);
 			} else {
-				if (cb) cb('Log not available', null);
+				if (cb) cb('Log not available for ' + data.filename, null);
 			}
-		} else if (cb) cb('No logs found', null);
+		} else if (cb) cb('No logs found.  No log directory or input data.filename was missing', null);
 	},
 	/* ------------------------------------------ */
   install_updates: function(data, cb) {
