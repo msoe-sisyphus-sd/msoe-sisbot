@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.22', // change status.json save to mv, ntp fix
+			version	: '1.9.23', // sleep/wake ntp fix, socket intialize after sisbot service
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -32,7 +32,7 @@ var config = {
 				tracks: 'tracks', // models
 				cloud: 'siscloud',
 				api: 'sisapi',
-		  	  	logs: '/var/log/sisyphus/'
+  	  	logs: '/var/log/sisyphus/'
 			},
 			receiver : true, // receive messages from cloud
 			sisbot_config : which_cson,
@@ -56,6 +56,8 @@ var config = {
 			internet_retries: 5, // retry # of times before resetting to hotspot
 			retry_internet_interval: 3000, // three seconds later
 			wifi_error_retry_interval: 60000, // one minute
+      ntp_wait: 5000, // five seconds
+      sleep_init_wait: 10000, // ten seconds
 			default_data: default_status,
 			pingTimeout: 1500, // socket pingTimeout
 			pingInterval: 600, // socket pingInterval

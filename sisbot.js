@@ -12,19 +12,10 @@ var Ping 		= require('ping-lite');
 var request 	= require('request');
 var webshot 	= require('webshot');
 var util 		= require('util');
-var scheduler 	= require('node-schedule');
+var scheduler 	= null; //require('node-schedule');
 var bleno 		= require('bleno');
 var io 			= require('socket.io');
 var moment 		= require('moment');
-var log4js    = require('log4js');
-
-/**************************** Logging *********************************************/
-log4js.configure({
-  appenders: { sisbot: { type: 'file', filename: 'sisbot.log' } },
-  categories: { default: { appenders: ['sisbot'], level: 'debug' } }
-});
-const logger = log4js.getLogger('sisbot');
-
 
 /**************************** BLE *********************************************/
 
@@ -39,13 +30,20 @@ var ble_obj = {
     char: false,
     ip_address: new Buffer([0, 0, 0, 0]),
     update_ip_address: function(ip_address_str) {
-    		logEvent(1, "ble_obj update_ip_address()");
-        logEvent(1, 'Updated IP ADDRESS', ip_address_str, ip_address_str.split('.').map(function(i) {
+      var self = this;
+      var ip_array = ip_address_str.split('.');
+      var new_ip = true;
+      ip_array.map(function(val, i) {
+          if (self.ip_address[i] != val) new_ip = false;
+      });
+      if (new_ip) {
+        logEvent(1, 'BLE Updated IP ADDRESS', ip_address_str, ip_array.map(function(i) {
             return +i;
         }));
-        this.ip_address = new Buffer(ip_address_str.split('.').map(function(i) {
+        this.ip_address = new Buffer(ip_array.map(function(i) {
             return +i;
         }));
+      }
     },
     on_state_change: function(state) {
     		logEvent(1, "ble_obj on_state_change()");
@@ -139,8 +137,6 @@ var sisbot = {
 		var self = this;
   	this.config = config;
 		logEvent(1, "Init Sisbot");
-		logger.info("Initialzie sisbot");
-
 
 		this.socket_update = socket_update;
 
@@ -1832,7 +1828,7 @@ state: function(data, cb) {
         // logEvent(1, 'stdout:', stdout);
         // logEvent(1, 'stderr:', stderr);
 
-        logEvent(1, "Internet Connected Check", returnValue, self.current_state.get("local_ip"));
+        if (self.current_state.get('is_internet_connected') != returnValue) logEvent(1, "Internet Connected Check", returnValue, self.current_state.get("local_ip"));
 
         // make sure connected to remote
         if (returnValue == "true" && self.current_state.get("share_log_files") == "true") self._setupAnsible();
@@ -1860,7 +1856,7 @@ state: function(data, cb) {
 			// logEvent(1, 'stdout:', stdout);
 			// logEvent(1, 'stderr:', stderr);
 
-			logEvent(1, "Internet Connected Check", returnValue, self.current_state.get("local_ip"));
+			if (self.current_state.get('is_internet_connected') != returnValue) logEvent(1, "Internet Connected Check", returnValue, self.current_state.get("local_ip"));
 
 			// if (self.current_state.get("is_internet_connected") != returnValue) {
 				// change hotspot status
@@ -1894,8 +1890,7 @@ state: function(data, cb) {
 				self._validate_internet(null, function(err, resp) {
 					if (err) return logEvent(2, "Internet check err", err);
 					if (resp == "true") {
-						logEvent(1, "Internet connected.",self.current_state.get("is_internet_connected"));
-            append_log('Internet connected: ' + self.current_state.get("is_internet_connected"));
+						if (self.config.debug) logEvent(1, "Internet connected.",self.current_state.get("is_internet_connected"));
 
       			self._changing_to_wifi = false;
 						self.current_state.set({
@@ -2178,18 +2173,67 @@ state: function(data, cb) {
 		else if (cb) cb(null, this.current_state.toJSON());
 	},
 	/* ------------- Sleep Timer ---------------- */
+  check_ntp: function(data, cb) {
+    // check status
+		exec('timedatectl status', (error, stdout, stderr) => {
+      console.log("Timedatectl err:", error);
+      logEvent(1, "Timedatectl stdout:", stdout);
+      console.log("Timedatectl stderr:", stderr);
+
+      var sync = stdout.match(/NTP synchronized: (yes|no)/);
+      if (_.isArray(sync) && sync.length > 1) {
+        var sync_value = (sync[1] == 'yes');
+        logEvent(1, "NTP Value: ", sync[1], sync_value);
+
+        if (cb) cb(null, sync_value)
+      } else if (cb) cb('Unknown result: '+sync, null);
+    });
+  },
 	set_sleep_time: function(data, cb) {
 		var self = this;
-		logEvent(1, "Set Sleep Time:", data.sleep_time, data.wake_time, data.timezone_offset, this.current_state.get('is_sleeping'));
+		// logEvent(1, "Set Sleep Time:", moment().format(), data.sleep_time, data.wake_time, data.timezone_offset, this.current_state.get('is_sleeping'));
+
+    // check NTP before assigning cron
+    this.check_ntp({}, function(err, sync_value) {
+      if (err) logEvent(2, "NTP Error", err);
+
+      if (sync_value) {
+        // assign now
+        self._set_sleep_time(data, cb);
+      } else if (self.current_state.get("wifi_network") == "" || self.current_state.get("wifi_network") == "false") {
+        // assign now, it is supposed to be a hotspot
+        self._set_sleep_time(data, cb);
+      } else {
+        // delay assigning cron
+        setTimeout(function() {
+          self.set_sleep_time(data, cb);
+        }, self.config.ntp_wait);
+      }
+    });
+  },
+  _set_sleep_time: function(data, cb) {
+    var self = this;
+
+    // load library when needed (to prevent power-cycle time issues)
+    if (!scheduler) {
+      scheduler 	= require('node-schedule');
+
+      // wait an additional 10 seconds
+      setTimeout(function() {
+        self._set_sleep_time(data, cb);
+      }, self.config.sleep_init_wait);
+
+      return;
+    }
 
 		// cancel old timers
-		if (this.sleep_timer != null) {
-			this.sleep_timer.cancel();
-			this.sleep_timer = null;
+		if (self.sleep_timer != null) {
+			self.sleep_timer.cancel();
+			self.sleep_timer = null;
 		}
-		if (this.wake_timer != null) {
-			this.wake_timer.cancel();
-			this.wake_timer = null;
+		if (self.wake_timer != null) {
+			self.wake_timer.cancel();
+			self.wake_timer = null;
 		}
 
 		// set timer
@@ -2198,7 +2242,7 @@ state: function(data, cb) {
 			var cron = sleep.minute()+" "+sleep.hour()+" * * *";
 			logEvent(1, "Sleep", sleep.format('mm HH'), cron);
 
-			this.sleep_timer = scheduler.scheduleJob(cron, function(){
+			self.sleep_timer = scheduler.scheduleJob(cron, function(){
 				self.sleep_sisbot(null, null);
 			});
 		}
@@ -2207,13 +2251,15 @@ state: function(data, cb) {
 			var cron = wake.minute()+" "+wake.hour()+" * * *";
 			logEvent(1, "Wake", wake.format('mm HH'), cron);
 
-			this.wake_timer = scheduler.scheduleJob(cron, function(){
+			self.wake_timer = scheduler.scheduleJob(cron, function(){
 				self.wake_sisbot(null, null);
 			});
 		}
 
+    // logEvent(1, "Sleep Time Set:", moment().format(), data.sleep_time, data.wake_time, data.timezone_offset, this.current_state.get('is_sleeping'));
+
 		// save to state
-		this.current_state.set({
+		self.current_state.set({
 			sleep_time: data.sleep_time,
 			wake_time: data.wake_time,
 			timezone_offset: data.timezone_offset,
@@ -2221,9 +2267,9 @@ state: function(data, cb) {
 			nightlight_brightness: data.nightlight_brightness
 		});
 
-		this.save(null, null);
+		self.save(null, null);
 
-		if (cb) cb(null, this.current_state.toJSON());
+		if (cb) cb(null, self.current_state.toJSON());
 	},
 	wake_sisbot: function(data, cb) {
 		logEvent(1, "Wake Sisbot", this.current_state.get('is_sleeping'));
