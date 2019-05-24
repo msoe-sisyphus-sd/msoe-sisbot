@@ -1,9 +1,10 @@
-# 2019-04-17 1.10.20
+# 2019-04-17 1.10.23
   - update Node to v 8.x.x on update, node_update.sh fix.
   - Versions .17, .18, .19 work in progress on Node to v 8 update
   - added is_servo to sisbot model for UI to know
   - status.json save() saves to tmp file, then moves after confirming data
   - ntp fix
+  - bugfix socket on startup/reconnect
 
 # 2019-04-17 1.10.16
   - accel is no longer scaled along with velocity when the speed slider changes (acceleration should stay fixed)
