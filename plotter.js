@@ -116,47 +116,47 @@ function checkPhoto() { //autodimming functionality:
 	if (plotRadius > 10) BRamp = 4; //temp fix for less light under 36 than 22
 
 	sp.write("I\r"); //SBB command to check digital inputs
-	
+
 	if (useFaultSensors)	sp.write("A2\r"); //SBB command to check analog inputs
 	else sp.write("A\r");
-	
+
 
  	if (autodim == "true") {	//need to check autodim toggle fn'ing
 		//console.log("photoAvgOld: " + photoAvgOld);
 	//filter spurious readings:
 		if (Math.abs(rawPhoto - photoAvgOld) / photoAvgOld > 0.5) {
-			if (bigChangeCounter < bigChangeIsReal) { 
+			if (bigChangeCounter < bigChangeIsReal) {
 				bigChangeCounter = bigChangeCounter + 1;
 				//console.log("bigChangeCtr = " + bigChangeCounter );
 				photoOut = photoAvgOld; // don't trust use prior avg
 				photoAvg = photoAvgOld;
 				trusted = false;
 			}
-			
+
 		}
 		if (trusted) { //trusted sensor reading
 			bigChangeCounter = 0;
-			photo = rawPhoto; 
-			
+			photo = rawPhoto;
+
 			if (photo > 1023) {photo = 1023;}
 			if (photo < photoMin) {photo = photoMin;} //photomin?
 			//console.log( "raw photo = " + photo)
 
-			
+
 			//logEvent(1, "photoSum = " + photoSum)
 
-			photoArray.shift(); //delete first val in array 
-			photoArray.push(photo); //add new val to end 
+			photoArray.shift(); //delete first val in array
+			photoArray.push(photo); //add new val to end
 			photoSum = photoArray.reduce(add, 0);
 			photoAvg = photoSum / photoArraySize;
-		
+
 			photoOut = photoAvg;
 			//console.log("photoAvg* = " + photoAvg);
 			//logEvent(1, "photoAvg = " + photoAvg);
 		}
-		
+
 		photoAvgOld = photoAvg;
-		
+
 		if (sliderBrightness > 0.5){
 			photoOut *= BRamp * (Math.pow(5,sliderBrightness * 2) - 4);
 		}
@@ -188,7 +188,7 @@ function checkPhoto() { //autodimming functionality:
 				//console.log("SE,0\r");
 			  	//logEvent(1, "SE,0");
 			}
-			
+
 			lastPhotoOut = photoOut;
 		}
 	}
@@ -601,18 +601,18 @@ function goThetaHome() {
 function goRhoHome() {
   var rhoHomingStr, rhoHomeQueryStr = "PI," + homingRPin + "\r";
 	//R home pin C6
-  
+
   if (IS_SERVO) {//skip sensored homing RHO:
-    
+
     console.log();
     console.log("rAccum= " + rAccum);
     console.log();
-    
+
     rAccum = 0;
     photoTimeout = setTimeout(checkPhoto, photoMsec); //restart photosensing for autodim
     setStatus('waiting');
     return;
-  } 
+  }
 	WAITING_RHO_HOMED = true;
 
   if (pauseRequest) {
@@ -823,17 +823,17 @@ function parseReceivedSerialData(data) {
 				}
 			}
 		}
-		
+
 	//	if (parts[0] == 'A1'){} for future use when serial parser improved...
 	//for SBB 2.2.18+, avg'd Tma, Rma, photo, Vm and sampleCount
-		
+
 		if (parts[0] == 'A2'){ //for SBB 2.2.18+ only avg'd photo and sampleCount
-			if (data.length == 20){ //analog report came back complete 
+			if (data.length == 20){ //analog report came back complete
 				if (parts[1]) {
 					photoAccum = Number(parts[1].slice(3,11));
-					//console.log("photoAccum= " + photoAccum);	
+					//console.log("photoAccum= " + photoAccum);
 				}
-				if (parts[2]) { 
+				if (parts[2]) {
 					sampleCount = Number(parts[2].slice(3,8)) //count is always , 5 digits
 					//console.log( "sampleCount= "+ sampleCount);
 					//if (sampleCount>9999) resend "A" command...
@@ -850,7 +850,7 @@ function parseReceivedSerialData(data) {
 				}
 			}
 		}
-		
+
 		if (parts[0] == 'PI') {//EBB Pin Input return prefix
 
 
@@ -879,7 +879,7 @@ function parseReceivedSerialData(data) {
 				return;
 			}
 		}
-		
+
 		if (parts[0] == 'I') {//EBB read al1 inputs
 			if (data.length == 21){ //valid "I" return
 				//logEvent(1, data);
@@ -891,7 +891,7 @@ function parseReceivedSerialData(data) {
 				//console.log(  "Rho fault pin = " + (num & 1));
 				//console.log(  "Th home pin = " + (num & 4));
 			if (useFaultSensors)
-			{        
+			{
 				var thFaultState, rFaultState;
 				var thHomeState, rHomeState;
         if (servo_wait_before_faulting)
@@ -994,7 +994,7 @@ module.exports = {
     // Servo values
     if (config.isServo) {
       useFaultSensors = config.isServo;
-      IS_SERVO = config.isServo;  
+      IS_SERVO = config.isServo;
     }
     if (config.faultActiveState)  faultActiveState = config.faultActiveState;
     if (config.twoBallEnabled)    twoBallEnabled = config.twoBallEnabled;
@@ -1016,7 +1016,7 @@ module.exports = {
       servo_wait_before_faulting = true;
       setTimeout(function(this2){  this2.allowFaultChecking(); }, 15000, this);
     }
-    logEvent(1, '#useSerial', sp.path, 'isOpen:', sp.isOpen());
+    logEvent(1, '#useSerial', sp.path, 'isOpen:', sp.isOpen);
 
     sp.on('data', parseReceivedSerialData);
     sp.write('CU,1,0\r'); // turn off EBB sending "OK"s
@@ -1025,15 +1025,15 @@ module.exports = {
     sp.write('AC,1,1\r'); // turn on analog channel 1 for current reading R
     sp.write('PD,B,3,1\r'); //set analog pin to input
     sp.write('AC,9,1\r'); // turn on analog channel 9 for reading photosensor
-    
+
     sp.write('AC,8,0\r'); // turn off analog channel 8 for servo enable line
     sp.write('AC,10,0\r'); // turn off analog channel 10 for servo enable line
     sp.write('PD,B,1,0\r'); //set B1 to output for Rho en/disable
     sp.write('PD,B,2,0\r'); //set B2 to output for Theta en/disable
-    
+
     sp.write('PO,B,1,1\r'); //set B1 high to enable Rho
     sp.write('PO,B,2,1\r'); //set B2 high to enable Theta
-    
+
     sp.write("SE,1,100\r"); //turn on low lighting
 
     checkPhoto(); //start ambient light sensing

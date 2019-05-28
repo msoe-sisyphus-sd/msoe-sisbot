@@ -12,19 +12,10 @@ var Ping 		= require('ping-lite');
 var request 	= require('request');
 var webshot 	= require('webshot');
 var util 		= require('util');
-var scheduler 	= require('node-schedule');
+var scheduler 	= null; //require('node-schedule');
 var bleno 		= require('bleno');
 var io 			= require('socket.io');
 var moment 		= require('moment');
-var log4js    = require('log4js');
-
-/**************************** Logging *********************************************/
-log4js.configure({
-  appenders: { sisbot: { type: 'file', filename: 'sisbot.log' } },
-  categories: { default: { appenders: ['sisbot'], level: 'debug' } }
-});
-const logger = log4js.getLogger('sisbot');
-
 
 /**************************** BLE *********************************************/
 
@@ -39,13 +30,20 @@ var ble_obj = {
     char: false,
     ip_address: new Buffer([0, 0, 0, 0]),
     update_ip_address: function(ip_address_str) {
-    		logEvent(1, "ble_obj update_ip_address()");
-        logEvent(1, 'Updated IP ADDRESS', ip_address_str, ip_address_str.split('.').map(function(i) {
+      var self = this;
+      var ip_array = ip_address_str.split('.');
+      var new_ip = true;
+      ip_array.map(function(val, i) {
+          if (self.ip_address[i] != val) new_ip = false;
+      });
+      if (new_ip) {
+        logEvent(1, 'BLE Updated IP ADDRESS', ip_address_str, ip_array.map(function(i) {
             return +i;
         }));
-        this.ip_address = new Buffer(ip_address_str.split('.').map(function(i) {
+        this.ip_address = new Buffer(ip_array.map(function(i) {
             return +i;
         }));
+      }
     },
     on_state_change: function(state) {
     		logEvent(1, "ble_obj on_state_change()");
@@ -85,7 +83,7 @@ Sisyphus_Characteristic.prototype.onReadRequest = function(offset, callback) {
 /**************************** SISBOT ******************************************/
 
 var SerialPort;
-if (process.env.NODE_ENV.indexOf("dummy") < 0) SerialPort = require('serialport').SerialPort;
+if (process.env.NODE_ENV.indexOf("dummy") < 0) SerialPort = require('serialport');
 
 var plotter = require('./plotter');
 var Sisbot_state = require('./models.sisbot_state');
@@ -139,8 +137,6 @@ var sisbot = {
 		var self = this;
   	this.config = config;
 		logEvent(1, "Init Sisbot");
-		logger.info("Initialzie sisbot");
-
 
 		this.socket_update = socket_update;
 
@@ -176,7 +172,7 @@ var sisbot = {
 
     var cson_config = CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config);
 
-    this.isServo =  (typeof cson_config.isServo === 'undefined') ? false : cson_config.isServo; 
+    this.isServo =  (typeof cson_config.isServo === 'undefined') ? false : cson_config.isServo;
     logEvent(1, "this.isServo: " + this.isServo);
     this.homeFirst = (typeof cson_config.homeFirst === 'undefined') ? true : cson_config.homeFirst;
     logEvent(1, "this.homeFirst: " + this.homeFirst);
@@ -302,6 +298,7 @@ var sisbot = {
 			is_internet_connected: "false",
 			software_version: this.config.version
 		});
+    if (this.isServo) this.current_state.set('is_servo', 'true');
 		this.current_state.set("local_ip", this._getIPAddress());
 		if (this.current_state.get("local_ip") == "192.168.42.1") {
 			this.current_state.set("is_hotspot", "true");
@@ -330,6 +327,7 @@ var sisbot = {
 		});
 
 		// plotter
+logEvent(1, "Plotter");
     var cson_config = CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config);
   	this.plotter.setConfig(cson_config);
     if (cson_config.max_speed) this.config.max_speed = cson_config.max_speed; // overwrite config.js max_speed if table allows
@@ -644,18 +642,21 @@ var sisbot = {
 	},
 	/***************************** Plotter ************************/
 	_connect: function() {
-    	if (this.serial && this.serial.isOpen()) return true;
+    	if (this.serial && this.serial.isOpen) return true;
 
 		var self = this;
-		//logEvent(1, "Serial Connect", this.config.serial_path);
+		logEvent(1, "Serial Connect", this.config.serial_path);
 		if (this.config.serial_path == "false") return this.current_state.set("is_serial_open","true");
-
- 		this.serial = new SerialPort(this.config.serial_path, {}, false);
-
+		logEvent(1, "Before Serial");
 		try {
+	this.serial = new SerialPort(this.config.serial_path, { autoOpen: false }, function (err) {
+  	  if (err) {
+    	    return console.log('Serial Error: ', err.message)
+	  }
+	});
       	this.serial.open(function (error) {
       	self.plotter.useSerial(self.serial);
-				console.info('Serial: connected!');
+				logEvent(1, 'Serial: connected!', error, self.serial.isOpen);
 
 				self.current_state.set("is_serial_open", "true");
 				self.set_brightness({value:self.current_state.get("brightness")}, null);
@@ -703,7 +704,7 @@ var sisbot = {
 		  logEvent(2, 'Fault state, not a valid connection');
       return false;
     }
-		if (!this.serial || !this.serial.isOpen()) {
+		if (!this.serial || !this.serial.isOpen) {
 		  logEvent(2, 'No serial connection');
 		  this.current_state.set("is_serial_open", "false");
 		  return false;
@@ -830,8 +831,8 @@ state: function(data, cb) {
 	},
 	save: function(data, cb) {
 		var self = this;
-		// logEvent(1, "Sisbot Save", data);
 		if (!this._saving) {
+		  if (this.config.debug) logEvent(1, "Sisbot Save", data);
 			this._saving = true;
 
 			var returnObjects = [];
@@ -857,9 +858,37 @@ state: function(data, cb) {
 				});
 			}
 
-			fs.writeFile(this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.sisbot_state, JSON.stringify(this.collection), function(err) {
-				self._saving = false;
-				if (err) return logEvent(2, err);
+      var path = this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.sisbot_state;
+      // save to tmp file
+      fs.writeFile(path+'.tmp', JSON.stringify(this.collection), function(err) {
+				if (err) {
+          self._saving = false;
+          return logEvent(2, err);
+        }
+
+        // double-check integrity of saved file
+        if (fs.existsSync(path+'.tmp')) {
+          var saved_state = fs.readFileSync(path+'.tmp', 'utf8');
+          try {
+            objs = JSON.parse(saved_state);
+
+            // make sure objs is not empty
+            if (_.size(objs) >= 1) {
+              // move tmp file to real location
+          		exec('mv '+path+'.tmp '+path, (error, stdout, stderr) => {
+        			  self._saving = false;
+          			if (error) return logEvent(2, 'save() exec error:',error);
+                if (self.config.debug) logEvent(1, 'Save move complete');
+              });
+            }
+          } catch (err) {
+    			  self._saving = false;
+            return logEvent(3, "!!Blank save state, don't overwrite", err);
+          }
+        } else {
+          self._saving = false;
+          return logEvent(3, "Temp save file missing!");
+        }
 			});
 
 			if (cb) cb(null, returnObjects);
@@ -1262,11 +1291,9 @@ state: function(data, cb) {
 			self.thumbnail_generate({id: all_tracks.pop()}, gen_next_track);
 	},
 	thumbnail_preview_generate: function(data, cb) {
-		logEvent(1, "Thumbnail preview", _.keys(data));
+		logEvent(1, "Thumbnail preview", data.name);
 
-    if (!data.raw_coors) return cb('No Coordinates found', null);
-
-    var self = this;
+        var self = this;
 
 		// add to front of queue
 		if (self._thumbnail_queue.length == 0) self._thumbnail_queue.push(data);
@@ -1287,8 +1314,8 @@ state: function(data, cb) {
 	},
   thumbnail_generate: function(data, cb) {
 		logEvent(1, "Thumbnail generate", data.id);
-    // @id
-    var self = this;
+        // @id
+        var self = this;
 		var coordinates = [];
 
 		if (data.id != 'preview') {
@@ -1333,55 +1360,55 @@ state: function(data, cb) {
         });
     },
     _thumbnails_generate: function(data, cb) {
-      // id, host_url, raw_coors, dimensions
+        // id, host_url, raw_coors, dimensions
 
-      var thumbs_dir = this.config.base_dir + '/' + this.config.folders.cloud + '/img/tracks';
-      var thumbs_file = thumbs_dir + '/' + data.id + '_' + data.dimensions + '.png';
+        var thumbs_dir = this.config.base_dir + '/' + this.config.folders.cloud + '/img/tracks';
+        var thumbs_file = thumbs_dir + '/' + data.id + '_' + data.dimensions + '.png';
 
-      var opts = {
-        siteType: 'html',
-        renderDelay: 2500,
-        captureSelector: '.print',
-        screenSize: {
-          width: data.dimensions + 16,
-          height: data.dimensions
-        },
-        phantomPath: '/home/pi/phantomjs/bin/phantomjs',
-        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_4) AppleWebKit/600.7.12 (KHTML, like Gecko) Version/8.0.7 Safari/600.7.12',
-        shotSize: {
-          width: 'window',
-          height: 'window'
-        }
-      };
+        var opts = {
+            siteType: 'html',
+            renderDelay: 2500,
+            captureSelector: '.print',
+            screenSize: {
+                width: data.dimensions + 16,
+                height: data.dimensions
+            },
+            phantomPath: '/home/pi/phantomjs/bin/phantomjs',
+            userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_4) AppleWebKit/600.7.12 (KHTML, like Gecko) Version/8.0.7 Safari/600.7.12',
+            shotSize: {
+                width: 'window',
+                height: 'window'
+            }
+        };
 
-      var base_url = 'http://' + this.current_state.get('local_ip') + ':' + this.config.servers.app.port + '/';
-      var html = '<html><!DOCTYPE html>\
-      <head>\
-          <meta charset="utf-8" />\
-          <meta name="format-detection" content="telephone=no" />\
-          <meta name="msapplication-tap-highlight" content="no" />\
-          <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1" />\
-          <meta charset="utf-8">\
-          <meta http-equiv="X-UA-Compatible" content="IE=edge">\
-          <meta name="viewport" content="width=device-width, initial-scale=1">\
-          <meta name="google" value="notranslate">\
-          <title>Ease</title>\
-          <base href="' + base_url + '" />\
-          <script src="js/libs/lib.jquery.min.js"></script>\
-          <script src="js/libs/lib.underscore.min.js"></script>\
-          <script src="js/libs/lib.d3.min.js"></script>\
-          <script src="js/libs/lib.gen_thumbnails.js"></script>\
-      </head><body><div class="print">\
-                      <div class="d3" data-coors="' + data.raw_coors + '" data-dimensions="' + data.dimensions + '"></div>\
-              </div></body></html>';
+        var base_url = 'http://' + this.current_state.get('local_ip') + ':' + this.config.servers.app.port + '/';
+        var html = '<html><!DOCTYPE html>\
+        <head>\
+            <meta charset="utf-8" />\
+            <meta name="format-detection" content="telephone=no" />\
+            <meta name="msapplication-tap-highlight" content="no" />\
+            <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1" />\
+            <meta charset="utf-8">\
+            <meta http-equiv="X-UA-Compatible" content="IE=edge">\
+            <meta name="viewport" content="width=device-width, initial-scale=1">\
+            <meta name="google" value="notranslate">\
+            <title>Ease</title>\
+            <base href="' + base_url + '" />\
+            <script src="js/libs/lib.jquery.min.js"></script>\
+            <script src="js/libs/lib.underscore.min.js"></script>\
+            <script src="js/libs/lib.d3.min.js"></script>\
+            <script src="js/libs/lib.gen_thumbnails.js"></script>\
+        </head><body><div class="print">\
+                        <div class="d3" data-coors="' + data.raw_coors + '" data-dimensions="' + data.dimensions + '"></div>\
+                </div></body></html>';
 
-      logEvent(1, '#### MAKE WEBSHOT', thumbs_file, base_url);
+        logEvent(1, '#### MAKE WEBSHOT', thumbs_file, base_url);
 
-      webshot(html, thumbs_file, opts, function(err) {
-      logEvent(1, '#### WEBSHOT FINISHED', thumbs_file, err);
+        webshot(html, thumbs_file, opts, function(err) {
+	        logEvent(1, '#### WEBSHOT FINISHED', thumbs_file, err);
 			if (data.cb) data.cb(err, { 'id':data.id });
-        if (cb) cb(err, null);
-      });
+            if (cb) cb(err, null);
+        });
     },
     /*********************** PLAYLIST *****************************************/
 	set_playlist: function(data, cb) {
@@ -1801,7 +1828,7 @@ state: function(data, cb) {
         // logEvent(1, 'stdout:', stdout);
         // logEvent(1, 'stderr:', stderr);
 
-        logEvent(1, "Internet Connected Check", returnValue, self.current_state.get("local_ip"));
+        if (self.current_state.get('is_internet_connected') != returnValue) logEvent(1, "Internet Connected Check", returnValue, self.current_state.get("local_ip"));
 
         // make sure connected to remote
         if (returnValue == "true" && self.current_state.get("share_log_files") == "true") self._setupAnsible();
@@ -1829,7 +1856,7 @@ state: function(data, cb) {
 			// logEvent(1, 'stdout:', stdout);
 			// logEvent(1, 'stderr:', stderr);
 
-			logEvent(1, "Internet Connected Check", returnValue, self.current_state.get("local_ip"));
+			if (self.current_state.get('is_internet_connected') != returnValue) logEvent(1, "Internet Connected Check", returnValue, self.current_state.get("local_ip"));
 
 			// if (self.current_state.get("is_internet_connected") != returnValue) {
 				// change hotspot status
@@ -1863,8 +1890,7 @@ state: function(data, cb) {
 				self._validate_internet(null, function(err, resp) {
 					if (err) return logEvent(2, "Internet check err", err);
 					if (resp == "true") {
-						logEvent(1, "Internet connected.",self.current_state.get("is_internet_connected"));
-            append_log('Internet connected: ' + self.current_state.get("is_internet_connected"));
+						if (self.config.debug) logEvent(1, "Internet connected.",self.current_state.get("is_internet_connected"));
 
       			self._changing_to_wifi = false;
 						self.current_state.set({
@@ -1896,8 +1922,7 @@ state: function(data, cb) {
               // try again since we haven't hit max tries
               append_log('Internet retry: ' + self.config.retry_internet_interval);
 							self._query_internet(self.config.retry_internet_interval);
-						}
-            else {
+						} else {
               if (self._internet_lanonly_check == false)
               {
                 self._internet_lanonly_check = true;
@@ -2148,18 +2173,67 @@ state: function(data, cb) {
 		else if (cb) cb(null, this.current_state.toJSON());
 	},
 	/* ------------- Sleep Timer ---------------- */
+  check_ntp: function(data, cb) {
+    // check status
+		exec('timedatectl status', (error, stdout, stderr) => {
+      console.log("Timedatectl err:", error);
+      logEvent(1, "Timedatectl stdout:", stdout);
+      console.log("Timedatectl stderr:", stderr);
+
+      var sync = stdout.match(/NTP synchronized: (yes|no)/);
+      if (_.isArray(sync) && sync.length > 1) {
+        var sync_value = (sync[1] == 'yes');
+        logEvent(1, "NTP Value: ", sync[1], sync_value);
+
+        if (cb) cb(null, sync_value)
+      } else if (cb) cb('Unknown result: '+sync, null);
+    });
+  },
 	set_sleep_time: function(data, cb) {
 		var self = this;
-		logEvent(1, "Set Sleep Time:", data.sleep_time, data.wake_time, data.timezone_offset, this.current_state.get('is_sleeping'));
+		// logEvent(1, "Set Sleep Time:", moment().format(), data.sleep_time, data.wake_time, data.timezone_offset, this.current_state.get('is_sleeping'));
+
+    // check NTP before assigning cron
+    this.check_ntp({}, function(err, sync_value) {
+      if (err) logEvent(2, "NTP Error", err);
+
+      if (sync_value) {
+        // assign now
+        self._set_sleep_time(data, cb);
+      } else if (self.current_state.get("wifi_network") == "" || self.current_state.get("wifi_network") == "false") {
+        // assign now, it is supposed to be a hotspot
+        self._set_sleep_time(data, cb);
+      } else {
+        // delay assigning cron
+        setTimeout(function() {
+          self.set_sleep_time(data, cb);
+        }, self.config.ntp_wait);
+      }
+    });
+  },
+  _set_sleep_time: function(data, cb) {
+    var self = this;
+
+    // load library when needed (to prevent power-cycle time issues)
+    if (!scheduler) {
+      scheduler 	= require('node-schedule');
+
+      // wait an additional 10 seconds
+      setTimeout(function() {
+        self._set_sleep_time(data, cb);
+      }, self.config.sleep_init_wait);
+
+      return;
+    }
 
 		// cancel old timers
-		if (this.sleep_timer != null) {
-			this.sleep_timer.cancel();
-			this.sleep_timer = null;
+		if (self.sleep_timer != null) {
+			self.sleep_timer.cancel();
+			self.sleep_timer = null;
 		}
-		if (this.wake_timer != null) {
-			this.wake_timer.cancel();
-			this.wake_timer = null;
+		if (self.wake_timer != null) {
+			self.wake_timer.cancel();
+			self.wake_timer = null;
 		}
 
 		// set timer
@@ -2168,7 +2242,7 @@ state: function(data, cb) {
 			var cron = sleep.minute()+" "+sleep.hour()+" * * *";
 			logEvent(1, "Sleep", sleep.format('mm HH'), cron);
 
-			this.sleep_timer = scheduler.scheduleJob(cron, function(){
+			self.sleep_timer = scheduler.scheduleJob(cron, function(){
 				self.sleep_sisbot(null, null);
 			});
 		}
@@ -2177,13 +2251,15 @@ state: function(data, cb) {
 			var cron = wake.minute()+" "+wake.hour()+" * * *";
 			logEvent(1, "Wake", wake.format('mm HH'), cron);
 
-			this.wake_timer = scheduler.scheduleJob(cron, function(){
+			self.wake_timer = scheduler.scheduleJob(cron, function(){
 				self.wake_sisbot(null, null);
 			});
 		}
 
+    // logEvent(1, "Sleep Time Set:", moment().format(), data.sleep_time, data.wake_time, data.timezone_offset, this.current_state.get('is_sleeping'));
+
 		// save to state
-		this.current_state.set({
+		self.current_state.set({
 			sleep_time: data.sleep_time,
 			wake_time: data.wake_time,
 			timezone_offset: data.timezone_offset,
@@ -2191,9 +2267,9 @@ state: function(data, cb) {
 			nightlight_brightness: data.nightlight_brightness
 		});
 
-		this.save(null, null);
+		self.save(null, null);
 
-		if (cb) cb(null, this.current_state.toJSON());
+		if (cb) cb(null, self.current_state.toJSON());
 	},
 	wake_sisbot: function(data, cb) {
 		logEvent(1, "Wake Sisbot", this.current_state.get('is_sleeping'));
@@ -2235,7 +2311,7 @@ state: function(data, cb) {
 	/* ------------------------------------------ */
 	get_log_file: function(data, cb) {
 		logEvent(1, "Get log file", data);
-		if (this.config.folders.logs) {
+		if (this.config.folders.logs && typeof data.filename !== 'undefined') {
 			if (/([.]{2}\/)/g.test(data.filename)) { // make sure we are not trying to leave the folder
 				if (cb) cb('Invalid characters', null);
 			} else if (fs.existsSync(this.config.folders.logs+data.filename.toLowerCase()+'.log')) {
@@ -2253,9 +2329,9 @@ state: function(data, cb) {
 				var file = fs.readFileSync(this.config.folders.logs+'proxy.log', 'utf8');
 				if (cb) cb(null, file);
 			} else {
-				if (cb) cb('Log not available', null);
+				if (cb) cb('Log not available for ' + data.filename, null);
 			}
-		} else if (cb) cb('No logs found', null);
+		} else if (cb) cb('No logs found.  No log directory or input data.filename was missing', null);
 	},
 	/* ------------------------------------------ */
   install_updates: function(data, cb) {
@@ -2298,7 +2374,7 @@ state: function(data, cb) {
 
       var self = this;
       logEvent(1, "_wait_for_home waiting to see homing");
-      setTimeout(function(data, cb, fptr, this2, saw_homing) {        
+      setTimeout(function(data, cb, fptr, this2, saw_homing) {
         // logEvent(1, "_wait_for_home callback self.funcptr = ", typeof fptr);
         self._wait_for_home(data, cb, fptr, this2, saw_homing);
       }, 1000, data, cb, funcptr, this2, saw_homing); // wait a second
@@ -2315,7 +2391,6 @@ state: function(data, cb) {
       var self = this;
       logEvent(1, "_wait_for_home, waiting for state waiting = ", data);
       setTimeout(function(data, cb, fptr, this2, saw_homing) {
-        // logEvent(1, "_wait_for_home callback self.funcptr = ", typeof fptr);
         self._wait_for_home(data, cb, fptr, this2, saw_homing);
       }, 1000, data, cb, funcptr, this2, saw_homing); // wait a second
     }

@@ -33,6 +33,7 @@ var app = function(given_config,ansible) {
 	/**************************** SERVICES ****************************************/
 
 	var services	= {};
+	var sockets			= { /* id: socket */	};
 
 	/**************************** SERVER *******************************************/
 
@@ -68,11 +69,8 @@ var app = function(given_config,ansible) {
 		service = req.params.service;
 		endpoint = req.params.endpoint;
 
-
-
     var host = req.headers['host'];
-
-    logEvent(1, "Sisbot POST recieved to service " + service + " endpoint " + endpoint + " host " + host );
+    if (config.debug) logEvent(1, "Sisbot POST recieved to service " + service + " endpoint " + endpoint + " host " + host );
     //var hdr = JSON.stringify(req.headers);
     //logEvent(1, "Headers for HOST were " + hdr);
 
@@ -81,15 +79,15 @@ var app = function(given_config,ansible) {
 
     if (hip[0] == "10"  || (hip[0] == "192" && hip[1] == "168")  || (hip[0] == "172" && oct2 > 15 && oct2 < 32) )
     {
-      logEvent(1, "POST host " + host + " is whitelisted");
+      if (config.debug) logEvent(1, "POST host " + host + " is whitelisted");
     }
     else
     {
       if (host.match("\.local$") != null)
       {
-         logEvent(1, "POST from bonjour is whitelisted " + host);
+         if (config.debug) logEvent(1, "POST from bonjour is whitelisted " + host);
       }
-      else 
+      else
       {
         logEvent(1, "POST host " + host + " is DENIED");
         //res.status(401).send({ error: "host " + host + " is not whitelisted" });
@@ -120,29 +118,7 @@ var app = function(given_config,ansible) {
 
 	var server = http.createServer(static).listen(config.services.sisbot.port);
 
-	/**************************** SOCKET.IO ***************************************/
-
-	var sockets			= { /* id: socket */	};
-	var socket_server   = io.listen(server, { pingTimeout: local_config.pingTimeout, pingInterval: local_config.pingInterval });
-
-	socket_server.origins('*:*');
-
-	socket_server.on('connection', function(socket) {
-		if (!sockets[socket.id]) {
-			// logEvent(1, "Socket connect: "+socket.id);
-			sockets[socket.id] = socket;
-
-			services['sisbot'].state({}, function(err, resp) {
-				if (err) return;
-				socket.emit('set', resp);
-			});
-		}
-
-		socket.on('disconnect', function(data) {
-			// logEvent(1, "Socket disconnect: ", data);
-			delete sockets[data.id];
-		});
-	});
+	/**************************** HELPER FUNCTIONS ***************************************/
 
 	function socket_update(data) {
 		if (data != null) {
@@ -156,8 +132,6 @@ var app = function(given_config,ansible) {
 			});
 		}
 	}
-
-	/**************************** SISBOT SERVICE ****************************************/
 
 	function logEvent() {
 		// save to the log file for sisbot
@@ -177,7 +151,36 @@ var app = function(given_config,ansible) {
 		} else console.log(arguments);
 	}
 
+	/**************************** SISBOT SERVICE ****************************************/
+
 	services.sisbot	= sisbot_obj.init(config, ansible, socket_update);
+
+	/**************************** SOCKET.IO ***************************************/
+
+	var socket_server   = io.listen(server, { pingTimeout: local_config.pingTimeout, pingInterval: local_config.pingInterval });
+
+	socket_server.origins('*:*');
+
+	socket_server.on('connection', function(socket) {
+		if (!sockets[socket.id]) {
+			// logEvent(1, "Socket connect: "+socket.id);
+			sockets[socket.id] = socket;
+
+			try {
+				services['sisbot'].state({}, function(err, resp) {
+					if (err) return;
+					socket.emit('set', resp);
+				});
+			} catch(err) {
+				logEvent(2, 'Socket emit state error', err);
+			}
+		}
+
+		socket.on('disconnect', function(data) {
+			// logEvent(1, "Socket disconnect: ", data);
+			delete sockets[data.id];
+		});
+	});
 
 	logEvent(1, "Sisbot Server created", config.version);
 }

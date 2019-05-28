@@ -25,7 +25,7 @@ if [ -n "$1" ]; then
 else
 	git pull origin master
 fi
-npm install
+# npm install
 
 cd /home/pi/sisbot-server/siscloud
 git reset --hard
@@ -34,7 +34,7 @@ if [ -n "$2" ]; then
 else
 	git pull origin master
 fi
-npm install
+# npm install
 
 cd /home/pi/sisbot-server/sisproxy
 git reset --hard
@@ -43,7 +43,7 @@ if [ -n "$3" ]; then
 else
 	git pull origin master
 fi
-npm install
+# npm install
 
 cd /home/pi/sisbot-server/
 sudo chown -R pi sisbot
