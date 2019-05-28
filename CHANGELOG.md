@@ -3,7 +3,7 @@
   - Versions .17, .18, .19 work in progress on Node to v 8 update
   - added is_servo to sisbot model for UI to know
   - status.json save() saves to tmp file, then moves after confirming data
-  - ntp fix
+  - ntp fix, sleep time sets self correctly after long power off
   - bugfix socket on startup/reconnect
 
 # 2019-04-17 1.10.16
