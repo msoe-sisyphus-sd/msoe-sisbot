@@ -32,9 +32,9 @@ var ble_obj = {
     update_ip_address: function(ip_address_str) {
       var self = this;
       var ip_array = ip_address_str.split('.');
-      var new_ip = true;
+      var new_ip = false;
       ip_array.map(function(val, i) {
-          if (self.ip_address[i] != val) new_ip = false;
+          if (self.ip_address[i] !== +val) new_ip = true;
       });
       if (new_ip) {
         logEvent(1, 'BLE Updated IP ADDRESS', ip_address_str, ip_array.map(function(i) {

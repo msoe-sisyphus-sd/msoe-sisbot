@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.10.23', // sleep/wake ntp fix, socket initialize after sisbot service
+			version	: '1.10.24', // fix BLE ip_address change
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
