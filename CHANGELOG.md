@@ -1,3 +1,7 @@
+# 2019-05-29 1.10.25
+  - wifi password fix for !$ and "
+  - iw scan instead of iwlist
+
 # 2019-04-17 1.10.23
   - update Node to v 8.x.x on update, node_update.sh fix.
   - Versions .17, .18, .19 work in progress on Node to v 8 update

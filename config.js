@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.23', // sleep/wake ntp fix, socket intialize after sisbot service
+			version	: '1.9.25', // wifi password fix, iw scan
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

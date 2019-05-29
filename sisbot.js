@@ -5,7 +5,7 @@ var spawn 		= require('child_process').spawn;
 var CSON 		= require('cson');
 var fs 			= require('fs');
 var iwconfig 	= require('wireless-tools/iwconfig');
-var iwlist 		= require('wireless-tools/iwlist');
+var iw 		= require('wireless-tools/iw');
 var uuid 		= require('uuid');
 var Backbone 	= require('backbone');
 var Ping 		= require('ping-lite');
@@ -32,9 +32,9 @@ var ble_obj = {
     update_ip_address: function(ip_address_str) {
       var self = this;
       var ip_array = ip_address_str.split('.');
-      var new_ip = true;
+      var new_ip = false;
       ip_array.map(function(val, i) {
-          if (self.ip_address[i] != val) new_ip = false;
+          if (self.ip_address[i] !== +val) new_ip = true;
       });
       if (new_ip) {
         logEvent(1, 'BLE Updated IP ADDRESS', ip_address_str, ip_array.map(function(i) {
@@ -127,8 +127,10 @@ var sisbot = {
 
 	_internet_check: 0,
 	_internet_retries: 0,
+	_network_retries: 0, // for connecting to known network, cancel after config.wifi_error_retries times
   _internet_lanonly_check: false,
 	_changing_to_wifi: false,
+	_iw_retries: 0,
 
 	_hostname_queue: {},
 	_hostname_schedule: null,
@@ -651,7 +653,7 @@ logEvent(1, "Plotter");
 		try {
 	this.serial = new SerialPort(this.config.serial_path, { autoOpen: false }, function (err) {
   	  if (err) {
-    	    return console.log('Serial Error: ', err.message)
+    	    return logEvent(2, 'Serial Error: ', err.message)
 	  }
 	});
       	this.serial.open(function (error) {
@@ -996,7 +998,6 @@ state: function(data, cb) {
 					};
 					self._paused = false;
 					logEvent("doing DEAD RECKONING homing...");
-					console.log("doing DEAD RECKONING homing...");
 					self.plotter.playTrack(track_obj);
 					self._home_next = true; // home after this outward movement
 
@@ -1022,7 +1023,6 @@ state: function(data, cb) {
       var rhoHome = self.plotter.getRhoHome();
 
       logEvent(1, "Sensor Values", thHome, rhoHome);
-			console.log("Sensor Values", thHome, rhoHome);
 			//testing this:
 			//thHome = false;
 			//rhoHome = false;
@@ -1034,7 +1034,6 @@ state: function(data, cb) {
       /////////////////////
       if (thHome && rhoHome && skip_move_out_if_sensors_at_home) {
         logEvent(1, "DEAD RECKONING Home Successful");
-				console.log("DEAD RECKONING Home Successful");
         this._sensored = false;
         this._home_next = false;
 				this.current_state.set({state: "waiting", is_homed: "true", _end_rho: 0});
@@ -1056,7 +1055,7 @@ state: function(data, cb) {
 	      if (this.isServo == true) this._moved_out = true; // no move out for servo tables
 
         if (this._moved_out) {
-					console.log("not at home after DR, doing sensored...");
+					logEvent(1, "not at home after DR, doing sensored...");
           self.plotter.home();
           this._moved_out = false;
         } else {
@@ -1839,9 +1838,7 @@ state: function(data, cb) {
           local_ip: self._getIPAddress()
         });
 
-        setTimeout(function () {
-          self.current_state.set({is_internet_connected: returnValue, local_ip: self._getIPAddress()});
-        }, 10000);
+  			self.save(null, null);
 
         if (cb) cb(null, returnValue);
       });
@@ -1876,9 +1873,9 @@ state: function(data, cb) {
 				local_ip: self._getIPAddress()
 			});
 
-      setTimeout(function () {
-	      self.current_state.set({is_internet_connected: returnValue, local_ip: self._getIPAddress()});
-      }, 10000);
+		  self.save(null, null);
+
+            if (returnValue == "true") this._network_retries = 0;
 
 			if (cb) cb(null, returnValue);
 		});
@@ -1963,10 +1960,30 @@ state: function(data, cb) {
             }
         );
     },
-	get_wifi: function(data, cb) {
-		logEvent(1, "Sisbot get wifi", data);
-		iwlist.scan(data, cb);
-	},
+  	get_wifi: function(data, cb) {
+      var self = this;
+  		// logEvent(1, "Sisbot get wifi", data);
+
+  		iw.scan(data, function(err, resp) {
+        if (err) {
+          self._iw_retries++;
+          logEvent(2, "iw:", err, resp);
+
+          if (self._iw_retries < 3) {
+            setTimeout(function() {
+              self.get_wifi(data, cb);
+            }, 500);
+          } else {
+            self._iw_retries = 0;
+            return cb('Unable to load network list', null);
+          }
+        } else {
+          logEvent(1, "iw: ", err, resp);
+          self._iw_retries = 0;
+          if (cb) cb(err, resp);
+        }
+      });
+  	},
 	connect_to_wifi: function(data, cb) {
 		// forward to old connection endpoint
 		this.current_state.set({ wifi_forget: "true" });
@@ -2041,6 +2058,7 @@ state: function(data, cb) {
 
 		// make sure we don't throw an error, we wanted to disconnect
 		this._changing_to_wifi = false;
+    this._network_retries = 0;
 
 		// this.save(null, null);
 
@@ -2070,6 +2088,7 @@ state: function(data, cb) {
 				wifi_error: "false", // not an error to remember
 				wifi_forget: "false"
 			});
+      this._network_retries = 0;
 		}
 
 		if (cb) cb(null, this.current_state.toJSON());
@@ -2109,6 +2128,8 @@ state: function(data, cb) {
 	_reconnect_to_wifi: function() {
 		var self = this;
 
+        var wifi_network = self.current_state.get("wifi_network");
+        if (!wifi_network || wifi_network == 'false') return;
 		self.get_wifi({ iface: 'wlan0', show_hidden: true }, function(err, resp) {
 			if (err) {
 				logEvent(2, "Wifi list error:", err);
@@ -2116,15 +2137,17 @@ state: function(data, cb) {
 				// try again later
 				self._internet_check = setTimeout(function() {
 					self._reconnect_to_wifi();
-				}, self.config.wifi_error_retry_interval);
+				}, self.config.retry_internet_interval); // wifi_error_retry_interval
 				return;
 			}
 
 			// check if the wanted network is in the list
 			if (resp) {
-				var wifi_network = self.current_state.get("wifi_network");
-				var network_found = false;
+              // logEvent(1, JSON.stringify(self.current_state.toJSON()));
+              logEvent(1, "Networks found, looking for ", wifi_network);
+        var network_found = false;
 				_.each(resp, function(network_obj) {
+          logEvent(1, "Network", network_obj.ssid);
 					if (network_obj && network_obj.ssid && network_obj.ssid == wifi_network) {
 						logEvent(1, "Found Network", wifi_network, "try to connect");
 						network_found = true;
@@ -2132,16 +2155,27 @@ state: function(data, cb) {
 				});
 
 				if (network_found) { // connect!
-					self.change_to_wifi({
-						ssid: self.current_state.get("wifi_network"),
-						psk: self.current_state.get("wifi_password")
-					}, null);
+          self._network_retries++;
+          if (self._network_retries >= self.config.wifi_error_retries) {
+            // forget wifi if it doesn't work this time
+            logEvent(1, "Last time to try  Wifi");
+  					self.connect_to_wifi({
+  						ssid: self.current_state.get("wifi_network"),
+  						psk: self.current_state.get("wifi_password")
+  					}, null);
+          } else {
+  					self.change_to_wifi({
+  						ssid: self.current_state.get("wifi_network"),
+  						psk: self.current_state.get("wifi_password")
+  					}, null);
+          }
 				} else { // try again later
 					self._internet_check = setTimeout(function() {
 						self._reconnect_to_wifi();
 					}, self.config.wifi_error_retry_interval);
 				}
 			} else { // try again later
+        logEvent(2, "No Networks found");
 				self._internet_check = setTimeout(function() {
 					self._reconnect_to_wifi();
 				}, self.config.wifi_error_retry_interval);
@@ -2176,9 +2210,9 @@ state: function(data, cb) {
   check_ntp: function(data, cb) {
     // check status
 		exec('timedatectl status', (error, stdout, stderr) => {
-      console.log("Timedatectl err:", error);
+      if (error) logEvent(2, "Timedatectl err:", error);
       logEvent(1, "Timedatectl stdout:", stdout);
-      console.log("Timedatectl stderr:", stderr);
+      if (stderr) logEvent(2, "Timedatectl stderr:", stderr);
 
       var sync = stdout.match(/NTP synchronized: (yes|no)/);
       if (_.isArray(sync) && sync.length > 1) {
@@ -2635,12 +2669,6 @@ var logEvent = function() {
     if (arguments[0] == 2 || arguments[0] == '2') line = '\x1b[31m'+line+'\x1b[0m';
 		console.log(line); // !! comment out in master !!
 	} else console.log(arguments);
-}
-
-var append_log = function(line) {
-    // fs.appendFile('travis.log' , line, function (err) {
-    //   if (err) throw err;
-    // });
 }
 
 module.exports = sisbot;
