@@ -1917,7 +1917,6 @@ state: function(data, cb) {
 						if (self._internet_retries < self.config.internet_retries)
             {
               // try again since we haven't hit max tries
-              append_log('Internet retry: ' + self.config.retry_internet_interval);
 							self._query_internet(self.config.retry_internet_interval);
 						} else {
               if (self._internet_lanonly_check == false)
@@ -1928,7 +1927,6 @@ state: function(data, cb) {
                 return;
               }
 							logEvent(2, "Internet not connected, reverting to hotspot.");
-                            append_log('Internet not connected, reverting to hotspot: ');
 							self.current_state.set({ wifi_error: "true" });
 							self.reset_to_hotspot(null,null);
 						}
@@ -2069,7 +2067,6 @@ state: function(data, cb) {
 		// Use disconnect_wifi if you want to remove old network/password
 		var self = this;
 		logEvent(1, "Sisbot Reset to Hotspot", data);
-        append_log('Sisbot Reset to Hotspot: ' + JSON.stringify(data));
 		clearTimeout(this._internet_check);
 		this._internet_retries = 0; // clear retry count
 
@@ -2103,7 +2100,6 @@ state: function(data, cb) {
 		exec('sudo /home/pi/sisbot-server/sisbot/start_hotspot.sh', (error, stdout, stderr) => {
 			if (error) return logEvent(2, 'exec error:',error);
 			logEvent(1, "start_hotspot", stdout);
-            append_log('Start Hotspot: ' + stdout);
 
             var new_state = {
                 is_available: "true",
@@ -2670,5 +2666,6 @@ var logEvent = function() {
 		console.log(line); // !! comment out in master !!
 	} else console.log(arguments);
 }
+
 
 module.exports = sisbot;
