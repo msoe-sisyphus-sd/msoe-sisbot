@@ -5,7 +5,7 @@ var spawn 		= require('child_process').spawn;
 var CSON 		= require('cson');
 var fs 			= require('fs');
 var iwconfig 	= require('wireless-tools/iwconfig');
-var iw 		= require('wireless-tools/iw');
+var iw 		   = require('./iw');
 var uuid 		= require('uuid');
 var Backbone 	= require('backbone');
 var Ping 		= require('ping-lite');
@@ -1960,7 +1960,10 @@ state: function(data, cb) {
     },
   	get_wifi: function(data, cb) {
       var self = this;
-  		// logEvent(1, "Sisbot get wifi", data);
+  		logEvent(1, "Sisbot get wifi", data);
+
+      // test ap-force
+      if (!data.flags) data.flags = ['ap-force'];
 
   		iw.scan(data, function(err, resp) {
         if (err) {
