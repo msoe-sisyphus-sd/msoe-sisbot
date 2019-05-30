@@ -1981,6 +1981,12 @@ state: function(data, cb) {
         } else {
           logEvent(1, "iw: ", err, resp);
           self._iw_retries = 0;
+
+          // fix unnamed ssid's
+          _.each(resp, function(network, index) {
+            if (!network.ssid || network.ssid == '') network.ssid = 'Unnamed Network';
+          });
+
           if (cb) cb(err, resp);
         }
       });
@@ -2061,7 +2067,7 @@ state: function(data, cb) {
 		this._changing_to_wifi = false;
     this._network_retries = 0;
 
-		// this.save(null, null);
+		this.save(null, null);
 
 		this.reset_to_hotspot(data, cb);
 	},
