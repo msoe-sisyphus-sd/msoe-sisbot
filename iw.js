@@ -188,8 +188,10 @@ function scan(options, callback) {
     var interface = options.iface;
     var show_hidden = options.show_hidden || false;
     if (options.flags && options.flags.length > 0) flags = ' '+options.flags.join(' ');
+    var exec_opts = {timeout: 10000};
+    if (options.timeout) exec_opts.timeout = options.timeout;
   }
 
   console.log('iw exec:', 'iw dev ' + interface + ' scan' + flags);
-  this.exec('iw dev ' + interface + ' scan' + flags, parse_scan(show_hidden, callback));
+  this.exec('iw dev ' + interface + ' scan' + flags, exec_opts, parse_scan(show_hidden, callback));
 }
