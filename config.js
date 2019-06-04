@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.25', // wifi password fix, iw scan
+			version	: '1.9.26', // fix error on downloading today's proxy log file, wifi adapter scan on boot
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -56,6 +56,7 @@ var config = {
 			internet_retries: 5, // retry # of times before resetting to hotspot
 			retry_internet_interval: 3000, // three seconds later
 			wifi_error_retry_interval: 60000, // one minute
+      wifi_first_retry_interval: 5000, // five seconds
       ntp_wait: 5000, // five seconds
       sleep_init_wait: 10000, // ten seconds
 			default_data: default_status,

@@ -125,6 +125,7 @@ var sisbot = {
 
 	_thumbnail_queue: [],
 
+  _first_retry: false,
 	_internet_check: 0,
 	_internet_retries: 0,
 	_network_retries: 0, // for connecting to known network, cancel after config.wifi_error_retries times
@@ -252,9 +253,9 @@ var sisbot = {
 
 		this.current_state = this.collection.findWhere({type: "sisbot"});
 
-    logEvent(1,"setting track_ids to ", tracks);
+    // logEvent(1,"setting track_ids to ", tracks);
     this.current_state.set("track_ids", tracks);
-    logEvent(1,"done setting track_ids");
+    // logEvent(1,"done setting track_ids");
     this.current_state.set("playlist_ids", playlists);
 
 
@@ -329,7 +330,7 @@ var sisbot = {
 		});
 
 		// plotter
-logEvent(1, "Plotter");
+    logEvent(1, "Plotter");
     var cson_config = CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config);
   	this.plotter.setConfig(cson_config);
     if (cson_config.max_speed) this.config.max_speed = cson_config.max_speed; // overwrite config.js max_speed if table allows
@@ -494,12 +495,15 @@ logEvent(1, "Plotter");
 
 		// wifi connect
 		if (this.current_state.get("is_hotspot") == "false") {
+      logEvent(1, "Init: Not hotspot, check in 5 sec...");
 			// this.current_state.set("is_internet_connected", "false"); // assume false, so sockets connect
       this._internet_lanonly_check = false;
+      this._first_retry = true; // if it fails, retry connecting to known network sooner
 			this._query_internet(5000); // check for internet connection after 5 seconds
 		} else {
 			// check if we should try reconnecting to wifi
 			if (this.current_state.get("wifi_network") != "" && this.current_state.get("wifi_network") != "false" && this.current_state.get("wifi_password") != "" && this.current_state.get("wifi_password") != "false") {
+        logEvent(1, "Init: Is hotspot, try to connect to wifi...");
 				this.change_to_wifi({ ssid: self.current_state.get("wifi_network"), psk: self.current_state.get("wifi_password") }, null);
 			}
 		}
@@ -651,12 +655,12 @@ logEvent(1, "Plotter");
 		if (this.config.serial_path == "false") return this.current_state.set("is_serial_open","true");
 		logEvent(1, "Before Serial");
 		try {
-	this.serial = new SerialPort(this.config.serial_path, { autoOpen: false }, function (err) {
-  	  if (err) {
+    	this.serial = new SerialPort(this.config.serial_path, { autoOpen: false }, function (err) {
+    	  if (err) {
     	    return logEvent(2, 'Serial Error: ', err.message)
-	  }
-	});
-      	this.serial.open(function (error) {
+    	  }
+    	});
+    	this.serial.open(function (error) {
       	self.plotter.useSerial(self.serial);
 				logEvent(1, 'Serial: connected!', error, self.serial.isOpen);
 
@@ -685,9 +689,9 @@ logEvent(1, "Plotter");
 					}
 				}
 			});
-	    } catch(err) {
-	      console.error('Connect err', err);
-	    }
+    } catch(err) {
+      console.error('Connect err', err);
+    }
 	},
 	// VERSIONS OF CODE
 	latest_software_version: function (data, cb) {
@@ -718,7 +722,7 @@ logEvent(1, "Plotter");
 		// logEvent(1, "Sisbot Connect", data);
 		if (cb) cb(null, this.collection.toJSON());
 	},
-state: function(data, cb) {
+  state: function(data, cb) {
     //logEvent(1, "Sisbot state");
     var ret_state = this.current_state.toJSON();
     delete ret_state.wifi_password;
@@ -880,6 +884,7 @@ state: function(data, cb) {
           		exec('mv '+path+'.tmp '+path, (error, stdout, stderr) => {
         			  self._saving = false;
           			if (error) return logEvent(2, 'save() exec error:',error);
+          			if (stderr) return logEvent(2, 'save() exec stderr:',stderr);
                 if (self.config.debug) logEvent(1, 'Save move complete');
               });
             }
@@ -1845,8 +1850,8 @@ state: function(data, cb) {
       return;
     }
 
-		exec('ping -c 1 -W 2 google.com', (error, stdout, stderr) => {
-			//if (error) return console.error('exec error:',error);
+		exec('ping -c 1 -W 2 google.com', {timeout: 5000}, (error, stdout, stderr) => {
+			if (error) logEvent(2, 'ping exec error:', error);
 
 			var returnValue = "false";
 			if (stdout.indexOf("1 packets transmitted") > -1) returnValue = "true";
@@ -1875,8 +1880,7 @@ state: function(data, cb) {
 
 		  self.save(null, null);
 
-            if (returnValue == "true") this._network_retries = 0;
-
+      if (returnValue == "true") this._network_retries = 0;
 			if (cb) cb(null, returnValue);
 		});
 	},
@@ -1910,17 +1914,15 @@ state: function(data, cb) {
 						self.socket_update(self.current_state.toJSON());
 
 						// TODO: only post if IP address changed
-                        self._post_state_to_cloud();
+            self._post_state_to_cloud();
 					} else {
 						self._internet_retries++;
 
-						if (self._internet_retries < self.config.internet_retries)
-            {
+						if (self._internet_retries < self.config.internet_retries) {
               // try again since we haven't hit max tries
 							self._query_internet(self.config.retry_internet_interval);
 						} else {
-              if (self._internet_lanonly_check == false)
-              {
+              if (self._internet_lanonly_check == false) {
                 self._internet_lanonly_check = true;
                 self._internet_retries = 0;
                 self._query_internet(self.config.retry_internet_interval);
@@ -1935,62 +1937,62 @@ state: function(data, cb) {
 			}, time_to_check);
 		}
 	},
-    _post_state_to_cloud: function () {
-        // THIS IS HELPFUL FOR ANDROID DEVICES
-        var self = this;
+  _post_state_to_cloud: function () {
+    // THIS IS HELPFUL FOR ANDROID DEVICES
+    var self = this;
 
-        // logEvent(1, 'LETS TRY AND GET TO CLOUD', this.current_state.toJSON());
+    // logEvent(1, 'LETS TRY AND GET TO CLOUD', this.current_state.toJSON());
 		var state = this.current_state.toJSON();
 		delete state.wifi_password;
 		delete state.wifi_network;
 
-        request.post('https://api.sisyphus.withease.io/sisbot_state/' + this.current_state.id, {
-                form: {
-                    data: state
-                }
-            },
-            function on_resp(error, response, body) {
-                if (!error && response.statusCode == 200) {
-                    logEvent(1, "Post to cloud", body);
-                } else {
-                    if (response) logEvent(2, "Request Not found:", response.statusCode);
-                }
-            }
-        );
-    },
-  	get_wifi: function(data, cb) {
-      var self = this;
-  		logEvent(1, "Sisbot get wifi", data);
-
-      // test ap-force
-      if (!data.flags) data.flags = ['ap-force'];
-
-  		iw.scan(data, function(err, resp) {
-        if (err) {
-          self._iw_retries++;
-          logEvent(2, "iw:", err, resp);
-
-          if (self._iw_retries < 3) {
-            setTimeout(function() {
-              self.get_wifi(data, cb);
-            }, 500);
-          } else {
-            self._iw_retries = 0;
-            return cb('Unable to load network list', null);
-          }
-        } else {
-          logEvent(1, "iw: ", err, resp);
-          self._iw_retries = 0;
-
-          // fix unnamed ssid's
-          _.each(resp, function(network, index) {
-            if (!network.ssid || network.ssid == '') network.ssid = 'Unnamed Network';
-          });
-
-          if (cb) cb(err, resp);
+    request.post('https://api.sisyphus.withease.io/sisbot_state/' + this.current_state.id, {
+        form: {
+            data: state
         }
-      });
-  	},
+      },
+      function on_resp(error, response, body) {
+        if (!error && response.statusCode == 200) {
+          logEvent(1, "Post to cloud", body);
+        } else {
+          if (response) logEvent(2, "Request Not found:", response.statusCode);
+        }
+      }
+    );
+  },
+	get_wifi: function(data, cb) {
+    var self = this;
+		logEvent(1, "Sisbot get wifi", data);
+
+    // test ap-force
+    if (!data.flags) data.flags = ['ap-force'];
+
+		iw.scan(data, function(err, resp) {
+      if (err) {
+        self._iw_retries++;
+        logEvent(2, "iw:", err, resp);
+
+        if (self._iw_retries < 3) {
+          setTimeout(function() {
+            self.get_wifi(data, cb);
+          }, 500);
+        } else {
+          self._iw_retries = 0;
+          return cb('Unable to load network list', null);
+        }
+      } else {
+        logEvent(1, "iw: ", err, resp);
+        self._iw_retries = 0;
+
+        // fix unnamed ssid's
+        _.each(resp, function(network, index) {
+          if (!network.ssid || network.ssid == '') network.ssid = 'Unnamed Network';
+        });
+
+        if (cb) cb(err, resp);
+      }
+    });
+	},
 	connect_to_wifi: function(data, cb) {
 		// forward to old connection endpoint
 		this.current_state.set({ wifi_forget: "true" });
@@ -2110,23 +2112,28 @@ state: function(data, cb) {
 			if (error) return logEvent(2, 'exec error:',error);
 			logEvent(1, "start_hotspot", stdout);
 
-            var new_state = {
-                is_available: "true",
-                reason_unavailable: "false",
-                local_ip: self._getIPAddress(),
-                failed_to_connect_to_wifi: (self._changing_to_wifi == true) ? 'true' : 'false'
-            };
+      var new_state = {
+          is_available: "true",
+          reason_unavailable: "false",
+          local_ip: self._getIPAddress(),
+          failed_to_connect_to_wifi: (self._changing_to_wifi == true) ? 'true' : 'false'
+      };
 
-            self._changing_to_wifi = false;
+      self._changing_to_wifi = false;
 			self.current_state.set(new_state);
 
 			self.save(null, null);
 
 			// if a wifi connection error, try to reconnect in __ time
+      var retry_interval = self.config.wifi_error_retry_interval;
+      if (self._first_retry) {
+        self._first_retry = false;
+        retry_interval = self.config.wifi_first_retry_interval;
+      }
 			if (self.current_state.get("wifi_error") == "true") {
 				self._internet_check = setTimeout(function() {
 					self._reconnect_to_wifi();
-				}, self.config.wifi_error_retry_interval);
+				}, retry_interval);
 			}
 		});
 	},

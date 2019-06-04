@@ -59,7 +59,23 @@ var app = function(given_config,ansible) {
 		var filename 		= req.params.filename.replace('.log', '');
 		var file_loc		= config.folders.logs + filename + '.log';
 
-		res.download(file_loc);
+		// if asking for today's proxy, and a datestamped copy doesn't exist
+		if (!fs.existsSync(filename)) {
+			var match = filename.match(/^([0-9]+)_([a-z]+)/);
+			if (match.length > 0 && match[2] == 'proxy' && moment().format('YYYYMMDD') == match[1]) {
+				filename = 'proxy';
+				file_loc		= config.folders.logs + filename + '.log';
+				logEvent(1, 'Proxy loc:', file_loc);
+			}
+		}
+
+		try {
+			res.download(file_loc, filename+'.log',function(err) {
+				if (err) logEvent(2, 'Download error:', err);
+			});
+		} catch(err) {
+			logEvent(2, 'Download log file error:', err);
+		}
 	});
 	static.get('/*', function(req, res) {
 		logEvent(1, "Get:",req.originalUrl);
