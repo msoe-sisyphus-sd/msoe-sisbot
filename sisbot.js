@@ -1946,7 +1946,7 @@ var sisbot = {
 		delete state.wifi_password;
 		delete state.wifi_network;
 
-    request.post('https://api.sisyphus.withease.io/sisbot_state/' + this.current_state.id, {
+    request.post(this.config.api_endpoint + '/sisbot_state/' + this.current_state.id, {
         form: {
             data: state
         }

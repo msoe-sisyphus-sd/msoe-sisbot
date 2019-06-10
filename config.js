@@ -34,6 +34,7 @@ var config = {
 				api: 'sisapi',
   	  	logs: '/var/log/sisyphus/'
 			},
+			api_endpoint : 'https://api.sisyphus.withease.io',
 			receiver : true, // receive messages from cloud
 			sisbot_config : which_cson,
 			sisbot_state : 'status.json',
