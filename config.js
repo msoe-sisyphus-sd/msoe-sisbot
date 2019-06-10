@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.26', // fix error on downloading today's proxy log file, wifi adapter scan on boot
+			version	: '1.9.27', // put api endpoint into config file
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
