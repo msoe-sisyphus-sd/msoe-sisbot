@@ -1,8 +1,9 @@
-# 2019-05-29 1.10.27
+# 2019-05-29 1.10.28
   - wifi password fix for !$ and "
   - iw scan instead of iwlist
   - fix error on downloading today's proxy log file
   - wifi adapter scan on boot
+  - api_endpoint changed to config setting
   - separate is_network_connected from is_internet_connected values, only goes to hotspot when !is_network_connected
 
 # 2019-04-17 1.10.23
