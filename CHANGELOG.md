@@ -1,8 +1,9 @@
-# 2019-05-29 1.10.26
+# 2019-05-29 1.10.27
   - wifi password fix for !$ and "
   - iw scan instead of iwlist
   - fix error on downloading today's proxy log file
   - wifi adapter scan on boot
+  - separate is_network_connected from is_internet_connected values, only goes to hotspot when !is_network_connected
 
 # 2019-04-17 1.10.23
   - update Node to v 8.x.x on update, node_update.sh fix.
