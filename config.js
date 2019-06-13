@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.23', // change status.json save to mv, python ball data socket, ntp fix
+			version	: '1.9.28', // separate is_network_connected from is_internet_connected values, only goes to hotspot when !is_network_connected
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -32,8 +32,9 @@ var config = {
 				tracks: 'tracks', // models
 				cloud: 'siscloud',
 				api: 'sisapi',
-		  	  	logs: '/var/log/sisyphus/'
+  	  	logs: '/var/log/sisyphus/'
 			},
+			api_endpoint : 'https://api.sisyphus.withease.io',
 			receiver : true, // receive messages from cloud
 			sisbot_config : which_cson,
 			sisbot_state : 'status.json',
@@ -53,10 +54,12 @@ var config = {
 			check_internet_interval: 60000, // every minute.
 			// check_internet_interval Changed because dropped LAN or changed wifi will not be detected by a bot for this long (used to be 30 minutes)
 			// unless the bot has a web or phone client connected to it before the LAN drops
-			internet_retries: 5, // retry # of times before resetting to hotspot
-			retry_internet_interval: 3000, // three seconds later
-			wifi_error_retry_interval: 30000, // thirty seconds
-			wifi_error_retries: 3, // retry # of times before resetting to hotspot and forgetting network
+			network_retries: 5, // retry # of times before resetting to hotspot
+			retry_network_interval: 3000, // three seconds later
+			wifi_error_retry_interval: 60000, // one minute
+      wifi_first_retry_interval: 5000, // five seconds
+      ntp_wait: 5000, // five seconds
+      sleep_init_wait: 10000, // ten seconds
 			default_data: default_status,
 			pingTimeout: 1500, // socket pingTimeout
 			pingInterval: 600, // socket pingInterval

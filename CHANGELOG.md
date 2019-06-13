@@ -1,10 +1,18 @@
-# 2019-04-17 1.10.20
+# 2019-05-29 1.10.28
+  - wifi password fix for !$ and "
+  - iw scan instead of iwlist
+  - fix error on downloading today's proxy log file
+  - wifi adapter scan on boot
+  - api_endpoint changed to config setting
+  - separate is_network_connected from is_internet_connected values, only goes to hotspot when !is_network_connected
+
+# 2019-04-17 1.10.23
   - update Node to v 8.x.x on update, node_update.sh fix.
   - Versions .17, .18, .19 work in progress on Node to v 8 update
-  - is_servo value added to sisbot model for UI to know
+  - added is_servo to sisbot model for UI to know
   - status.json save() saves to tmp file, then moves after confirming data
   - ntp fix
-  - creates socket for python to receive ball data
+  - bugfix socket on startup/reconnect
 
 # 2019-04-17 1.10.16
   - accel is no longer scaled along with velocity when the speed slider changes (acceleration should stay fixed)

@@ -4,15 +4,15 @@ var exec 		= require('child_process').exec;
 var spawn 		= require('child_process').spawn;
 var CSON 		= require('cson');
 var fs 			= require('fs');
-var iwconfig 	= require('wireless-tools/iwconfig');
-var iwlist 		= require('wireless-tools/iwlist');
+// var iwconfig 	= require('wireless-tools/iwconfig');
+var iw 		   = require('./iw');
 var uuid 		= require('uuid');
 var Backbone 	= require('backbone');
 var Ping 		= require('ping-lite');
 var request 	= require('request');
 var webshot 	= require('webshot');
 var util 		= require('util');
-var scheduler 	= require('node-schedule');
+var scheduler 	= null; //require('node-schedule');
 var bleno 		= require('bleno');
 var io 			= require('socket.io');
 var moment 		= require('moment');
@@ -31,10 +31,20 @@ var ble_obj = {
     char: false,
     ip_address: new Buffer([0, 0, 0, 0]),
     update_ip_address: function(ip_address_str) {
-      var new_ip = ip_address_str.split('.').map(function(i) { return +i; });
-      // TODO: don't update/log unless the values are different
-      this.ip_address = new Buffer(new_ip);
-      logEvent(1, 'BLE Updated IP ADDRESS', ip_address_str, new_ip);
+      var self = this;
+      var ip_array = ip_address_str.split('.');
+      var new_ip = false;
+      ip_array.map(function(val, i) {
+          if (self.ip_address[i] !== +val) new_ip = true;
+      });
+      if (new_ip) {
+        logEvent(1, 'BLE Updated IP ADDRESS', ip_address_str, ip_array.map(function(i) {
+            return +i;
+        }));
+        this.ip_address = new Buffer(ip_array.map(function(i) {
+            return +i;
+        }));
+      }
     },
     on_state_change: function(state) {
     		logEvent(1, "ble_obj on_state_change()");
@@ -117,11 +127,12 @@ var sisbot = {
 
 	_thumbnail_queue: [],
 
-	_internet_check: 0,
-	_internet_retries: 0,
+  _first_retry: false,
+	_network_check: 0,
 	_network_retries: 0, // for connecting to known network, cancel after config.wifi_error_retries times
   _internet_lanonly_check: false,
 	_changing_to_wifi: false,
+	_iw_retries: 0,
 
 	_hostname_queue: {},
 	_hostname_schedule: null,
@@ -243,9 +254,9 @@ var sisbot = {
 
 		this.current_state = this.collection.findWhere({type: "sisbot"});
 
-    logEvent(1,"setting track_ids to ", tracks);
+    // logEvent(1,"setting track_ids to ", tracks);
     this.current_state.set("track_ids", tracks);
-    logEvent(1,"done setting track_ids");
+    // logEvent(1,"done setting track_ids");
     this.current_state.set("playlist_ids", playlists);
 
 
@@ -289,6 +300,7 @@ var sisbot = {
 			factory_resetting_error: "",
 			installed_updates: "false",
 			is_internet_connected: "false",
+      is_network_connected: "false",
 			software_version: this.config.version
 		});
     if (this.isServo) this.current_state.set('is_servo', 'true');
@@ -348,21 +360,21 @@ var sisbot = {
 			self.pause(null, null);
 			self.current_state.set("reason_unavailable", "servo_th_fault");
 			self.socket_update(self.current_state.toJSON()); // notify all connected UI
-			clearTimeout(self._internet_check); // stop internet checks
+			clearTimeout(self._network_check); // stop internet checks
 		});
 		plotter.onServoRhoFault(function() {
       if (self.current_state.get('reason_unavailable') != 'servo_rho_fault') logEvent(2, "Servo Rho Fault!");
 			self.pause(null, null);
 			self.current_state.set("reason_unavailable", "servo_rho_fault");
 			self.socket_update(self.current_state.toJSON()); // notify all connected UI
-			clearTimeout(self._internet_check); // stop internet checks
+			clearTimeout(self._network_check); // stop internet checks
 		});
 		plotter.onServoThRhoFault(function() {
       if (self.current_state.get('reason_unavailable') != 'servo_th_rho_fault') logEvent(2, 'Servo Th and Rho Fault!');
 			self.pause(null, null);
 			self.current_state.set("reason_unavailable", "servo_th_rho_fault");
 			self.socket_update(self.current_state.toJSON()); // notify all connected UI
-			clearTimeout(self._internet_check); // stop internet checks
+			clearTimeout(self._network_check); // stop internet checks
 		});
 		plotter.onFinishTrack(function() {
 			logEvent(1, "Track Finished");
@@ -488,12 +500,14 @@ var sisbot = {
 
 		// wifi connect
 		if (this.current_state.get("is_hotspot") == "false") {
-			// this.current_state.set("is_internet_connected", "false"); // assume false, so sockets connect
-      this._internet_lanonly_check = false;
+      logEvent(1, "Init: Not hotspot, check in 5 sec...");
+      // this._internet_lanonly_check = false;
+      this._first_retry = true; // if it fails, retry connecting to known network sooner
 			this._query_internet(5000); // check for internet connection after 5 seconds
 		} else {
 			// check if we should try reconnecting to wifi
 			if (this.current_state.get("wifi_network") != "" && this.current_state.get("wifi_network") != "false" && this.current_state.get("wifi_password") != "" && this.current_state.get("wifi_password") != "false") {
+        logEvent(1, "Init: Is hotspot, try to connect to wifi...");
 				this.change_to_wifi({ ssid: self.current_state.get("wifi_network"), psk: self.current_state.get("wifi_password") }, null);
 			}
 		}
@@ -538,19 +552,19 @@ var sisbot = {
 	  var ip_address = '0.0.0.0';
 	  var interfaces = os.networkInterfaces();
 
-
 	  for (var devName in interfaces) {
 	    var iface = interfaces[devName];
 
 	    for (var i = 0; i < iface.length; i++) {
 	      var alias = iface[i];
+        // logEvent(1, "IP Address alias:", devName, alias);
 	      if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal)
 	        ip_address = alias.address;
 	    }
 	  }
 
-      // WE ADD BLUETOOTH HOOK HERE
-      ble_obj.update_ip_address(ip_address);
+    // WE ADD BLUETOOTH HOOK HERE
+    ble_obj.update_ip_address(ip_address);
 
 	  return ip_address;
 	},
@@ -687,40 +701,40 @@ var sisbot = {
 		if (this.config.serial_path == "false") return this.current_state.set("is_serial_open","true");
 		logEvent(1, "Before Serial");
 		try {
-      this.serial = new SerialPort(this.config.serial_path, { autoOpen: false }, function (err) {
+    	this.serial = new SerialPort(this.config.serial_path, { autoOpen: false }, function (err) {
     	  if (err) {
     	    return logEvent(2, 'Serial Error: ', err.message)
-  	    }
-  	  });
+    	  }
+    	});
     	this.serial.open(function (error) {
       	self.plotter.useSerial(self.serial);
-  			logEvent(1, 'Serial: connected!', error, self.serial.isOpen);
+				logEvent(1, 'Serial: connected!', error, self.serial.isOpen);
 
-  			self.current_state.set("is_serial_open", "true");
-  			self.set_brightness({value:self.current_state.get("brightness")}, null);
-  			self.set_speed({value:self.current_state.get("speed")}, null);
+				self.current_state.set("is_serial_open", "true");
+				self.set_brightness({value:self.current_state.get("brightness")}, null);
+				self.set_speed({value:self.current_state.get("speed")}, null);
 
-  			if (self.config.autoplay) {
-  				//logEvent(1, "Autoplay:", self.current_state.get("default_playlist_id"));
-  				if (self.current_state.get("default_playlist_id") != "false" && self.collection.get(self.current_state.get("default_playlist_id"))!=undefined) {
-  					var playlist = self.collection.get(self.current_state.get("default_playlist_id"));
-  					playlist.set({active_track_id: "false", active_track_index: -1});
-  					playlist.reset_tracks(); // start with non-reversed list
-  					playlist.set_shuffle({ is_shuffle: "true", start_rho: 0 }); // update order, active tracks indexing
-  					playlist.set({active_track_index: 0});
+				if (self.config.autoplay) {
+					//logEvent(1, "Autoplay:", self.current_state.get("default_playlist_id"));
+					if (self.current_state.get("default_playlist_id") != "false" && self.collection.get(self.current_state.get("default_playlist_id"))!=undefined) {
+						var playlist = self.collection.get(self.current_state.get("default_playlist_id"));
+						playlist.set({active_track_id: "false", active_track_index: -1});
+						playlist.reset_tracks(); // start with non-reversed list
+						playlist.set_shuffle({ is_shuffle: "true", start_rho: 0 }); // update order, active tracks indexing
+						playlist.set({active_track_index: 0});
 
-  					var playlist_obj = playlist.toJSON();
-  					logEvent(1, "Playlist Active Index:", playlist_obj.active_track_index);
-  					playlist_obj.skip_save = true;
-  					playlist_obj.is_current = true; // we already set the randomized pattern
+						var playlist_obj = playlist.toJSON();
+						logEvent(1, "Playlist Active Index:", playlist_obj.active_track_index);
+						playlist_obj.skip_save = true;
+						playlist_obj.is_current = true; // we already set the randomized pattern
 
-  					self.set_playlist(playlist_obj, function(err, resp) {
-  						if (err) return logEvent(1, "Set initial playlist", err);
-  						self.socket_update(resp);
-  					});
-  				}
-  			}
-  		});
+						self.set_playlist(playlist_obj, function(err, resp) {
+							if (err) return logEvent(1, "Set initial playlist", err);
+							self.socket_update(resp);
+						});
+					}
+				}
+			});
     } catch(err) {
       console.error('Connect err', err);
     }
@@ -793,7 +807,7 @@ var sisbot = {
     this.current_state.set('reason_unavailable', data.value);
 
     this.socket_update(this.current_state.toJSON()); // notify all connected UI
-    clearTimeout(this._internet_check); // stop internet checks
+    clearTimeout(this._network_check); // stop internet checks
 
     if (cb) cb(null, this.current_state.toJSON());
   },
@@ -915,6 +929,7 @@ var sisbot = {
           		exec('mv '+path+'.tmp '+path, (error, stdout, stderr) => {
         			  self._saving = false;
           			if (error) return logEvent(2, 'save() exec error:',error);
+          			if (stderr) return logEvent(2, 'save() exec stderr:',stderr);
                 if (self.config.debug) logEvent(1, 'Save move complete');
               });
             }
@@ -1327,7 +1342,7 @@ var sisbot = {
 	thumbnail_preview_generate: function(data, cb) {
 		logEvent(1, "Thumbnail preview", data.name);
 
-        var self = this;
+    var self = this;
 
 		// add to front of queue
 		if (self._thumbnail_queue.length == 0) self._thumbnail_queue.push(data);
@@ -1348,8 +1363,8 @@ var sisbot = {
 	},
   thumbnail_generate: function(data, cb) {
 		logEvent(1, "Thumbnail generate", data.id);
-        // @id
-        var self = this;
+    // @id
+    var self = this;
 		var coordinates = [];
 
 		if (data.id != 'preview') {
@@ -1377,11 +1392,10 @@ var sisbot = {
 		});
 
 		self._thumbnails_generate(data, function(err, resp) {
-            if (err) {
-				if (cb) cb(cb_err, null);
-			}
-
-			if (cb) cb(null, { id: data.id, dimensions: data.dimensions }); // don't send back verts
+      if (err) {
+        logEvent(2, "Thumbnail err", err);
+				if (cb) cb(err, null);
+			} else if (cb) cb(null, { id: data.id, dimensions: data.dimensions }); // don't send back verts
 
 			self._thumbnail_queue.shift(); // remove first in queue
 			if (self._thumbnail_queue.length > 0) {
@@ -1391,60 +1405,60 @@ var sisbot = {
 			} else {
 				logEvent(1, "All thumbnails generated");
 			}
-        });
-    },
-    _thumbnails_generate: function(data, cb) {
-        // id, host_url, raw_coors, dimensions
+    });
+  },
+  _thumbnails_generate: function(data, cb) {
+    // id, host_url, raw_coors, dimensions
 
-        var thumbs_dir = this.config.base_dir + '/' + this.config.folders.cloud + '/img/tracks';
-        var thumbs_file = thumbs_dir + '/' + data.id + '_' + data.dimensions + '.png';
+    var thumbs_dir = this.config.base_dir + '/' + this.config.folders.cloud + '/img/tracks';
+    var thumbs_file = thumbs_dir + '/' + data.id + '_' + data.dimensions + '.png';
 
-        var opts = {
-            siteType: 'html',
-            renderDelay: 2500,
-            captureSelector: '.print',
-            screenSize: {
-                width: data.dimensions + 16,
-                height: data.dimensions
-            },
-            phantomPath: '/home/pi/phantomjs/bin/phantomjs',
-            userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_4) AppleWebKit/600.7.12 (KHTML, like Gecko) Version/8.0.7 Safari/600.7.12',
-            shotSize: {
-                width: 'window',
-                height: 'window'
-            }
-        };
+    var opts = {
+      siteType: 'html',
+      renderDelay: 2500,
+      captureSelector: '.print',
+      screenSize: {
+        width: data.dimensions + 16,
+        height: data.dimensions
+      },
+      phantomPath: '/home/pi/phantomjs/bin/phantomjs',
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_4) AppleWebKit/600.7.12 (KHTML, like Gecko) Version/8.0.7 Safari/600.7.12',
+      shotSize: {
+        width: 'window',
+        height: 'window'
+      }
+    };
 
-        var base_url = 'http://' + this.current_state.get('local_ip') + ':' + this.config.servers.app.port + '/';
-        var html = '<html><!DOCTYPE html>\
-        <head>\
-            <meta charset="utf-8" />\
-            <meta name="format-detection" content="telephone=no" />\
-            <meta name="msapplication-tap-highlight" content="no" />\
-            <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1" />\
-            <meta charset="utf-8">\
-            <meta http-equiv="X-UA-Compatible" content="IE=edge">\
-            <meta name="viewport" content="width=device-width, initial-scale=1">\
-            <meta name="google" value="notranslate">\
-            <title>Ease</title>\
-            <base href="' + base_url + '" />\
-            <script src="js/libs/lib.jquery.min.js"></script>\
-            <script src="js/libs/lib.underscore.min.js"></script>\
-            <script src="js/libs/lib.d3.min.js"></script>\
-            <script src="js/libs/lib.gen_thumbnails.js"></script>\
-        </head><body><div class="print">\
-                        <div class="d3" data-coors="' + data.raw_coors + '" data-dimensions="' + data.dimensions + '"></div>\
-                </div></body></html>';
+    var base_url = 'http://' + this.current_state.get('local_ip') + ':' + this.config.servers.app.port + '/';
+    var html = '<html><!DOCTYPE html>\
+    <head>\
+        <meta charset="utf-8" />\
+        <meta name="format-detection" content="telephone=no" />\
+        <meta name="msapplication-tap-highlight" content="no" />\
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1" />\
+        <meta charset="utf-8">\
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">\
+        <meta name="viewport" content="width=device-width, initial-scale=1">\
+        <meta name="google" value="notranslate">\
+        <title>Ease</title>\
+        <base href="' + base_url + '" />\
+        <script src="js/libs/lib.jquery.min.js"></script>\
+        <script src="js/libs/lib.underscore.min.js"></script>\
+        <script src="js/libs/lib.d3.min.js"></script>\
+        <script src="js/libs/lib.gen_thumbnails.js"></script>\
+    </head><body><div class="print">\
+                    <div class="d3" data-coors="' + data.raw_coors + '" data-dimensions="' + data.dimensions + '"></div>\
+            </div></body></html>';
 
-        logEvent(1, '#### MAKE WEBSHOT', thumbs_file, base_url);
+    logEvent(1, '#### MAKE WEBSHOT', thumbs_file, base_url);
 
-        webshot(html, thumbs_file, opts, function(err) {
-	        logEvent(1, '#### WEBSHOT FINISHED', thumbs_file, err);
-			if (data.cb) data.cb(err, { 'id':data.id });
-            if (cb) cb(err, null);
-        });
-    },
-    /*********************** PLAYLIST *****************************************/
+    webshot(html, thumbs_file, opts, function(err) {
+    logEvent(1, '#### WEBSHOT FINISHED', thumbs_file, err);
+		if (data.cb) data.cb(err, { 'id':data.id });
+      if (cb) cb(err, null);
+    });
+  },
+  /*********************** PLAYLIST *****************************************/
 	set_playlist: function(data, cb) {
 		logEvent(1, "Sisbot Set Playlist", data);
 
@@ -1836,44 +1850,53 @@ var sisbot = {
 		if (cb)	cb(null, this.current_state.toJSON());
 	},
 	/* --------------- WIFI ---------------------*/
+  _validate_network: function(data, cb) {
+		logEvent(1, "Sisbot validate network");
+    var self = this;
+
+    exec('route | grep default', {timeout: 5000}, (error, stdout, stderr) => {
+      //if (error) return console.error('exec error:',error);
+
+      logEvent(1, "LAN result", stdout, stderr, this._network_retries);
+
+      var returnValue = "false";
+      if (stdout.indexOf("default") > -1) returnValue = "true";
+      // logEvent(1, 'stdout:', stdout);
+      // logEvent(1, 'stderr:', stderr);
+
+      if (self.current_state.get('is_network_connected') != returnValue) logEvent(1, "LAN Internet Connected Check", returnValue, self.current_state.get("local_ip"));
+
+      // make sure connected to remote
+      if (returnValue == "true" && self.current_state.get("share_log_files") == "true") self._setupAnsible();
+
+      // update values
+      self.current_state.set({
+        is_network_connected: returnValue,
+        local_ip: self._getIPAddress()
+      });
+
+      logEvent(1, "LAN IP", self._getIPAddress());
+
+      self.save(null, null);
+
+      if (returnValue == "true") this._network_retries = 0;
+
+      if (cb) cb(null, returnValue);
+    });
+  },
 	_validate_internet: function(data, cb) {
-		//logEvent(1, "Sisbot validate internet");
+		logEvent(1, "Sisbot validate internet");
 		var self = this;
 
-    if (self._internet_lanonly_check == true) {
-      exec('route | grep default', (error, stdout, stderr) => {
-        //if (error) return console.error('exec error:',error);
-
-        var returnValue = "false";
-        if (stdout.indexOf("default") > -1) returnValue = "true";
-        // logEvent(1, 'stdout:', stdout);
-        // logEvent(1, 'stderr:', stderr);
-
-        logEvent(1, "Internet Connected Check", returnValue, self.current_state.get("local_ip"));
-
-        // make sure connected to remote
-        if (returnValue == "true" && self.current_state.get("share_log_files") == "true") self._setupAnsible();
-
-        // update values
-        self.current_state.set({
-          is_internet_connected: returnValue,
-          local_ip: self._getIPAddress()
-        });
-
-        if (cb) cb(null, returnValue);
-      });
-      return;
-    }
-
-	  exec('ping -c 1 -W 2 google.com', (error, stdout, stderr) => {
-			//if (error) return console.error('exec error:',error);
+		exec('ping -c 1 -W 2 google.com', {timeout: 5000}, (error, stdout, stderr) => {
+			if (error) logEvent(2, 'ping exec error:', error);
 
 			var returnValue = "false";
 			if (stdout.indexOf("1 packets transmitted") > -1) returnValue = "true";
 			// logEvent(1, 'stdout:', stdout);
 			// logEvent(1, 'stderr:', stderr);
 
-			logEvent(1, "Internet Connected Check", returnValue, self.current_state.get("local_ip"));
+			if (self.current_state.get('is_internet_connected') != returnValue) logEvent(1, "Internet Connected Check", returnValue, self.current_state.get("local_ip"));
 
 			// make sure connected to remote
 			if (returnValue == "true" && self.current_state.get("share_log_files") == "true") self._setupAnsible();
@@ -1884,7 +1907,7 @@ var sisbot = {
 				local_ip: self._getIPAddress()
 			});
 
-      if (returnValue == "true") this._network_retries = 0;
+		  self.save(null, null);
 
 			if (cb) cb(null, returnValue);
 		});
@@ -1892,11 +1915,12 @@ var sisbot = {
 	_query_internet: function(time_to_check) {
 		if (this.current_state.get("is_hotspot") == "false") { // only bother if you are not a hotspot
 			var self = this;
-			this._internet_check = setTimeout(function() {
-				self._validate_internet(null, function(err, resp) {
-					if (err) return logEvent(2, "Internet check err", err);
+			this._network_check = setTimeout(function() {
+        // validate we are on the network
+        self._validate_network(null, function(err, resp) {
+					if (err) return logEvent(2, "Network check err", err);
 					if (resp == "true") {
-						logEvent(1, "Internet connected.",self.current_state.get("is_internet_connected"));
+						if (self.config.debug) logEvent(1, "Network connected.",self.current_state.get("is_network_connected"));
 
       			self._changing_to_wifi = false;
 						self.current_state.set({
@@ -1905,41 +1929,43 @@ var sisbot = {
 							wifi_forget: "false",
 						 	wifi_error: "false"
 						});
+
 						// leave current state alone if fault
 						if (self.current_state.get('reason_unavailable').indexOf('_fault') < 0) {
 							self.current_state.set("reason_unavailable", "false");
 						}
-						self._internet_retries = 0; // successful, reset
 
-						self.save(null, null);
+						self._network_retries = 0; // successful network connection, reset
 
-						// check again later
-						self._query_internet(self.config.check_internet_interval);
+            // _validate_internet
+    				self._validate_internet(null, function(err, resp) {
+              // check again later, regardless of internet error
+              self._query_internet(self.config.check_internet_interval);
 
-						self.socket_update(self.current_state.toJSON());
+              // update table with info
+              self.socket_update(self.current_state.toJSON());
 
-						// TODO: only post if IP address changed
-            self._post_state_to_cloud();
-					} else {
-						self._internet_retries++;
+    					if (err) return logEvent(2, "Internet check err", err);
+    					if (resp == "true") {
+    						if (self.config.debug) logEvent(1, "Internet connected.",self.current_state.get("is_internet_connected"));
 
-						if (self._internet_retries < self.config.internet_retries) {
+    						// TODO: only post if IP address changed
+                self._post_state_to_cloud();
+    					}
+    				});
+          } else {
+						self._network_retries++;
+
+						if (self._network_retries < self.config.network_retries) {
               // try again since we haven't hit max tries
-							logEvent(2, 'Internet retry: ' + self.config.retry_internet_interval, self._internet_retries);
-							self._query_internet(self.config.retry_internet_interval);
+							self._query_internet(self.config.retry_network_interval);
 						} else {
-              if (self._internet_lanonly_check == false) {
-                self._internet_lanonly_check = true;
-                self._internet_retries = 0;
-                self._query_internet(self.config.retry_internet_interval);
-                return;
-              }
-							logEvent(2, "Internet not connected, reverting to hotspot.", self._network_retries);
+							logEvent(2, "Network not connected, reverting to hotspot.");
 							self.current_state.set({ wifi_error: "true" });
 							self.reset_to_hotspot(null,null);
 						}
 					}
-				});
+        });
 			}, time_to_check);
 		}
 	},
@@ -1952,7 +1978,7 @@ var sisbot = {
 		delete state.wifi_password;
 		delete state.wifi_network;
 
-    request.post('https://api.sisyphus.withease.io/sisbot_state/' + this.current_state.id, {
+    request.post(this.config.api_endpoint + '/sisbot_state/' + this.current_state.id, {
         form: {
           data: state
         }
@@ -1967,8 +1993,37 @@ var sisbot = {
     );
   },
 	get_wifi: function(data, cb) {
+    var self = this;
 		logEvent(1, "Sisbot get wifi", data);
-		iwlist.scan(data, cb);
+
+    // test ap-force
+    if (!data.flags) data.flags = ['ap-force'];
+
+		iw.scan(data, function(err, resp) {
+      if (err) {
+        self._iw_retries++;
+        logEvent(2, "iw:", err, resp);
+
+        if (self._iw_retries < 3) {
+          setTimeout(function() {
+            self.get_wifi(data, cb);
+          }, 500);
+        } else {
+          self._iw_retries = 0;
+          return cb('Unable to load network list', null);
+        }
+      } else {
+        logEvent(1, "iw: ", err, resp);
+        self._iw_retries = 0;
+
+        // fix unnamed ssid's
+        _.each(resp, function(network, index) {
+          if (!network.ssid || network.ssid == '') network.ssid = 'Unnamed Network';
+        });
+
+        if (cb) cb(err, resp);
+      }
+    });
 	},
 	connect_to_wifi: function(data, cb) {
 		// forward to old connection endpoint
@@ -1981,9 +2036,9 @@ var sisbot = {
 		if (data.ssid == undefined || data.ssid == "" || data.ssid == "false") {
 			if (cb) cb("No network name given", null);
 		} else if (data.psk && (data.psk == "" || data.psk.length >= 8)) {
-			clearTimeout(this._internet_check);
+			clearTimeout(this._network_check);
   		this._changing_to_wifi = true;
-			this._internet_retries = 0; // clear retry count
+			this._network_retries = 0; // clear retry count
 
 			// Make sure password is valid
 			// ValidPasswordRegex = new RegExp("^([^\s\"]{8,64})$");
@@ -1995,7 +2050,8 @@ var sisbot = {
 					wifi_password: data.psk,
 					is_hotspot: "false",
 					failed_to_connect_to_wifi: "false",
-					is_internet_connected: "true"
+          is_network_connected: "false",
+					is_internet_connected: "false" // ?remove?
 				});
 
 				// logEvent(1, "New State:", self.current_state.toJSON());
@@ -2014,7 +2070,6 @@ var sisbot = {
   				});
         }, 100);
 
-        self._internet_lanonly_check = false;
 				self._query_internet(8000); // check again in 8 seconds
 			} else if (cb) {
 				logEvent(2, "Invalid Password", data.psk);
@@ -2023,6 +2078,9 @@ var sisbot = {
 		} else {
 			if (cb) cb('ssid or psk error', null);
 		}
+	},
+	is_network_connected: function(data, cb) {
+		this._validate_network(data, cb);
 	},
 	is_internet_connected: function(data, cb) {
 		this._validate_internet(data, cb);
@@ -2039,6 +2097,7 @@ var sisbot = {
 			wifi_password: "false",
 			wifi_error: "false",
 			is_internet_connected: "false",
+      is_network_connected: "false",
 			reason_unavailable: "disconnect_from_wifi"
 		});
 
@@ -2046,7 +2105,7 @@ var sisbot = {
 		this._changing_to_wifi = false;
     this._network_retries = 0;
 
-		// this.save(null, null);
+		this.save(null, null);
 
 		this.reset_to_hotspot(data, cb);
 	},
@@ -2055,14 +2114,15 @@ var sisbot = {
 		// Use disconnect_wifi if you want to remove old network/password
 		var self = this;
 		logEvent(1, "Sisbot Reset to Hotspot", data);
-		clearTimeout(this._internet_check);
-		this._internet_retries = 0; // clear retry count
+		clearTimeout(this._network_check);
+		this._network_retries = 0; // clear retry count
 
 		this.current_state.set({
 			is_available: "false",
 			reason_unavailable: "reset_to_hotspot",
 			is_hotspot: "true",
-			is_internet_connected: "false"
+			is_internet_connected: "false",
+      is_network_connected: "false"
 		});
 
 		// forget bad network values (from cloud)
@@ -2103,10 +2163,15 @@ var sisbot = {
 			self.save(null, null);
 
 			// if a wifi connection error, try to reconnect in __ time
+      var retry_interval = self.config.wifi_error_retry_interval;
+      if (self._first_retry) {
+        self._first_retry = false;
+        retry_interval = self.config.wifi_first_retry_interval;
+      }
 			if (self.current_state.get("wifi_error") == "true") {
-				self._internet_check = setTimeout(function() {
+				self._network_check = setTimeout(function() {
 					self._reconnect_to_wifi();
-				}, self.config.wifi_error_retry_interval);
+				}, retry_interval);
 			}
 		});
 	},
@@ -2121,18 +2186,17 @@ var sisbot = {
 				logEvent(2, "Wifi list error:", err);
 
 				// try again later
-				self._internet_check = setTimeout(function() {
+				self._network_check = setTimeout(function() {
 					self._reconnect_to_wifi();
-				}, self.config.retry_internet_interval); // wifi_error_retry_interval
+				}, self.config.retry_network_interval); // wifi_error_retry_interval
 				return;
 			}
 
 			// check if the wanted network is in the list
 			if (resp) {
-
         // logEvent(1, JSON.stringify(self.current_state.toJSON()));
         logEvent(1, "Networks found, looking for ", wifi_network);
-				var network_found = false;
+        var network_found = false;
 				_.each(resp, function(network_obj) {
           logEvent(1, "Network", network_obj.ssid);
 					if (network_obj && network_obj.ssid && network_obj.ssid == wifi_network) {
@@ -2157,13 +2221,13 @@ var sisbot = {
   					}, null);
           }
 				} else { // try again later
-					self._internet_check = setTimeout(function() {
+					self._network_check = setTimeout(function() {
 						self._reconnect_to_wifi();
 					}, self.config.wifi_error_retry_interval);
 				}
 			} else { // try again later
         logEvent(2, "No Networks found");
-				self._internet_check = setTimeout(function() {
+				self._network_check = setTimeout(function() {
 					self._reconnect_to_wifi();
 				}, self.config.wifi_error_retry_interval);
 			}
@@ -2194,18 +2258,67 @@ var sisbot = {
 		else if (cb) cb(null, this.current_state.toJSON());
 	},
 	/* ------------- Sleep Timer ---------------- */
+  check_ntp: function(data, cb) {
+    // check status
+		exec('timedatectl status', (error, stdout, stderr) => {
+      if (error) logEvent(2, "Timedatectl err:", error);
+      logEvent(1, "Timedatectl stdout:", stdout);
+      if (stderr) logEvent(2, "Timedatectl stderr:", stderr);
+
+      var sync = stdout.match(/NTP synchronized: (yes|no)/);
+      if (_.isArray(sync) && sync.length > 1) {
+        var sync_value = (sync[1] == 'yes');
+        logEvent(1, "NTP Value: ", sync[1], sync_value);
+
+        if (cb) cb(null, sync_value)
+      } else if (cb) cb('Unknown result: '+sync, null);
+    });
+  },
 	set_sleep_time: function(data, cb) {
 		var self = this;
-		logEvent(1, "Set Sleep Time:", data.sleep_time, data.wake_time, data.timezone_offset, this.current_state.get('is_sleeping'));
+		// logEvent(1, "Set Sleep Time:", moment().format(), data.sleep_time, data.wake_time, data.timezone_offset, this.current_state.get('is_sleeping'));
+
+    // check NTP before assigning cron
+    this.check_ntp({}, function(err, sync_value) {
+      if (err) logEvent(2, "NTP Error", err);
+
+      if (sync_value) {
+        // assign now
+        self._set_sleep_time(data, cb);
+      } else if (self.current_state.get("wifi_network") == "" || self.current_state.get("wifi_network") == "false") {
+        // assign now, it is supposed to be a hotspot
+        self._set_sleep_time(data, cb);
+      } else {
+        // delay assigning cron
+        setTimeout(function() {
+          self.set_sleep_time(data, cb);
+        }, self.config.ntp_wait);
+      }
+    });
+  },
+  _set_sleep_time: function(data, cb) {
+    var self = this;
+
+    // load library when needed (to prevent power-cycle time issues)
+    if (!scheduler) {
+      scheduler 	= require('node-schedule');
+
+      // wait an additional 10 seconds
+      setTimeout(function() {
+        self._set_sleep_time(data, cb);
+      }, self.config.sleep_init_wait);
+
+      return;
+    }
 
 		// cancel old timers
-		if (this.sleep_timer != null) {
-			this.sleep_timer.cancel();
-			this.sleep_timer = null;
+		if (self.sleep_timer != null) {
+			self.sleep_timer.cancel();
+			self.sleep_timer = null;
 		}
-		if (this.wake_timer != null) {
-			this.wake_timer.cancel();
-			this.wake_timer = null;
+		if (self.wake_timer != null) {
+			self.wake_timer.cancel();
+			self.wake_timer = null;
 		}
 
 		// set timer
@@ -2214,7 +2327,7 @@ var sisbot = {
 			var cron = sleep.minute()+" "+sleep.hour()+" * * *";
 			logEvent(1, "Sleep", sleep.format('mm HH'), cron);
 
-			this.sleep_timer = scheduler.scheduleJob(cron, function(){
+			self.sleep_timer = scheduler.scheduleJob(cron, function(){
 				self.sleep_sisbot(null, null);
 			});
 		}
@@ -2223,13 +2336,15 @@ var sisbot = {
 			var cron = wake.minute()+" "+wake.hour()+" * * *";
 			logEvent(1, "Wake", wake.format('mm HH'), cron);
 
-			this.wake_timer = scheduler.scheduleJob(cron, function(){
+			self.wake_timer = scheduler.scheduleJob(cron, function(){
 				self.wake_sisbot(null, null);
 			});
 		}
 
+    // logEvent(1, "Sleep Time Set:", moment().format(), data.sleep_time, data.wake_time, data.timezone_offset, this.current_state.get('is_sleeping'));
+
 		// save to state
-		this.current_state.set({
+		self.current_state.set({
 			sleep_time: data.sleep_time,
 			wake_time: data.wake_time,
 			timezone_offset: data.timezone_offset,
@@ -2237,9 +2352,9 @@ var sisbot = {
 			nightlight_brightness: data.nightlight_brightness
 		});
 
-		this.save(null, null);
+		self.save(null, null);
 
-		if (cb) cb(null, this.current_state.toJSON());
+		if (cb) cb(null, self.current_state.toJSON());
 	},
 	wake_sisbot: function(data, cb) {
 		logEvent(1, "Wake Sisbot", this.current_state.get('is_sleeping'));
@@ -2281,7 +2396,7 @@ var sisbot = {
 	/* ------------------------------------------ */
 	get_log_file: function(data, cb) {
 		logEvent(1, "Get log file", data);
-		if (this.config.folders.logs) {
+		if (this.config.folders.logs && typeof data.filename !== 'undefined') {
 			if (/([.]{2}\/)/g.test(data.filename)) { // make sure we are not trying to leave the folder
 				if (cb) cb('Invalid characters', null);
 			} else if (fs.existsSync(this.config.folders.logs+data.filename.toLowerCase()+'.log')) {
@@ -2299,9 +2414,9 @@ var sisbot = {
 				var file = fs.readFileSync(this.config.folders.logs+'proxy.log', 'utf8');
 				if (cb) cb(null, file);
 			} else {
-				if (cb) cb('Log not available', null);
+				if (cb) cb('Log not available for ' + data.filename, null);
 			}
-		} else if (cb) cb('No logs found', null);
+		} else if (cb) cb('No logs found.  No log directory or input data.filename was missing', null);
 	},
 	/* ------------------------------------------ */
   install_updates: function(data, cb) {
