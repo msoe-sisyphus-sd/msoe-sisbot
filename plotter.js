@@ -550,13 +550,12 @@ function goThetaHome() {
 
   if (THETA_HOME_COUNTER == THETA_HOME_MAX) {
     logEvent(2, 'Failed to find Theta home!');
-	console.log( 'Failed to find Theta home!');
     //setStatus('waiting');
-	thAccum = 0;
-	WAITING_THETA_HOMED = false;
-	setStatus('home_th_failed');
+  	thAccum = 0;
+  	WAITING_THETA_HOMED = false;
+  	setStatus('home_th_failed');
 
-	photoTimeout = setTimeout(checkPhoto, photoMsec); //restart photosensing for autodim
+  	photoTimeout = setTimeout(checkPhoto, photoMsec); //restart photosensing for autodim
     return;
   }
 
@@ -626,9 +625,9 @@ function goRhoHome() {
 
   if (IS_SERVO) {//skip sensored homing RHO:
 
-    console.log();
-    console.log("rAccum= " + rAccum);
-    console.log();
+    // console.log();
+    // console.log("rAccum= " + rAccum);
+    // console.log();
 
     rAccum = 0;
     photoTimeout = setTimeout(checkPhoto, photoMsec); //restart photosensing for autodim
@@ -942,7 +941,7 @@ function parseReceivedSerialData(data) {
 				// logEvent(1, "R home pin = " + (num & 64));
 				if ((num & 64) > 0) {rHomeState = 1;} else {rHomeState = 0;}
 				if (rHomeState == homingRHitState) {
-          console.log(  "Rho at home");
+          // console.log(  "Rho at home");
 					RHO_HOMED = true;
         } else {
 					RHO_HOMED = false;

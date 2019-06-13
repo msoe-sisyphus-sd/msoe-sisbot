@@ -16,15 +16,7 @@ var scheduler 	= require('node-schedule');
 var bleno 		= require('bleno');
 var io 			= require('socket.io');
 var moment 		= require('moment');
-var log4js    = require('log4js');
 var unix_dg   = require('unix-dgram');
-
-/**************************** Logging *********************************************/
-log4js.configure({
-  appenders: { sisbot: { type: 'file', filename: 'sisbot.log' } },
-  categories: { default: { appenders: ['sisbot'], level: 'debug' } }
-});
-const logger = log4js.getLogger('sisbot');
 
 /**************************** BLE *********************************************/
 
@@ -138,8 +130,6 @@ var sisbot = {
 		var self = this;
   	this.config = config;
 		logEvent(1, "Init Sisbot");
-		logger.info("Initialzie sisbot");
-
 
 		this.socket_update = socket_update;
 
@@ -699,7 +689,7 @@ var sisbot = {
 		try {
       this.serial = new SerialPort(this.config.serial_path, { autoOpen: false }, function (err) {
     	  if (err) {
-    	    return console.log('Serial Error: ', err.message)
+    	    return logEvent(2, 'Serial Error: ', err.message)
   	    }
   	  });
     	this.serial.open(function (error) {
@@ -1043,7 +1033,6 @@ var sisbot = {
 					};
 					self._paused = false;
 					logEvent("doing DEAD RECKONING homing...");
-					console.log("doing DEAD RECKONING homing...");
 					self.plotter.playTrack(track_obj);
 					self._home_next = true; // home after this outward movement
 
@@ -1069,7 +1058,6 @@ var sisbot = {
       var rhoHome = self.plotter.getRhoHome();
 
       logEvent(1, "Sensor Values", thHome, rhoHome);
-			console.log("Sensor Values", thHome, rhoHome);
 			//testing this:
 			//thHome = false;
 			//rhoHome = false;
@@ -1081,7 +1069,6 @@ var sisbot = {
       /////////////////////
       if (thHome && rhoHome && skip_move_out_if_sensors_at_home) {
         logEvent(1, "DEAD RECKONING Home Successful");
-				console.log("DEAD RECKONING Home Successful");
         this._sensored = false;
         this._home_next = false;
 				this.current_state.set({state: "waiting", is_homed: "true", _end_rho: 0});
@@ -1103,7 +1090,7 @@ var sisbot = {
 	      if (this.isServo == true) this._moved_out = true; // no move out for servo tables
 
         if (this._moved_out) {
-					console.log("not at home after DR, doing sensored...");
+					logEvent(1, "not at home after DR, doing sensored...");
           self.plotter.home();
           this._moved_out = false;
         } else {
