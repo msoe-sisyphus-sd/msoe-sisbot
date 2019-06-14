@@ -5,6 +5,7 @@
   - wifi adapter scan on boot
   - api_endpoint changed to config setting
   - separate is_network_connected from is_internet_connected values, only goes to hotspot when !is_network_connected
+  - fix compile error for USB
 
 # 2019-04-17 1.10.23
   - update Node to v 8.x.x on update, node_update.sh fix.
