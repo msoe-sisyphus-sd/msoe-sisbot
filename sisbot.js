@@ -98,6 +98,7 @@ var sisbot = {
   lcp_socket: null,
 	plotter: plotter,
 	socket_update: null,
+  py: null, // python process for LEDs
 
 	sleep_timer: null,
 	wake_timer: null,
@@ -200,8 +201,7 @@ var sisbot = {
           if (obj.name == 'Detach') { is_2ball_track = true; }
           logEvent(1, "track switch 2ball ", is_2ball , " track_type ", is_2ball_track);
 
-          if (is_2ball || is_2ball_track == false)
-          {
+          if (is_2ball || is_2ball_track == false) {
             logEvent(1, "adding track named to self.collection ", obj.name);
             var newTrack = new Track(obj);
   					var track = self.collection.add(newTrack);
@@ -218,8 +218,7 @@ var sisbot = {
 				case "playlist":
           var newPlaylist = new Playlist(obj);
           logEvent(1,"reading in playlist during init " + newPlaylist.get('name'));
-          if (newPlaylist.get('name') == "2Ball Demo")
-          {
+          if (newPlaylist.get('name') == "2Ball Demo") {
             logEvent(1,"Found the 2Ball Demo playlist");
             if (cson_config.twoBallEnabled) {
               logEvent(1,"Two ball config, allowed to see this playlist");
@@ -228,9 +227,7 @@ var sisbot = {
                 playlists.push(playlist.get("id"));
               }
             }
-          }
-          else
-          {
+          } else {
             logEvent(1,"saving playlist to collection " + newPlaylist.get('name'));
   					var playlist = self.collection.add(newPlaylist);
             if (playlists.indexOf(playlist.get("id")) < 0) {
@@ -250,7 +247,6 @@ var sisbot = {
 
 
 		});
-
 
 		this.current_state = this.collection.findWhere({type: "sisbot"});
 
@@ -665,6 +661,30 @@ var sisbot = {
     // this.lcp_socket.bind('/tmp/sisyphus_sockets');
     // this.lcp_socket.on('error', console.error);
     this.plotter.useLCPSocket(this.lcp_socket);
+  },
+
+  set_led: function(data, cb) {
+    // Enable/disable LED lights
+    logEvent(1, 'Set led', data);
+
+    // tell plotter to send to LEDs/original strip
+
+
+    // kill running python file
+    if (this.py) this.py.kill();
+
+    // start/stop python script
+    if (data.is_rgbw == 'true') {
+  		this.py = spawn('python',['led_main.py'],{cwd:"/home/pi/sisbot-server/sisbot/content",detached:true,stdio:'ignore'});
+      this.py.on('error', (err) => {
+  			logEvent(2, 'Failed to start python process.', err);
+  		});
+  		this.py.on('close', (code) => {
+  			logEvent(1, "python process exited with code", code);
+  		});
+    }
+
+    if (cb) cb(null, data);
   },
 
   lcpWrite: function(data, cb) {
@@ -2572,7 +2592,6 @@ var sisbot = {
 		ping.send(); // or ping.start();
 	},
   factory_reset: function(data, cb) {
-
     if (this.isServo && this.homeFirst) {
       var homedata = {
         stop : true,
@@ -2610,7 +2629,6 @@ var sisbot = {
 		});
 	},
   restart: function(data,cb) {
-
     if (this.isServo && this.homeFirst) {
       var homedata = {
         stop : true,
@@ -2632,9 +2650,7 @@ var sisbot = {
     }
 
     this._restart(data, cb);
-
   },
-
 	_restart: function(data,cb) {
 		logEvent(1, "Sisbot Restart", data);
 		this.current_state.set({is_available: "false", reason_unavailable: "restarting"});
@@ -2648,9 +2664,7 @@ var sisbot = {
 		});
 	},
   reboot: function(data,cb) {
-
-    if (this.isServo  && this.homeFirst)
-    {
+    if (this.isServo  && this.homeFirst) {
       var homedata = {
         stop : true,
         clear_tracks: true
@@ -2671,7 +2685,6 @@ var sisbot = {
     }
 
     this._reboot(data, cb);
-
   },
   _reboot: function(data,cb) {
 		logEvent(1, "Sisbot Reboot", data);

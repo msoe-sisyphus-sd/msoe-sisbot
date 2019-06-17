@@ -7,6 +7,7 @@ var config 	= require('./config');
 
 { //globals:
 var twoBallEnabled=false;
+var rgbwEnabled=false;
 var Vball=2,  Accel = 2, MTV=0.5, Vmin = 0.1, Voverride = 1;
 var balls  = 1; //sis vs tant mode
 //machine constants:

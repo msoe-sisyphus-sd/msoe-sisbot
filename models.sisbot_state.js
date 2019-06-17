@@ -22,6 +22,7 @@ var sisbot_state = Backbone.Model.extend({
 		hostname_prompt				: "false",
 
 		state									: "waiting", // playing, homing, paused, waiting
+		is_rgbw								: "false", // Neopixels enabled?
 		brightness						: 0.8,
 		is_autodim						: "true",
 		is_nightlight					: "false",
