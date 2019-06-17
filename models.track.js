@@ -70,47 +70,51 @@ var track = Backbone.Model.extend({
 		// console.log("Get Verts From Data", data);
 
 		// Step the file, line by line
-		var lines = data.toString().trim().split('\n');
-		// var regex = /^\s*$/; // eliminate empty lines
-		var pos_regex = /^[0-9.e-]+\s+[0-9.e-]+/;
+		try {
+			var lines = data.toString().trim().split('\n');
+			// var regex = /^\s*$/; // eliminate empty lines
+			var pos_regex = /^[0-9.e-]+\s+[0-9.e-]+/;
 
-		_.map(lines, function(line) {
-			line.trim();
+			_.map(lines, function(line) {
+				line.trim();
 
-			if (line.length > 0 && pos_regex.test(line)) { //line.substring(0,1) != '#' && !line.match(regex)) {
-				var values = line.split(/\s+/);
-				var entry = {th:parseFloat(values[0]),r:parseFloat(values[1])};
-				return_value.push(entry);
-			}
-		});
+				if (line.length > 0 && pos_regex.test(line)) { //line.substring(0,1) != '#' && !line.match(regex)) {
+					var values = line.split(/\s+/);
+					var entry = {th:parseFloat(values[0]),r:parseFloat(values[1])};
+					return_value.push(entry);
+				}
+			});
 
-		// make sure first/last rho is 0 or 1
-		if (return_value.length > 0) {
-			if (return_value[0].r != 0 && return_value[0].r != 1) {
-				console.log("Invalid track start", return_value[0].r);
-				return_value.unshift({th:return_value[0].th,r:Math.round(return_value[0].r)});
-			}
-			if (return_value[return_value.length-1].r != 0 && return_value[return_value.length-1].r != 1) {
-				console.log("Invalid track end", return_value[return_value.length-1].r);
-				return_value.push({th:return_value[return_value.length-1].th,r:Math.round(return_value[return_value.length-1].r)});
-			}
+			// make sure first/last rho is 0 or 1
+			if (return_value.length > 0) {
+				if (return_value[0].r != 0 && return_value[0].r != 1) {
+					console.log("Invalid track start", return_value[0].r);
+					return_value.unshift({th:return_value[0].th,r:Math.round(return_value[0].r)});
+				}
+				if (return_value[return_value.length-1].r != 0 && return_value[return_value.length-1].r != 1) {
+					console.log("Invalid track end", return_value[return_value.length-1].r);
+					return_value.push({th:return_value[return_value.length-1].th,r:Math.round(return_value[return_value.length-1].r)});
+				}
 
-			// !! error check !!
-			if (return_value[0].r != this.get("firstR")) {
-				// console.log("R[0] not matching", return_value[0].r, self.get("firstR"));
-				this.set({firstR: return_value[0].r, r_type:"r"+return_value[0].r+this.get("lastR")});
-			}
-			if (return_value[return_value.length-1].r != this.get("lastR")) {
-				// console.log("R[n] not matching", return_value[return_value.length-1].r, self.get("lastR"));
-				this.set({lastR: return_value[return_value.length-1].r, r_type:"r"+this.get("firstR")+return_value[return_value.length-1].r});
-			}
-			if (this.get('firstR') == this.get('lastR')) {
-				this.set('reversible', 'false');
+				// !! error check !!
+				if (return_value[0].r != this.get("firstR")) {
+					// console.log("R[0] not matching", return_value[0].r, self.get("firstR"));
+					this.set({firstR: return_value[0].r, r_type:"r"+return_value[0].r+this.get("lastR")});
+				}
+				if (return_value[return_value.length-1].r != this.get("lastR")) {
+					// console.log("R[n] not matching", return_value[return_value.length-1].r, self.get("lastR"));
+					this.set({lastR: return_value[return_value.length-1].r, r_type:"r"+this.get("firstR")+return_value[return_value.length-1].r});
+				}
+				if (this.get('firstR') == this.get('lastR')) {
+					this.set('reversible', 'false');
+				} else {
+					this.set('reversible', 'true');
+				}
 			} else {
-				this.set('reversible', 'true');
+				console.log("No verts found!", this.get('id'), this.get('name'));
 			}
-		} else {
-			console.log("No verts found!", this.get('id'), this.get('name'));
+		} catch (err) {
+			console.log("Track get_verts_from_data error", err);
 		}
 
 		//console.log("Track verts", return_value.length, self.get("r_type"));

@@ -37,6 +37,13 @@ fi
 # make sure ntp is enabled
 timedatectl set-ntp true
 
+# fix USB npm compile issue
+PKG_LIBUDEV_V="$(dpkg -l libudev-dev 2>&1)"
+if [[ $PKG_LIBUDEV_V == "dpkg-query: no packages found matching libudev-dev"* ]]; then
+  echo "No libudev package found"
+  apt-get install -yq libudev-dev
+fi
+
 # fix factory reset issue
 cp /home/pi/sisbot-server/sisbot/factory_reset.sh /home/pi/sisbot-server/
 
