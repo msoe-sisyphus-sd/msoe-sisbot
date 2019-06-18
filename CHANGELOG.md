@@ -1,3 +1,6 @@
+# 2019-05-29 1.10.30
+  - move sisbots over to webcenter
+
 # 2019-05-29 1.10.28
   - wifi password fix for !$ and "
   - iw scan instead of iwlist

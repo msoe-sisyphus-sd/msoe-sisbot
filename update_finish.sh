@@ -62,3 +62,17 @@ echo "Upgrade_Finish completed"
 if [ -z "$1" ]; then
 	sudo reboot
 fi
+
+pushd /home/pi/sisbot-server/sisbot
+git remote set-url origin pi@webcenter.sisyphus-industries.com:/git/sisbot.git
+popd
+
+pushd /home/pi/sisbot-server/siscloud
+git remote set-url origin pi@webcenter.sisyphus-industries.com:/git/siscloud.git
+popd
+
+pushd /home/pi/sisbot-server/sisproxy
+git remote set-url origin pi@webcenter.sisyphus-industries.com:/git/sisproxy.git
+popd
+
+  
