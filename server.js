@@ -106,8 +106,8 @@ var app = function(given_config,ansible) {
       else
       {
         logEvent(1, "POST host " + host + " is DENIED");
-        res.status(401).send({ error: "host " + host + " is not whitelisted" });
-        return;
+        //res.status(401).send({ error: "host " + host + " is not whitelisted" });
+        //return;
       }
     }
 

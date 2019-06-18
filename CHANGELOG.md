@@ -1,4 +1,4 @@
-# 2019-05-29 1.10.28
+# 2019-05-29 1.10.29
   - wifi password fix for !$ and "
   - iw scan instead of iwlist
   - fix error on downloading today's proxy log file
@@ -7,12 +7,15 @@
   - separate is_network_connected from is_internet_connected values, only goes to hotspot when !is_network_connected
   - fix compile error for USB
 
+# 2019-05-29 1.10.24
+  - fix BLE ip_address change
+
 # 2019-04-17 1.10.23
   - update Node to v 8.x.x on update, node_update.sh fix.
   - Versions .17, .18, .19 work in progress on Node to v 8 update
   - added is_servo to sisbot model for UI to know
   - status.json save() saves to tmp file, then moves after confirming data
-  - ntp fix
+  - ntp fix, sleep time sets self correctly after long power off
   - bugfix socket on startup/reconnect
 
 # 2019-04-17 1.10.16

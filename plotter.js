@@ -794,7 +794,7 @@ var logEvent = function() {
 			else line += "\t"+obj;
 		});
 
-		console.log(line); // !! comment out in master !!
+		// console.log(line); // !! comment out in master !!
 		fs.appendFile(filename, line + '\n', function(err, resp) {
 		  if (err) console.log("Plotter Log err", err);
 		});

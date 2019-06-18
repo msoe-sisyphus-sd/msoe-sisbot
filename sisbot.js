@@ -2721,8 +2721,8 @@ var logEvent = function() {
 		});
 
     // redline errors
-    if (arguments[0] == 2 || arguments[0] == '2') line = '\x1b[31m'+line+'\x1b[0m';
-		console.log(line); // !! comment out in master !!
+    // if (arguments[0] == 2 || arguments[0] == '2') line = '\x1b[31m'+line+'\x1b[0m';
+		// console.log(line); // !! comment out in master !!
 	} else console.log(arguments);
 }
 

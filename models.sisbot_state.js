@@ -44,6 +44,7 @@ var sisbot_state = Backbone.Model.extend({
 		is_servo						: "false",
 
 		is_hotspot						: "true",
+		is_network_separate		: "true",
 		is_network_connected	: "false",
 		is_internet_connected	: "false",
 		service_connected			: {},
