@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.10.29', // update_finish add fix for USB compile
+			version	: '1.9.29', // update_finish add fix for USB compile
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

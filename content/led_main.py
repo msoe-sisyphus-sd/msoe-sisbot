@@ -319,6 +319,24 @@ if __name__ == '__main__':
                 elif command == 104: # h: homing state
                     print "homing...\n",
                     sys.stdout.flush()
+                elif command == 80: # P: playing state
+                    print "Playing...\n",
+                    sys.stdout.flush()
+                elif command == 112: # p: paused state
+                    print "paused...\n",
+                    sys.stdout.flush()
+                elif command == 115: # s: sleep state
+                    print "sleep...\n",
+                    sys.stdout.flush()
+                elif command == 119: # w: wake state
+                    print "wake...\n",
+                    sys.stdout.flush()
+                elif command == 111: # o: offset
+                    print "offset...\n",
+                    sys.stdout.flush()
+                elif command == 105: # i: import
+                    print "import...\n",
+                    sys.stdout.flush()
                 else:
                     print "command %s\n" % (command),
                     sys.stdout.flush()

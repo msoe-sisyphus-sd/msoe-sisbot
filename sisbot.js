@@ -687,6 +687,15 @@ var sisbot = {
     if (cb) cb(null, data);
   },
 
+  set_led_color: function(data, cb) {
+    // Set LED colors
+    logEvent(1, 'Set led color', data);
+
+    //
+
+    if (cb) cb(null, data);
+  },
+
   lcpWrite: function(data, cb) {
     logEvent(1, 'LCP-write:',data.value);
 
@@ -2508,7 +2517,7 @@ var sisbot = {
 		if (cb) cb(null, this.current_state.toJSON());
 
     logEvent(1, "Sisbot running update script update.sh");
-		exec('/home/pi/sisbot-server/sisbot/update.sh '+this.config.service_branches.sisbot+' '+this.config.service_branches.app+' '+this.config.service_branches.proxy+' false > /home/pi/sisbot-server/update.log', (error, stdout, stderr) => {
+		exec('/home/pi/sisbot-server/sisbot/update.sh '+this.config.service_branches.sisbot+' '+this.config.service_branches.app+' '+this.config.service_branches.proxy+' false >> /var/log/sisyphus/'+moment().format('YYYYMMDD')+'_update.log', (error, stdout, stderr) => {
 			self.current_state.set({installing_updates: 'false'});
 		  if (error) {
 				return logEvent(2, 'exec error:',error);

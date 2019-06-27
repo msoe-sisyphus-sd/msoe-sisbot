@@ -47,14 +47,20 @@ fi
 # fix factory reset issue
 cp /home/pi/sisbot-server/sisbot/factory_reset.sh /home/pi/sisbot-server/
 
-# update rc.local
-cp /home/pi/sisbot-server/sisbot/rc_fix.local /etc/rc.local
-
 # make sure log file location existsSync
 mkdir -p /var/log/sisyphus
 
 # make sure we are on node 8.x.x
-sudo /home/pi/sisbot-server/sisbot/node_update.sh
+NODE_V="$(node -v)"
+if [[ $NODE_V != "v8."* ]]; then
+  # update rc.local
+  cp /home/pi/sisbot-server/sisbot/rc_fix.local /etc/rc.local
+
+  sudo /home/pi/sisbot-server/sisbot/node_update.sh
+else
+  # update rc.local
+  cp /home/pi/sisbot-server/sisbot/rc.local /etc/rc.local
+fi
 
 echo "Upgrade_Finish completed"
 
