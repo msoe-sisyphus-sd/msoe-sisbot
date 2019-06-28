@@ -662,7 +662,6 @@ var sisbot = {
     // this.lcp_socket.on('error', console.error);
     this.plotter.useLCPSocket(this.lcp_socket);
   },
-
   set_led: function(data, cb) {
     // Enable/disable LED lights
     logEvent(1, 'Set led', data);
@@ -686,16 +685,62 @@ var sisbot = {
 
     if (cb) cb(null, data);
   },
+  set_led_offset: function(data, cb) {
+    // Set LED offset
+    logEvent(1, 'Set led offset', data);
 
+    if (data.offset) {
+      // keep within range
+      data.offset = +data.offset % 360;
+
+      var buf1 = Buffer.from('o', 0, 1);
+      var buf2 =  Buffer.alloc(4);
+      buf2.writeFloatBE(data.offset, 0);
+
+      var totalLength = buf1.length + buf2.length;
+      message = Buffer.concat([buf1, buf2], totalLength);
+
+      this.lcp_socket.send(message, 0, totalLength, '/tmp/sisyphus_sockets');
+    }
+
+    if (cb) cb(null, data);
+  },
   set_led_color: function(data, cb) {
     // Set LED colors
     logEvent(1, 'Set led color', data);
 
     //
+    if (data.primary_color) {
+      logEvent(1, "Set primary color", JSON.stringify(data.primary_color));
+
+      var arr = new Uint8Array(5);
+      arr[0] = 67; // C
+      if (data.primary_color.red) arr[1] = Math.max(0,Math.min(+data.primary_color.red, 255));
+      if (data.primary_color.green) arr[2] = Math.max(0,Math.min(+data.primary_color.green, 255));
+      if (data.primary_color.blue) arr[3] = Math.max(0,Math.min(+data.primary_color.blue, 255));
+      if (data.primary_color.white) arr[4] = Math.max(0,Math.min(+data.primary_color.white, 255));
+
+      var buf = Buffer.from(arr.buffer);
+
+      this.lcp_socket.send(buf, 0, 5, '/tmp/sisyphus_sockets');
+    }
+    if (data.secondary_color) {
+      logEvent(1, "Set secondary color", JSON.stringify(data.secondary_color));
+
+      var arr = new Uint8Array(5);
+      arr[0] = 99; // c
+      if (data.secondary_color.red) arr[1] = Math.max(0,Math.min(+data.secondary_color.red, 255));
+      if (data.secondary_color.green) arr[2] = Math.max(0,Math.min(+data.secondary_color.green, 255));
+      if (data.secondary_color.blue) arr[3] = Math.max(0,Math.min(+data.secondary_color.blue, 255));
+      if (data.secondary_color.white) arr[4] = Math.max(0,Math.min(+data.secondary_color.white, 255));
+
+      var buf = Buffer.from(arr.buffer);
+
+      this.lcp_socket.send(buf, 0, 5, '/tmp/sisyphus_sockets');
+    }
 
     if (cb) cb(null, data);
   },
-
   lcpWrite: function(data, cb) {
     logEvent(1, 'LCP-write:',data.value);
 
@@ -2730,8 +2775,8 @@ var logEvent = function() {
 		});
 
     // redline errors
-    // if (arguments[0] == 2 || arguments[0] == '2') line = '\x1b[31m'+line+'\x1b[0m';
-		// console.log(line); // !! comment out in master !!
+    if (arguments[0] == 2 || arguments[0] == '2') line = '\x1b[31m'+line+'\x1b[0m';
+		console.log(line); // !! comment out in master !!
 	} else console.log(arguments);
 }
 
