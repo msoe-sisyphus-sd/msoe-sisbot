@@ -674,7 +674,7 @@ var sisbot = {
 
     // start/stop python script
     if (data.is_rgbw == 'true') {
-  		this.py = spawn('python',['led_main.py'],{cwd:"/home/pi/sisbot-server/sisbot/content",detached:true,stdio:'ignore'});
+  		this.py = spawn('python',['led_main.py'],{cwd:"/home/pi/sisbot-server/sisbot/content/lights",detached:true,stdio:'ignore'});
       this.py.on('error', (err) => {
   			logEvent(2, 'Failed to start python process.', err);
   		});
@@ -713,6 +713,16 @@ var sisbot = {
     if (data.primary_color) {
       logEvent(1, "Set primary color", JSON.stringify(data.primary_color));
 
+      // split from hex into components
+      if (_.isString(data.primary_color)) {
+        red = parseInt(data.primary_color.substr(1, 2), 16);
+        green = parseInt(data.primary_color.substr(3, 2), 16);
+        blue = parseInt(data.primary_color.substr(5, 2), 16);
+
+        // logEvent(1, "Primary Colors: ", red, green, blue);
+        data.primary_color = { red: red, green: green, blue: blue };
+      }
+
       var arr = new Uint8Array(5);
       arr[0] = 67; // C
       if (data.primary_color.red) arr[1] = Math.max(0,Math.min(+data.primary_color.red, 255));
@@ -727,6 +737,15 @@ var sisbot = {
     if (data.secondary_color) {
       logEvent(1, "Set secondary color", JSON.stringify(data.secondary_color));
 
+      // split from hex into components
+      if (_.isString(data.secondary_color)) {
+        red = parseInt(data.secondary_color.substr(1, 2), 16);
+        green = parseInt(data.secondary_color.substr(3, 2), 16);
+        blue = parseInt(data.secondary_color.substr(5, 2), 16);
+
+        // logEvent(1, "Secondary Colors: ", red, green, blue);
+        data.secondary_color = { red: red, green: green, blue: blue };
+      }
       var arr = new Uint8Array(5);
       arr[0] = 99; // c
       if (data.secondary_color.red) arr[1] = Math.max(0,Math.min(+data.secondary_color.red, 255));
