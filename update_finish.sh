@@ -54,7 +54,7 @@ cp /home/pi/sisbot-server/sisbot/rc_fix.local /etc/rc.local
 mkdir -p /var/log/sisyphus
 
 # make sure we are on node 8.x.x
-sudo /home/pi/sisbot-server/sisbot/node_update.sh
+sudo /home/pi/sisbot-server/sisbot/node_update.sh > /var/log/sisyphus/node_update.log
 
 echo "Upgrade_Finish completed"
 

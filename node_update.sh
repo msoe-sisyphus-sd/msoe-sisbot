@@ -40,6 +40,7 @@ if [[ $NODE_V != "v8."* ]]; then
       # rm -rf /usr/local/lib/node_modeles ??
 
       # restart pi
+      sleep 5
       reboot
     fi
   fi

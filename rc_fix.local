@@ -4,7 +4,7 @@
 /home/pi/sisbot-server/sisbot/wifi_adapter_check.sh
 
 # make sure we are on node 8.x.x
-/home/pi/sisbot-server/sisbot/node_update.sh
+/home/pi/sisbot-server/sisbot/node_update.sh > /var/log/sisyphus/node_update.log
 
 cd /home/pi/sisbot-server/sisproxy && git reset --hard && NODE_ENV=sisbot node server.js >> /var/log/sisyphus/proxy.log  2>&1 &
 exit 0
