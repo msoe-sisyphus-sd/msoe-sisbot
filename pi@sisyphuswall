@@ -7,19 +7,19 @@ fi
 
 #check for node_modules in each folder
 cd /home/pi/sisbot-server/sisbot
-if [ -d "node_modules" ]; then
+if [ -d "node_modules" ] then
   echo "Sisbot node_modules found"
 else
   sudo -u pi npm install
 fi
 cd /home/pi/sisbot-server/siscloud
-if [ -d "node_modules" ]; then
+if [ -d "node_modules" ] then
   echo "Siscloud node_modules found"
 else
   sudo -u pi npm install
 fi
 cd /home/pi/sisbot-server/sisproxy && git reset --hard
-if [ -d "node_modules" ]; then
+if [ -d "node_modules" ] then
   echo "Sisproxy node_modules found"
 else
   sudo -u pi npm install
