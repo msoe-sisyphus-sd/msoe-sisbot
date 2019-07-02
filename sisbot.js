@@ -1855,7 +1855,7 @@ var sisbot = {
 		var self = this;
 
 		exec('ping -c 1 -W 2 google.com', {timeout: 5000}, (error, stdout, stderr) => {
-			if (error) logEvent(2, 'ping exec error:', error);
+			if (error) logEvent(1, 'ping exec error:', error);
 
 			var returnValue = "false";
 			if (stdout.indexOf("1 packets transmitted") > -1) returnValue = "true";

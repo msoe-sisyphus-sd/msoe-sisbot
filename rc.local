@@ -1,7 +1,4 @@
 #!/bin/sh -e
 
-# check for wifi adapters plugged in
-/home/pi/sisbot-server/sisbot/wifi_adapter_check.sh
-
-cd /home/pi/sisbot-server/sisproxy && git reset --hard && NODE_ENV=sisbot node server.js >> /var/log/sisyphus/proxy.log  2>&1 &
+/home/pi/sisbot-server/sisbot/startup.sh >> /var/log/sisyphus/startup.log  2>&1 &
 exit 0
