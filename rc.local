@@ -1,9 +1,11 @@
 #!/bin/sh -e
 
-{
-  /home/pi/sisbot-server/sisbot/startup.sh >> /var/log/sisyphus/startup.log  2>&1
-} || {
-  # fallback to old method
+if [ -f "/home/pi/sisbot-server/sisbot/startup.sh" ]; then
+  echo "Sisyphus Startup"
+  /home/pi/sisbot-server/sisbot/startup.sh >> /var/log/sisyphus/startup.log  2>&1 &
+else
+  echo "Fallback"
   cd /home/pi/sisbot-server/sisproxy && git reset --hard && sudo NODE_ENV=sisbot node server.js >> /var/log/sisyphus/proxy.log  2>&1 &
-}
+fi
+
 exit 0

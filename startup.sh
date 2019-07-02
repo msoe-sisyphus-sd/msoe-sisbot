@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
 # check for wifi adapters plugged in
-/home/pi/sisbot-server/sisbot/wifi_adapter_check.sh
+if [ -f "/home/pi/sisbot-server/sisbot/wifi_adapter_check.sh" ]; then
+  /home/pi/sisbot-server/sisbot/wifi_adapter_check.sh
+fi
 
 start_time="$(date -u +%s)"
 
