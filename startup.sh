@@ -5,27 +5,82 @@ if [ -f "/home/pi/sisbot-server/sisbot/wifi_adapter_check.sh" ]; then
   /home/pi/sisbot-server/sisbot/wifi_adapter_check.sh
 fi
 
-#check for node_modules in each folder
+# fix USB npm compile issue
+PKG_LIBUDEV_V="$(dpkg -l libudev-dev 2>&1)"
+if [[ $PKG_LIBUDEV_V == "dpkg-query: no packages found matching libudev-dev"* ]]; then
+  echo "No libudev package found"
+  apt-get install -yq libudev-dev
+fi
+
+# check for node_modules in each folder
 cd /home/pi/sisbot-server/sisbot
 if [ -d "node_modules" ]; then
   echo "Sisbot node_modules found"
 else
   echo "Sisbot node_modules missing"
-  sudo -u pi npm install
+  echo "Make sure we are connected to internet"
+  RETRIES=0
+  FAILED=false
+  while ! ping -c 1 -W 2 google.com ; do
+    sleep 1
+    RETRIES=RETRIES+1
+    if [ "$RETRIES" > "25" ] ; then
+      FAILED=true
+    fi
+  done
+
+  if [ "$FAILED" = false ] ; then
+    echo "Failure! Unable to connect to network, please retry."
+    return 1
+  else
+    sudo -u pi npm install
+  fi
 fi
 cd /home/pi/sisbot-server/siscloud
 if [ -d "node_modules" ]; then
   echo "Siscloud node_modules found"
 else
   echo "Siscloud node_modules missing"
-  sudo -u pi npm install
+  echo "Make sure we are connected to internet"
+  RETRIES=0
+  FAILED=false
+  while ! ping -c 1 -W 2 google.com ; do
+    sleep 1
+    RETRIES=RETRIES+1
+    if [ "$RETRIES" > "25" ] ; then
+      FAILED=true
+    fi
+  done
+
+  if [ "$FAILED" = false ] ; then
+    echo "Failure! Unable to connect to network, please retry."
+    return 1
+  else
+    sudo -u pi npm install
+  fi
 fi
 cd /home/pi/sisbot-server/sisproxy && git reset --hard
 if [ -d "node_modules" ]; then
   echo "Sisproxy node_modules found"
 else
   echo "Sisproxy node_modules missing"
-  sudo -u pi npm install
+  echo "Make sure we are connected to internet"
+  RETRIES=0
+  FAILED=false
+  while ! ping -c 1 -W 2 google.com ; do
+    sleep 1
+    RETRIES=RETRIES+1
+    if [ "$RETRIES" > "25" ] ; then
+      FAILED=true
+    fi
+  done
+
+  if [ "$FAILED" = false ] ; then
+    echo "Failure! Unable to connect to network, please retry."
+    return 1
+  else
+    sudo -u pi npm install
+  fi
 fi
 
 start_time="$(date -u +%s)"
