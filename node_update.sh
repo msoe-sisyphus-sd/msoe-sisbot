@@ -2,7 +2,7 @@
 
 # check what version of node is installed/used
 NODE_V="$(node -v)"
-PKG_NODE_V="$(dpkg -l nodejs 2>&1)" 
+PKG_NODE_V="$(dpkg -l nodejs 2>&1)"
 
 # is this node 8?
 if [[ $NODE_V != "v8."* ]]; then
@@ -12,20 +12,38 @@ if [[ $NODE_V != "v8."* ]]; then
   if [[ $PKG_NODE_V == "dpkg-query: no packages found matching nodejs"* ]]; then
     echo "No nodejs package found"
     echo 'Acquire::ForceIPv4 "true";' | tee /etc/apt/apt.conf.d/99force-ipv4 |
-    # install nodejs via apt-get and -yq yes and quit
-    curl -sL https://deb.nodesource.com/setup_8.x | bash - 
-    apt-get install -yq nodejs 
-    
+
+    echo "Make sure we are connected to internet"
+    RETRIES=0
+    FAILED=false
+    while ! ping -c 1 -W 2 google.com ; do
+      sleep 1
+  		RETRIES=RETRIES+1
+      if [ "$RETRIES" > "25" ] ; then
+      	FAILED=true
+      fi
+    done
+
+    if [ "$FAILED" = false ] ; then
+      echo "Failure! Unable to connect to network, please retry."
+      return 1
+    else
+      echo "Success! Network found."
+      # install nodejs via apt-get and -yq yes and quit
+      curl -sL https://deb.nodesource.com/setup_8.x | bash -
+      apt-get install -yq nodejs
+
+      # remove version in /usr/local
+      rm -rf /usr/local/bin/node
+      rm -rf /usr/local/bin/npm
+      rm -rf /usr/local/include/node
+      # rm -rf /usr/local/lib/node_modeles ??
+
+      # restart pi
+      sleep 5
+      reboot
+    fi
   fi
-
-  # remove version in /usr/local
-  rm -rf /usr/local/bin/node
-  rm -rf /usr/local/bin/npm
-  rm -rf /usr/local/include/node
-  # rm -rf /usr/local/lib/node_modeles ??
-
-  # restart pi
-  reboot
 else
   echo "$(node -v)"
 
