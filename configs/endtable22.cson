@@ -13,6 +13,12 @@ autoplay: true # when true it will home and play the default playlist sequential
 
 twoBallEnabled: false
 
+useLED: true # sisbot board LEDs, !! must specify false to turn off !!
+# useRGBW: true # pi connected RGBW LEDs
+# rgbwCount: 100 # number of rgbw LEDs
+# rgbwPrimaryColor: "#FFFFFF"
+# rgbwSecondaryColor: "#00FFFF"
+
 # Default movement parameters
 # 5. Default velocity (in/sec)= 1
 # 6. Default acceleration (in/sec^2)= 1

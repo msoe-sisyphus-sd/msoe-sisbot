@@ -5,6 +5,7 @@ if [ -f "/home/pi/sisbot-server/sisbot/wifi_adapter_check.sh" ]; then
   /home/pi/sisbot-server/sisbot/wifi_adapter_check.sh
 fi
 
+
 #check for node_modules in each folder
 cd /home/pi/sisbot-server/sisbot
 if [ -d "node_modules" ]; then

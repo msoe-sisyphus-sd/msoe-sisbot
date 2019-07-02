@@ -30,6 +30,8 @@ var homingRPin; // SBB board pin for homing rho sensor
 var homingThHitState; // The value the sensor reports when triggered. 0 or 1.
 var homingRHitState; // The value the sensor reports when triggered. 0 or 1.
 
+var useLED = true;
+
 var useFaultSensors = 0; // True if the bot has sensors. Otherwise the current position is considered home.
 //var faultThPin = "D,1"; // SBB board pin for homing theta sensor
 //var faultRPin = "D,0"; // SBB board pin for homing rho sensor
@@ -179,17 +181,19 @@ function checkPhoto() { //autodimming functionality:
 
 		if ( delta >= .5 ) {
 
-			if (photoOut != 0) {
-				sp.write("SE,1," + photoOut +"\r");
-				//console.log('\x1b[31m%s\x1b[0m',"SE,1," + photoOut +"\r"); //in red
-				//console.log("SE,1," + photoOut +"\r");
-				//logEvent(1, "SE,1," + photoOut);
-			}
-			else {
-				sp.write("SE,0\r");
-				//console.log("SE,0\r");
-			  	//logEvent(1, "SE,0");
-			}
+      if (useLED) {
+  			if (photoOut != 0) {
+  				sp.write("SE,1," + photoOut +"\r");
+  				//console.log('\x1b[31m%s\x1b[0m',"SE,1," + photoOut +"\r"); //in red
+  				//console.log("SE,1," + photoOut +"\r");
+  				//logEvent(1, "SE,1," + photoOut);
+  			}
+  			else {
+  				sp.write("SE,0\r");
+  				//console.log("SE,0\r");
+  			  	//logEvent(1, "SE,0");
+  			}
+      }
 
 			lastPhotoOut = photoOut;
 		}
@@ -1014,6 +1018,9 @@ module.exports = {
     }
     if (config.faultActiveState)  faultActiveState = config.faultActiveState;
     if (config.twoBallEnabled)    twoBallEnabled = config.twoBallEnabled;
+
+    // LED Values
+    if (config.useLED !== undefined) useLED = config.useLED;
   },
 
 
@@ -1048,7 +1055,7 @@ module.exports = {
     sp.write('PO,B,1,1\r'); //set B1 high to enable Rho
     sp.write('PO,B,2,1\r'); //set B2 high to enable Theta
 
-    sp.write("SE,1,100\r"); //turn on low lighting
+    if (useLED) sp.write("SE,1,100\r"); //turn on low lighting
 
     checkPhoto(); //start ambient light sensing
   },
@@ -1194,7 +1201,7 @@ module.exports = {
       if (pwm == 0) {
 				sp.write("SE,0\r");
       } else {
-				sp.write("SE,1," + pwm +"\r");
+				if (useLED) sp.write("SE,1," + pwm +"\r");
         lastPhotoOut = pwm;
       }
   	}
