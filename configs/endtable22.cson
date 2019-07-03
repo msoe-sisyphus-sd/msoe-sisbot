@@ -13,7 +13,6 @@ autoplay: true # when true it will home and play the default playlist sequential
 
 twoBallEnabled: false
 
-# useLED: false # sisbot board LEDs, !! must specify false to turn off !!
 useRGBW: true # pi connected RGBW LEDs
 rgbwCount: 100 # number of rgbw LEDs
 rgbwPrimaryColor: "#FFFFFF"
