@@ -17,7 +17,7 @@ check_internet () {
     fi
   done
 
-  if [ "$FAILED" = false ] ; then
+  if [ "$FAILED" = true ] ; then
     echo "Failure! Unable to connect to network, please retry."
     return 0
   else
@@ -96,6 +96,7 @@ start_time="$(date -u +%s)"
     if [ "$IS_CONNECTED" = 0 ] ; then
       echo "Failure! Unable to connect to network, please retry."
     else
+      rm -rf node_modules
       sudo -u pi npm install
       sleep 5
       ./restart.sh &

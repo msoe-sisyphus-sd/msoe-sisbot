@@ -24,9 +24,9 @@ if [[ $NODE_V != "v8."* ]]; then
       fi
     done
 
-    if [ "$FAILED" = false ] ; then
+    if [ "$FAILED" = true ] ; then
       echo "Failure! Unable to connect to network, please retry."
-      return 1
+      exit 1
     else
       echo "Success! Network found."
       # install nodejs via apt-get and -yq yes and quit
