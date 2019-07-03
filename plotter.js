@@ -981,6 +981,8 @@ module.exports = {
 
   // Update the global configuration variables with data form a config file.
   setConfig: function(config) {
+    logEvent(1, "Set Config");
+
     plotRadius = config.radius;
     thSPRev = config.stepsPerThetaRevolution;
     rSPRev = config.stepsPerRadiusRevolution;
@@ -1020,7 +1022,12 @@ module.exports = {
     if (config.twoBallEnabled)    twoBallEnabled = config.twoBallEnabled;
 
     // LED Values
-    if (config.useLED !== undefined) useLED = config.useLED;
+    logEvent(1, "Use RGBW config:", _.keys(config).join(','));
+    if (config.useRGBW !== undefined) {
+      logEvent(1, "Use RGBW config:", config.useRGBW);
+      useLED = !config.useLED;
+      useRGBW = config.useRGBW;
+    }
   },
 
 
@@ -1191,7 +1198,7 @@ module.exports = {
 	// get the brightness slider value
   setBrightness: function(value) {
     sliderBrightness = value;
-		//logEvent(1, "sb: " + sliderBrightness);
+		logEvent(1, "sb: " + sliderBrightness);
 
     if (autodim !== 'true') {
       // convert to an integer from 0 - 1023, parabolic scale.
@@ -1205,6 +1212,13 @@ module.exports = {
         lastPhotoOut = pwm;
       }
   	}
+  },
+
+  // set useLED
+  setLED: function(value) {
+    logEvent(1, "Set LED "+value);
+    useLED = value;
+    if (useLED == false) sp.write("SE,0\r");
   },
 
   // Set a speed scalar where 1 is normal, 2 is double

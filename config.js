@@ -1,17 +1,13 @@
 var fs				      = require('fs');
 var _               = require('underscore');
 var uuid			      = require('uuid');
-var which_cson      = 'default.cson';
 var default_status  = require('./default_status.js');
+var which_cson  = require('/home/pi/sisbot-server/sisbot/configs/whichcson.js');
 
-if (process.env.NODE_ENV.indexOf('dev') == -1) {
-    var which_cson  = require('/home/pi/sisbot-server/sisbot/configs/whichcson.js');
-
-    // PROVE CSON FILE EXISTS
-    if (!fs.existsSync('/home/pi/sisbot-server/sisbot/configs/' + which_cson)) {
-        console.log('!!!!! MISSING CSON FILE !!!!!');
-        which_cson = 'default.cson';
-    }
+// PROVE CSON FILE EXISTS
+if (!fs.existsSync('/home/pi/sisbot-server/sisbot/configs/' + which_cson)) {
+    console.log('!!!!! MISSING CSON FILE !!!!!');
+    which_cson = 'default.cson';
 }
 
 var config = {

@@ -126,7 +126,7 @@ if __name__ == '__main__':
         print('Use "-c" argument to clear LEDs on exit')
 
     # load default python script
-    update = dynamic_import("fade", "update")
+    update = dynamic_import("spread", "update")
 
     try:
 	fill(strip, Color(1,1,1,1))

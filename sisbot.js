@@ -331,7 +331,11 @@ var sisbot = {
     logEvent(1, "Plotter");
     var cson_config = CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config);
   	this.plotter.setConfig(cson_config);
-    if (cson_config.max_speed) this.config.max_speed = cson_config.max_speed; // overwrite config.js max_speed if table allows
+
+    // overwrite config.js max_speed if table allows
+    if (cson_config.max_speed) this.config.max_speed = cson_config.max_speed;
+
+    // two ball
 		if (cson_config.twoBallEnabled) {
       logEvent(1, "Enable two ball");
 			this._detach_first = true;
@@ -351,6 +355,22 @@ var sisbot = {
         // this._detach_track = cson_config.detach_track;
 			}
 		}
+
+    // RGBW
+    if (cson_config.useRGBW) {
+      logEvent(1, "Use RGBW");
+      this.current_state.set('led_enabled','true');
+      this.current_state.set('led_count', cson_config.rgbwCount);
+      if (this.current_state.get('led_primary_color') == 'false') {
+        logEvent(2, "Set Primary Color", this.current_state.get('led_primary_color'));
+        this.current_state.set('led_primary_color', cson_config.rgbwPrimaryColor);
+      }
+      if (this.current_state.get('led_secondary_color') == 'false') {
+        logEvent(2, "Set Primary Color", this.current_state.get('led_primary_color'));
+        this.current_state.set('led_secondary_color', cson_config.rgbwSecondaryColor);
+      }
+    }
+
 		plotter.onServoThFault(function() {
       if (self.current_state.get('reason_unavailable') != 'servo_th_fault') logEvent(2, "Servo Th Fault!");
 			self.pause(null, null);
@@ -490,9 +510,6 @@ var sisbot = {
 
 		// connect
 		this._connect();
-
-    // position socket
-    this._connect_lcp();
 
 		// wifi connect
 		if (this.current_state.get("is_hotspot") == "false") {
@@ -661,26 +678,40 @@ var sisbot = {
     // this.lcp_socket.bind('/tmp/sisyphus_sockets');
     // this.lcp_socket.on('error', console.error);
     this.plotter.useLCPSocket(this.lcp_socket);
+
+    // turn on LEDs now if enabled by config
+    if (this.current_state.get('led_enabled') == 'true') this.set_led({is_rgbw:'true'});
   },
   set_led: function(data, cb) {
+    var self = this;
     // Enable/disable LED lights
     logEvent(1, 'Set led', data);
-
-    // tell plotter to send to LEDs/original strip
-
 
     // kill running python file
     if (this.py) this.py.kill();
 
     // start/stop python script
     if (data.is_rgbw == 'true') {
-  		this.py = spawn('python',['led_main.py'],{cwd:"/home/pi/sisbot-server/sisbot/content/lights",detached:true,stdio:'ignore'});
+      // tell plotter to turn off original strip
+      this.plotter.setLED(false);
+
+  		this.py = spawn('./start_leds.sh',[],{cwd:"/home/pi/sisbot-server/sisbot",detached:true,stdio:'ignore'});
       this.py.on('error', (err) => {
   			logEvent(2, 'Failed to start python process.', err);
   		});
   		this.py.on('close', (code) => {
   			logEvent(1, "python process exited with code", code);
   		});
+
+      // set initial values
+      setTimeout(function() {
+        var offset = self.current_state.get('led_offset');
+        if (offset != 0) self.set_led_offset({offset:offset});
+        self.set_led_color({primary_color:self.current_state.get('led_primary_color'), secondary_color:self.current_state.get('led_secondary_color')});
+      }, 1000);
+    } else {
+      // tell plotter to use original strip
+      this.plotter.setLED(true);
     }
 
     if (cb) cb(null, data);
@@ -708,6 +739,7 @@ var sisbot = {
   set_led_color: function(data, cb) {
     // Set LED colors
     logEvent(1, 'Set led color', data);
+    var is_change = false;
 
     //
     if (data.primary_color) {
@@ -733,6 +765,7 @@ var sisbot = {
       var buf = Buffer.from(arr.buffer);
 
       this.lcp_socket.send(buf, 0, 5, '/tmp/sisyphus_sockets');
+      is_change = true;
     }
     if (data.secondary_color) {
       logEvent(1, "Set secondary color", JSON.stringify(data.secondary_color));
@@ -756,6 +789,7 @@ var sisbot = {
       var buf = Buffer.from(arr.buffer);
 
       this.lcp_socket.send(buf, 0, 5, '/tmp/sisyphus_sockets');
+      is_change = true;
     }
 
     if (cb) cb(null, data);
@@ -787,7 +821,7 @@ var sisbot = {
   },
 	/***************************** Plotter ************************/
 	_connect: function() {
-    	if (this.serial && this.serial.isOpen) return true;
+  	if (this.serial && this.serial.isOpen) return true;
 
 		var self = this;
 		logEvent(1, "Serial Connect", this.config.serial_path);
@@ -804,6 +838,10 @@ var sisbot = {
 				logEvent(1, 'Serial: connected!', error, self.serial.isOpen);
 
 				self.current_state.set("is_serial_open", "true");
+
+        // position socket
+        self._connect_lcp();
+
 				self.set_brightness({value:self.current_state.get("brightness")}, null);
 				self.set_speed({value:self.current_state.get("speed")}, null);
 
