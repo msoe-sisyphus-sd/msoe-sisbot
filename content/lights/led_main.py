@@ -112,7 +112,13 @@ if __name__ == '__main__':
     # Process arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--clear', action='store_true', help='clear the display on exit')
+    parser.add_argument('-n', '--n', help='number of pixels in LED strip', type=int)
     args = parser.parse_args()
+
+    # Set led_count based on argument 0 if passed
+    if args.n:
+        print "LED Count {0}\n".format(args.n)
+        led_count = args.n
 
     # Create NeoPixel object with appropriate configuration.
     strip = Adafruit_NeoPixel(led_count, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, scolor)

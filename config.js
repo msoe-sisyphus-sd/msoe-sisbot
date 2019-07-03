@@ -12,7 +12,7 @@ if (!fs.existsSync('/home/pi/sisbot-server/sisbot/configs/' + which_cson)) {
 
 var config = {
 		base: {
-			version	: '1.9.30', // dynamic loading of python files, color/offset values passed to python
+			version	: '1.9.31', // config settings based on cson, autostart
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

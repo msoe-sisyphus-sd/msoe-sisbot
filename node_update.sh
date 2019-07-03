@@ -39,7 +39,7 @@ if [[ $NODE_V != "v8."* ]]; then
       rm -rf /usr/local/include/node
       # rm -rf /usr/local/lib/node_modeles ??
 
-      # remove proxy state file
+      # remove state file from proxy
       rm /home/pi/sisbot-server/sisproxy/state.json
 
       # restart pi

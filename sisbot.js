@@ -112,6 +112,8 @@ var sisbot = {
   isServo: false,
   homeFirst: true,
 
+  led_count: 0,
+
 	_paused: false,
   _pause_timestamp: null,
 	_play_next: false,
@@ -358,9 +360,9 @@ var sisbot = {
 
     // RGBW
     if (cson_config.useRGBW) {
-      logEvent(1, "Use RGBW");
+      logEvent(1, "Use RGBW", this.current_state.get('led_primary_color'), this.current_state.get('led_secondary_color'));
       this.current_state.set('led_enabled','true');
-      this.current_state.set('led_count', cson_config.rgbwCount);
+      if (cson_config.rgbwCount) this.led_count = cson_config.rgbwCount;
       if (this.current_state.get('led_primary_color') == 'false') {
         logEvent(2, "Set Primary Color", this.current_state.get('led_primary_color'));
         this.current_state.set('led_primary_color', cson_config.rgbwPrimaryColor);
@@ -695,7 +697,13 @@ var sisbot = {
       // tell plotter to turn off original strip
       this.plotter.setLED(false);
 
-  		this.py = spawn('./start_leds.sh',[],{cwd:"/home/pi/sisbot-server/sisbot",detached:true,stdio:'ignore'});
+      var args = [];
+      if (this.led_count) {
+        args.push('-n');
+        args.push(this.led_count);
+      }
+      logEvent(1, "Start LED", args);
+  		this.py = spawn('./start_leds.sh',args,{cwd:"/home/pi/sisbot-server/sisbot",detached:true,stdio:'ignore'});
       this.py.on('error', (err) => {
   			logEvent(2, 'Failed to start python process.', err);
   		});
@@ -708,7 +716,7 @@ var sisbot = {
         var offset = self.current_state.get('led_offset');
         if (offset != 0) self.set_led_offset({offset:offset});
         self.set_led_color({primary_color:self.current_state.get('led_primary_color'), secondary_color:self.current_state.get('led_secondary_color')});
-      }, 1000);
+      }, 2000);
     } else {
       // tell plotter to use original strip
       this.plotter.setLED(true);
@@ -731,7 +739,11 @@ var sisbot = {
       var totalLength = buf1.length + buf2.length;
       message = Buffer.concat([buf1, buf2], totalLength);
 
-      this.lcp_socket.send(message, 0, totalLength, '/tmp/sisyphus_sockets');
+      try {
+        this.lcp_socket.send(message, 0, totalLength, '/tmp/sisyphus_sockets');
+      } catch(err) {
+        logEvent(2, "LCP Offset error", err);
+      }
     }
 
     if (cb) cb(null, data);
@@ -764,7 +776,11 @@ var sisbot = {
 
       var buf = Buffer.from(arr.buffer);
 
-      this.lcp_socket.send(buf, 0, 5, '/tmp/sisyphus_sockets');
+      try {
+        this.lcp_socket.send(buf, 0, 5, '/tmp/sisyphus_sockets');
+      } catch(err) {
+        logEvent(2, "LCP primary color error", err);
+      }
       is_change = true;
     }
     if (data.secondary_color) {
@@ -788,7 +804,11 @@ var sisbot = {
 
       var buf = Buffer.from(arr.buffer);
 
-      this.lcp_socket.send(buf, 0, 5, '/tmp/sisyphus_sockets');
+      try {
+        this.lcp_socket.send(buf, 0, 5, '/tmp/sisyphus_sockets');
+      } catch(err) {
+        logEvent(2, "LCP secondary color error", err);
+      }
       is_change = true;
     }
 
