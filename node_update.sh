@@ -32,7 +32,7 @@ if [[ $NODE_V != "v8."* ]]; then
       exit 1
     else
       echo "Success! Network found."
-      exit 0
+
       # install nodejs via apt-get and -yq yes and quit
       curl -sL https://deb.nodesource.com/setup_8.x | bash -
       apt-get install -yq nodejs
