@@ -2057,6 +2057,8 @@ var sisbot = {
 		if (cb) cb(null, this.current_state.toJSON());
 	},
 	disconnect_wifi: function(data, cb) {
+    if (this.current_state.get('installing_updates') == 'true') return cb('Cannot Disconnect during Updates', null);
+
 		// This will remove old network/password
 		this.current_state.set({
 			wifi_network: "false",
@@ -2076,6 +2078,11 @@ var sisbot = {
 		this.reset_to_hotspot(data, cb);
 	},
 	reset_to_hotspot: function(data, cb) {
+    if (this.current_state.get('installing_updates') == 'true') {
+      if (cb) cb('Cannot Disconnect during Updates', null);
+      return;
+    }
+
 		// This won't remove old network/password, so we can try reconnecting again later
 		// Use disconnect_wifi if you want to remove old network/password
 		var self = this;
