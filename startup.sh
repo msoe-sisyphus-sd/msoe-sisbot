@@ -11,11 +11,14 @@ check_internet () {
   FAILED=false
   while ! ping -c 1 -W 2 google.com ; do
     sleep 1
-    RETRIES=RETRIES+1
-    if [ "$RETRIES" > "25" ] ; then
+    let "RETRIES++"
+    if [ $RETRIES -gt 25 ] ; then
       FAILED=true
+      break
     fi
   done
+
+  echo "Retries $RETRIES, Failed $FAILED"
 
   if [ "$FAILED" = true ] ; then
     echo "Failure! Unable to connect to network, please retry."
