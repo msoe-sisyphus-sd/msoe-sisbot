@@ -6,6 +6,7 @@
   - api_endpoint changed to config setting
   - separate is_network_connected from is_internet_connected values, only goes to hotspot when !is_network_connected
   - fix compile error for USB
+  - many fixes for errors on software update
 
 # 2019-05-29 1.10.24
   - fix BLE ip_address change
