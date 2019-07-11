@@ -53,16 +53,7 @@ cp /home/pi/sisbot-server/sisbot/rc_fix.local /etc/rc.local
 # make sure log file location existsSync
 mkdir -p /var/log/sisyphus
 
-# make sure we are on node 8.x.x
-sudo /home/pi/sisbot-server/sisbot/node_update.sh
-
-echo "Upgrade_Finish completed"
-
-# 1.0-1.2 reboot necessity, to make sure bluetooth updates self
-if [ -z "$1" ]; then
-	sudo reboot
-fi
-
+# Change the git repos over to webcenter
 pushd /home/pi/sisbot-server/sisbot
 git remote set-url origin pi@webcenter.sisyphus-industries.com:/git/sisbot.git
 popd
@@ -74,5 +65,15 @@ popd
 pushd /home/pi/sisbot-server/sisproxy
 git remote set-url origin pi@webcenter.sisyphus-industries.com:/git/sisproxy.git
 popd
+
+# make sure we are on node 8.x.x
+sudo /home/pi/sisbot-server/sisbot/node_update.sh
+
+echo "Upgrade_Finish completed"
+
+# 1.0-1.2 reboot necessity, to make sure bluetooth updates self
+if [ -z "$1" ]; then
+	sudo reboot
+fi
 
   
