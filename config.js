@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dev') == -1) {
 
 var config = {
 		base: {
-			version	: '1.10.29', // update_finish add fix for USB compile
+			version	: '1.10.30', // Move Bots over to webcenter
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -34,7 +34,7 @@ var config = {
 				api: 'sisapi',
   	  	logs: '/var/log/sisyphus/'
 			},
-			api_endpoint : 'https://api.sisyphus.withease.io',
+			api_endpoint : 'https://webcenter.sisyphus-industries.com',
 			receiver : true, // receive messages from cloud
 			sisbot_config : which_cson,
 			sisbot_state : 'status.json',
