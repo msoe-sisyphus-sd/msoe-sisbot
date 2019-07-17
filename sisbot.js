@@ -2001,14 +2001,14 @@ var sisbot = {
 		logEvent(1, "Sisbot change to wifi", data.ssid);
 		if (data.ssid == undefined || data.ssid == "" || data.ssid == "false") {
 			if (cb) cb("No network name given", null);
-		} else if (data.psk && (data.psk == "" || data.psk.length >= 8)) {
+		} else if (!data.psk || (data.psk && data.psk.length >= 8)) {
 			clearTimeout(this._network_check);
   		this._changing_to_wifi = true;
 			this._network_retries = 0; // clear retry count
 
 			// Make sure password is valid
 			// ValidPasswordRegex = new RegExp("^([^\s\"]{8,64})$");
-			if (/^([^\r\n"]{8,64})$/g.test(data.psk)) {
+			if (!data.psk || /^([^\r\n]{8,64})$/g.test(data.psk)) {
 				self.current_state.set({
 					is_available: "false",
           reason_unavailable: "connect_to_wifi",
@@ -2028,10 +2028,12 @@ var sisbot = {
 				// disconnect all socket connections first
 				self.socket_update("disconnect");
 
+        var connection = "'"+data.ssid.replace("'", '\'"\'"\'')+"'";
+        if (data.psk) connection += " '"+data.psk.replace("'", '\'"\'"\'')+"'";
 				logEvent(1, "Connect To Wifi", data.ssid);
 
         setTimeout(function () {
-          exec('sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "'+data.ssid+'" "'+data.psk+'"', (error, stdout, stderr) => {
+          exec("sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "+connection, (error, stdout, stderr) => {
   					if (error) return console.error('exec error:',error);
   				});
         }, 100);
@@ -2042,7 +2044,7 @@ var sisbot = {
 				cb("Invalid password", null);
 			}
 		} else {
-			if (cb) cb('ssid or psk error', null);
+			if (cb) cb('ssid or psk error "'+data.psk+'"', null);
 		}
 	},
 	is_network_connected: function(data, cb) {
