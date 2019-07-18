@@ -2001,6 +2001,7 @@ var sisbot = {
 		logEvent(1, "Sisbot change to wifi", data.ssid);
 		if (data.ssid == undefined || data.ssid == "" || data.ssid == "false") {
 			if (cb) cb("No network name given", null);
+      self.current_state.set({ wifi_forget: "false" });
 		} else if (!data.psk || (data.psk && data.psk.length >= 8)) {
 			clearTimeout(this._network_check);
   		this._changing_to_wifi = true;
@@ -2011,12 +2012,12 @@ var sisbot = {
 			if (!data.psk || /^([^\r\n]{8,64})$/g.test(data.psk)) {
 				self.current_state.set({
 					is_available: "false",
-          			reason_unavailable: "connect_to_wifi",
+    			reason_unavailable: "connect_to_wifi",
 					wifi_network: data.ssid,
 					wifi_password: data.psk,
 					is_hotspot: "false",
 					failed_to_connect_to_wifi: "false",
-          			is_network_connected: "false",
+    			is_network_connected: "false",
 					is_internet_connected: "false",// ?remove?
 				});
 
@@ -2036,17 +2037,17 @@ var sisbot = {
           exec("sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "+connection, (error, stdout, stderr) => {
   					if (error) return console.error('exec error:',error);
   				});
-        		}, 100);
+    		}, 100);
 
 				self._query_internet(8000); // check again in 8 seconds
 			} else if (cb) {
 				logEvent(2, "Invalid Password", data.psk);
 				cb("Invalid password", null);
+				self.current_state.set({ wifi_forget: "false" });
 			}
 		} else {
-			if (cb)
-			{ 
-			cb('Wi-Fi ssid is incorrect or you have entered the wrong password.', null);
+			if (cb) {
+			  cb('Wi-Fi ssid is incorrect or you have entered the wrong password.', null);
 				self.current_state.set({ wifi_forget: "false" });
 			}
 		}
@@ -2694,6 +2695,7 @@ var logEvent = function() {
 		});
 
     // redline errors
+    // if (arguments[0] == 0 || arguments[0] == '0') line = '\x1b[32m'+line+'\x1b[0m';
     // if (arguments[0] == 2 || arguments[0] == '2') line = '\x1b[31m'+line+'\x1b[0m';
 		// console.log(line); // !! comment out in master !!
 	} else console.log(arguments);
