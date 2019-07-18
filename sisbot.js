@@ -2011,13 +2011,13 @@ var sisbot = {
 			if (/^([^\r\n"]{8,64})$/g.test(data.psk)) {
 				self.current_state.set({
 					is_available: "false",
-          reason_unavailable: "connect_to_wifi",
+          			reason_unavailable: "connect_to_wifi",
 					wifi_network: data.ssid,
 					wifi_password: data.psk,
 					is_hotspot: "false",
 					failed_to_connect_to_wifi: "false",
-          is_network_connected: "false",
-					is_internet_connected: "false" // ?remove?
+          			is_network_connected: "false",
+					is_internet_connected: "false",// ?remove?
 				});
 
 				// logEvent(1, "New State:", self.current_state.toJSON());
@@ -2030,11 +2030,11 @@ var sisbot = {
 
 				logEvent(1, "Connect To Wifi", data.ssid);
 
-        setTimeout(function () {
-          exec('sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "'+data.ssid+'" "'+data.psk+'"', (error, stdout, stderr) => {
+        		setTimeout(function () {
+          		exec('sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "'+data.ssid+'" "'+data.psk+'"', (error, stdout, stderr) => {
   					if (error) return console.error('exec error:',error);
   				});
-        }, 100);
+        		}, 100);
 
 				self._query_internet(8000); // check again in 8 seconds
 			} else if (cb) {
@@ -2042,7 +2042,11 @@ var sisbot = {
 				cb("Invalid password", null);
 			}
 		} else {
-			if (cb) cb('ssid or psk error', null);
+			if (cb)
+			{ 
+			cb('Wi-Fi ssid is incorrect or you have entered the wrong password.', null);
+				self.current_state.set({ wifi_forget: "false" });
+			}
 		}
 	},
 	is_network_connected: function(data, cb) {
