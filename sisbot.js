@@ -20,64 +20,64 @@ var moment 		= require('moment');
 /**************************** BLE *********************************************/
 
 var ble_obj = {
-    initialize: function(sisbot_id) {
-    		logEvent(1, "ble_obj initialize()");
-        this.sisbot_id = sisbot_id;
+  initialize: function(sisbot_id) {
+		logEvent(1, "ble_obj initialize()");
+    this.sisbot_id = sisbot_id;
 
-        bleno.on('stateChange', this.on_state_change);
-        bleno.on('advertisingStart', this.on_advertising_start);
-    },
-    char: false,
-    ip_address: new Buffer([0, 0, 0, 0]),
-    update_ip_address: function(ip_address_str) {
-      var self = this;
-      var ip_array = ip_address_str.split('.');
-      var new_ip = false;
-      ip_array.map(function(val, i) {
-          if (self.ip_address[i] !== +val) new_ip = true;
-      });
-      if (new_ip) {
-        logEvent(1, 'BLE Updated IP ADDRESS', ip_address_str, ip_array.map(function(i) {
-            return +i;
-        }));
-        this.ip_address = new Buffer(ip_array.map(function(i) {
-            return +i;
-        }));
-      }
-    },
-    on_state_change: function(state) {
-    		logEvent(1, "ble_obj on_state_change()");
-        var ble_id = ble_obj.sisbot_id.substr(ble_obj.sisbot_id.length - 7);
-        logEvent(1, 'BLE Sisbot ID', ble_id);
-        if (state === 'poweredOn') bleno.startAdvertising('sisbot' + ble_id, ['ec00']);
-        else bleno.stopAdvertising();
-    },
-    on_advertising_start: function(error) {
-    		logEvent(1, "ble_obj on_advertising_start()");
-        if (error) return logEvent(2, '### WE HAD ISSUE STARTING BLUETOOTH');
-
-        bleno.setServices([
-            new bleno.PrimaryService({
-                uuid: 'ec00',
-                characteristics: [new Sisyphus_Characteristic()]
-            })
-        ]);
+    bleno.on('stateChange', this.on_state_change);
+    bleno.on('advertisingStart', this.on_advertising_start);
+  },
+  char: false,
+  ip_address: new Buffer([0, 0, 0, 0]),
+  update_ip_address: function(ip_address_str) {
+    var self = this;
+    var ip_array = ip_address_str.split('.');
+    var new_ip = false;
+    ip_array.map(function(val, i) {
+      if (self.ip_address[i] !== +val) new_ip = true;
+    });
+    if (new_ip) {
+      logEvent(1, 'BLE Updated IP ADDRESS', ip_address_str, ip_array.map(function(i) {
+        return +i;
+      }));
+      this.ip_address = new Buffer(ip_array.map(function(i) {
+        return +i;
+      }));
     }
+  },
+  on_state_change: function(state) {
+		logEvent(1, "ble_obj on_state_change()");
+    var ble_id = ble_obj.sisbot_id.substr(ble_obj.sisbot_id.length - 7);
+    logEvent(1, 'BLE Sisbot ID', ble_id);
+    if (state === 'poweredOn') bleno.startAdvertising('sisbot' + ble_id, ['ec00']);
+    else bleno.stopAdvertising();
+  },
+  on_advertising_start: function(error) {
+		logEvent(1, "ble_obj on_advertising_start()");
+    if (error) return logEvent(2, '### WE HAD ISSUE STARTING BLUETOOTH');
+
+    bleno.setServices([
+      new bleno.PrimaryService({
+        uuid: 'ec00',
+        characteristics: [new Sisyphus_Characteristic()]
+      })
+    ]);
+  }
 };
 
 var Sisyphus_Characteristic = function() {
-    Sisyphus_Characteristic.super_.call(this, {
-        uuid: 'ec0e',
-        properties: ['read'],
-        value: null
-    });
+  Sisyphus_Characteristic.super_.call(this, {
+    uuid: 'ec0e',
+    properties: ['read'],
+    value: null
+  });
 };
 
 util.inherits(Sisyphus_Characteristic, bleno.Characteristic);
 
 Sisyphus_Characteristic.prototype.onReadRequest = function(offset, callback) {
-    logEvent(1, 'Sisyphus_Characteristic - onReadRequest: value = ' + ble_obj.ip_address.toString('hex'));
-    callback(this.RESULT_SUCCESS, ble_obj.ip_address);
+  logEvent(1, 'Sisyphus_Characteristic - onReadRequest: value = ' + ble_obj.ip_address.toString('hex'));
+  callback(this.RESULT_SUCCESS, ble_obj.ip_address);
 };
 
 /**************************** SISBOT ******************************************/
@@ -109,6 +109,7 @@ var sisbot = {
   isServo: false,
   homeFirst: true,
 
+  // _valid_home: false,
 	_paused: false,
   _pause_timestamp: null,
 	_play_next: false,
@@ -244,9 +245,6 @@ var sisbot = {
 					logEvent(1, "Unknown:", obj);
 					self.collection.add(obj);
 			}
-
-
-
 		});
 
 
@@ -257,6 +255,8 @@ var sisbot = {
     // logEvent(1,"done setting track_ids");
     this.current_state.set("playlist_ids", playlists);
 
+    logEvent(1, "CSON:", config.sisbot_config);
+    this.current_state.set('cson', config.sisbot_config);
 
 		// make sure the hostname is correct
 		var regex = /^[^a-zA-Z]*/; // make sure first character is a-z
@@ -331,7 +331,7 @@ var sisbot = {
 
 		// plotter
     logEvent(1, "Plotter");
-    var cson_config = CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config);
+    // var cson_config = CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config);
   	this.plotter.setConfig(cson_config);
     if (cson_config.max_speed) this.config.max_speed = cson_config.max_speed; // overwrite config.js max_speed if table allows
 		if (cson_config.twoBallEnabled) {
@@ -375,8 +375,20 @@ var sisbot = {
 			clearTimeout(self._network_check); // stop internet checks
 		});
 		plotter.onFinishTrack(function() {
-			logEvent(1, "Track Finished");
+      var finished_track = self.current_state.get('active_track');
+			logEvent(1, "Track Finished", finished_track.id);
+
 			if (self._home_next == true) return logEvent(1, "Home Next, skip playing next");
+
+      // update balls
+      self.current_state.set('ball_count', self.plotter.getBalls());
+      logEvent(1, "Ball_count", self.current_state.get('ball_count'));
+
+      // force homing if rho is at zero, and we don't know if it is valid
+      if (!self.plotter.getRhoHome() && self.current_state.get('_end_rho') == 0) {
+        logEvent(1, "Rho at zero, validate home th, rho", self.plotter.getThetaHome(), self.plotter.getRhoHome());
+        self._home_next = true;
+      }
 
 			var playlist_id = self.current_state.get('active_playlist_id');
 			if (playlist_id != "false") {
@@ -447,8 +459,11 @@ var sisbot = {
 					return;
 				}
 
+        logEvent(1, "Sensor Values th, rho", self.plotter.getThetaHome(), self.plotter.getRhoHome());
+
         self._sensored = false; // don't sensored home next
 				self._home_next = false; // clear home next
+        // self._valid_home = true; // confirmed we are home
 				self.current_state.set({is_homed: "true", _end_rho: 0}); // reset
 
         if (newState == 'waiting' && self._autoplay && self.current_state.get('installing_updates') == "false") {
@@ -473,6 +488,7 @@ var sisbot = {
 
 			// play next track after pausing (i.e. new playlist)
 			if (newState == 'waiting' && oldState == 'playing' && !self._paused) {
+
 				if (self._home_next) {
 					logEvent(1, "Home Next");
 					setTimeout(function() {
@@ -668,9 +684,9 @@ var sisbot = {
 				self.set_speed({value:self.current_state.get("speed")}, null);
 
 				if (self.config.autoplay) {
-					//logEvent(1, "Autoplay:", self.current_state.get("default_playlist_id"));
-					if (self.current_state.get("default_playlist_id") != "false" && self.collection.get(self.current_state.get("default_playlist_id"))!=undefined) {
-						var playlist = self.collection.get(self.current_state.get("default_playlist_id"));
+					logEvent(1, "Autoplay:", self.current_state.get("active_playlist_id"));
+					if (self.current_state.get("active_playlist_id") != "false" && self.collection.get(self.current_state.get("active_playlist_id"))!=undefined) {
+						var playlist = self.collection.get(self.current_state.get("active_playlist_id"));
 						playlist.set({active_track_id: "false", active_track_index: -1});
 						playlist.reset_tracks(); // start with non-reversed list
 						playlist.set_shuffle({ is_shuffle: "true", start_rho: 0 }); // update order, active tracks indexing
@@ -907,8 +923,7 @@ var sisbot = {
 
 		if (this._validateConnection()) {
   		logEvent(1, "Sisbot Play", data);
-      if (this._pause_timestamp != null && (Date.now() - this._pause_timestamp) < this.pause_play_lockout_msec)
-      {
+      if (this._pause_timestamp != null && (Date.now() - this._pause_timestamp) < this.pause_play_lockout_msec) {
         logEvent(1,"Sisbot refused to Play, Still in lockout time window after a Pause command");
         if (cb) cb('Still waiting for Pause to complete', null);
         return;
@@ -969,13 +984,14 @@ var sisbot = {
 		var self = this;
 
 		if (this._validateConnection()) {
-	    logEvent(1, "Sisbot Home", data);
+	    logEvent(1, "Sisbot Home", data, this.current_state.get("state"));
 			if (data) { // special instructions?
 				if (data.stop) this._autoplay = false; // home without playing anything afterward
 				if (data.clear_tracks) this.current_state.set({active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
 			}
 
 			if (this.current_state.get("state") == "playing") {
+  	    logEvent(1, "Home Next");
 				this._home_next = true;
 				this.pause(null, function(err, resp) {
 					self._paused = false;
@@ -987,12 +1003,13 @@ var sisbot = {
 
 				////////// DR Homing:
 	      if (this._sensored == false){
+          logEvent(1, "Not Sensored");
     			var thetaPosition, rhoPosition;
 
     			thetaPosition = self.plotter.getThetaPosition();
-    			logEvent("shortest theta dist away from home = " + thetaPosition + " rads");
+    			logEvent(1, "shortest theta dist away from home = " + thetaPosition + " rads");
     			rhoPosition = plotter.getRhoPosition();
-    			logEvent("rho dist away form home = " + rhoPosition + " normalized");
+    			logEvent(1, "rho dist away form home = " + rhoPosition + " normalized");
 
     			var track_obj = {
 						verts: [{th: thetaPosition, r: rhoPosition},{th:0,r:0}],
@@ -1001,7 +1018,7 @@ var sisbot = {
 						thvmax: 0.5
 					};
 					self._paused = false;
-					logEvent("doing DEAD RECKONING homing...");
+					logEvent(1, "doing DEAD RECKONING homing...");
 					self.plotter.playTrack(track_obj);
 					self._home_next = true; // home after this outward movement
 
@@ -1009,6 +1026,7 @@ var sisbot = {
 
   				if (cb)	cb(null, this.current_state.toJSON());
 	      } else {
+          logEvent(1, "Home on Delay");
           // delay, then check if we need to move out
           self._home_delay = setTimeout(function() {
             self._delayed_home(data, cb);
@@ -1017,23 +1035,21 @@ var sisbot = {
 			}
 		} else if (cb) cb('No Connection', null);
 	},
-    _delayed_home: function(data, cb) {
+  _delayed_home: function(data, cb) {
     var self = this;
 
     //
 		if (this._validateConnection()) {
       var thHome = self.plotter.getThetaHome();
-
       var rhoHome = self.plotter.getRhoHome();
-
       logEvent(1, "Sensor Values", thHome, rhoHome);
 			//testing this:
 			//thHome = false;
 			//rhoHome = false;
 		//	console.log("setting homes false here");
 
-    	var skip_move_out_if_sensors_at_home = false;
-    	if (this.isServo) skip_move_out_if_sensors_at_home = true;
+    	var skip_move_out_if_sensors_at_home = true; // !! Was false
+    	// if (this.isServo) skip_move_out_if_sensors_at_home = true; !! Removed for testing
 
       /////////////////////
       if (thHome && rhoHome && skip_move_out_if_sensors_at_home) {
@@ -1059,7 +1075,7 @@ var sisbot = {
 	      if (this.isServo == true) this._moved_out = true; // no move out for servo tables
 
         if (this._moved_out) {
-					logEvent(1, "not at home after DR, doing sensored...");
+					logEvent(2, "not at home after DR, doing sensored...");
           self.plotter.home();
           this._moved_out = false;
         } else {
@@ -1072,10 +1088,10 @@ var sisbot = {
             thvmax: 0.5
           };
           if (thHome == true) {
-            logEvent(1, "Homing... Failed rho after DR, Fix rho");
+            logEvent(2, "Homing... Failed rho after DR, Fix rho");
             track_obj.verts.push({th:self.config.auto_home_th, r:self.config.auto_home_rho});
           } else {
-            logEvent(1, "Homing... Failed Theta after DR, Fix theta and rho");
+            logEvent(2, "Homing... Failed Theta after DR, Fix theta and rho");
             track_obj.verts.push({th:self.config.auto_home_th, r:self.config.auto_home_rho});
           }
           self.plotter.playTrack(track_obj);
@@ -1487,6 +1503,7 @@ var sisbot = {
 
 		// tell sockets
 		this.socket_update([playlist.toJSON(), this.current_state.toJSON()]);
+
 		if (do_save) this.save(null, null);
 
 		if (cb)	cb(null, playlist.toJSON());
@@ -1551,10 +1568,11 @@ var sisbot = {
 			else return;
 		}
 		if (this._validateConnection()) {
+
 			if (this.current_state.get("is_homed") == "true") {
 				var track = this.collection.get(data.id);
 				if (track != undefined) {
-				    if (this.current_state.get("is_homed") == "true") {
+			    if (this.current_state.get("is_homed") == "true") {
 						_.extend(data, {start:self.current_state.get('_end_rho')});
 						var track_obj = track.get_plotter_obj(data, self.config.auto_track_start_rho);
 						if (track_obj != "false") {
@@ -1566,6 +1584,7 @@ var sisbot = {
                 this._play_given_track(track_obj, null);
               } else {
   							this.plotter.playTrack(track_obj);
+                // this._valid_home = false; // so we validate home on next zero start
   							this.current_state.set('_end_rho', track_obj.lastR); // pull from track_obj
 
   							this.save(null, null);
@@ -2690,8 +2709,13 @@ var logEvent = function() {
 		});
 
     // redline errors
-    // if (arguments[0] == 2 || arguments[0] == '2') line = '\x1b[31m'+line+'\x1b[0m';
-		// console.log(line); // !! comment out in master !!
+    if (process.env.NODE_ENV != undefined) {
+      if (process.env.NODE_ENV.indexOf('_dev') >= 0) {
+        if (arguments[0] == 0 || arguments[0] == '0') line = '\x1b[32m'+line+'\x1b[0m'; // Green
+        if (arguments[0] == 2 || arguments[0] == '2') line = '\x1b[31m'+line+'\x1b[0m'; // Red
+    		console.log(line);
+      }
+    }
 	} else console.log(arguments);
 }
 

@@ -1210,6 +1210,10 @@ module.exports = {
     return ((rAccum - thAccum * rthAsp * nestedAxisSign) * rDirSign/ rSPInch)/plotRadius;
  },
 
+   getBalls: function() {
+     return balls;
+  },
+
   // Find the ball and reset it's position.
   home: function() {
     if (options.home) {

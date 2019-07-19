@@ -12,6 +12,8 @@ stepsPerRadiusInch: 2573.2841325173814
 autoplay: true # when true it will home and play the default playlist sequentially on boot.
 
 twoBallEnabled: false
+# attach_track: '0 0,-0.6 0,-0.6 -0.0741,0 -0.0741,-0.6 -0.0741,-0.6 0,0 0' # set table specific attach verts
+# detach_track: '0 0,-0.6 0,-0.6 -0.0741,0 -0.0741,0 0' # set table specific detach verts
 
 # Default movement parameters
 # 5. Default velocity (in/sec)= 1
