@@ -4,6 +4,7 @@
   - save cson name & ball_count to model
   - home on rho 0
   - autoplay last playlist on reboot
+  - fixed force sensored home on first homing (non-servos)
 
 # 2019-05-29 1.10.30
   - move sisbots over to webcenter

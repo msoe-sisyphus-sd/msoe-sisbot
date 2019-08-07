@@ -211,7 +211,7 @@ function checkPhoto() { //autodimming functionality:
     if (delta >= .5) {
 
       if (photoOut != 0) {
-        sp.write("SE,1," + photoOut + "\r");
+        if (useLED) sp.write("SE,1," + photoOut + "\r");
         // logEvent(0, "SE,1," + photoOut);
       } else {
         sp.write("SE,0\r");
@@ -715,13 +715,13 @@ function goRhoHome() {
   } else { //Rho home sensor activated, confirm it:
     if (RETESTCOUNTER < RETESTNUM) { //not fully confirmed yet:
       RETESTCOUNTER++;
-      logEvent(0, "RETESTCOUNTER: " + RETESTCOUNTER);
+      logEvent(1, "RETESTCOUNTER: " + RETESTCOUNTER);
       sp.write(rhoHomeQueryStr, function(err, res) {
         sp.drain(function(err, result) {
           if (err) {
             logEvent(2, err, result);
           } else {
-            logEvent(0, "Rho Home", rhoHomeQueryStr);
+            logEvent(1, "Rho Home", rhoHomeQueryStr);
 
             // allow time for return of sensor state:
             setTimeout(goRhoHome, 15);

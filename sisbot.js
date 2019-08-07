@@ -114,7 +114,7 @@ var sisbot = {
 
   led_count: 0,
 
-  // _valid_home: false,
+  _first_home: true, // make sure we do a sensored home on startup
 	_paused: false,
   _pause_timestamp: null,
 	_play_next: false,
@@ -261,7 +261,7 @@ var sisbot = {
 
     if (cson_config.autodim) this.current_state.set('is_autodim_allowed', cson_config.autodim.toString());
     else this.current_state.set('is_autodim_allowed', 'true');
-    logEvent(0, "Autodim: ", this.current_state.get('is_autodim_allowed'));
+    logEvent(1, "Autodim: ", this.current_state.get('is_autodim_allowed'));
 
 		// make sure the hostname is correct
 		var regex = /^[^a-zA-Z]*/; // make sure first character is a-z
@@ -488,7 +488,7 @@ var sisbot = {
 
         self._sensored = false; // don't sensored home next
 				self._home_next = false; // clear home next
-        // self._valid_home = true; // confirmed we are home
+        self._first_home = false; // first homing is complete
 				self.current_state.set({is_homed: "true", _end_rho: 0}); // reset
 
         if (newState == 'waiting' && self._autoplay && self.current_state.get('installing_updates') == "false") {
@@ -1250,8 +1250,8 @@ var sisbot = {
 			//rhoHome = false;
 		  //	console.log("setting homes false here");
 
-    	var skip_move_out_if_sensors_at_home = true; // !! Was false
-    	// if (this.isServo) skip_move_out_if_sensors_at_home = true; !! Removed for testing
+    	var skip_move_out_if_sensors_at_home = true;
+      if (this._first_home && !this.isServo) skip_move_out_if_sensors_at_home = false; // force sensored on first homing, if not servo
 
       /////////////////////
       if (thHome && rhoHome && skip_move_out_if_sensors_at_home) {
@@ -1273,11 +1273,12 @@ var sisbot = {
       } else {
         this._sensored = true; // force sensored home
 
-        // 	this._moved_out = true; // restore the move out after DR has failed ****************
+        if (thHome && rhoHome) this._moved_out = false; // move out if we are on sensors and need to force sensored home
 	      if (this.isServo == true) this._moved_out = true; // no move out for servo tables
 
         if (this._moved_out) {
-					logEvent(2, "not at home after DR, doing sensored...");
+					if (this._first_home) logEvent(0, "First home, use sensors");
+          else logEvent(2, "not at home after DR, doing sensored...");
           self.plotter.home();
           this._moved_out = false;
         } else {
@@ -1289,11 +1290,13 @@ var sisbot = {
             accel: 0.5,
             thvmax: 0.5
           };
-          if (thHome == true) {
-            logEvent(2, "Homing... Failed rho after DR, Fix rho");
+          if (thHome == true && rhoHome == false) {
+  					if (this._first_home) logEvent(0, "First home, use sensors");
+            else logEvent(2, "Homing... Failed rho after DR, Fix rho");
             track_obj.verts.push({th:self.config.auto_home_th, r:self.config.auto_home_rho});
           } else {
-            logEvent(2, "Homing... Failed Theta after DR, Fix theta and rho");
+  					if (this._first_home) logEvent(0, "First home, use sensors");
+            else logEvent(2, "Homing... Failed Theta after DR, Fix theta and rho");
             track_obj.verts.push({th:self.config.auto_home_th, r:self.config.auto_home_rho});
           }
           self.plotter.playTrack(track_obj);
@@ -1786,7 +1789,6 @@ var sisbot = {
                 this._play_given_track(track_obj, null);
               } else {
   							this.plotter.playTrack(track_obj);
-                // this._valid_home = false; // so we validate home on next zero start
   							this.current_state.set('_end_rho', track_obj.lastR); // pull from track_obj
 
   							this.save(null, null);
