@@ -1,3 +1,10 @@
+# 2019-08-07 1.10.31
+  - Jimmy homing
+  - Allow empty password on wifi
+  - save cson name & ball_count to model
+  - home on rho 0
+  - autoplay last playlist on reboot
+
 # 2019-05-29 1.10.30
   - move sisbots over to webcenter
 

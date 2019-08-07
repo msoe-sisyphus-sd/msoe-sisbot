@@ -132,6 +132,7 @@ var sisbot = {
   _internet_lanonly_check: false,
 	_changing_to_wifi: false,
 	_iw_retries: 0,
+  _old_ip: null,
 
 	_hostname_queue: {},
 	_hostname_schedule: null,
@@ -257,6 +258,10 @@ var sisbot = {
 
     logEvent(1, "CSON:", config.sisbot_config);
     this.current_state.set('cson', config.sisbot_config);
+
+    if (cson_config.autodim) this.current_state.set('is_autodim_allowed', cson_config.autodim.toString());
+    else this.current_state.set('is_autodim_allowed', 'true');
+    logEvent(0, "Autodim: ", this.current_state.get('is_autodim_allowed'));
 
 		// make sure the hostname is correct
 		var regex = /^[^a-zA-Z]*/; // make sure first character is a-z
@@ -1795,15 +1800,17 @@ var sisbot = {
 		if (this.current_state.get('is_autodim') == "true") {
 	    	plotter.setBrightness(value);// for autodim
 		} else {
-		    // convert to an integer from 0 - 1023, parabolic scale.
-		    var pwm = Math.pow(2, value * 10) - 1;
-		    pwm = Math.floor(pwm);
+	    // convert to an integer from 0 - 1023, parabolic scale.
+	    var pwm = Math.pow(2, value * 10) - 1;
+	    pwm = Math.floor(pwm);
 
-		    if (pwm == 0) {
-		      this._serialWrite('SE,0');
-		    } else {
-		      this._serialWrite('SE,1,'+pwm);
-		    }
+      logEvent(0, "Brightness", data, value, pwm);
+
+	    if (pwm == 0) {
+	      this._serialWrite('SE,0');
+	    } else {
+	      this._serialWrite('SE,1,'+pwm);
+	    }
 		}
 
 		this.save(null, null);
@@ -1934,8 +1941,12 @@ var sisbot = {
     					if (resp == "true") {
     						if (self.config.debug) logEvent(1, "Internet connected.",self.current_state.get("is_internet_connected"));
 
-    						// TODO: only post if IP address changed
-                self._post_state_to_cloud();
+                // TODO: only post if IP address changed
+                var ip_address = self._getIPAddress();
+                if (self._old_ip != ip_address) {
+                  self._post_state_to_cloud();
+                  self._old_ip = ip_address;
+                }
     					}
     				});
           } else {
@@ -1970,7 +1981,7 @@ var sisbot = {
       },
       function on_resp(error, response, body) {
         if (!error && response.statusCode == 200) {
-          logEvent(1, "Post to cloud", body);
+          logEvent(0, "Post to cloud", body);
         } else {
           if (response) logEvent(2, "Request Not found:", response.statusCode);
         }
@@ -2149,6 +2160,8 @@ var sisbot = {
           local_ip: self._getIPAddress(),
           failed_to_connect_to_wifi: (self._changing_to_wifi == true) ? 'true' : 'false'
       };
+
+      self._old_ip = self._getIPAddress();
 
       self._changing_to_wifi = false;
 			self.current_state.set(new_state);
