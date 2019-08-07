@@ -12,7 +12,7 @@ if (!fs.existsSync('/home/pi/sisbot-server/sisbot/configs/' + which_cson)) {
 
 var config = {
 		base: {
-			version	: '1.9.31', // config settings based on cson, autostart
+			version	: '1.9.31', // Jimmy Homing, Allow empty password on wifi, save cson name & ball_count to model, home on rho 0, autoplay last playlist on reboot
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -30,7 +30,7 @@ var config = {
 				api: 'sisapi',
   	  	logs: '/var/log/sisyphus/'
 			},
-			api_endpoint : 'https://api.sisyphus.withease.io',
+			api_endpoint : 'https://webcenter.sisyphus-industries.com',
 			receiver : true, // receive messages from cloud
 			sisbot_config : which_cson,
 			sisbot_state : 'status.json',

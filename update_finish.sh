@@ -43,6 +43,19 @@ cp /home/pi/sisbot-server/sisbot/factory_reset.sh /home/pi/sisbot-server/
 # make sure log file location existsSync
 mkdir -p /var/log/sisyphus
 
+# Change the git repos over to webcenter
+pushd /home/pi/sisbot-server/sisbot
+git remote set-url origin pi@webcenter.sisyphus-industries.com:/git/sisbot.git
+popd
+
+pushd /home/pi/sisbot-server/siscloud
+git remote set-url origin pi@webcenter.sisyphus-industries.com:/git/siscloud.git
+popd
+
+pushd /home/pi/sisbot-server/sisproxy
+git remote set-url origin pi@webcenter.sisyphus-industries.com:/git/sisproxy.git
+popd
+
 # make sure we are on node 8.x.x
 sudo /home/pi/sisbot-server/sisbot/node_update.sh > /var/log/sisyphus/node_update.log
 
@@ -52,3 +65,5 @@ echo "Upgrade_Finish completed"
 if [ -z "$1" ]; then
 	sudo reboot
 fi
+
+  

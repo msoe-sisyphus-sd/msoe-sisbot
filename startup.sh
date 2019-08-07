@@ -11,13 +11,16 @@ check_internet () {
   FAILED=false
   while ! ping -c 1 -W 2 google.com ; do
     sleep 1
-    RETRIES=RETRIES+1
-    if [ "$RETRIES" > "25" ] ; then
+    let "RETRIES++"
+    if [ $RETRIES -gt 25 ] ; then
       FAILED=true
+      break
     fi
   done
 
-  if [ "$FAILED" = false ] ; then
+  echo "Retries $RETRIES, Failed $FAILED"
+
+  if [ "$FAILED" = true ] ; then
     echo "Failure! Unable to connect to network, please retry."
     return 0
   else
@@ -96,6 +99,7 @@ start_time="$(date -u +%s)"
     if [ "$IS_CONNECTED" = 0 ] ; then
       echo "Failure! Unable to connect to network, please retry."
     else
+      rm -rf node_modules
       sudo -u pi npm install
       sleep 5
       ./restart.sh &

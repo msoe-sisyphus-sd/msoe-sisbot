@@ -12,6 +12,7 @@ var sisbot_state = Backbone.Model.extend({
 		software_version		: "1.0",
 		hostname						: "sisyphus.local",
 		local_ip						: "",
+		cson								: "false",
 
 		is_available					: "true",
 		installing_updates		: "false",
