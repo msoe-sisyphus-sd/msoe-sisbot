@@ -110,6 +110,7 @@ var sisbot = {
   homeFirst: true,
 
   // _valid_home: false,
+  _first_home: true, // make sure we do a sensored home on startup
 	_paused: false,
   _pause_timestamp: null,
 	_play_next: false,
@@ -200,8 +201,7 @@ var sisbot = {
           if (obj.name == 'Detach') { is_2ball_track = true; }
           logEvent(1, "track switch 2ball ", is_2ball , " track_type ", is_2ball_track);
 
-          if (is_2ball || is_2ball_track == false)
-          {
+          if (is_2ball || is_2ball_track == false) {
             logEvent(1, "adding track named to self.collection ", obj.name);
             var newTrack = new Track(obj);
   					var track = self.collection.add(newTrack);
@@ -218,8 +218,7 @@ var sisbot = {
 				case "playlist":
           var newPlaylist = new Playlist(obj);
           logEvent(1,"reading in playlist during init " + newPlaylist.get('name'));
-          if (newPlaylist.get('name') == "2Ball Demo")
-          {
+          if (newPlaylist.get('name') == "2Ball Demo") {
             logEvent(1,"Found the 2Ball Demo playlist");
             if (cson_config.twoBallEnabled) {
               logEvent(1,"Two ball config, allowed to see this playlist");
@@ -228,9 +227,7 @@ var sisbot = {
                 playlists.push(playlist.get("id"));
               }
             }
-          }
-          else
-          {
+          } else {
             logEvent(1,"saving playlist to collection " + newPlaylist.get('name'));
   					var playlist = self.collection.add(newPlaylist);
             if (playlists.indexOf(playlist.get("id")) < 0) {
@@ -248,7 +245,6 @@ var sisbot = {
 			}
 		});
 
-
 		this.current_state = this.collection.findWhere({type: "sisbot"});
 
     // logEvent(1,"setting track_ids to ", tracks);
@@ -261,7 +257,7 @@ var sisbot = {
 
     if (cson_config.autodim) this.current_state.set('is_autodim_allowed', cson_config.autodim.toString());
     else this.current_state.set('is_autodim_allowed', 'true');
-    logEvent(0, "Autodim: ", this.current_state.get('is_autodim_allowed'));
+    logEvent(1, "Autodim: ", this.current_state.get('is_autodim_allowed'));
 
 		// make sure the hostname is correct
 		var regex = /^[^a-zA-Z]*/; // make sure first character is a-z
@@ -338,7 +334,11 @@ var sisbot = {
     logEvent(1, "Plotter");
     // var cson_config = CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config);
   	this.plotter.setConfig(cson_config);
-    if (cson_config.max_speed) this.config.max_speed = cson_config.max_speed; // overwrite config.js max_speed if table allows
+
+    // overwrite config.js max_speed if table allows
+    if (cson_config.max_speed) this.config.max_speed = cson_config.max_speed;
+
+    // two ball
 		if (cson_config.twoBallEnabled) {
       logEvent(1, "Enable two ball");
 			this._detach_first = true;
@@ -468,7 +468,7 @@ var sisbot = {
 
         self._sensored = false; // don't sensored home next
 				self._home_next = false; // clear home next
-        // self._valid_home = true; // confirmed we are home
+        self._first_home = false; // first homing is complete
 				self.current_state.set({is_homed: "true", _end_rho: 0}); // reset
 
         if (newState == 'waiting' && self._autoplay && self.current_state.get('installing_updates') == "false") {
@@ -795,8 +795,7 @@ var sisbot = {
   set_hostname: function(data,cb) {
     logEvent(1, "set hostname", data);
 
-    if (this.isServo && this.homeFirst)
-    {
+    if (this.isServo && this.homeFirst) {
       var homedata = {
         stop : true,
         clear_tracks: true
@@ -1053,8 +1052,8 @@ var sisbot = {
 			//rhoHome = false;
 		//	console.log("setting homes false here");
 
-    	var skip_move_out_if_sensors_at_home = true; // !! Was false
-    	// if (this.isServo) skip_move_out_if_sensors_at_home = true; !! Removed for testing
+    	var skip_move_out_if_sensors_at_home = true;
+      if (this._first_home && !this.isServo) skip_move_out_if_sensors_at_home = false; // force sensored on first homing, if not servo
 
       /////////////////////
       if (thHome && rhoHome && skip_move_out_if_sensors_at_home) {
@@ -1076,11 +1075,12 @@ var sisbot = {
       } else {
         this._sensored = true; // force sensored home
 
-        // 	this._moved_out = true; // restore the move out after DR has failed ****************
+        if (thHome && rhoHome) this._moved_out = false; // move out if we are on sensors and need to force sensored home
 	      if (this.isServo == true) this._moved_out = true; // no move out for servo tables
 
         if (this._moved_out) {
-					logEvent(2, "not at home after DR, doing sensored...");
+					if (this._first_home) logEvent(0, "First home, use sensors");
+          else logEvent(2, "not at home after DR, doing sensored...");
           self.plotter.home();
           this._moved_out = false;
         } else {
@@ -1092,11 +1092,13 @@ var sisbot = {
             accel: 0.5,
             thvmax: 0.5
           };
-          if (thHome == true) {
-            logEvent(2, "Homing... Failed rho after DR, Fix rho");
+          if (thHome == true && rhoHome == false) {
+  					if (this._first_home) logEvent(0, "First home, use sensors");
+            else logEvent(2, "Homing... Failed rho after DR, Fix rho");
             track_obj.verts.push({th:self.config.auto_home_th, r:self.config.auto_home_rho});
           } else {
-            logEvent(2, "Homing... Failed Theta after DR, Fix theta and rho");
+  					if (this._first_home) logEvent(0, "First home, use sensors");
+            else logEvent(2, "Homing... Failed Theta after DR, Fix theta and rho");
             track_obj.verts.push({th:self.config.auto_home_th, r:self.config.auto_home_rho});
           }
           self.plotter.playTrack(track_obj);
@@ -1589,7 +1591,6 @@ var sisbot = {
                 this._play_given_track(track_obj, null);
               } else {
   							this.plotter.playTrack(track_obj);
-                // this._valid_home = false; // so we validate home on next zero start
   							this.current_state.set('_end_rho', track_obj.lastR); // pull from track_obj
 
   							this.save(null, null);
@@ -2132,6 +2133,7 @@ var sisbot = {
 
 		// forget bad network values (from cloud)
 		if (this.current_state.get('wifi_forget') == 'true') {
+	    logEvent(1, "Sisbot Forget Wifi");
 			this.current_state.set({
 				wifi_network: "false",
 				wifi_password: "false",
@@ -2186,6 +2188,7 @@ var sisbot = {
 
     var wifi_network = self.current_state.get("wifi_network");
     if (!wifi_network || wifi_network == 'false') return;
+
 		self.get_wifi({ iface: 'wlan0', show_hidden: true }, function(err, resp) {
 			if (err) {
 				logEvent(2, "Wifi list error:", err);
@@ -2427,8 +2430,7 @@ var sisbot = {
   install_updates: function(data, cb) {
 
     logEvent(1, "Sisbot Install Updates WRAPPER", data);
-    if (this.isServo && this.homeFirst)
-    {
+    if (this.isServo && this.homeFirst) {
       var homedata = {
         stop : true,
         clear_tracks: true
@@ -2451,14 +2453,11 @@ var sisbot = {
     logEvent(1, "no servo, call _install_updates directly");
     this._install_updates(data, cb);
   },
-  _wait_for_home: function(data, cb, funcptr, this2, saw_homing)
-  {
+  _wait_for_home: function(data, cb, funcptr, this2, saw_homing) {
     // logEvent(1, "Waiting for home, current state = ", this.current_state.get("state"));
 
-    if (saw_homing == false)
-    {
-      if (this.current_state.get("state") == "homing")
-      {
+    if (saw_homing == false) {
+      if (this.current_state.get("state") == "homing") {
         saw_homing = true;
       }
 
@@ -2471,13 +2470,10 @@ var sisbot = {
       return;
     }
 
-    if (this.current_state.get("state") == "waiting")
-    {
+    if (this.current_state.get("state") == "waiting") {
       logEvent(1, "_wait_for_home done waiting for servo to go home, call the next function with data=", data);
       funcptr.call(this2, data, cb);
-    }
-    else
-    {
+    } else {
       var self = this;
       logEvent(1, "_wait_for_home, waiting for state waiting = ", data);
       setTimeout(function(data, cb, fptr, this2, saw_homing) {
@@ -2500,7 +2496,7 @@ var sisbot = {
 		if (cb) cb(null, this.current_state.toJSON());
 
     logEvent(1, "Sisbot running update script update.sh");
-		exec('/home/pi/sisbot-server/sisbot/update.sh '+this.config.service_branches.sisbot+' '+this.config.service_branches.app+' '+this.config.service_branches.proxy+' false > /home/pi/sisbot-server/update.log', (error, stdout, stderr) => {
+		exec('/home/pi/sisbot-server/sisbot/update.sh '+this.config.service_branches.sisbot+' '+this.config.service_branches.app+' '+this.config.service_branches.proxy+' false >> /var/log/sisyphus/'+moment().format('YYYYMMDD')+'_update.log', (error, stdout, stderr) => {
 			self.current_state.set({installing_updates: 'false'});
 		  if (error) {
 				return logEvent(2, 'exec error:',error);
@@ -2584,9 +2580,7 @@ var sisbot = {
 		ping.send(); // or ping.start();
 	},
   factory_reset: function(data, cb) {
-
-    if (this.isServo && this.homeFirst)
-    {
+    if (this.isServo && this.homeFirst) {
       var homedata = {
         stop : true,
         clear_tracks: true
@@ -2623,9 +2617,7 @@ var sisbot = {
 		});
 	},
   restart: function(data,cb) {
-
-    if (this.isServo && this.homeFirst)
-    {
+    if (this.isServo && this.homeFirst) {
       var homedata = {
         stop : true,
         clear_tracks: true
@@ -2646,9 +2638,7 @@ var sisbot = {
     }
 
     this._restart(data, cb);
-
   },
-
 	_restart: function(data,cb) {
 		logEvent(1, "Sisbot Restart", data);
 		this.current_state.set({is_available: "false", reason_unavailable: "restarting"});
@@ -2662,9 +2652,7 @@ var sisbot = {
 		});
 	},
   reboot: function(data,cb) {
-
-    if (this.isServo  && this.homeFirst)
-    {
+    if (this.isServo  && this.homeFirst) {
       var homedata = {
         stop : true,
         clear_tracks: true
@@ -2685,7 +2673,6 @@ var sisbot = {
     }
 
     this._reboot(data, cb);
-
   },
   _reboot: function(data,cb) {
 		logEvent(1, "Sisbot Reboot", data);
@@ -2731,6 +2718,5 @@ var logEvent = function() {
     }
 	} else console.log(arguments);
 }
-
 
 module.exports = sisbot;
