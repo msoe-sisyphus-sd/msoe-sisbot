@@ -12,7 +12,7 @@ if (!fs.existsSync('/home/pi/sisbot-server/sisbot/configs/' + which_cson)) {
 
 var config = {
 		base: {
-			version	: '1.9.31', // Jimmy Homing, Allow empty password on wifi, save cson name & ball_count to model, home on rho 0, autoplay last playlist on reboot
+			version	: '1.9.31', // Fix DR drift, Jimmy Homing, Allow empty password on wifi, save cson name & ball_count to model, home on rho 0, autoplay last playlist on reboot
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

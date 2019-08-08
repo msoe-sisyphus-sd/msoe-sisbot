@@ -434,7 +434,7 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLOstep
       ReLOr = eLOr;
       RfracSeg = fracSeg;
 
-      sp.write('EM,0,0\r'); // turn off motors
+      // sp.write('EM,0,0\r'); // turn off motors
 
       return; //break the nextSeg chain = being paused
     } else ASindex--; //decel on the way to being paused
@@ -872,8 +872,16 @@ function jog(axis, direction) {
     else jogRsteps = JOGRSTEPS * -rDirSign;
   }
 
-  sp.write("SM," + baseMS + "," + jogThsteps + "," + jogRsteps + "\r");
-
+  sp.write("SM," + baseMS + "," + jogThsteps + "," + jogRsteps + "\r", function(err, res) {
+    sp.drain(function(err, result) {
+      if (err) {
+        logEvent(2, err, result);
+      } else {
+        thAccum += jogThsteps;
+        rAccum += jogRsteps;
+      }
+    });
+  });
 }
 
 function reportRgap() {
@@ -1415,6 +1423,8 @@ module.exports = {
 
   // Find the ball and reset it's position.
   home: function() {
+    if (pauseRequest) return; // don't allow homing during deceleration
+
     if (options.home) {
       if (useHomeSensors) {
         // Use above homing sensors routine.
