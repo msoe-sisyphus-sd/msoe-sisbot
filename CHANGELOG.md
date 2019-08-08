@@ -3,8 +3,11 @@
   - Allow empty password on wifi
   - save cson name & ball_count to model
   - home on rho 0
-  - autoplay last playlist on reboot
+  - autoplay last playlist on reboot, or default playlist if none
   - fixed sensored home on first homing (non-servos)
+  - fix DR drift from deceleration
+  - lock out home button when homing
+  - 
 
 # 2019-05-29 1.10.30
   - move sisbots over to webcenter

@@ -116,6 +116,7 @@ var sisbot = {
 	_play_next: false,
 	_autoplay: false,
 	_home_next: false,
+  _home_requested: false,
   _sensored: true, // use a sensored home
   _home_delay: 0,
 	_moved_out: false, // small ball adjustment before homing
@@ -468,6 +469,7 @@ var sisbot = {
 
         self._sensored = false; // don't sensored home next
 				self._home_next = false; // clear home next
+        self._home_requested = false; // allow home button again
         self._first_home = false; // first homing is complete
 				self.current_state.set({is_homed: "true", _end_rho: 0}); // reset
 
@@ -497,6 +499,7 @@ var sisbot = {
 				if (self._home_next) {
 					logEvent(1, "Home Next");
 					setTimeout(function() {
+            self._home_requested = false;
 						self.home(null, null);
 					}, 1000);
 				} else if (self.current_state.get('active_track').id != "false") {
@@ -690,8 +693,11 @@ var sisbot = {
 
 				if (self.config.autoplay) {
 					logEvent(1, "Autoplay:", self.current_state.get("active_playlist_id"));
-					if (self.current_state.get("active_playlist_id") != "false" && self.collection.get(self.current_state.get("active_playlist_id"))!=undefined) {
-						var playlist = self.collection.get(self.current_state.get("active_playlist_id"));
+          var playlist_id = self.current_state.get("active_playlist_id");
+          if (!playlist_id || playlist_id == 'false') playlist_id = self.current_state.get('default_playlist_id');
+
+					if (playlist_id != "false" && self.collection.get(playlist_id) != undefined) {
+						var playlist = self.collection.get(playlist_id);
 						playlist.set({active_track_id: "false", active_track_index: -1});
 						playlist.reset_tracks(); // start with non-reversed list
 						playlist.set_shuffle({ is_shuffle: "true", start_rho: 0 }); // update order, active tracks indexing
@@ -957,6 +963,7 @@ var sisbot = {
 					this.current_state.set('state', 'waiting'); // fix so it does the home correctly
 					logEvent(1, "Home Next", this.current_state.get("state"));
 					setTimeout(function() {
+            self._home_requested = false;
 						self.home(null, null);
 					}, 100);
 				} else {
@@ -988,20 +995,26 @@ var sisbot = {
 		var self = this;
 
 		if (this._validateConnection()) {
-	    logEvent(1, "Sisbot Home", data, this.current_state.get("state"));
+      if (this._home_requested) {
+        if (cb)	cb('Already homing', null);
+        return logEvent(2, "Sisbot Already Homing");
+      }
+
+	    logEvent(0, "Sisbot Home", data, this.current_state.get("state"));
+      this._home_requested = true; // keep from calling multiple times
 			if (data) { // special instructions?
 				if (data.stop) this._autoplay = false; // home without playing anything afterward
 				if (data.clear_tracks) this.current_state.set({active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
 			}
 
-			if (this.current_state.get("state") == "playing") {
+      if (this.current_state.get("state") == "playing") {
   	    logEvent(1, "Home Next");
 				this._home_next = true;
 				this.pause(null, function(err, resp) {
 					self._paused = false;
 					if (cb)	cb(err, resp);
 				});
-			} else {
+			} else if (this.current_state.get("state") == 'waiting' || this.current_state.get("state") == 'paused') {
 				this._paused = false;
 				this.current_state.set("state", "homing");
 
@@ -1060,6 +1073,7 @@ var sisbot = {
         logEvent(1, "DEAD RECKONING Home Successful");
         this._sensored = false;
         this._home_next = false;
+        this._home_requested = false;
 				this.current_state.set({state: "waiting", is_homed: "true", _end_rho: 0});
 
         // play next track as intended
@@ -1532,7 +1546,8 @@ var sisbot = {
 		track.config = this.config;
 
 		// don't change, this is already playing
-		if (track.get('id') == this.current_state.get("active_track").id && this.current_state.get('state') == "playing") {
+    var active_playlist_id = this.current_state.get('active_playlist_id');
+		if (active_playlist_id && active_playlist_id == 'false' && track.get('id') == this.current_state.get('active_track').id && this.current_state.get('state') == 'playing') {
 			if (cb) return cb('already playing', null);
 			else return;
 		}
@@ -1678,7 +1693,7 @@ var sisbot = {
 			else return;
 		}
 		if (this._validateConnection()) {
-			if (this.current_state.get('state') == "playing") this.pause();
+			if (this.current_state.get('state') == "playing") return this.pause(data, cb);
 			this.current_state.set({state: "waiting", is_homed: "false", active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
 			plotter.jogThetaLeft();
 			if (cb)	cb(null, this.current_state.toJSON());
@@ -1690,7 +1705,7 @@ var sisbot = {
 			else return;
 		}
 		if (this._validateConnection()) {
-			if (this.current_state.get('state') == "playing") this.pause();
+			if (this.current_state.get('state') == "playing") return this.pause(data, cb);
 			this.current_state.set({state: "waiting", is_homed: "false", active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
 			plotter.jogThetaRight();
 			if (cb)	cb(null, this.current_state.toJSON());
@@ -1702,7 +1717,7 @@ var sisbot = {
 			else return;
 		}
 		if (this._validateConnection()) {
-			if (this.current_state.get('state') == "playing") this.pause();
+			if (this.current_state.get('state') == "playing") return this.pause(data, cb);
 			this.current_state.set({state: "waiting", is_homed: "false", active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
 			plotter.jogRhoOutward();
 			if (cb)	cb(null, this.current_state.toJSON());
@@ -1714,7 +1729,7 @@ var sisbot = {
 			else return;
 		}
 		if (this._validateConnection()) {
-			if (this.current_state.get('state') == "playing") this.pause();
+			if (this.current_state.get('state') == "playing") return this.pause(data, cb);
 			this.current_state.set({state: "waiting", is_homed: "false", active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
 			plotter.jogRhoInward();
 			if (cb)	cb(null, this.current_state.toJSON());
