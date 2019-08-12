@@ -1000,7 +1000,7 @@ var sisbot = {
         return logEvent(2, "Sisbot Already Homing");
       }
 
-	    logEvent(0, "Sisbot Home", data, this.current_state.get("state"));
+	    logEvent(1, "Sisbot Home", data, this.current_state.get("state"));
       this._home_requested = true; // keep from calling multiple times
 			if (data) { // special instructions?
 				if (data.stop) this._autoplay = false; // home without playing anything afterward
@@ -1820,7 +1820,7 @@ var sisbot = {
 	    var pwm = Math.pow(2, value * 10) - 1;
 	    pwm = Math.floor(pwm);
 
-      logEvent(0, "Brightness", data, value, pwm);
+      logEvent(1, "Brightness", data, value, pwm);
 
 	    if (pwm == 0) {
 	      this._serialWrite('SE,0');
@@ -1997,7 +1997,7 @@ var sisbot = {
       },
       function on_resp(error, response, body) {
         if (!error && response.statusCode == 200) {
-          logEvent(0, "Post to cloud", body);
+          logEvent(1, "Post to cloud", body);
         } else {
           if (response) logEvent(2, "Request Not found:", response.statusCode);
         }
