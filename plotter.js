@@ -435,6 +435,15 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLOstep
       RfracSeg = fracSeg;
 
       // sp.write('EM,0,0\r'); // turn off motors
+      // kill motors after 5 seconds if still paused
+      setTimeout(function() {
+        if (paused) {
+          logEvent(0, "Stop motors");
+          sp.write('EM,0,0\r'); // turn off motors
+        } else {
+          logEvent(0, "Not paused anymore, disregard motor stop");
+        }
+      }, 5000);
 
       return; //break the nextSeg chain = being paused
     } else ASindex--; //decel on the way to being paused
