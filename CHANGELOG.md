@@ -7,7 +7,7 @@
   - fixed sensored home on first homing (non-servos)
   - fix DR drift from deceleration
   - lock out home button when homing
-  - 
+  - Motors de-power after 5 seconds of paused
 
 # 2019-05-29 1.10.30
   - move sisbots over to webcenter
