@@ -1,22 +1,19 @@
 var fs				      = require('fs');
 var _               = require('underscore');
 var uuid			      = require('uuid');
-var which_cson      = 'default.cson';
 var default_status  = require('./default_status.js');
 
-if (process.env.NODE_ENV.indexOf('dev') == -1) {
-    var which_cson  = require('/home/pi/sisbot-server/sisbot/configs/whichcson.js');
+var which_cson  = require('/home/pi/sisbot-server/sisbot/configs/whichcson.js');
 
-    // PROVE CSON FILE EXISTS
-    if (!fs.existsSync('/home/pi/sisbot-server/sisbot/configs/' + which_cson)) {
-        console.log('!!!!! MISSING CSON FILE !!!!!');
-        which_cson = 'default.cson';
-    }
+// PROVE CSON FILE EXISTS
+if (!fs.existsSync('/home/pi/sisbot-server/sisbot/configs/' + which_cson)) {
+    console.log('!!!!! MISSING CSON FILE !!!!!');
+    which_cson = 'default.cson';
 }
 
 var config = {
 		base: {
-			version	: '1.10.30', // Move Bots over to webcenter
+			version	: '1.9.31', // Fix DR drift, Jimmy Homing, Allow empty password on wifi, save cson name & ball_count to model, home on rho 0, autoplay last playlist on reboot
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
