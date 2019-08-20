@@ -132,7 +132,7 @@ if __name__ == '__main__':
         print('Use "-c" argument to clear LEDs on exit')
 
     # load default python script
-    update = dynamic_import("spread", "update")
+    update = dynamic_import("white", "update")
 
     try:
 	fill(strip, Color(1,1,1,1))

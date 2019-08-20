@@ -774,7 +774,7 @@ var sisbot = {
   },
   set_led_color: function(data, cb) {
     // Set LED colors
-    logEvent(1, 'Set led color', data);
+    logEvent(0, 'Set led color', data);
     var is_change = false;
 
     //
@@ -786,9 +786,11 @@ var sisbot = {
         red = parseInt(data.primary_color.substr(1, 2), 16);
         green = parseInt(data.primary_color.substr(3, 2), 16);
         blue = parseInt(data.primary_color.substr(5, 2), 16);
+        white = 0;
+        if (data.primary_color.length > 7) white = parseInt(data.primary_color.substr(7, 2), 16);
 
         // logEvent(1, "Primary Colors: ", red, green, blue);
-        data.primary_color = { red: red, green: green, blue: blue };
+        data.primary_color = { red: red, green: green, blue: blue, white: white };
       }
 
       var arr = new Uint8Array(5);
@@ -815,9 +817,11 @@ var sisbot = {
         red = parseInt(data.secondary_color.substr(1, 2), 16);
         green = parseInt(data.secondary_color.substr(3, 2), 16);
         blue = parseInt(data.secondary_color.substr(5, 2), 16);
+        white = 0;
+        if (data.secondary_color.length > 7) white = parseInt(data.secondary_color.substr(7, 2), 16);
 
         // logEvent(1, "Secondary Colors: ", red, green, blue);
-        data.secondary_color = { red: red, green: green, blue: blue };
+        data.secondary_color = { red: red, green: green, blue: blue, white: white };
       }
       var arr = new Uint8Array(5);
       arr[0] = 99; // c
@@ -2002,8 +2006,8 @@ var sisbot = {
 	set_brightness: function(data, cb) {
 		logEvent(1, 'Sisbot set brightness', data);
 
-    	// Don't continue if we're disconnected from the sisbot
-    	if (!this._validateConnection()) {
+  	// Don't continue if we're disconnected from the sisbot
+  	if (!this._validateConnection()) {
 			if (cb) return cb('No Connection', null);
 			else return;
 		}

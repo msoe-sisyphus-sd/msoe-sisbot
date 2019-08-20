@@ -1374,8 +1374,8 @@ module.exports = {
 				sp.write("SE,0\r");
       } else {
 				if (useLED) sp.write("SE,1," + pwm +"\r");
-        lastPhotoOut = pwm;
       }
+      lastPhotoOut = pwm;
   	}
   },
 
