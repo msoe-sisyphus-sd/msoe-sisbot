@@ -1,6 +1,6 @@
-var fs				      = require('fs');
+var fs				= require('fs');
 var _               = require('underscore');
-var uuid			      = require('uuid');
+var uuid			= require('uuid');
 var default_status  = require('./default_status.js');
 var which_cson;
 
