@@ -46,6 +46,10 @@ photo           = 0 # 0-1023
 primary_color   = Color(18,1,1,1);
 secondary_color = Color(1,1,18,1);
 
+actual_primary_color   = Color(18,1,1,1); # incorporates brightness
+actual_secondary_color = Color(1,1,18,1); # incorporates brightness
+old_photo       = 0 # to reduce recreation of colors
+
 # on quit
 def signal_handler(sig, frame):
     print('You pressed Ctrl+C!')
@@ -96,6 +100,14 @@ def dynamic_import(abs_module_path, class_name):
     return target_class
 
 # Define functions which animate LEDs in various ways.
+def brightness_adjust(color, photo):
+    brightness = photo/1024.0
+    w1 = (color >> 24) & 0xFF;
+    r1 = (color >> 16) & 0xFF;
+    g1 = (color >> 8) & 0xFF;
+    b1 = color & 0xFF;
+    return Color(int(r1*brightness),int(g1*brightness),int(b1*brightness),int(w1*brightness))
+
 def colorWipe(strip, color, wait_ms=50):
     """Wipe color across display a pixel at a time."""
     for i in range(strip.numPixels()+1):
@@ -141,6 +153,7 @@ if __name__ == '__main__':
 
         #  Loop and get incoming data from plotter
         while True:
+            new_color = False # do we need to update actual_colors
             bytes = get_data(server)
             if bytes > 0:
                 command = socket_bytes[0]
@@ -157,6 +170,7 @@ if __name__ == '__main__':
                     primary_color = Color(red,green,blue,white)
                     print "Primary color {0} {1} {2} {3}\n".format(red,green,blue,white),
                     sys.stdout.flush()
+                    new_color = True
                 elif command == 99: # c: secondary color data
                     [red] = struct.unpack_from('>B', socket_bytes, 1)
                     [green] = struct.unpack_from('>B', socket_bytes, 2)
@@ -165,6 +179,7 @@ if __name__ == '__main__':
                     secondary_color = Color(red,green,blue,white)
                     print "Secondary color {0} {1} {2} {3}\n".format(red,green,blue,white),
                     sys.stdout.flush()
+                    new_color = True
                 elif command == 104: # h: homing state
                     print "homing...\n",
                     sys.stdout.flush()
@@ -195,9 +210,16 @@ if __name__ == '__main__':
                     print "command %s\n" % (command),
                     sys.stdout.flush()
 
+            # update colors, if changed
+            if photo != old_photo or new_color:
+                actual_primary_color = brightness_adjust(primary_color, photo)
+                actual_secondary_color = brightness_adjust(secondary_color, photo)
+
             # update, regardless of socket_data
-            update(rho, abs(360 - (theta * 57.2958 + led_offset)), photo, primary_color, secondary_color, led_count, strip)
+            update(rho, abs(360 - (theta * 57.2958 + led_offset)), photo, actual_primary_color, actual_secondary_color, led_count, strip)
             # time.sleep(1.0/60.0) # sixty frames/sec
+
+            old_photo = photo;
 
     except KeyboardInterrupt:
         if args.clear:

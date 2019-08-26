@@ -28,10 +28,10 @@ def colorBlend(color1,color2,blend=0):
     r2 = (color2 >> 16) & 0xFF;
     g2 = (color2 >> 8) & 0xFF;
     b2 = color2 & 0xFF;
-    red = int(r1+(r2-r1)*blend)
-    green = int(g1+(g2-g1)*blend)
-    blue = int(b1+(b2-b1)*blend)
-    white = int(w1+(w2-w1)*blend)
+    red = int((r1+(r2-r1)*blend))
+    green = int((g1+(g2-g1)*blend))
+    blue = int((b1+(b2-b1)*blend))
+    white = int((w1+(w2-w1)*blend))
     return Color(red,green,blue,white)
 
 def update(rho, theta, photo, primary_color, secondary_color, led_count, strip):

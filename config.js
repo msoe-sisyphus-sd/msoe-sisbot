@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dummy') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.32', // Lights changes, White balance, Rainbow brightness adjust
+			version	: '1.9.32', // Lights changes, White balance, Rainbow brightness adjust, all colors/patterns relate to brightness
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
