@@ -1,3 +1,7 @@
+# 2019-08-26 1.10.32
+  - Light patterns
+  - Pattern brightness matches slider
+
 # 2019-08-07 1.10.31
   - Jimmy homing
   - Allow empty password on wifi

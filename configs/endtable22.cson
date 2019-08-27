@@ -17,6 +17,11 @@ twoBallEnabled: false
 
 autodim: true # is autodim allowed in UI
 
+useRGBW: true # pi connected RGBW LEDs
+rgbwCount: 100 # number of rgbw LEDs
+rgbwPrimaryColor: "#FFFFFF"
+rgbwSecondaryColor: "#00FFFF"
+
 # Default movement parameters
 # 5. Default velocity (in/sec)= 1
 # 6. Default acceleration (in/sec^2)= 1

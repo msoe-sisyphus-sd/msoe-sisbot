@@ -23,6 +23,7 @@ var sisbot_state = Backbone.Model.extend({
 		hostname_prompt				: "false",
 
 		state									: "waiting", // playing, homing, paused, waiting
+		is_rgbw								: "false", // Neopixels enabled?
 		brightness						: 0.8,
 		is_autodim						: "true",
 		is_nightlight					: "false",
@@ -49,19 +50,25 @@ var sisbot_state = Backbone.Model.extend({
 		is_internet_connected	: "false",
 		service_connected			: {},
 
-		is_sleeping				: "false",
-		sleep_time				: "false", // time to start sleep: H:MM A | false
-		wake_time					: "false", // time to wake up: H:MM A | false
-		timezone_offset		: "-06:00", // Central time
+		is_sleeping					: "false",
+		sleep_time					: "false", // time to start sleep: H:MM A | false
+		wake_time						: "false", // time to wake up: H:MM A | false
+		timezone_offset			: "-06:00", // Central time
 
-		wifi_network			: "",
-		wifi_password			: "",
-		wifi_forget				: "false", // forget wifi credentials on fail to connect (from cloud)
-		wifi_error				: "false", // flag to know if should be trying to reconnect to wifi
+		wifi_network				: "",
+		wifi_password				: "",
+		wifi_forget					: "false", // forget wifi credentials on fail to connect (from cloud)
+		wifi_error					: "false", // flag to know if should be trying to reconnect to wifi
 		failed_to_connect_to_wifi: "false",
 
-		is_multiball			: "false", // allow multiple balls
-		ball_count				: 1, // 1 or 2
+		is_multiball				: "false", // allow multiple balls
+		ball_count					: 1, // 1 or 2
+
+		led_enabled					: 'false',
+		led_pattern					: 'spread',
+		led_offset 					: 0,
+		led_primary_color		: 'false', // Hex
+		led_secondary_color	: 'false', // Hex
 
 		share_log_files			: "false"
 	},

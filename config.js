@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dummy') == -1) {
 
 var config = {
 		base: {
-			version	: '1.10.31', // Fix DR drift, Jimmy Homing, Allow empty password on wifi, save cson name & ball_count to model, home on rho 0, autoplay last playlist on reboot
+			version	: '1.9.32', // Lights changes, White balance, Rainbow brightness adjust, all colors/patterns relate to brightness
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
