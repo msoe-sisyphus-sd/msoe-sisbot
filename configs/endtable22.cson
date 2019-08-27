@@ -17,7 +17,7 @@ twoBallEnabled: false
 
 autodim: true # is autodim allowed in UI
 
-useRGBW: true # pi connected RGBW LEDs
+useRGBW: false # pi connected RGBW LEDs
 rgbwCount: 100 # number of rgbw LEDs
 rgbwPrimaryColor: "#FFFFFF"
 rgbwSecondaryColor: "#00FFFF"
