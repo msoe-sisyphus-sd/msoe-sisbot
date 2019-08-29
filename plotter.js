@@ -522,6 +522,17 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLOstep
       else {
         // send to socket
         try {
+          // Row
+          var newR = ((rAccum - thAccum * rthAsp * nestedAxisSign) * rDirSign/ rSPInch)/plotRadius;
+          // Theta
+          var thetaDistHome, modRads, rawRads, shortestRads;
+          rawRads = thAccum / thSPRad;
+          modRads = rawRads % (2 * Math.PI);
+          shortestRads = modRads*-1; //this is verified correct - but theta sign is wrong :(
+          if (modRads > Math.PI) shortestRads = 2 * Math.PI - modRads; //shortestRads = modRads - 2 * Math.PI;
+          if (modRads < -1 * Math.PI) shortestRads = -2 * Math.PI - modRads; //shortestRads = modRads + 2 * Math.PI;
+          var newTh = shortestRads;
+          
           var buf1 = Buffer.from('b', 0, 1);
           var buf2 =  Buffer.alloc(4);
           buf2.writeFloatBE(newR, 0);
@@ -888,6 +899,30 @@ function jog(axis, direction) {
       } else {
         thAccum += jogThsteps;
         rAccum += jogRsteps;
+
+        // send to socket
+        try {
+          var buf1 = Buffer.from('b', 0, 1);
+          var buf2 =  Buffer.alloc(4);
+          buf2.writeFloatBE(rAccum, 0);
+          var buf3 =  Buffer.alloc(4);
+          buf3.writeFloatBE(thAccum, 0);
+          var buf4 =  Buffer.alloc(4);
+          buf4.writeFloatBE(lastPhotoOut, 0);
+          var totalLength = buf1.length + buf2.length + buf3.length + buf4.length;
+
+          // var d = new Date();
+          // var n = d.getMilliseconds();
+          // logEvent(1, "Millis", n);
+
+          // logEvent(1, "Values: ", newR, newTh, lastPhotoOut, "Buffer Length:", totalLength);
+          message = Buffer.concat([buf1, buf2, buf3, buf4], totalLength);
+
+          sp_lcp.send(message, 0, totalLength, '/tmp/sisyphus_sockets');
+          // logEvent(1,'LCP ' + inp);
+        } catch (err) {
+          // logEvent(2,'Error writing to LCP socket ' + err.message);
+        }
       }
     });
   });
@@ -1363,18 +1398,23 @@ module.exports = {
   // get the brightness slider value
   setBrightness: function(value) {
     sliderBrightness = value;
-		logEvent(1, "sb: " + sliderBrightness);
+		// logEvent(1, "sb: " + sliderBrightness);
 
     if (autodim !== 'true') {
-      // convert to an integer from 0 - 1023, parabolic scale.
-      var pwm = Math.pow(2, value * 10) - 1;
-      pwm = Math.floor(pwm);
-
-      if (pwm == 0) {
+      if (value == 0) {
 				sp.write("SE,0\r");
+        pwm = 0;
       } else {
+        // convert to an integer from 0 - 1023, parabolic scale.
+        // var pwm = value * 20;
+        var pwm = Math.pow(2, value * 10); // - 1;
+        pwm = Math.round(pwm);
+        if (pwm <= 0) pwm = 1; // must be at lease one
+        else if (pwm > 1023) pwm = 1023; // cannot be greater than 1023
+
 				if (useLED) sp.write("SE,1," + pwm +"\r");
       }
+  		logEvent(1, "brightness: " + value + " pwm: " + pwm);
       lastPhotoOut = pwm;
   	}
   },

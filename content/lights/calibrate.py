@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-# Spread
+# Calibrate
 # Author: Matthew Klundt (matt@withease.io)
 #
-# Spread of color pixels around the position of Sisyphus ball
+# Use for matching the ball position to theta
 
 from neopixel import *
+import sys
 
 # globals
 h_theta         = 0 # wanted ball position
@@ -49,16 +50,13 @@ def update(rho, theta, photo, primary_color, secondary_color, led_count, strip):
     brightness = int(255 * (photo / 1024)) + 1
 
     # color of non-pixels
-    bg_color = secondary_color
+    bg_color = Color(0,0,0,0)
 
     # color of spread by ball
-    ball_color = primary_color
+    ball_color = Color(128,128,128,128)
 
-    # spread out the pixel color based on rho
-    max_spread = 75 # degress on either side of pixel to spread white
-    min_spread = 15 # degress on either side of pixel to spread white
-    spread = max_spread - (max_spread * rho) + min_spread
-    # spread = 45 # force to specific width
+    # spread out the pixel color based on total lights
+    spread = 10    # spread over 15 degrees
     spread_l = h_theta - spread
     spread_r = h_theta + spread
 

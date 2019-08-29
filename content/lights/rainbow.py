@@ -7,8 +7,7 @@
 from neopixel import *
 
 def brightness_adjust(color, photo):
-    # brightness = int(photo*255.0/1024.0)
-    brightness = photo/1024.0
+    brightness = photo/1023.0
     w1 = (color >> 24) & 0xFF;
     r1 = (color >> 16) & 0xFF;
     g1 = (color >> 8) & 0xFF;

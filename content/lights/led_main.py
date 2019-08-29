@@ -43,11 +43,11 @@ led_offset      = 0      # Degrees to offset the theta position 0-360 (float)
 rho             = 0 # 0.0-1.0
 theta           = 0
 photo           = 0 # 0-1023
-primary_color   = Color(18,1,1,1);
-secondary_color = Color(1,1,18,1);
+primary_color   = Color(1,1,1,18);
+secondary_color = Color(1,1,1,18);
 
-actual_primary_color   = Color(18,1,1,1); # incorporates brightness
-actual_secondary_color = Color(1,1,18,1); # incorporates brightness
+actual_primary_color   = Color(1,1,1,18); # incorporates brightness
+actual_secondary_color = Color(1,1,1,18); # incorporates brightness
 old_photo       = 0 # to reduce recreation of colors
 
 # on quit
@@ -101,7 +101,7 @@ def dynamic_import(abs_module_path, class_name):
 
 # Define functions which animate LEDs in various ways.
 def brightness_adjust(color, photo):
-    brightness = photo/1024.0
+    brightness = photo/1023.0
     w1 = (color >> 24) & 0xFF;
     r1 = (color >> 16) & 0xFF;
     g1 = (color >> 8) & 0xFF;
@@ -144,7 +144,7 @@ if __name__ == '__main__':
         print('Use "-c" argument to clear LEDs on exit')
 
     # load default python script
-    update = dynamic_import("white", "update")
+    update = dynamic_import("calibrate", "update") # white
 
     try:
 	fill(strip, Color(1,1,1,1))
@@ -212,6 +212,7 @@ if __name__ == '__main__':
 
             # update colors, if changed
             if photo != old_photo or new_color:
+                # print "photo %4d : %6.4f\n" % (photo, photo/1023.0),
                 actual_primary_color = brightness_adjust(primary_color, photo)
                 actual_secondary_color = brightness_adjust(secondary_color, photo)
 

@@ -260,9 +260,10 @@ var sisbot = {
     logEvent(1, "CSON:", config.sisbot_config);
     this.current_state.set('cson', config.sisbot_config);
 
-    if (cson_config.autodim) this.current_state.set('is_autodim_allowed', cson_config.autodim.toString());
+    if (cson_config.autodim !== undefined) this.current_state.set('is_autodim_allowed', cson_config.autodim.toString());
     else this.current_state.set('is_autodim_allowed', 'true');
     logEvent(1, "Autodim: ", this.current_state.get('is_autodim_allowed'));
+    if (this.current_state.get('is_autodim_allowed') == 'false') this.current_state.set('is_autodim', 'false'); // force autodim off
 
 		// make sure the hostname is correct
 		var regex = /^[^a-zA-Z]*/; // make sure first character is a-z
@@ -377,6 +378,9 @@ var sisbot = {
         logEvent(2, "Set Primary Color", this.current_state.get('led_primary_color'));
         this.current_state.set('led_secondary_color', cson_config.rgbwSecondaryColor);
       }
+    } else {
+      this.current_state.set('led_enabled','false');
+      this.current_state.set('is_rgbw','false');
     }
 
 		plotter.onServoThFault(function() {
