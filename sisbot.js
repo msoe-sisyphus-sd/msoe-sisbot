@@ -776,6 +776,21 @@ var sisbot = {
 
     if (cb) cb(null, data);
   },
+  set_led_pattern: function(data, cb) {
+    var self = this;
+    logEvent(0, "Set led pattern", data);
+
+    // set pattern
+    this.lcpWrite({ value: 'i'+data.id }, function(err, resp) {
+      if (err) return console.log("LCP Error", err);
+
+      self.current_state.set('led_pattern', data.id);
+
+      self.save(null, null);
+
+      if (cb) cb(null, self.current_state.toJSON());
+    });
+  },
   set_led_color: function(data, cb) {
     // Set LED colors
     logEvent(0, 'Set led color', data);
