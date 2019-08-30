@@ -14,6 +14,8 @@ jogStepsTheta: 50
 jogStepsRadius: 100
 
 twoBallEnabled: false
+attach_track: '0 0,0 0' # set table specific attach verts
+detach_track: '0 0,0 0' # set table specific detach verts
 
 useHomeSensors: true# false means that a "home" event means to set the current $
 homingThSteps: 17# Steps per homing check on Theta

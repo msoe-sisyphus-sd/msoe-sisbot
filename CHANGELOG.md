@@ -3,6 +3,7 @@
   - Pattern brightness matches slider
   - Light offset added to Advanced Settings - Lights
   - Autodim is available on a per CSON basis (some tables may not support it)  
+  - User can override CSON defaults
 
 # 2019-08-07 1.10.31
   - Jimmy homing

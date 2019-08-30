@@ -336,6 +336,19 @@ var sisbot = {
 			}
 		});
 
+    // override CSON values if User changed them
+    var table_settings = this.current_state.get('table_settings');
+    _.each(table_settings, function(value, key) {
+      if (value != undefined && value != '') {
+        logEvent(1, "Table Setting:", key, value);
+        logEvent(1, "CSON Match:", cson_config[key]);
+        if (value == 'true') cson_config[key] = true;
+        else if (value == 'false') cson_config[key] = false;
+        else cson_config[key] = value;
+        logEvent(0, "New CSON Value:", key, cson_config[key]);
+      }
+    });
+
 		// plotter
     logEvent(1, "Plotter");
     // var cson_config = CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config);
@@ -367,7 +380,7 @@ var sisbot = {
 
     // RGBW
     if (cson_config.useRGBW) {
-      logEvent(1, "Use RGBW", this.current_state.get('led_primary_color'), this.current_state.get('led_secondary_color'));
+      logEvent(0, "Use RGBW", this.current_state.get('led_primary_color'), this.current_state.get('led_secondary_color'));
       this.current_state.set('led_enabled','true');
       if (cson_config.rgbwCount) this.led_count = cson_config.rgbwCount;
       if (this.current_state.get('led_primary_color') == 'false') {
@@ -379,6 +392,7 @@ var sisbot = {
         this.current_state.set('led_secondary_color', cson_config.rgbwSecondaryColor);
       }
     } else {
+      logEvent(0, "No RGBW");
       this.current_state.set('led_enabled','false');
       this.current_state.set('is_rgbw','false');
     }

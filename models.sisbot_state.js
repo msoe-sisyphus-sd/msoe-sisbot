@@ -64,6 +64,8 @@ var sisbot_state = Backbone.Model.extend({
 		is_multiball				: "false", // allow multiple balls
 		ball_count					: 1, // 1 or 2
 
+		table_settings			: {},
+
 		led_enabled					: 'false',
 		led_pattern					: 'spread',
 		led_offset 					: 0,

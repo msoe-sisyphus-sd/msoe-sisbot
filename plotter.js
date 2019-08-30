@@ -532,7 +532,7 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLOstep
           if (modRads > Math.PI) shortestRads = 2 * Math.PI - modRads; //shortestRads = modRads - 2 * Math.PI;
           if (modRads < -1 * Math.PI) shortestRads = -2 * Math.PI - modRads; //shortestRads = modRads + 2 * Math.PI;
           var newTh = shortestRads;
-          
+
           var buf1 = Buffer.from('b', 0, 1);
           var buf2 =  Buffer.alloc(4);
           buf2.writeFloatBE(newR, 0);
@@ -1220,10 +1220,10 @@ module.exports = {
     if (config.twoBallEnabled)    twoBallEnabled = config.twoBallEnabled;
 
     // LED Values
-    logEvent(1, "Use RGBW config:", _.keys(config).join(','));
+    logEvent(1, "Use config:", _.keys(config).join(','));
     if (config.useRGBW !== undefined) {
-      logEvent(1, "Use RGBW config:", config.useRGBW);
-      useLED = !config.useLED;
+      logEvent(1, "Use config:", config.useRGBW);
+      useLED = !config.useRGBW;
       useRGBW = config.useRGBW;
     }
   },
