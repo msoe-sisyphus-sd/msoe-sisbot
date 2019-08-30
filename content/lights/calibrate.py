@@ -5,7 +5,8 @@
 # Use for matching the ball position to theta
 
 from neopixel import *
-import sys
+from math import pow
+# import sys
 
 # globals
 h_theta         = 0 # wanted ball position
@@ -38,8 +39,8 @@ def colorBlend(color1,color2,blend=0):
     white = int(w1+(w2-w1)*blend)
     return Color(red,green,blue,white)
 
-def easeInQuad(t):
-    return t*t
+def easeIn(t):
+    return 1.0 - pow(2, (1.0 - t) * 10.0) / 1024.0
 
 def update(rho, theta, photo, primary_color, secondary_color, led_count, strip):
     global h_theta
@@ -85,7 +86,11 @@ def update(rho, theta, photo, primary_color, secondary_color, led_count, strip):
         # if (degrees >= spread_l and degrees <= spread_r):
         # ramp brightness
         t = abs(h_fixed - degrees) / spread
-        percent = easeInQuad(t) # choose an ease function from above
+
+
+        # update blend, it is given linear, but needs to be logarithmic(?)
+        percent = easeIn(t) # choose an ease function from above
+
         # print "pos {0} ( {1} - {2} ) / {3}, percent {4}\n".format(pos, h_fixed, degrees, spread, t),
         # sys.stdout.flush()
 
