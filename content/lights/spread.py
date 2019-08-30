@@ -37,8 +37,9 @@ def colorBlend(color1,color2,blend=0):
     white = int(w1+(w2-w1)*blend)
     return Color(red,green,blue,white)
 
-def easeInQuad(t):
-    return t*t
+def easeIn(t):
+    return 1.0 - pow(2, (1.0 - t) * 10.0) / 1024.0
+    # return t*t
 
 def update(rho, theta, photo, primary_color, secondary_color, led_count, strip):
     global h_theta
@@ -87,7 +88,7 @@ def update(rho, theta, photo, primary_color, secondary_color, led_count, strip):
         # if (degrees >= spread_l and degrees <= spread_r):
         # ramp brightness
         t = abs(h_fixed - degrees) / spread
-        percent = easeInQuad(t) # choose an ease function from above
+        percent = easeIn(t) # choose an ease function from above
         # print "pos {0} ( {1} - {2} ) / {3}, percent {4}\n".format(pos, h_fixed, degrees, spread, t),
         # sys.stdout.flush()
 
