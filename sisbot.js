@@ -397,6 +397,9 @@ var sisbot = {
       this.current_state.set('is_rgbw','false');
     }
 
+    // Autodim
+		plotter.setAutodim(this.current_state.get('is_autodim'));
+
 		plotter.onServoThFault(function() {
       if (self.current_state.get('reason_unavailable') != 'servo_th_fault') logEvent(2, "Servo Th Fault!");
 			self.pause(null, null);
@@ -755,8 +758,15 @@ var sisbot = {
 
       // set initial values
       setTimeout(function() {
+        // set pattern
+        var pattern = self.current_state.get('led_pattern');
+        if (pattern && pattern != 'false') self.set_led_pattern({id:pattern});
+
+        // set offset
         var offset = self.current_state.get('led_offset');
         if (offset != 0) self.set_led_offset({offset:offset});
+
+        // set colors
         self.set_led_color({primary_color:self.current_state.get('led_primary_color'), secondary_color:self.current_state.get('led_secondary_color')});
       }, 2000);
     } else {
