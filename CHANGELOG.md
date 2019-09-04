@@ -1,3 +1,6 @@
+# 2019-09-04 1.10.32
+ - no changes, version bump for sisproxy 1.4.12
+
 # 2019-08-07 1.10.31
   - Jimmy homing
   - Allow empty password on wifi
