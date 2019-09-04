@@ -806,7 +806,7 @@ var sisbot = {
 
     // set pattern
     this.lcpWrite({ value: 'i'+data.id }, function(err, resp) {
-      if (err) return console.log("LCP Error", err);
+      if (err) return logEvent(2, "LCP Error", err);
 
       self.current_state.set('led_pattern', data.id);
 
