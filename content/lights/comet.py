@@ -99,7 +99,7 @@ def update(rho, theta, photo, primary_color, secondary_color, led_count, strip):
     t_end = t_x + t_r
 
     # fade light by tail
-    t_diff = max(abs(t_x - h_end), abs(t_x - h_start))
+    t_diff = max(abs(t_x - t_r - h_end), abs(t_x + t_r - h_start))
     if t_diff > h_r:
         for x in range(t_start, t_end):
             pos = x % led_count
