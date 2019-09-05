@@ -67,7 +67,7 @@ var sisbot_state = Backbone.Model.extend({
 		table_settings			: {},
 
 		led_enabled					: 'false',
-		led_pattern					: 'spread',
+		led_pattern					: 'white',
 		led_offset 					: 0,
 		led_primary_color		: 'false', // Hex
 		led_secondary_color	: 'false', // Hex
