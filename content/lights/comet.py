@@ -75,12 +75,14 @@ def update(rho, theta, photo, primary_color, secondary_color, led_count, strip):
     dt = (h_theta - t_theta) * t_easing
     t_theta += dt * elapsed
 
+    # fix wrapping
+    diff = h_theta - t_theta
+    if abs(diff) >= 360:
+        t_theta = h_theta
+
     # solid positions
     h_x = int( (h_theta * led_count) / 360 )
     t_x = int( (t_theta * led_count) / 360 )
-    diff = h_theta - t_theta
-    if abs(diff) >= 360:
-        t_x = h_x
 
     h_fixed = h_theta % 360
     t_fixed = t_theta % 360
