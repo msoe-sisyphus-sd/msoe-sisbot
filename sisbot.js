@@ -397,9 +397,6 @@ var sisbot = {
       this.current_state.set('is_rgbw','false');
     }
 
-    // Autodim
-		plotter.setAutodim(this.current_state.get('is_autodim'));
-
 		plotter.onServoThFault(function() {
       if (self.current_state.get('reason_unavailable') != 'servo_th_fault') logEvent(2, "Servo Th Fault!");
 			self.pause(null, null);
@@ -929,6 +926,9 @@ var sisbot = {
 				logEvent(1, 'Serial: connected!', error, self.serial.isOpen);
 
 				self.current_state.set("is_serial_open", "true");
+
+        // Autodim
+    		self.plotter.setAutodim(self.current_state.get('is_autodim'));
 
         // position socket
         self._connect_lcp();
