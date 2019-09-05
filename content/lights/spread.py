@@ -39,7 +39,6 @@ def colorBlend(color1,color2,blend=0):
 
 def easeIn(t):
     return 1.0 - pow(2, (1.0 - t) * 10.0) / 1024.0
-    # return t*t
 
 def update(rho, theta, photo, primary_color, secondary_color, led_count, strip):
     global h_theta

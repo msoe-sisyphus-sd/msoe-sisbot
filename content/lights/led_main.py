@@ -217,7 +217,7 @@ if __name__ == '__main__':
                 actual_secondary_color = brightness_adjust(secondary_color, photo)
 
             # update, regardless of socket_data
-            update(rho, abs(360 - (theta * 57.2958 + led_offset)), photo, actual_primary_color, actual_secondary_color, led_count, strip)
+            update(rho, theta * 57.2958 + led_offset, photo, actual_primary_color, actual_secondary_color, led_count, strip)
             # time.sleep(1.0/60.0) # sixty frames/sec
 
             old_photo = photo;

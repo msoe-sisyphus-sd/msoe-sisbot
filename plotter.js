@@ -527,11 +527,7 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLOstep
           // Theta
           var thetaDistHome, modRads, rawRads, shortestRads;
           rawRads = thAccum / thSPRad;
-          modRads = rawRads % (2 * Math.PI);
-          shortestRads = modRads*-1; //this is verified correct - but theta sign is wrong :(
-          if (modRads > Math.PI) shortestRads = 2 * Math.PI - modRads; //shortestRads = modRads - 2 * Math.PI;
-          if (modRads < -1 * Math.PI) shortestRads = -2 * Math.PI - modRads; //shortestRads = modRads + 2 * Math.PI;
-          var newTh = shortestRads;
+          var newTh = rawRads;
 
           var buf1 = Buffer.from('b', 0, 1);
           var buf2 =  Buffer.alloc(4);

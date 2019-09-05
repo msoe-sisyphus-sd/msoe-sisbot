@@ -1,9 +1,12 @@
-# 2019-08-26 1.10.32
+# 2019-08-26 1.10.33
   - Light patterns
   - Pattern brightness matches slider
   - Light offset added to Advanced Settings - Lights
-  - Autodim is available on a per CSON basis (some tables may not support it)  
+  - Autodim is available on a per CSON basis (some tables may not support autodim)  
   - User can override CSON defaults
+
+# 2019-09-04 1.10.32
+  - version bump, no changes
 
 # 2019-08-07 1.10.31
   - Jimmy homing
