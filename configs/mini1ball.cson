@@ -19,8 +19,6 @@ detach_track: '0 0,-1.2 0,-1.2 -0.135,0 -0.135,0 0' # set table specific detach 
 
 useRGBW: true # pi connected RGBW LEDs
 rgbwCount: 68 # number of rgbw LEDs
-rgbwPrimaryColor: "#FFFFFF"
-rgbwSecondaryColor: "#00FFFF"
 
 jogStepsTheta: 100
 jogStepsRadius: 100

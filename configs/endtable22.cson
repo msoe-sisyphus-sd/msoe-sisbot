@@ -19,8 +19,6 @@ autodim: true # is autodim allowed in UI
 
 useRGBW: false # pi connected RGBW LEDs
 rgbwCount: 100 # number of rgbw LEDs
-rgbwPrimaryColor: "#FFFFFF"
-rgbwSecondaryColor: "#00FFFF"
 
 # Default movement parameters
 # 5. Default velocity (in/sec)= 1

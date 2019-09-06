@@ -12,7 +12,7 @@ h_r = 5 # head radius (in lights)
 h_easing = 0.9 # head easing
 t_theta = 0 # tail theta (offset from h_theta)
 t_r = 5 # tail radius (in lights)
-t_easing = 0.15 # tail easing
+t_easing = 0.125 # tail easing
 
 def fill(strip, color):
     for i in range(strip.numPixels()+1):
@@ -47,7 +47,7 @@ def easeIn(t):
         t = 1.0
     elif t < 0:
         t = 0
-    return 1.0 - pow(2, (1.0 - t) * 10.0) / 1024.0 
+    return 1.0 - pow(2, (1.0 - t) * 10.0) / 1024.0
 
 def update(rho, theta, photo, primary_color, secondary_color, led_count, strip):
     global h_theta,h_r,h_easing,t_theta,t_r,t_easing
@@ -73,9 +73,12 @@ def update(rho, theta, photo, primary_color, secondary_color, led_count, strip):
     dt = (h_theta - t_theta) * t_easing
     t_theta += dt * elapsed
 
-    # fix wrapping
+    # fix flashing of ball trying to catch up to big theta
+    h_diff = h_theta - theta
+    if abs(h_diff) >= 180:
+        h_theta = theta
     diff = h_theta - t_theta
-    if abs(diff) >= 360:
+    if abs(diff) >= 360: # reset tail if falling too far behind
         t_theta = h_theta
 
     # solid positions

@@ -130,6 +130,7 @@ var sisbot = {
 	_move_to_rho: 0,
 	_saving: false,
 
+  _save_queue: [],
 	_thumbnail_queue: [],
 
   _first_retry: false,
@@ -1156,6 +1157,13 @@ var sisbot = {
           			if (error) return logEvent(2, 'save() exec error:',error);
           			if (stderr) return logEvent(2, 'save() exec stderr:',stderr);
                 if (self.config.debug) logEvent(1, 'Save move complete');
+
+                // call next in queue if available
+                if (self._save_queue.length > 0) {
+                  logEvent(0, "Save queue:", self._save_queue.length);
+                  var next_save = self._save_queue.shift();
+                  self.save(next_save.data, next_save.cb);
+                }
               });
             }
           } catch (err) {
@@ -1170,7 +1178,8 @@ var sisbot = {
 
 			if (cb) cb(null, returnObjects);
 		} else {
-			if (cb) cb('Another save in process, try again', null);
+      // save into a queue
+      this._save_queue.push({data:data, cb:cb});
 		}
 	},
 	play: function(data, cb) {
