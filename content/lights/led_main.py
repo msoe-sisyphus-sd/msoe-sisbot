@@ -210,14 +210,20 @@ if __name__ == '__main__':
                     print "command %s\n" % (command),
                     sys.stdout.flush()
 
-            # update colors, if changed
-            if photo != old_photo or new_color:
-                # print "photo %4d : %6.4f\n" % (photo, photo/1023.0),
-                actual_primary_color = brightness_adjust(primary_color, photo)
-                actual_secondary_color = brightness_adjust(secondary_color, photo)
+            # update brightness, if changed
+            if photo != old_photo:
+                brightness = 0
+                if photo >= 1023:
+                    brightness = 255
+                elif photo > 0:
+                    adjustment = pow(2,(1-(photo/1023))*10)/256+1
+                    brightness = int(round(photo/1023*adjustment*255)) # int(round(photo/1023.0*255))
+                # print "Brightness {0} => {1} {2}\n".format(photo, brightness, strip.getBrightness()),
+                # sys.stdout.flush()
+                strip.setBrightness(brightness)
 
             # update, regardless of socket_data
-            update(rho, theta * 57.2958 + led_offset, photo, actual_primary_color, actual_secondary_color, led_count, strip)
+            update(rho, theta * 57.2958 + led_offset, photo, primary_color, secondary_color, led_count, strip)
             # time.sleep(1.0/60.0) # sixty frames/sec
 
             old_photo = photo;

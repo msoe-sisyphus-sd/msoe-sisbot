@@ -46,8 +46,6 @@ def update(rho, theta, photo, primary_color, secondary_color, led_count, strip):
     # assign h_theta
     h_theta = theta
 
-    brightness = int(255 * (photo / 1024)) + 1
-
     # color of non-pixels
     bg_color = secondary_color
 

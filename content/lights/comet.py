@@ -47,12 +47,10 @@ def easeIn(t):
         t = 1.0
     elif t < 0:
         t = 0
-    return 1.0 - pow(2, (1.0 - t) * 10.0) / 1024.0
+    return 1.0 - pow(2, (1.0 - t) * 10.0) / 1024.0 
 
 def update(rho, theta, photo, primary_color, secondary_color, led_count, strip):
     global h_theta,h_r,h_easing,t_theta,t_r,t_easing
-
-    brightness = int(255 * (photo / 1024)) + 1
 
     # color of non-pixels
     bg_color = secondary_color

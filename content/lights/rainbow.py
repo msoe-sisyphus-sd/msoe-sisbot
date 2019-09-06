@@ -6,14 +6,6 @@
 
 from neopixel import *
 
-def brightness_adjust(color, photo):
-    brightness = photo/1023.0
-    w1 = (color >> 24) & 0xFF;
-    r1 = (color >> 16) & 0xFF;
-    g1 = (color >> 8) & 0xFF;
-    b1 = color & 0xFF;
-    return Color(int(r1*brightness),int(g1*brightness),int(b1*brightness),int(w1*brightness))
-
 def wheel(pos):
     # print "wheel %s\n" % (pos),
     """Generate rainbow colors across 0-255 positions."""
@@ -35,6 +27,6 @@ def update(rho, theta, photo, primary_color, secondary_color, led_count, strip):
         pixel_offset = float(i)/led_count*255.0
         offset = (int(pixel_offset)+wheel_deg) & 255;
         # print "%d wheel_deg %s degrees + pixel_offset %s = %s \n" % (i, wheel_deg, pixel_offset, offset),
-        strip.setPixelColor(i, brightness_adjust(wheel(offset), photo))
+        strip.setPixelColor(i, wheel(offset))
 
     strip.show()
