@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
-# Fade
+# Software Update
 # Author: Matthew Klundt (matt@withease.io)
 #
-# Fade between primary/secondary color based on rho of Sisyphus ball
+# Breathing colors for software update
 
 from neopixel import *
+from math import sin
+
+breathe_fade = 0
 
 def fill(strip, color):
     for i in range(strip.numPixels()+1):
@@ -35,6 +38,10 @@ def colorBlend(color1,color2,blend=0):
     return Color(red,green,blue,white)
 
 def update(rho, theta, photo, primary_color, secondary_color, strip):
-    percent = rho
+    global breathe_fade
+
+    percent = 0.5 + sin(breathe_fade) * 0.5
     fill(strip, colorBlend(secondary_color,primary_color,percent)) # fill with color based on rho only
     strip.show()
+
+    breathe_fade += 0.005

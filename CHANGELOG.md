@@ -4,6 +4,9 @@
   - Light offset added to Advanced Settings - Lights
   - Autodim is available on a per CSON basis (some tables may not support autodim)  
   - User can override CSON defaults
+  - Multiple saves now queue up, preventing "Another save in process, try again" error messages
+  - Light trail on Pi boot, color pattern on Node start
+  - Fading blue/red on software update
 
 # 2019-09-04 1.10.32
   - version bump, no changes

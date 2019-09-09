@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-# White
+# Solid
 # Author: Matthew Klundt (matt@withease.io)
 #
-# White with a color temperature
+# Show Primary Color
 
 from neopixel import *
 
@@ -11,5 +11,5 @@ def fill(strip, color):
         strip.setPixelColor(i, color)
 
 def update(rho, theta, photo, primary_color, secondary_color, strip):
-    fill(strip, primary_color) # fill with white
+    fill(strip, primary_color) # fill with color
     strip.show()

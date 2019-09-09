@@ -2755,6 +2755,21 @@ var sisbot = {
 		// send response first
 		if (cb) cb(null, this.current_state.toJSON());
 
+    // change to software_update.py pattern
+    logEvent(0, "Change pattern", this.current_state.get('led_enabled'), this.current_state.get('is_rgbw'));
+    if (this.current_state.get('led_enabled') == 'true') {
+      logEvent(0, "Change to Software Update pattern");
+      // change colors
+      self.set_led_color({ primary_color: '#0000FF00', secondary_color:'#FF000000'}, function(err, resp) {
+        if (err) return logEvent(2, "Software Update Color error", err);
+
+        // change pattern
+        self.lcpWrite({ value: 'isoftware_update' }, function(err, resp) {
+          if (err) return logEvent(2, "Software Update Pattern Error", err);
+        });
+      });
+    }
+
     logEvent(1, "Sisbot running update script update.sh");
 		exec('/home/pi/sisbot-server/sisbot/update.sh '+this.config.service_branches.sisbot+' '+this.config.service_branches.app+' '+this.config.service_branches.proxy+' false >> /var/log/sisyphus/'+moment().format('YYYYMMDD')+'_update.log', (error, stdout, stderr) => {
 			self.current_state.set({installing_updates: 'false'});

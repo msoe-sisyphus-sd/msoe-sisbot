@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Fade
+# Rainbow
 # Author: Matthew Klundt (matt@withease.io)
 #
 # Fade between primary/secondary color based on rho of Sisyphus ball
@@ -18,7 +18,9 @@ def wheel(pos):
         pos -= 170
         return Color(0, pos * 3, 255 - pos * 3)
 
-def update(rho, theta, photo, primary_color, secondary_color, led_count, strip):
+def update(rho, theta, photo, primary_color, secondary_color, strip):
+    led_count = strip.numPixels()
+
     # offset of rainbow
     wheel_deg = int((-theta%360) / 360 * 255)
     # print "theta %s = %s \n" % (theta, wheel_deg),

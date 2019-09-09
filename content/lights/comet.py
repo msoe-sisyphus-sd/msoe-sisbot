@@ -49,8 +49,10 @@ def easeIn(t):
         t = 0
     return 1.0 - pow(2, (1.0 - t) * 10.0) / 1024.0
 
-def update(rho, theta, photo, primary_color, secondary_color, led_count, strip):
+def update(rho, theta, photo, primary_color, secondary_color, strip):
     global h_theta,h_r,h_easing,t_theta,t_r,t_easing
+
+    led_count = strip.numPixels()
 
     # color of non-pixels
     bg_color = secondary_color
@@ -122,19 +124,21 @@ def update(rho, theta, photo, primary_color, secondary_color, led_count, strip):
         strip.setPixelColor(pos, colorBlend(ball_color,bg_color,percent))
 
     # fade between ball-tail
-    start = h_x
-    end = t_x
-    if h_x > t_x: # reverse order if head is greater
-        start = t_x
-        end = h_x
-    for x in range(start, end):
-        pos = x % led_count
-        degrees = (float(x * 360) / led_count)
+    if spread != 0:
+        start = h_x-1
+        end = t_x+1
+        if h_x > t_x: # reverse order if head is greater
+            start = t_x-1
+            end = h_x+1
+        for x in range(start, end):
+            pos = x % led_count
+            degrees = (float(x * 360) / led_count)
 
-        t = abs((h_theta - degrees) / spread)
-        percent = t # linear ease, I want this to be apparent
+            t = abs((h_theta - degrees) / spread)
+            if t <= 1.0 and t > 0:
+                percent = t # linear ease, I want this to be apparent
 
-        strip.setPixelColor(pos, colorBlend(ball_color,tail_color,percent))
+                strip.setPixelColor(pos, colorBlend(ball_color,tail_color,percent))
 
     # print "Theta %s, Head %s, Tail %s\n" % (theta, h_x, t_x),
     # sys.stdout.flush()
