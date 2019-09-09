@@ -42,8 +42,8 @@ led_offset      = 0         # Degrees to offset the theta position 0-360 (float)
 rho             = 0         # 0.0-1.0
 theta           = 0
 photo           = 0         # 0-1023
-primary_color   = Color(1,1,255,1);
-secondary_color = Color(255,1,1,1);
+primary_color   = Color(1,1,1,64);
+secondary_color = Color(1,1,1,1);
 
 old_photo       = 0 # to reduce recreation of colors
 

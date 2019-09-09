@@ -41,7 +41,7 @@ def update(rho, theta, photo, primary_color, secondary_color, strip):
     global breathe_fade
 
     percent = 0.5 + sin(breathe_fade) * 0.5
-    fill(strip, colorBlend(secondary_color,primary_color,percent)) # fill with color based on rho only
+    fill(strip, colorBlend(Color(0,0,255,16),primary_color,percent)) # fill with color based on rho only
     strip.show()
 
     breathe_fade += 0.005
