@@ -32,7 +32,7 @@ SK6812_STRIP_BGRW =                       0x18000810
 scolor = SK6812_STRIP_GRBW
 
 # globals
-led_count       = 101       # Number of LED pixels.
+led_count       = 167       # Number of LED pixels.
 led_offset      = 0         # Degrees to offset the theta position 0-360 (float)
 rho             = 0         # 0.0-1.0
 theta           = 0

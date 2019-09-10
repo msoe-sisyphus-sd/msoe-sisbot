@@ -3,7 +3,7 @@
 # start LED lights?
 if [ -f "/home/pi/sisbot-server/sisbot/content/lights/led_startup.py" ]; then
   cd /home/pi/sisbot-server/sisbot/content/lights/
-  python led_startup.py -n 101 & # 101 lights, this may need to be different based on cson
+  python led_startup.py -n 167 & # 167 lights, this may need to be different based on cson
 fi
 
 # check for wifi adapters plugged in

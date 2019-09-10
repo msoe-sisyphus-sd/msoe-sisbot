@@ -5,6 +5,7 @@
 # Spread of color pixels around the position of Sisyphus ball
 
 from neopixel import *
+import sys
 
 # globals
 h_theta         = 0 # wanted ball position
@@ -37,6 +38,9 @@ def colorBlend(color1,color2,blend=0):
     white = int(w1+(w2-w1)*blend)
     return Color(red,green,blue,white)
 
+def easeQuad(t):
+    return t*t
+
 def easeIn(t):
     return 1.0 - pow(2, (1.0 - t) * 10.0) / 1024.0
 
@@ -55,8 +59,8 @@ def update(rho, theta, photo, primary_color, secondary_color, strip):
     ball_color = primary_color
 
     # spread out the pixel color based on rho
-    max_spread = 75 # degress on either side of pixel to spread white
-    min_spread = 15 # degress on either side of pixel to spread white
+    max_spread = 85 # degress on either side of pixel to spread white
+    min_spread = 10 # degress on either side of pixel to spread white
     spread = max_spread - (max_spread * rho) + min_spread
     # spread = 45 # force to specific width
     spread_l = h_theta - spread
@@ -84,10 +88,10 @@ def update(rho, theta, photo, primary_color, secondary_color, strip):
         elif (degrees < h_fixed - 180):
             degrees += 360
 
-        # if (degrees >= spread_l and degrees <= spread_r):
         # ramp brightness
         t = abs(h_fixed - degrees) / spread
-        percent = easeIn(t) # choose an ease function from above
+        percent = easeQuad(t) # choose an ease function from above
+
         # print "pos {0} ( {1} - {2} ) / {3}, percent {4}\n".format(pos, h_fixed, degrees, spread, t),
         # sys.stdout.flush()
 
