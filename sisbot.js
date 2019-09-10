@@ -554,7 +554,15 @@ var sisbot = {
 		});
 
 		// connect
-		this._connect();
+    if (this.current_state.get('led_enabled') == 'false') {
+      // pulse led strip once
+  		spawn('./pulse_leds.sh',[1],{cwd:"/home/pi/sisbot-server/sisbot",detached:true,stdio:'ignore'});
+
+      // delay connect until after lights are done fading
+      setTimeout(function() {
+        self._connect();
+      }, 2250);
+    } else this._connect();
 
 		// wifi connect
 		if (this.current_state.get("is_hotspot") == "false") {
@@ -2768,13 +2776,18 @@ var sisbot = {
           if (err) return logEvent(2, "Software Update Pattern Error", err);
         });
       });
+    } else {
+      // stop checkPhoto?
+
+      // pulse lights endlessly
+  		spawn('./pulse_leds.sh',[-1],{cwd:"/home/pi/sisbot-server/sisbot",detached:true,stdio:'ignore'});
     }
 
     logEvent(1, "Sisbot running update script update.sh");
 		exec('/home/pi/sisbot-server/sisbot/update.sh '+this.config.service_branches.sisbot+' '+this.config.service_branches.app+' '+this.config.service_branches.proxy+' false >> /var/log/sisyphus/'+moment().format('YYYYMMDD')+'_update.log', (error, stdout, stderr) => {
 			self.current_state.set({installing_updates: 'false'});
 		  if (error) {
-				return logEvent(2, 'exec error:',error);
+				return logEvent(plo2, 'exec error:',error);
 			}
 			logEvent(1, "Install complete");
 

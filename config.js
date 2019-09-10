@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dummy') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.35', // Warm light balance adjustment, Spread adjustment, led_startup preset with max lights value
+			version	: '1.9.36', // Software update specifically fades blue/white, bootup, node start and software update pulse led strip
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

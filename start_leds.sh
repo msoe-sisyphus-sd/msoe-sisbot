@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+#stop existing led_main if running
 ps aux | grep " led_main.py" | grep -v grep
 pypids=$(ps aux | grep " led_main.py" | grep -v grep | cut -c10-15)
 echo "OK, so we will stop these process/es now..."

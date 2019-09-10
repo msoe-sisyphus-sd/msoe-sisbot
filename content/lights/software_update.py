@@ -8,6 +8,8 @@ from neopixel import *
 from math import sin
 
 breathe_fade = 0
+blue = Color(0,0,255,0)
+white = Color(0,0,0,255)
 
 def fill(strip, color):
     for i in range(strip.numPixels()+1):
@@ -38,10 +40,10 @@ def colorBlend(color1,color2,blend=0):
     return Color(red,green,blue,white)
 
 def update(rho, theta, photo, primary_color, secondary_color, strip):
-    global breathe_fade
+    global breathe_fade, blue, white
 
     percent = 0.5 + sin(breathe_fade) * 0.5
-    fill(strip, colorBlend(Color(0,0,255,16),primary_color,percent)) # fill with color based on rho only
+    fill(strip, colorBlend(white,blue,percent)) # fill with color based on rho only
     strip.show()
 
     breathe_fade += 0.005

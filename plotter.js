@@ -144,7 +144,6 @@ function checkPhoto() { //autodimming functionality:
   if (useFaultSensors) sp.write("A2\r"); //SBB command to check analog inputs
   else sp.write("A\r");
 
-
   if (autodim == "true") { //need to check autodim toggle fn'ing
     //console.log("photoAvgOld: " + photoAvgOld);
     //filter spurious readings:
@@ -1258,9 +1257,8 @@ module.exports = {
     sp.write('PO,B,1,1\r'); //set B1 high to enable Rho
     sp.write('PO,B,2,1\r'); //set B2 high to enable Theta
 
-    if (useLED) sp.write("SE,1,100\r"); //turn on low lighting
-
-    checkPhoto(); //start ambient light sensing
+    // if (useLED) sp.write("SE,1,100\r"); //turn on low lighting
+    // checkPhoto(); //start ambient light sensing
   },
 
   useLCPSocket: function (newsock) {
