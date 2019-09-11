@@ -1220,7 +1220,6 @@ module.exports = {
     if (config.useRGBW !== undefined) {
       logEvent(1, "Use config:", config.useRGBW);
       useLED = !config.useRGBW;
-      useRGBW = config.useRGBW;
     }
   },
 

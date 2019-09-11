@@ -19,7 +19,7 @@ detach_track: '0 0,0 0' # set table specific detach verts
 
 autodim: true # is autodim allowed in UI
 
-useRGBW: false # pi connected RGBW LEDs
+useRGBW: true # pi connected RGBW LEDs
 rgbwCount: 100 # number of rgbw LEDs
 
 
