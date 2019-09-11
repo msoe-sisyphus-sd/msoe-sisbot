@@ -12,7 +12,7 @@ h_r = 5 # head radius (in lights)
 h_easing = 0.9 # head easing
 t_theta = 0 # tail theta (offset from h_theta)
 t_r = 5 # tail radius (in lights)
-t_easing = 0.125 # tail easing
+t_easing = 0.075 # tail easing
 
 def fill(strip, color):
     for i in range(strip.numPixels()+1):
@@ -80,8 +80,11 @@ def update(rho, theta, photo, primary_color, secondary_color, strip):
     if abs(h_diff) >= 180:
         h_theta = theta
     diff = h_theta - t_theta
-    if abs(diff) >= 360: # reset tail if falling too far behind
-        t_theta = h_theta
+    if abs(diff) > 360: # reset tail if falling too far behind
+        if h_theta > t_theta:
+            t_theta = h_theta-360
+        else:
+            t_theta = h_theta+360
 
     # solid positions
     h_x = int( (h_theta * led_count) / 360 )
@@ -94,12 +97,12 @@ def update(rho, theta, photo, primary_color, secondary_color, strip):
     # head positions
     h_spread = 360 / led_count * h_r
     h_start = h_x - h_r
-    h_end = h_x + h_r
+    h_end = h_x + h_r+1
 
     # tail positions
     t_spread = 360 / led_count * t_r
     t_start = t_x - t_r
-    t_end = t_x + t_r
+    t_end = t_x + t_r+1
 
     # fade light by tail
     t_diff = max(abs(t_x - t_r - h_end), abs(t_x + t_r - h_start))

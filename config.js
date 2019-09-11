@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dummy') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.36', // Software update specifically fades blue/white, bootup, node start and software update pulse led strip
+			version	: '1.9.37', // Jog position fix, comet adjustments
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

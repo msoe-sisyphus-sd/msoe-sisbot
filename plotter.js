@@ -524,9 +524,7 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLOstep
           // Row
           var newR = ((rAccum - thAccum * rthAsp * nestedAxisSign) * rDirSign/ rSPInch)/plotRadius;
           // Theta
-          var thetaDistHome, modRads, rawRads, shortestRads;
-          rawRads = thAccum / thSPRad;
-          var newTh = rawRads;
+          var newTh = thAccum / thSPRad;
 
           var buf1 = Buffer.from('b', 0, 1);
           var buf2 =  Buffer.alloc(4);
@@ -897,11 +895,14 @@ function jog(axis, direction) {
 
         // send to socket
         try {
+          var newR = ((rAccum - thAccum * rthAsp * nestedAxisSign) * rDirSign/ rSPInch)/plotRadius;
+          var newTh = thAccum / thSPRad;
+
           var buf1 = Buffer.from('b', 0, 1);
           var buf2 =  Buffer.alloc(4);
-          buf2.writeFloatBE(rAccum, 0);
+          buf2.writeFloatBE(newR, 0);
           var buf3 =  Buffer.alloc(4);
-          buf3.writeFloatBE(thAccum, 0);
+          buf3.writeFloatBE(newTh, 0);
           var buf4 =  Buffer.alloc(4);
           buf4.writeFloatBE(lastPhotoOut, 0);
           var totalLength = buf1.length + buf2.length + buf3.length + buf4.length;
