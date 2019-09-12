@@ -7,6 +7,8 @@
   - Multiple saves now queue up, preventing "Another save in process, try again" error messages
   - Light trail on Pi boot, color pattern on Node start
   - Fading blue/red on software update
+  - Demo pattern
+  - Install Python button for Advanced Table Settings
 
 # 2019-09-04 1.10.32
   - version bump, no changes

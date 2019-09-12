@@ -2696,7 +2696,6 @@ var sisbot = {
 	},
 	/* ------------------------------------------ */
   install_updates: function(data, cb) {
-
     logEvent(1, "Sisbot Install Updates WRAPPER", data);
     if (this.isServo && this.homeFirst) {
       var homedata = {
@@ -2785,6 +2784,78 @@ var sisbot = {
 
     logEvent(1, "Sisbot running update script update.sh");
 		exec('/home/pi/sisbot-server/sisbot/update.sh '+this.config.service_branches.sisbot+' '+this.config.service_branches.app+' '+this.config.service_branches.proxy+' false >> /var/log/sisyphus/'+moment().format('YYYYMMDD')+'_update.log', (error, stdout, stderr) => {
+			self.current_state.set({installing_updates: 'false'});
+		  if (error) {
+				return logEvent(plo2, 'exec error:',error);
+			}
+			logEvent(1, "Install complete");
+
+			self.save(null, null);
+
+  		self._reboot(null,null);
+		});
+	},
+  install_python: function(data, cb) {
+    logEvent(1, "Sisbot Install Python WRAPPER", data);
+    if (this.isServo && this.homeFirst) {
+      var homedata = {
+        stop : true,
+        clear_tracks: true
+      };
+
+      logEvent(1, "install_python, SERVO so calling Home() first");
+      self = this;
+      this.home(homedata, null);
+      logEvent(1, "next call wait_for_home");
+
+      self = this;
+      setTimeout(function() {
+        logEvent(1, "calling _install_python pointer is = ", typeof self._install_python);
+        self._wait_for_home(data, cb,  self._install_python, self, false);
+      }, 2000);
+
+      return;
+    }
+
+    logEvent(1, "no servo, call _install_python directly");
+    this._install_python(data, cb);
+  },
+  _install_python: function(data, cb) {
+		var self = this;
+		logEvent(1, "Sisbot Install Python", data);
+		if (this.current_state.get("is_internet_connected") != "true") {
+			if (cb) cb("Not connected to internet", null);
+			return logEvent(2, "Install error: not connected to internet");
+		}
+
+		this.current_state.set('installing_updates','true');
+		this.pause(null, null);
+
+		// send response first
+		if (cb) cb(null, this.current_state.toJSON());
+
+    // change to software_update.py pattern
+    logEvent(0, "Change pattern", this.current_state.get('led_enabled'), this.current_state.get('is_rgbw'));
+    if (this.current_state.get('led_enabled') == 'true') {
+      logEvent(0, "Change to Software Update pattern");
+      // change colors
+      self.set_led_color({ primary_color: '#0000FF00', secondary_color:'#FF000000'}, function(err, resp) {
+        if (err) return logEvent(2, "Software Update Color error", err);
+
+        // change pattern
+        self.lcpWrite({ value: 'isoftware_update' }, function(err, resp) {
+          if (err) return logEvent(2, "Software Update Pattern Error", err);
+        });
+      });
+    } else {
+      // stop checkPhoto?
+
+      // pulse lights endlessly
+  		spawn('./pulse_leds.sh',[-1],{cwd:"/home/pi/sisbot-server/sisbot",detached:true,stdio:'ignore'});
+    }
+
+    logEvent(1, "Sisbot running update script install_python.sh");
+		exec('/home/pi/sisbot-server/sisbot/install_python.sh >> /var/log/sisyphus/'+moment().format('YYYYMMDD')+'_update.log', (error, stdout, stderr) => {
 			self.current_state.set({installing_updates: 'false'});
 		  if (error) {
 				return logEvent(plo2, 'exec error:',error);

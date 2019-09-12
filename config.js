@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dummy') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.37', // Jog position fix, comet adjustments
+			version	: '1.9.38', // Demo pattern, Python Install button
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
