@@ -6,10 +6,18 @@
 
 from neopixel import *
 from math import pow
-# import sys
+from timeit import default_timer as timer
+import sys
 
-# globals
-h_theta         = 0 # wanted ball position
+time_start = 0 # for elapsed time
+transition = 0 # 0-1.0, fade between states
+
+def init(theta, rho):
+    global transition, time_start
+    time_start = 0
+    transition = 0
+    print "Init solid pattern {0} {1}\n".format(time_start, transition),
+    sys.stdout.flush()
 
 def fill(strip, color):
     for i in range(strip.numPixels()+1):
@@ -17,14 +25,9 @@ def fill(strip, color):
 
 def colorBlend(color1,color2,blend=0):
     if (blend > 1):
-        # print "blend %s out of range" % (blend)
-        # sys.stdout.flush()
         blend = 1
     if (blend < 0):
-        # print "blend %s out of range" % (blend)
-        # sys.stdout.flush()
         blend = 0
-    """Fade color1 into color2 by blend percent"""
     w1 = (color1 >> 24) & 0xFF;
     r1 = (color1 >> 16) & 0xFF;
     g1 = (color1 >> 8) & 0xFF;
@@ -42,8 +45,16 @@ def colorBlend(color1,color2,blend=0):
 def easeIn(t):
     return 1.0 - pow(2, (1.0 - t) * 10.0) / 1024.0
 
-def update(rho, theta, photo, primary_color, secondary_color, strip):
-    global h_theta
+def easeOut(t):
+    return pow(2, t * 10.0) / 1024.0
+
+def update(theta, rho, photo, primary_color, secondary_color, strip):
+    global transition, time_start
+    if time_start == 0:
+        time_start = timer()
+        transition = 0
+        print "Start calibrate timer {0}\n".format(time_start),
+        sys.stdout.flush()
 
     led_count = strip.numPixels()
 
@@ -99,3 +110,9 @@ def update(rho, theta, photo, primary_color, secondary_color, strip):
         strip.setPixelColor(pos, colorBlend(ball_color,bg_color,percent))
         # strip.setPixelColor(pos, ball_color)
     strip.show()
+
+    # increment time
+    if transition < 1.0:
+        time_end = timer()
+        transition += time_end - time_start
+        time_start = time_end

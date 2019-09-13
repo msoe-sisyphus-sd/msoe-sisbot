@@ -39,7 +39,7 @@ def colorBlend(color1,color2,blend=0):
     white = int((w1+(w2-w1)*blend))
     return Color(red,green,blue,white)
 
-def update(rho, theta, photo, primary_color, secondary_color, strip):
+def update(theta, rho, photo, primary_color, secondary_color, strip):
     global breathe_fade, blue, white
 
     percent = 0.5 + sin(breathe_fade) * 0.5

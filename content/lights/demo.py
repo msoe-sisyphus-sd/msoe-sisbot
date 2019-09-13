@@ -59,7 +59,7 @@ def wheel(pos):
         pos -= 170
         return Color(0, pos * 3, 255 - pos * 3)
 
-def update(rho, theta, photo, primary_color, secondary_color, strip):
+def update(theta, rho, photo, primary_color, secondary_color, strip):
     global state, transition, current_primary, current_secondary, time, time_start, length
     if time_start == 0:
         time_start = timer()

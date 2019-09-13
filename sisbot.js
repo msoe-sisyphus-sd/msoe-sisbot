@@ -814,11 +814,14 @@ var sisbot = {
     this.lcpWrite({ value: 'i'+data.id }, function(err, resp) {
       if (err) return logEvent(2, "LCP Error", err);
 
-      self.current_state.set('led_pattern', data.id);
+      // change colors
+      self.set_led_color(data, function(err, resp) {
+        self.current_state.set('led_pattern', data.id);
+        self.save(null, null);
 
-      self.save(null, null);
+        if (cb) cb(null, self.current_state.toJSON());
+      });
 
-      if (cb) cb(null, self.current_state.toJSON());
     });
   },
   set_led_color: function(data, cb) {
@@ -827,27 +830,27 @@ var sisbot = {
     var is_change = false;
 
     //
-    if (data.primary_color) {
+    if (data.led_primary_color) {
       logEvent(1, "Set primary color", JSON.stringify(data.primary_color));
 
       // split from hex into components
-      if (_.isString(data.primary_color)) {
-        red = parseInt(data.primary_color.substr(1, 2), 16);
-        green = parseInt(data.primary_color.substr(3, 2), 16);
-        blue = parseInt(data.primary_color.substr(5, 2), 16);
+      if (_.isString(data.led_primary_color)) {
+        red = parseInt(data.led_primary_color.substr(1, 2), 16);
+        green = parseInt(data.led_primary_color.substr(3, 2), 16);
+        blue = parseInt(data.led_primary_color.substr(5, 2), 16);
         white = 0;
-        if (data.primary_color.length > 7) white = parseInt(data.primary_color.substr(7, 2), 16);
+        if (data.led_primary_color.length > 7) white = parseInt(data.led_primary_color.substr(7, 2), 16);
 
         // logEvent(1, "Primary Colors: ", red, green, blue);
-        data.primary_color = { red: red, green: green, blue: blue, white: white };
+        data.led_primary_color = { red: red, green: green, blue: blue, white: white };
       }
 
       var arr = new Uint8Array(5);
       arr[0] = 67; // C
-      if (data.primary_color.red) arr[1] = Math.max(0,Math.min(+data.primary_color.red, 255));
-      if (data.primary_color.green) arr[2] = Math.max(0,Math.min(+data.primary_color.green, 255));
-      if (data.primary_color.blue) arr[3] = Math.max(0,Math.min(+data.primary_color.blue, 255));
-      if (data.primary_color.white) arr[4] = Math.max(0,Math.min(+data.primary_color.white, 255));
+      if (data.led_primary_color.red) arr[1] = Math.max(0,Math.min(+data.led_primary_color.red, 255));
+      if (data.led_primary_color.green) arr[2] = Math.max(0,Math.min(+data.led_primary_color.green, 255));
+      if (data.led_primary_color.blue) arr[3] = Math.max(0,Math.min(+data.led_primary_color.blue, 255));
+      if (data.led_primary_color.white) arr[4] = Math.max(0,Math.min(+data.led_primary_color.white, 255));
 
       var buf = Buffer.from(arr.buffer);
 
@@ -858,26 +861,26 @@ var sisbot = {
       }
       is_change = true;
     }
-    if (data.secondary_color) {
-      logEvent(1, "Set secondary color", JSON.stringify(data.secondary_color));
+    if (data.led_secondary_color) {
+      logEvent(1, "Set secondary color", JSON.stringify(data.led_secondary_color));
 
       // split from hex into components
-      if (_.isString(data.secondary_color)) {
-        red = parseInt(data.secondary_color.substr(1, 2), 16);
-        green = parseInt(data.secondary_color.substr(3, 2), 16);
-        blue = parseInt(data.secondary_color.substr(5, 2), 16);
+      if (_.isString(data.led_secondary_color)) {
+        red = parseInt(data.led_secondary_color.substr(1, 2), 16);
+        green = parseInt(data.led_secondary_color.substr(3, 2), 16);
+        blue = parseInt(data.led_secondary_color.substr(5, 2), 16);
         white = 0;
-        if (data.secondary_color.length > 7) white = parseInt(data.secondary_color.substr(7, 2), 16);
+        if (data.led_secondary_color.length > 7) white = parseInt(data.led_secondary_color.substr(7, 2), 16);
 
         // logEvent(1, "Secondary Colors: ", red, green, blue);
-        data.secondary_color = { red: red, green: green, blue: blue, white: white };
+        data.led_secondary_color = { red: red, green: green, blue: blue, white: white };
       }
       var arr = new Uint8Array(5);
       arr[0] = 99; // c
-      if (data.secondary_color.red) arr[1] = Math.max(0,Math.min(+data.secondary_color.red, 255));
-      if (data.secondary_color.green) arr[2] = Math.max(0,Math.min(+data.secondary_color.green, 255));
-      if (data.secondary_color.blue) arr[3] = Math.max(0,Math.min(+data.secondary_color.blue, 255));
-      if (data.secondary_color.white) arr[4] = Math.max(0,Math.min(+data.secondary_color.white, 255));
+      if (data.led_secondary_color.red) arr[1] = Math.max(0,Math.min(+data.led_secondary_color.red, 255));
+      if (data.led_secondary_color.green) arr[2] = Math.max(0,Math.min(+data.led_secondary_color.green, 255));
+      if (data.led_secondary_color.blue) arr[3] = Math.max(0,Math.min(+data.led_secondary_color.blue, 255));
+      if (data.led_secondary_color.white) arr[4] = Math.max(0,Math.min(+data.led_secondary_color.white, 255));
 
       var buf = Buffer.from(arr.buffer);
 

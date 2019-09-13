@@ -5,10 +5,18 @@
 # Spread of color pixels around the position of Sisyphus ball
 
 from neopixel import *
+from timeit import default_timer as timer
 import sys
 
-# globals
-h_theta         = 0 # wanted ball position
+time_start = 0 # for elapsed time
+transition = 0 # 0-1.0, fade between states
+
+def init(theta, rho):
+    global transition, time_start
+    time_start = 0
+    transition = 0
+    print "Init spread pattern {0} {1}\n".format(time_start, transition),
+    sys.stdout.flush()
 
 def fill(strip, color):
     for i in range(strip.numPixels()+1):
@@ -44,8 +52,16 @@ def easeQuad(t):
 def easeIn(t):
     return 1.0 - pow(2, (1.0 - t) * 10.0) / 1024.0
 
-def update(rho, theta, photo, primary_color, secondary_color, strip):
-    global h_theta
+def easeOut(t):
+    return pow(2, t * 10.0) / 1024.0
+
+def update(theta, rho, photo, primary_color, secondary_color, strip):
+    global transition, time_start
+    if time_start == 0:
+        time_start = timer()
+        transition = 0
+        print "Start spread timer {0}\n".format(time_start),
+        sys.stdout.flush()
 
     led_count = strip.numPixels()
 
@@ -66,14 +82,19 @@ def update(rho, theta, photo, primary_color, secondary_color, strip):
     spread_l = h_theta - spread
     spread_r = h_theta + spread
 
-    fill(strip, bg_color) # default color
-
     start = int( (spread_l * led_count) / 360 )
     end = int( (spread_r * led_count) / 360 ) + 1
     if (end < start):
         end += led_count
 
     h_fixed = h_theta % 360
+
+    if transition < 1.0:
+        for i in range(strip.numPixels()+1):
+            if i < start%led_count or i > end%led_count:
+                strip.setPixelColor(i, colorBlend(strip.getPixelColor(i),bg_color,easeOut(transition)))
+    else:
+        fill(strip, bg_color) # default color
 
     # print "Rho %s, Theta %s, Adjusted Theta %s, Photo %s, Brightness %s 0.5 %s 0.25 %s\n" % (rho, theta, h_theta, photo, brightness, max(int(brightness/2),1), max(int(brightness/4),1)),
     # sys.stdout.flush()
@@ -95,6 +116,14 @@ def update(rho, theta, photo, primary_color, secondary_color, strip):
         # print "pos {0} ( {1} - {2} ) / {3}, percent {4}\n".format(pos, h_fixed, degrees, spread, t),
         # sys.stdout.flush()
 
-        strip.setPixelColor(pos, colorBlend(ball_color,bg_color,percent))
-        # strip.setPixelColor(pos, ball_color)
+        if transition < 1.0:
+            strip.setPixelColor(pos, colorBlend(strip.getPixelColor(pos),colorBlend(ball_color,bg_color,percent),easeOut(transition)))
+        else:
+            strip.setPixelColor(pos, colorBlend(ball_color,bg_color,percent))
     strip.show()
+
+    # increment time
+    if transition < 1.0:
+        time_end = timer()
+        transition += time_end - time_start
+        time_start = time_end

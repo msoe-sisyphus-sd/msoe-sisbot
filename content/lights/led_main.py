@@ -63,7 +63,7 @@ def signal_handler(sig, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 
-def init(socket_path):
+def init_socket(socket_path):
     if os.path.exists(socket_path):
         os.remove(socket_path)
     print("Opening socket...")
@@ -94,8 +94,14 @@ def get_data(server):
 # Import a new pattern, which will overwrite the function update()
 def dynamic_import(abs_module_path, class_name):
     module_object = import_module(abs_module_path)
-    target_class = getattr(module_object, class_name)
+    target_class = getattr(module_object, class_name, no_init)
     return target_class
+
+def no_init(start_rho, start_theta):
+    pass # default: do nothing
+
+def init(start_rho, start_theta):
+    pass # default: do nothing
 
 # Define functions which animate LEDs in various ways.
 def colorWipe(strip, color, wait_ms=50):
@@ -166,7 +172,7 @@ if __name__ == '__main__':
     # Intialize the library (must be called once before other functions).
     strip.begin()
 
-    server = init('/tmp/sisyphus_sockets')
+    server = init_socket('/tmp/sisyphus_sockets')
 
     print ('Press Ctrl-C to quit.')
     if not args.clear:
@@ -218,6 +224,10 @@ if __name__ == '__main__':
             strip.show()
             time.sleep(5/1000.0)
             fade_time += 1
+
+        # off all colors
+        fill(strip, Color(0,0,0,0))
+        strip.show()
 
         #  Loop and get incoming data from plotter
         while True:
@@ -273,6 +283,10 @@ if __name__ == '__main__':
                     filename = load_file[1:bytes]
                     print filename
                     sys.stdout.flush()
+                    # init the pattern
+                    init = dynamic_import(filename, "init")
+                    init(theta * 57.2958 + led_offset, rho)
+                    # change update function
                     update = dynamic_import(filename, "update")
                 else:
                     print "command %s\n" % (command),
@@ -291,7 +305,7 @@ if __name__ == '__main__':
                 strip.setBrightness(brightness)
 
             # update, regardless of socket_data
-            update(rho, theta * 57.2958 + led_offset, photo, primary_color, secondary_color, strip)
+            update(theta * 57.2958 + led_offset, rho, photo, primary_color, secondary_color, strip)
             # time.sleep(1.0/60.0) # sixty frames/sec
 
             old_photo = photo;
