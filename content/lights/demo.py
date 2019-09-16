@@ -18,6 +18,17 @@ transition = 0 # 0-1.0, fade between states
 current_primary = Color(255,255,255,255) # start off
 current_secondary = Color(0,0,0,0) # start off
 
+def init(theta, rho):
+    global state, time, transition, time_start, current_primary, current_secondary
+    state = 0 # 0-3, white, color, spread, rainbow
+    time_start = 0
+    time = 0 # time in seconds to count
+    transition = 0
+    current_primary = Color(255,255,255,255) # start off
+    current_secondary = Color(0,0,0,0) # start off
+    # print "Init demo pattern {0} {1}\n".format(time_start, transition),
+    sys.stdout.flush()
+
 def fill(strip, color):
     for i in range(strip.numPixels()+1):
         strip.setPixelColor(i, color)

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-# Fade
+# None
 # Author: Matthew Klundt (matt@withease.io)
 #
-# Fade between primary/secondary color based on rho of Sisyphus ball
+# Fade to off
 
 from neopixel import *
 from timeit import default_timer as timer
@@ -10,13 +10,6 @@ import sys
 
 time_start = 0 # for elapsed time
 transition = 0 # 0-1.0, fade between states
-
-def init(theta, rho):
-    global transition, time_start
-    time_start = 0
-    transition = 0
-    # print "Init fade pattern {0} {1}\n".format(time_start, transition),
-    sys.stdout.flush()
 
 def fill(strip, color):
     for i in range(strip.numPixels()+1):
@@ -35,30 +28,35 @@ def colorBlend(color1,color2,blend=0):
     r2 = (color2 >> 16) & 0xFF;
     g2 = (color2 >> 8) & 0xFF;
     b2 = color2 & 0xFF;
-    red = int((r1+(r2-r1)*blend))
-    green = int((g1+(g2-g1)*blend))
-    blue = int((b1+(b2-b1)*blend))
-    white = int((w1+(w2-w1)*blend))
+    red = int(r1+(r2-r1)*blend)
+    green = int(g1+(g2-g1)*blend)
+    blue = int(b1+(b2-b1)*blend)
+    white = int(w1+(w2-w1)*blend)
     return Color(red,green,blue,white)
 
 def easeOut(t):
     return pow(2, t * 10.0) / 1024.0
+
+def init(start_theta, start_rho):
+    global transition, time_start
+    transition = 0
+    time_start = 0
+    # print "Init white pattern {0} {1}\n".format(time_start, transition),
+    # sys.stdout.flush()
 
 def update(theta, rho, photo, primary_color, secondary_color, strip):
     global transition, time_start
     if time_start == 0:
         time_start = timer()
         transition = 0
-        # print "Start fade timer {0}\n".format(time_start),
-        sys.stdout.flush()
+        # print "Start white timer {0}\n".format(time_start),
+        # sys.stdout.flush()
 
-    percent = rho
     if transition < 1.0:
         for i in range(strip.numPixels()+1):
-            strip.setPixelColor(i, colorBlend(strip.getPixelColor(i),colorBlend(secondary_color,primary_color,percent),easeOut(transition)))
+            strip.setPixelColor(i, colorBlend(strip.getPixelColor(i),Color(0,0,0,0),easeOut(transition)))
     else:
-        fill(strip, colorBlend(secondary_color,primary_color,percent)) # fill with color based on rho only
-
+        fill(strip, Color(0,0,0,0)) # fill with white
     strip.show()
 
     # increment time

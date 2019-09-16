@@ -20,7 +20,7 @@ def init(theta, rho):
     global transition, time_start
     time_start = 0
     transition = 0
-    print "Init software_update pattern {0} {1}\n".format(time_start, transition),
+    # print "Init software_update pattern {0} {1}\n".format(time_start, transition),
     sys.stdout.flush()
 
 def fill(strip, color):
@@ -54,7 +54,7 @@ def update(theta, rho, photo, primary_color, secondary_color, strip):
     if time_start == 0:
         time_start = timer()
         transition = 0
-        print "Start software_update timer {0}\n".format(time_start),
+        # print "Start software_update timer {0}\n".format(time_start),
         sys.stdout.flush()
 
     percent = 0.5 + sin(breathe_fade) * 0.5

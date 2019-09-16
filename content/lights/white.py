@@ -41,7 +41,7 @@ def init(start_theta, start_rho):
     global transition, time_start
     transition = 0
     time_start = 0
-    print "Init white pattern {0} {1}\n".format(time_start, transition),
+    # print "Init white pattern {0} {1}\n".format(time_start, transition),
     sys.stdout.flush()
 
 def update(theta, rho, photo, primary_color, secondary_color, strip):
@@ -49,7 +49,7 @@ def update(theta, rho, photo, primary_color, secondary_color, strip):
     if time_start == 0:
         time_start = timer()
         transition = 0
-        print "Start white timer {0}\n".format(time_start),
+        # print "Start white timer {0}\n".format(time_start),
         sys.stdout.flush()
 
     if transition < 1.0:

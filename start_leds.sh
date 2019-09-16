@@ -12,7 +12,7 @@ done
 
 cd /home/pi/sisbot-server/sisbot/content/lights
 if [ -n "$1" ] && [ -n "$2" ]; then
-  python led_main.py "$1" "$2"
+  python led_main.py "$1" "$2" > /var/log/sisyphus/lights.log
 else
-  python led_main.py
+  python led_main.py > /var/log/sisyphus/lights.log
 fi

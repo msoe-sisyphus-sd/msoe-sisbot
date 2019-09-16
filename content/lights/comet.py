@@ -24,7 +24,7 @@ def init(theta, rho):
     transition = 0
     t_theta = theta
     h_theta = theta
-    print "Init comet pattern {0} {1}\n".format(theta, rho),
+    # print "Init comet pattern {0} {1}\n".format(theta, rho),
     sys.stdout.flush()
 
 def fill(strip, color):
@@ -71,7 +71,7 @@ def update(theta, rho, photo, primary_color, secondary_color, strip):
     if time_start == 0:
         time_start = timer()
         transition = 0
-        print "Start solid timer {0}\n".format(time_start),
+        # print "Start solid timer {0}\n".format(time_start),
         sys.stdout.flush()
 
     led_count = strip.numPixels()

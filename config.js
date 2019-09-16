@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dummy') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.39', // Smooth transitions on pattern changes
+			version	: '1.9.40', // Smooth transitions on pattern changes, startup colors fixed, pattern turns off on table settings change
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

@@ -15,7 +15,7 @@ def init(theta, rho):
     global transition, time_start
     time_start = 0
     transition = 0
-    print "Init rainbow pattern {0} {1}\n".format(time_start, transition),
+    # print "Init rainbow pattern {0} {1}\n".format(time_start, transition),
     sys.stdout.flush()
 
 def wheel(pos):
@@ -57,7 +57,7 @@ def update(theta, rho, photo, primary_color, secondary_color, strip):
     if time_start == 0:
         time_start = timer()
         transition = 0
-        print "Start rainbow timer {0}\n".format(time_start),
+        # print "Start rainbow timer {0}\n".format(time_start),
         sys.stdout.flush()
 
     led_count = strip.numPixels()

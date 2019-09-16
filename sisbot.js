@@ -381,19 +381,19 @@ var sisbot = {
 
     // RGBW
     if (cson_config.useRGBW) {
-      logEvent(0, "Use RGBW", this.current_state.get('led_primary_color'), this.current_state.get('led_secondary_color'));
+      logEvent(1, "Use RGBW", this.current_state.get('led_primary_color'), this.current_state.get('led_secondary_color'));
       this.current_state.set('led_enabled','true');
       if (cson_config.rgbwCount) this.led_count = cson_config.rgbwCount;
-      if (this.current_state.get('led_primary_color') == 'false') {
-        logEvent(2, "Set Primary Color", this.current_state.get('led_primary_color'));
-        this.current_state.set('led_primary_color', cson_config.rgbwPrimaryColor);
-      }
-      if (this.current_state.get('led_secondary_color') == 'false') {
-        logEvent(2, "Set Primary Color", this.current_state.get('led_primary_color'));
-        this.current_state.set('led_secondary_color', cson_config.rgbwSecondaryColor);
-      }
+      // if (this.current_state.get('led_primary_color') == 'false') {
+      //   logEvent(2, "Set Primary Color", this.current_state.get('led_primary_color'));
+      //   this.current_state.set('led_primary_color', cson_config.rgbwPrimaryColor);
+      // }
+      // if (this.current_state.get('led_secondary_color') == 'false') {
+      //   logEvent(2, "Set Primary Color", this.current_state.get('led_primary_color'));
+      //   this.current_state.set('led_secondary_color', cson_config.rgbwSecondaryColor);
+      // }
     } else {
-      logEvent(0, "No RGBW");
+      logEvent(1, "No RGBW");
       this.current_state.set('led_enabled','false');
       this.current_state.set('is_rgbw','false');
     }
@@ -766,14 +766,11 @@ var sisbot = {
       setTimeout(function() {
         // set pattern
         var pattern = self.current_state.get('led_pattern');
-        if (pattern && pattern != 'false') self.set_led_pattern({id:pattern});
+        if (pattern && pattern != 'false') self.set_led_pattern({id:pattern,led_primary_color:self.current_state.get('led_primary_color'), led_secondary_color:self.current_state.get('led_secondary_color')});
 
         // set offset
         var offset = self.current_state.get('led_offset');
         if (offset != 0) self.set_led_offset({offset:offset});
-
-        // set colors
-        self.set_led_color({primary_color:self.current_state.get('led_primary_color'), secondary_color:self.current_state.get('led_secondary_color')});
       }, 2000);
     } else {
       // tell plotter to use original strip
@@ -831,7 +828,7 @@ var sisbot = {
 
     //
     if (data.led_primary_color) {
-      logEvent(1, "Set primary color", JSON.stringify(data.primary_color));
+      logEvent(0, "Set primary color", JSON.stringify(data.led_primary_color));
 
       // split from hex into components
       if (_.isString(data.led_primary_color)) {
@@ -3005,6 +3002,15 @@ var sisbot = {
 	_restart: function(data,cb) {
 		logEvent(1, "Sisbot Restart", data);
 		this.current_state.set({is_available: "false", reason_unavailable: "restarting"});
+
+    // turn off lights if running
+    if (this.py) {
+      logEvent(0, "Python running, turn off RGBW leds");
+      this.lcpWrite({ value: 'inone' }, function(err, resp) {
+        if (err) return logEvent(2, "LCP Error", err);
+      });
+    }
+
 		if (cb) cb(null, this.current_state.toJSON());
 		var ls = spawn('./restart.sh',[],{cwd:"/home/pi/sisbot-server/sisbot/",detached:true,stdio:'ignore'});
 		ls.on('error', (err) => {
