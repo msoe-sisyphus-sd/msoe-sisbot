@@ -199,16 +199,16 @@ if __name__ == '__main__':
             fade_time += 1
 
         # fade to color
-        start_color = wheel(0)
         fade_time = 0
-        fade_total = 128.0
+        startup = 0
+        fade_total = 100.0
         while fade_time < fade_total:
-            fill(strip, colorBlend(white_color, start_color, easeIn(fade_time/fade_total)))
+            fill(strip, colorBlend(white_color, wheel(startup), easeIn(fade_time/fade_total)))
             strip.show()
             time.sleep(10/1000.0)
             fade_time += 1
+            startup += 1
 
-        startup = 0
         while startup<256:
             fill(strip, wheel(startup)) # Cycle through colors as a means of startup
             strip.show()

@@ -2769,13 +2769,14 @@ var sisbot = {
     logEvent(0, "Change pattern", this.current_state.get('led_enabled'), this.current_state.get('is_rgbw'));
     if (this.current_state.get('led_enabled') == 'true') {
       logEvent(0, "Change to Software Update pattern");
-      // change colors
-      self.set_led_color({ primary_color: '#0000FF00', secondary_color:'#FF000000'}, function(err, resp) {
-        if (err) return logEvent(2, "Software Update Color error", err);
 
-        // change pattern
-        self.lcpWrite({ value: 'isoftware_update' }, function(err, resp) {
-          if (err) return logEvent(2, "Software Update Pattern Error", err);
+      // change pattern
+      self.lcpWrite({ value: 'isoftware_update' }, function(err, resp) {
+        if (err) return logEvent(2, "Software Update Pattern Error", err);
+
+        // change colors
+        self.set_led_color({ primary_color: '#0000FF00', secondary_color:'#FF000000'}, function(err, resp) {
+          if (err) return logEvent(2, "Software Update Color error", err);
         });
       });
     } else {
