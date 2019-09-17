@@ -1,5 +1,17 @@
+# 2019-08-26 1.10.33
+  - Light patterns
+  - Pattern brightness matches slider
+  - Light offset added to Advanced Settings - Lights
+  - Autodim is available on a per CSON basis (some tables may not support autodim)  
+  - User can override CSON defaults
+  - Multiple saves now queue up, preventing "Another save in process, try again" error messages
+  - Light trail on Pi boot, color pattern on Node start
+  - Fading blue/red on software update
+  - Demo pattern
+  - Install Python button for Advanced Table Settings
+
 # 2019-09-04 1.10.32
- - no changes, version bump for sisproxy 1.4.12
+  - version bump, no changes
 
 # 2019-08-07 1.10.31
   - Jimmy homing

@@ -37,6 +37,7 @@
     "tough-cookie": "^2.3.4",
     "tunnel-agent": "^0.6.0",
     "underscore": "^1.8.3",
+    "unix-dgram": "^2.0.2",
     "uuid": "^2.0.2",
     "webshot": "^0.18.0",
     "wireless-tools": "^0.19.0",

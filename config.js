@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dummy') == -1) {
 
 var config = {
 		base: {
-			version	: '1.10.32', // Version bump for sisproxy change
+			version	: '1.9.41', // Demo pattern changes, led_main.py start_pattern argument added, Paint pattern added
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
