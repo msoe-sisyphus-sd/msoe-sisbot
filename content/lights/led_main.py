@@ -45,6 +45,7 @@ photo           = 0         # 0-1023
 primary_color   = Color(1,1,1,64);
 secondary_color = Color(1,1,1,1);
 
+start_pattern   = "white" # what pattern to begin with
 old_photo       = 0 # to reduce recreation of colors
 
 # on quit
@@ -160,12 +161,16 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--clear', action='store_true', help='clear the display on exit')
     parser.add_argument('-n', '--n', help='number of pixels in LED strip', type=int)
+    parser.add_argument("-p", '--p', help="pattern filename without .py")
     args = parser.parse_args()
 
     # Set led_count based on argument 0 if passed
     if args.n:
         print "LED Count {0}\n".format(args.n)
         led_count = args.n
+    if args.p:
+        print "Begin with pattern {0}\n".format(args.p)
+        start_pattern = args.p
 
     # Create NeoPixel object with appropriate configuration.
     strip = Adafruit_NeoPixel(led_count, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, scolor)
@@ -177,9 +182,6 @@ if __name__ == '__main__':
     print ('Press Ctrl-C to quit.')
     if not args.clear:
         print('Use "-c" argument to clear LEDs on exit')
-
-    # load default python script
-    update = dynamic_import("white", "update")
 
     try:
         # colorWipe(strip, white_color,10)  # White wipe just to get started
@@ -228,6 +230,9 @@ if __name__ == '__main__':
         # off all colors
         fill(strip, Color(0,0,0,0))
         strip.show()
+
+        # load default python script
+        update = dynamic_import(start_pattern, "update")
 
         #  Loop and get incoming data from plotter
         while True:

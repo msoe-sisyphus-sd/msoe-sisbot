@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dummy') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.40', // Smooth transitions on pattern changes, startup colors fixed, pattern turns off on table settings change
+			version	: '1.9.41', // Demo pattern changes, led_main.py start_pattern argument added, Paint pattern added
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

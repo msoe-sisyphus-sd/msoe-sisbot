@@ -9,7 +9,7 @@ from timeit import default_timer as timer
 from random import randrange
 import sys
 
-state = 0 # 0-3, white, color, spread, rainbow
+state = 0 # 0-2, white, warm, rainbow, color, spread
 length = 20 # seconds to wait between patterns
 time_start = 0 # for elapsed time
 time = 0 # time in seconds to count
@@ -85,13 +85,17 @@ def update(theta, rho, photo, primary_color, secondary_color, strip):
                 strip.setPixelColor(i, colorBlend(strip.getPixelColor(i),current_primary,easeOut(transition)))
         else:
             fill(strip, current_primary) # default color
-    elif state == 1: # color
-        if transition < 1.0:
-            for i in range(strip.numPixels()+1):
-                strip.setPixelColor(i, colorBlend(strip.getPixelColor(i),current_primary,easeOut(transition)))
-        else:
-            fill(strip, current_primary) # default color
-    elif state == 2: # spread
+    elif state == 2: # rainbow
+        # offset of rainbow
+        wheel_deg = int((-theta%360) / 360 * 255)
+        for i in range(0,led_count):
+            pixel_offset = float(i)/led_count*255.0
+            offset = (int(pixel_offset)+wheel_deg) & 255;
+            if transition < 1.0:
+                strip.setPixelColor(i, colorBlend(strip.getPixelColor(i), wheel(offset),easeOut(transition)))
+            else:
+                strip.setPixelColor(i, wheel(offset))
+    elif state == 4: # spread
         # spread out the pixel color based on rho
         max_spread = 85 # degress on either side of pixel to spread white
         min_spread = 10 # degress on either side of pixel to spread white
@@ -131,16 +135,12 @@ def update(theta, rho, photo, primary_color, secondary_color, strip):
                 strip.setPixelColor(pos, colorBlend(strip.getPixelColor(pos),colorBlend(current_primary,current_secondary,percent),easeOut(transition)))
             else:
                 strip.setPixelColor(pos, colorBlend(current_primary,current_secondary,percent))
-    else: # rainbow
-        # offset of rainbow
-        wheel_deg = int((-theta%360) / 360 * 255)
-        for i in range(0,led_count):
-            pixel_offset = float(i)/led_count*255.0
-            offset = (int(pixel_offset)+wheel_deg) & 255;
-            if transition < 1.0:
-                strip.setPixelColor(i, colorBlend(strip.getPixelColor(i), wheel(offset),easeOut(transition)))
-            else:
-                strip.setPixelColor(i, wheel(offset))
+    else: # warm/solid
+        if transition < 1.0:
+            for i in range(strip.numPixels()+1):
+                strip.setPixelColor(i, colorBlend(strip.getPixelColor(i),current_primary,easeOut(transition)))
+        else:
+            fill(strip, current_primary) # default color
 
     strip.show()
 
@@ -155,14 +155,16 @@ def update(theta, rho, photo, primary_color, secondary_color, strip):
         time = 0
         transition = 0
         state += 1
-        if state > 3:
+        if state > 2:
             state = 0
             current_primary = Color(255,255,255,255)
-        elif state == 1:
-            # new color
+        elif state == 1: # warm white
+            current_primary = Color(255,98,0,89)
+        elif state == 3: # random solid color
             current_primary = wheel(randrange(256))
-        elif state == 2:
+        elif state == 4: # random spread background
             current_primary = Color(255,255,255,255)
             current_secondary = wheel(randrange(256))
+
         # print "State %s\n" % (state),
         # sys.stdout.flush()
