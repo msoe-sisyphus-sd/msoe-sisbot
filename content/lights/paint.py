@@ -121,12 +121,14 @@ def update(theta, rho, photo, primary_color, secondary_color, strip):
 
         # ramp brightness
         t = abs(h_fixed - degrees) / spread
-        percent = easeIn(t) # choose an ease function from above
 
-        # print "pos {0} ( {1} - {2} ) / {3}, percent {4}\n".format(pos, h_fixed, degrees, spread, t),
-        # sys.stdout.flush()
+        if t > 0 and t < 1.0:
+            percent = easeIn(t) # choose an ease function from above
+            strip.setPixelColor(pos, colorBlend(ball_color,strip.getPixelColor(pos),percent))
 
-        strip.setPixelColor(pos, colorBlend(ball_color,strip.getPixelColor(pos),percent))
+            # print "pos {0} ( {1} - {2} ) / {3}, percent {4}\n".format(pos, h_fixed, degrees, spread, t),
+            # sys.stdout.flush()
+
         # strip.setPixelColor(pos, colorBlend(colorBlend(no_color,ball_color,easeIn(rho)),strip.getPixelColor(pos),percent))
     strip.show()
 
