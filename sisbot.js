@@ -346,7 +346,7 @@ var sisbot = {
         if (value == 'true') cson_config[key] = true;
         else if (value == 'false') cson_config[key] = false;
         else cson_config[key] = value;
-        logEvent(0, "New CSON Value:", key, cson_config[key]);
+        logEvent(1, "New CSON Value:", key, cson_config[key]);
       }
     });
 
@@ -805,7 +805,7 @@ var sisbot = {
   },
   set_led_pattern: function(data, cb) {
     var self = this;
-    logEvent(0, "Set led pattern", data);
+    logEvent(1, "Set led pattern", data);
 
     // set pattern
     this.lcpWrite({ value: 'i'+data.id }, function(err, resp) {
@@ -823,12 +823,12 @@ var sisbot = {
   },
   set_led_color: function(data, cb) {
     // Set LED colors
-    logEvent(0, 'Set led color', data);
+    logEvent(1, 'Set led color', data);
     var is_change = false;
 
     //
     if (data.led_primary_color) {
-      logEvent(0, "Set primary color", JSON.stringify(data.led_primary_color));
+      logEvent(1, "Set primary color", JSON.stringify(data.led_primary_color));
 
       // split from hex into components
       if (_.isString(data.led_primary_color)) {
@@ -1168,7 +1168,7 @@ var sisbot = {
 
                 // call next in queue if available
                 if (self._save_queue.length > 0) {
-                  logEvent(0, "Save queue:", self._save_queue.length);
+                  logEvent(1, "Save queue:", self._save_queue.length);
                   var next_save = self._save_queue.shift();
                   self.save(next_save.data, next_save.cb);
                 }
@@ -1355,7 +1355,7 @@ var sisbot = {
 	      if (this.isServo == true) this._moved_out = true; // no move out for servo tables
 
         if (this._moved_out) {
-					if (this._first_home) logEvent(0, "First home, use sensors");
+					if (this._first_home) logEvent(1, "First home, use sensors");
           else logEvent(2, "not at home after DR, doing sensored...");
           self.plotter.home();
           this._moved_out = false;
@@ -1369,11 +1369,11 @@ var sisbot = {
             thvmax: 0.5
           };
           if (thHome == true && rhoHome == false) {
-  					if (this._first_home) logEvent(0, "First home, use sensors");
+  					if (this._first_home) logEvent(1, "First home, use sensors");
             else logEvent(2, "Homing... Failed rho after DR, Fix rho");
             track_obj.verts.push({th:self.config.auto_home_th, r:self.config.auto_home_rho});
           } else {
-  					if (this._first_home) logEvent(0, "First home, use sensors");
+  					if (this._first_home) logEvent(1, "First home, use sensors");
             else logEvent(2, "Homing... Failed Theta after DR, Fix theta and rho");
             track_obj.verts.push({th:self.config.auto_home_th, r:self.config.auto_home_rho});
           }
@@ -2763,9 +2763,7 @@ var sisbot = {
 		if (cb) cb(null, this.current_state.toJSON());
 
     // change to software_update.py pattern
-    logEvent(0, "Change pattern", this.current_state.get('led_enabled'), this.current_state.get('is_rgbw'));
     if (this.current_state.get('led_enabled') == 'true') {
-      logEvent(0, "Change to Software Update pattern");
 
       // change pattern
       self.lcpWrite({ value: 'isoftware_update' }, function(err, resp) {
@@ -2836,9 +2834,7 @@ var sisbot = {
 		if (cb) cb(null, this.current_state.toJSON());
 
     // change to software_update.py pattern
-    logEvent(0, "Change pattern", this.current_state.get('led_enabled'), this.current_state.get('is_rgbw'));
     if (this.current_state.get('led_enabled') == 'true') {
-      logEvent(0, "Change to Software Update pattern");
       // change colors
       self.set_led_color({ primary_color: '#0000FF00', secondary_color:'#FF000000'}, function(err, resp) {
         if (err) return logEvent(2, "Software Update Color error", err);
@@ -3005,7 +3001,7 @@ var sisbot = {
 
     // turn off lights if running
     if (this.py) {
-      logEvent(0, "Python running, turn off RGBW leds");
+      logEvent(1, "Python running, turn off RGBW leds");
       this.lcpWrite({ value: 'inone' }, function(err, resp) {
         if (err) return logEvent(2, "LCP Error", err);
       });

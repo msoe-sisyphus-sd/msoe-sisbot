@@ -211,7 +211,7 @@ function checkPhoto() { //autodimming functionality:
 
       if (photoOut != 0) {
         if (useLED) sp.write("SE,1," + photoOut + "\r");
-        // logEvent(0, "SE,1," + photoOut);
+        // logEvent(1, "SE,1," + photoOut);
       } else {
         sp.write("SE,0\r");
         //console.log("SE,0\r");
@@ -437,10 +437,10 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLOstep
       // kill motors after 5 seconds if still paused
       setTimeout(function() {
         if (paused) {
-          logEvent(0, "Stop motors");
+          logEvent(1, "Stop motors");
           sp.write('EM,0,0\r'); // turn off motors
         } else {
-          logEvent(0, "Not paused anymore, disregard motor stop");
+          logEvent(1, "Not paused anymore, disregard motor stop");
         }
       }, 5000);
 
@@ -753,7 +753,7 @@ function goRhoHome() {
               if (err) {
                 logEvent(2, err, result);
               } else {
-                logEvent(0, "Centered Jimmy Homing", rSensorCenter);
+                logEvent(1, "Centered Jimmy Homing", rSensorCenter);
                 homeSuccess();
               }
             });
@@ -770,7 +770,7 @@ function goRhoHome() {
 }
 
 function goRhoHomeSpan() {
-  logEvent(0, "Go Rho Home Span", rSensorSpan, rSensorCenter, RETESTCOUNTER);
+  // logEvent(1, "Go Rho Home Span", rSensorSpan, rSensorCenter, RETESTCOUNTER);
   var rhoHomeQueryStr = "PI," + homingRPin + "\r";
 
   // check sensor
@@ -798,14 +798,14 @@ function goRhoHomeSpan() {
     // recheck reading
     if (RETESTCOUNTER < RETESTNUM) { //not fully confirmed yet:
       RETESTCOUNTER++;
-      logEvent(0, "RETESTCOUNTER: " + RETESTCOUNTER);
+      // logEvent(1, "RETESTCOUNTER: " + RETESTCOUNTER);
 
       sp.write(rhoHomeQueryStr, function(err, res) {
         sp.drain(function(err, result) {
           if (err) {
             logEvent(2, err, result);
           } else {
-            logEvent(0, "Rho Span", rhoHomeQueryStr);
+            logEvent(1, "Rho Span", rhoHomeQueryStr);
 
             // allow time for return of sensor state:
             setTimeout(goRhoHomeSpan, 15);
@@ -817,7 +817,7 @@ function goRhoHomeSpan() {
         // move back half of rSensorSpan
         rSensorCenter = rSensorSpan/2;
 
-        logEvent(0, "Jimmy Home sensor passed", rSensorSpan, rSensorCenter);
+        logEvent(1, "Jimmy Home sensor passed", rSensorSpan, rSensorCenter);
         var rhoFix = "SM,250,0," + rSensorCenter * rDirSign + "\r";
 
         sp.write(rhoFix, function(err, res) {
@@ -848,7 +848,7 @@ function homeSuccess() {
   RHO_HOME_COUNTER = 0;
   WAITING_RHO_HOMED = false;
 
-  logEvent(0, 'Plotter: Homed');
+  logEvent(1, 'Plotter: Homed');
 
   if (PLHOMED) { //homed from playlist
     setStatus('playing');
@@ -1129,14 +1129,14 @@ function parseReceivedSerialData(data) {
         }
 
         num = parseInt(parts[3], 10);
-        // logEvent(0, "R home pin = " + (num & 64));
+        // logEvent(1, "R home pin = " + (num & 64));
         if ((num & 64) > 0) {
           rHomeState = 1;
         } else {
           rHomeState = 0;
         }
         if (rHomeState == homingRHitState) {
-          // logEvent(0, "Rho at home");
+          // logEvent(1, "Rho at home");
           RHO_HOMED = true;
         } else {
           RHO_HOMED = false;
