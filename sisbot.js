@@ -16,6 +16,7 @@ var scheduler 	= null; //require('node-schedule');
 var bleno 		= require('bleno');
 var io 			= require('socket.io');
 var moment 		= require('moment');
+var unix_dg   = require('unix-dgram');
 
 /**************************** BLE *********************************************/
 
@@ -94,8 +95,10 @@ var sisbot = {
 	config: {},
 	ansible: null,
 	serial: null,
+  lcp_socket: null,
 	plotter: plotter,
 	socket_update: null,
+  py: null, // python process for LEDs
 
 	sleep_timer: null,
 	wake_timer: null,
@@ -109,7 +112,8 @@ var sisbot = {
   isServo: false,
   homeFirst: true,
 
-  // _valid_home: false,
+  led_count: 0,
+
   _first_home: true, // make sure we do a sensored home on startup
 	_paused: false,
   _pause_timestamp: null,
@@ -126,6 +130,7 @@ var sisbot = {
 	_move_to_rho: 0,
 	_saving: false,
 
+  _save_queue: [],
 	_thumbnail_queue: [],
 
   _first_retry: false,
@@ -256,9 +261,10 @@ var sisbot = {
     logEvent(1, "CSON:", config.sisbot_config);
     this.current_state.set('cson', config.sisbot_config);
 
-    if (cson_config.autodim) this.current_state.set('is_autodim_allowed', cson_config.autodim.toString());
+    if (cson_config.autodim !== undefined) this.current_state.set('is_autodim_allowed', cson_config.autodim.toString());
     else this.current_state.set('is_autodim_allowed', 'true');
     logEvent(1, "Autodim: ", this.current_state.get('is_autodim_allowed'));
+    if (this.current_state.get('is_autodim_allowed') == 'false') this.current_state.set('is_autodim', 'false'); // force autodim off
 
 		// make sure the hostname is correct
 		var regex = /^[^a-zA-Z]*/; // make sure first character is a-z
@@ -331,6 +337,19 @@ var sisbot = {
 			}
 		});
 
+    // override CSON values if User changed them
+    var table_settings = this.current_state.get('table_settings');
+    _.each(table_settings, function(value, key) {
+      if (value != undefined && value != '') {
+        logEvent(1, "Table Setting:", key, value);
+        logEvent(1, "CSON Match:", cson_config[key]);
+        if (value == 'true') cson_config[key] = true;
+        else if (value == 'false') cson_config[key] = false;
+        else cson_config[key] = value;
+        logEvent(0, "New CSON Value:", key, cson_config[key]);
+      }
+    });
+
 		// plotter
     logEvent(1, "Plotter");
     // var cson_config = CSON.load(config.base_dir+'/'+config.folders.sisbot+'/'+config.folders.config+'/'+config.sisbot_config);
@@ -359,6 +378,26 @@ var sisbot = {
         // this._detach_track = cson_config.detach_track;
 			}
 		}
+
+    // RGBW
+    if (cson_config.useRGBW) {
+      logEvent(1, "Use RGBW", this.current_state.get('led_primary_color'), this.current_state.get('led_secondary_color'));
+      this.current_state.set('led_enabled','true');
+      if (cson_config.rgbwCount) this.led_count = cson_config.rgbwCount;
+      // if (this.current_state.get('led_primary_color') == 'false') {
+      //   logEvent(2, "Set Primary Color", this.current_state.get('led_primary_color'));
+      //   this.current_state.set('led_primary_color', cson_config.rgbwPrimaryColor);
+      // }
+      // if (this.current_state.get('led_secondary_color') == 'false') {
+      //   logEvent(2, "Set Primary Color", this.current_state.get('led_primary_color'));
+      //   this.current_state.set('led_secondary_color', cson_config.rgbwSecondaryColor);
+      // }
+    } else {
+      logEvent(1, "No RGBW");
+      this.current_state.set('led_enabled','false');
+      this.current_state.set('is_rgbw','false');
+    }
+
 		plotter.onServoThFault(function() {
       if (self.current_state.get('reason_unavailable') != 'servo_th_fault') logEvent(2, "Servo Th Fault!");
 			self.pause(null, null);
@@ -515,7 +554,15 @@ var sisbot = {
 		});
 
 		// connect
-		this._connect();
+    if (this.current_state.get('led_enabled') == 'false') {
+      // pulse led strip once
+  		spawn('./pulse_leds.sh',[1],{cwd:"/home/pi/sisbot-server/sisbot",detached:true,stdio:'ignore'});
+
+      // delay connect until after lights are done fading
+      setTimeout(function() {
+        self._connect();
+      }, 2250);
+    } else this._connect();
 
 		// wifi connect
 		if (this.current_state.get("is_hotspot") == "false") {
@@ -556,7 +603,7 @@ var sisbot = {
 					} else logEvent(2, service_name + " Sisbot Connect Error", err);
 				});
 			}
-  		});
+		});
 	},
 	_teardownAnsible() {
 		var self = this;
@@ -669,9 +716,209 @@ var sisbot = {
 
 		this._connectionError(service);
 	},
+
+  /***************************** Connect PI light controller  program ******************/
+  // _reconnect_lcp: function() {
+  //   this.lcp_socket = unix_dg.createSocket('unix_dgram');
+  //   // this.lcp_socket.bind('/tmp/sisyphus_sockets');
+  //   // this.lcp_socket.on('error', console.error);
+  //   this.plotter.useLCPSocket(this.lcp_socket, this._reconnect_lcp);
+  // },
+
+  _connect_lcp: function() {
+    logEvent(1, 'connecting to light controller program');
+    this.lcp_socket = unix_dg.createSocket('unix_dgram');
+    // this.lcp_socket.bind('/tmp/sisyphus_sockets');
+    // this.lcp_socket.on('error', console.error);
+    this.plotter.useLCPSocket(this.lcp_socket);
+
+    // turn on LEDs now if enabled by config
+    if (this.current_state.get('led_enabled') == 'true') this.set_led({is_rgbw:'true'});
+  },
+  set_led: function(data, cb) {
+    var self = this;
+    // Enable/disable LED lights
+    logEvent(1, 'Set led', data);
+
+    // kill running python file
+    if (this.py) this.py.kill();
+
+    // start/stop python script
+    if (data.is_rgbw == 'true') {
+      // tell plotter to turn off original strip
+      this.plotter.setLED(false);
+
+      var args = [];
+      if (this.led_count) {
+        args.push('-n');
+        args.push(this.led_count);
+      }
+      logEvent(1, "Start LED", args);
+  		this.py = spawn('./start_leds.sh',args,{cwd:"/home/pi/sisbot-server/sisbot",detached:true,stdio:'ignore'});
+      this.py.on('error', (err) => {
+  			logEvent(2, 'Failed to start python process.', err);
+  		});
+  		this.py.on('close', (code) => {
+  			logEvent(1, "python process exited with code", code);
+  		});
+
+      // set initial values
+      setTimeout(function() {
+        // set pattern
+        var pattern = self.current_state.get('led_pattern');
+        if (pattern && pattern != 'false') self.set_led_pattern({id:pattern,led_primary_color:self.current_state.get('led_primary_color'), led_secondary_color:self.current_state.get('led_secondary_color')});
+
+        // set offset
+        var offset = self.current_state.get('led_offset');
+        if (offset != 0) self.set_led_offset({offset:offset});
+      }, 2000);
+    } else {
+      // tell plotter to use original strip
+      this.plotter.setLED(true);
+    }
+
+    if (cb) cb(null, data);
+  },
+  set_led_offset: function(data, cb) {
+    // Set LED offset
+    logEvent(1, 'Set led offset', data);
+
+    if (data.offset) {
+      // keep within range
+      data.offset = +data.offset % 360;
+
+      var buf1 = Buffer.from('o', 0, 1);
+      var buf2 =  Buffer.alloc(4);
+      buf2.writeFloatBE(data.offset, 0);
+
+      var totalLength = buf1.length + buf2.length;
+      message = Buffer.concat([buf1, buf2], totalLength);
+
+      try {
+        this.lcp_socket.send(message, 0, totalLength, '/tmp/sisyphus_sockets');
+      } catch(err) {
+        logEvent(2, "LCP Offset error", err);
+      }
+    }
+
+    if (cb) cb(null, data);
+  },
+  set_led_pattern: function(data, cb) {
+    var self = this;
+    logEvent(0, "Set led pattern", data);
+
+    // set pattern
+    this.lcpWrite({ value: 'i'+data.id }, function(err, resp) {
+      if (err) return logEvent(2, "LCP Error", err);
+
+      // change colors
+      self.set_led_color(data, function(err, resp) {
+        self.current_state.set('led_pattern', data.id);
+        self.save(null, null);
+
+        if (cb) cb(null, self.current_state.toJSON());
+      });
+
+    });
+  },
+  set_led_color: function(data, cb) {
+    // Set LED colors
+    logEvent(0, 'Set led color', data);
+    var is_change = false;
+
+    //
+    if (data.led_primary_color) {
+      logEvent(0, "Set primary color", JSON.stringify(data.led_primary_color));
+
+      // split from hex into components
+      if (_.isString(data.led_primary_color)) {
+        red = parseInt(data.led_primary_color.substr(1, 2), 16);
+        green = parseInt(data.led_primary_color.substr(3, 2), 16);
+        blue = parseInt(data.led_primary_color.substr(5, 2), 16);
+        white = 0;
+        if (data.led_primary_color.length > 7) white = parseInt(data.led_primary_color.substr(7, 2), 16);
+
+        // logEvent(1, "Primary Colors: ", red, green, blue);
+        data.led_primary_color = { red: red, green: green, blue: blue, white: white };
+      }
+
+      var arr = new Uint8Array(5);
+      arr[0] = 67; // C
+      if (data.led_primary_color.red) arr[1] = Math.max(0,Math.min(+data.led_primary_color.red, 255));
+      if (data.led_primary_color.green) arr[2] = Math.max(0,Math.min(+data.led_primary_color.green, 255));
+      if (data.led_primary_color.blue) arr[3] = Math.max(0,Math.min(+data.led_primary_color.blue, 255));
+      if (data.led_primary_color.white) arr[4] = Math.max(0,Math.min(+data.led_primary_color.white, 255));
+
+      var buf = Buffer.from(arr.buffer);
+
+      try {
+        this.lcp_socket.send(buf, 0, 5, '/tmp/sisyphus_sockets');
+      } catch(err) {
+        logEvent(2, "LCP primary color error", err);
+      }
+      is_change = true;
+    }
+    if (data.led_secondary_color) {
+      logEvent(1, "Set secondary color", JSON.stringify(data.led_secondary_color));
+
+      // split from hex into components
+      if (_.isString(data.led_secondary_color)) {
+        red = parseInt(data.led_secondary_color.substr(1, 2), 16);
+        green = parseInt(data.led_secondary_color.substr(3, 2), 16);
+        blue = parseInt(data.led_secondary_color.substr(5, 2), 16);
+        white = 0;
+        if (data.led_secondary_color.length > 7) white = parseInt(data.led_secondary_color.substr(7, 2), 16);
+
+        // logEvent(1, "Secondary Colors: ", red, green, blue);
+        data.led_secondary_color = { red: red, green: green, blue: blue, white: white };
+      }
+      var arr = new Uint8Array(5);
+      arr[0] = 99; // c
+      if (data.led_secondary_color.red) arr[1] = Math.max(0,Math.min(+data.led_secondary_color.red, 255));
+      if (data.led_secondary_color.green) arr[2] = Math.max(0,Math.min(+data.led_secondary_color.green, 255));
+      if (data.led_secondary_color.blue) arr[3] = Math.max(0,Math.min(+data.led_secondary_color.blue, 255));
+      if (data.led_secondary_color.white) arr[4] = Math.max(0,Math.min(+data.led_secondary_color.white, 255));
+
+      var buf = Buffer.from(arr.buffer);
+
+      try {
+        this.lcp_socket.send(buf, 0, 5, '/tmp/sisyphus_sockets');
+      } catch(err) {
+        logEvent(2, "LCP secondary color error", err);
+      }
+      is_change = true;
+    }
+
+    if (cb) cb(null, data);
+  },
+  lcpWrite: function(data, cb) {
+    logEvent(1, 'LCP-write:',data.value);
+
+    if (typeof this.lcp_socket === 'undefined' || this.lcp_socket === null) {
+      logEvent(1, 'lcpWrite: FAIL lcp is not initialized');
+      errv = {"fail":"lcp socket is not initialized"}
+      resp = errv;
+      if (cb) cb(errv,resp);
+      return;
+    }
+    var rval = {};
+    var errv = null;
+    try {
+      message = Buffer(data.value);
+      this.lcp_socket.send(message, 0, message.length, '/tmp/sisyphus_sockets');
+      rval.lcp_send = data.value;
+    } catch(err) {
+      // console.error('LCP write err', err);
+      logEvent(2, 'LCP socket write err:' + err);
+      rval.lcp_send_err = err;
+      errv = {"err":"LCP socket write threw an error"}
+    }
+
+    if (cb) cb(errv, rval);
+  },
 	/***************************** Plotter ************************/
 	_connect: function() {
-    	if (this.serial && this.serial.isOpen) return true;
+  	if (this.serial && this.serial.isOpen) return true;
 
 		var self = this;
 		logEvent(1, "Serial Connect", this.config.serial_path);
@@ -688,6 +935,13 @@ var sisbot = {
 				logEvent(1, 'Serial: connected!', error, self.serial.isOpen);
 
 				self.current_state.set("is_serial_open", "true");
+
+        // Autodim
+    		self.plotter.setAutodim(self.current_state.get('is_autodim'));
+
+        // position socket
+        self._connect_lcp();
+
 				self.set_brightness({value:self.current_state.get("brightness")}, null);
 				self.set_speed({value:self.current_state.get("speed")}, null);
 
@@ -911,6 +1165,13 @@ var sisbot = {
           			if (error) return logEvent(2, 'save() exec error:',error);
           			if (stderr) return logEvent(2, 'save() exec stderr:',stderr);
                 if (self.config.debug) logEvent(1, 'Save move complete');
+
+                // call next in queue if available
+                if (self._save_queue.length > 0) {
+                  logEvent(0, "Save queue:", self._save_queue.length);
+                  var next_save = self._save_queue.shift();
+                  self.save(next_save.data, next_save.cb);
+                }
               });
             }
           } catch (err) {
@@ -925,7 +1186,8 @@ var sisbot = {
 
 			if (cb) cb(null, returnObjects);
 		} else {
-			if (cb) cb('Another save in process, try again', null);
+      // save into a queue
+      this._save_queue.push({data:data, cb:cb});
 		}
 	},
 	play: function(data, cb) {
@@ -1063,7 +1325,7 @@ var sisbot = {
 			//testing this:
 			//thHome = false;
 			//rhoHome = false;
-		//	console.log("setting homes false here");
+		  //	console.log("setting homes false here");
 
     	var skip_move_out_if_sensors_at_home = true;
       if (this._first_home && !this.isServo) skip_move_out_if_sensors_at_home = false; // force sensored on first homing, if not servo
@@ -1804,8 +2066,8 @@ var sisbot = {
 	set_brightness: function(data, cb) {
 		logEvent(1, 'Sisbot set brightness', data);
 
-    	// Don't continue if we're disconnected from the sisbot
-    	if (!this._validateConnection()) {
+  	// Don't continue if we're disconnected from the sisbot
+  	if (!this._validateConnection()) {
 			if (cb) return cb('No Connection', null);
 			else return;
 		}
@@ -1813,21 +2075,7 @@ var sisbot = {
 		var value = this._clamp(+data.value, 0.0, 1.0);
 		this.current_state.set('brightness', value);
 
-		if (this.current_state.get('is_autodim') == "true") {
-	    	plotter.setBrightness(value);// for autodim
-		} else {
-	    // convert to an integer from 0 - 1023, parabolic scale.
-	    var pwm = Math.pow(2, value * 10) - 1;
-	    pwm = Math.floor(pwm);
-
-      logEvent(1, "Brightness", data, value, pwm);
-
-	    if (pwm == 0) {
-	      this._serialWrite('SE,0');
-	    } else {
-	      this._serialWrite('SE,1,'+pwm);
-	    }
-		}
+	  plotter.setBrightness(value);
 
 		this.save(null, null);
 
@@ -1992,7 +2240,7 @@ var sisbot = {
 
     request.post(this.config.api_endpoint + '/sisbot_state/' + this.current_state.id, {
         form: {
-            data: state
+          data: state
         }
       },
       function on_resp(error, response, body) {
@@ -2448,7 +2696,6 @@ var sisbot = {
 	},
 	/* ------------------------------------------ */
   install_updates: function(data, cb) {
-
     logEvent(1, "Sisbot Install Updates WRAPPER", data);
     if (this.isServo && this.homeFirst) {
       var homedata = {
@@ -2515,11 +2762,104 @@ var sisbot = {
 		// send response first
 		if (cb) cb(null, this.current_state.toJSON());
 
+    // change to software_update.py pattern
+    logEvent(0, "Change pattern", this.current_state.get('led_enabled'), this.current_state.get('is_rgbw'));
+    if (this.current_state.get('led_enabled') == 'true') {
+      logEvent(0, "Change to Software Update pattern");
+
+      // change pattern
+      self.lcpWrite({ value: 'isoftware_update' }, function(err, resp) {
+        if (err) return logEvent(2, "Software Update Pattern Error", err);
+
+        // change colors
+        self.set_led_color({ primary_color: '#0000FF00', secondary_color:'#FF000000'}, function(err, resp) {
+          if (err) return logEvent(2, "Software Update Color error", err);
+        });
+      });
+    } else {
+      // stop checkPhoto?
+
+      // pulse lights endlessly
+  		spawn('./pulse_leds.sh',[-1],{cwd:"/home/pi/sisbot-server/sisbot",detached:true,stdio:'ignore'});
+    }
+
     logEvent(1, "Sisbot running update script update.sh");
 		exec('/home/pi/sisbot-server/sisbot/update.sh '+this.config.service_branches.sisbot+' '+this.config.service_branches.app+' '+this.config.service_branches.proxy+' false >> /var/log/sisyphus/'+moment().format('YYYYMMDD')+'_update.log', (error, stdout, stderr) => {
 			self.current_state.set({installing_updates: 'false'});
 		  if (error) {
-				return logEvent(2, 'exec error:',error);
+				return logEvent(plo2, 'exec error:',error);
+			}
+			logEvent(1, "Install complete");
+
+			self.save(null, null);
+
+  		self._reboot(null,null);
+		});
+	},
+  install_python: function(data, cb) {
+    logEvent(1, "Sisbot Install Python WRAPPER", data);
+    if (this.isServo && this.homeFirst) {
+      var homedata = {
+        stop : true,
+        clear_tracks: true
+      };
+
+      logEvent(1, "install_python, SERVO so calling Home() first");
+      self = this;
+      this.home(homedata, null);
+      logEvent(1, "next call wait_for_home");
+
+      self = this;
+      setTimeout(function() {
+        logEvent(1, "calling _install_python pointer is = ", typeof self._install_python);
+        self._wait_for_home(data, cb,  self._install_python, self, false);
+      }, 2000);
+
+      return;
+    }
+
+    logEvent(1, "no servo, call _install_python directly");
+    this._install_python(data, cb);
+  },
+  _install_python: function(data, cb) {
+		var self = this;
+		logEvent(1, "Sisbot Install Python", data);
+		if (this.current_state.get("is_internet_connected") != "true") {
+			if (cb) cb("Not connected to internet", null);
+			return logEvent(2, "Install error: not connected to internet");
+		}
+
+		this.current_state.set('installing_updates','true');
+		this.pause(null, null);
+
+		// send response first
+		if (cb) cb(null, this.current_state.toJSON());
+
+    // change to software_update.py pattern
+    logEvent(0, "Change pattern", this.current_state.get('led_enabled'), this.current_state.get('is_rgbw'));
+    if (this.current_state.get('led_enabled') == 'true') {
+      logEvent(0, "Change to Software Update pattern");
+      // change colors
+      self.set_led_color({ primary_color: '#0000FF00', secondary_color:'#FF000000'}, function(err, resp) {
+        if (err) return logEvent(2, "Software Update Color error", err);
+
+        // change pattern
+        self.lcpWrite({ value: 'isoftware_update' }, function(err, resp) {
+          if (err) return logEvent(2, "Software Update Pattern Error", err);
+        });
+      });
+    } else {
+      // stop checkPhoto?
+
+      // pulse lights endlessly
+  		spawn('./pulse_leds.sh',[-1],{cwd:"/home/pi/sisbot-server/sisbot",detached:true,stdio:'ignore'});
+    }
+
+    logEvent(1, "Sisbot running update script install_python.sh");
+		exec('/home/pi/sisbot-server/sisbot/install_python.sh >> /var/log/sisyphus/'+moment().format('YYYYMMDD')+'_update.log', (error, stdout, stderr) => {
+			self.current_state.set({installing_updates: 'false'});
+		  if (error) {
+				return logEvent(plo2, 'exec error:',error);
 			}
 			logEvent(1, "Install complete");
 
@@ -2662,6 +3002,15 @@ var sisbot = {
 	_restart: function(data,cb) {
 		logEvent(1, "Sisbot Restart", data);
 		this.current_state.set({is_available: "false", reason_unavailable: "restarting"});
+
+    // turn off lights if running
+    if (this.py) {
+      logEvent(0, "Python running, turn off RGBW leds");
+      this.lcpWrite({ value: 'inone' }, function(err, resp) {
+        if (err) return logEvent(2, "LCP Error", err);
+      });
+    }
+
 		if (cb) cb(null, this.current_state.toJSON());
 		var ls = spawn('./restart.sh',[],{cwd:"/home/pi/sisbot-server/sisbot/",detached:true,stdio:'ignore'});
 		ls.on('error', (err) => {

@@ -1,5 +1,15 @@
 #!/usr/bin/env bash
 
+# start LED lights?
+if [ -f "/home/pi/sisbot-server/sisbot/content/lights/led_startup.py" ]; then
+  cd /home/pi/sisbot-server/sisbot/content/lights/
+  python led_startup.py -n 167 & # 167 lights, this may need to be different based on cson
+fi
+if [ -f "/home/pi/sisbot-server/sisbot/pulse_leds.sh" ]; then
+  cd /home/pi/sisbot-server/sisbot/
+  ./pulse_leds.sh 2 & # pulse led strip once
+fi
+
 # check for wifi adapters plugged in
 if [ -f "/home/pi/sisbot-server/sisbot/wifi_adapter_check.sh" ]; then
   /home/pi/sisbot-server/sisbot/wifi_adapter_check.sh

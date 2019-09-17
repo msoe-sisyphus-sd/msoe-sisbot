@@ -1,4 +1,4 @@
-# Sisbot config for 36"Coffee Table
+# Sisbot config for 36" Coffee Table with RGBW 09/11/2019
 
 serialPath: "/dev/ttyACM0"
 
@@ -17,6 +17,12 @@ twoBallEnabled: false
 attach_track: '0 0,0 0' # set table specific attach verts
 detach_track: '0 0,0 0' # set table specific detach verts
 
+autodim: true # is autodim allowed in UI
+
+useRGBW: true # pi connected RGBW LEDs
+rgbwCount: 167 # number of rgbw LEDs
+
+
 useHomeSensors: true# false means that a "home" event means to set the current $
 homingThSteps: 17# Steps per homing check on Theta
 homingRSteps: 25 # Steps per homing check on R
@@ -24,6 +30,9 @@ homingThPin: 'D,2'
 homingRPin: 'C,6'
 homingThHitState: 0 # The value the sensor reports when triggered. 0 or 1.
 homingRHitState: 0 # The value the sensor reports when triggered. 0 or 1.
+
+useJimmyHoming: false
+homingRSpanSteps: 10 # Steps per sensor check on Jimmy Homing R
 
 # Axis directions and nested axis compensation:
 nestedAxisSign:       1 # -1 or 1, or 0 if no Naxis

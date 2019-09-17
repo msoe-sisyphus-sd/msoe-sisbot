@@ -7,6 +7,7 @@ var config = require('./config');
 
 //globals:
 var twoBallEnabled = false;
+var rgbwEnabled = false;
 var Vball = 2,
   Accel = 2,
   MTV = 0.5,
@@ -37,6 +38,8 @@ var homingRPin; // SBB board pin for homing rho sensor
 var homingThHitState; // The value the sensor reports when triggered. 0 or 1.
 var homingRHitState; // The value the sensor reports when triggered. 0 or 1.
 
+var useLED = true;
+
 var rSensorSpan = 0; // span of homing sensor, use this to find true center
 var rSensorCenter = 0; // half of rSensorSpan, use to move to center
 var useFaultSensors = 0; // True if the bot has sensors. Otherwise the current position is considered home.
@@ -64,6 +67,7 @@ var miMax, thAccum = 0,
 var pauseRequest = false;
 
 var sp // serial port
+var sp_lcp // light controller program socket
 
 var paused = true;
 //pars stored for pause/resume:
@@ -140,7 +144,6 @@ function checkPhoto() { //autodimming functionality:
   if (useFaultSensors) sp.write("A2\r"); //SBB command to check analog inputs
   else sp.write("A\r");
 
-
   if (autodim == "true") { //need to check autodim toggle fn'ing
     //console.log("photoAvgOld: " + photoAvgOld);
     //filter spurious readings:
@@ -207,7 +210,7 @@ function checkPhoto() { //autodimming functionality:
     if (delta >= .5) {
 
       if (photoOut != 0) {
-        sp.write("SE,1," + photoOut + "\r");
+        if (useLED) sp.write("SE,1," + photoOut + "\r");
         // logEvent(0, "SE,1," + photoOut);
       } else {
         sp.write("SE,0\r");
@@ -362,8 +365,7 @@ function nextMove(mi) {
   //      Math.floor(thOld / (2 * Math.PI) * rSPRev )  * nestedAxisSign;
   //  logEvent(1, rStepsComp + '*');
 
-  rStepsComp = Math.floor(thStepsNew * rthAsp * nestedAxisSign) -
-    Math.floor(thStepsOld * rthAsp * nestedAxisSign);
+  rStepsComp = Math.floor(thStepsNew * rthAsp * nestedAxisSign) - Math.floor(thStepsOld * rthAsp * nestedAxisSign);
 
   //logEvent(1, rStepsComp + '');
 
@@ -381,13 +383,11 @@ function nextMove(mi) {
 
   //logEvent(1, 'move ' + mi + ' of ' + miMax);
 
-  nextSeg(mi, miMax, 0, segs, thStepsSeg, rStepsSeg,
-    thLOsteps, rLOsteps, 0, 0, fracSeg);
+  nextSeg(mi, miMax,0,segs, thStepsSeg, rStepsSeg, thLOsteps, rLOsteps, 0, 0, fracSeg);
 
 }
 //////      NEXTSEG     ///////////////////////////////////
-function nextSeg(mi, miMax, si, siMax, thStepsSeg, rStepsSeg,
-  thLOsteps, rLOsteps, eLOth, eLOr, fracSeg) {
+function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLOsteps, eLOth, eLOr, fracSeg) {
   var msec = baseMS;
   var cmd;
   var thLOsign = 0,
@@ -410,7 +410,7 @@ function nextSeg(mi, miMax, si, siMax, thStepsSeg, rStepsSeg,
       if (ASindex < accelSegs) ASindex++; //accel
       if (ASindex > accelSegs) ASindex = accelSegs; //updates Accel changes ?--;?
     }
-  } else { //pause requested:
+  } else { // pause requested:
     logEvent(1, 'decelerating...');
     //logEvent(1, ASindex);
     if (ASindex <= VminSegs) {
@@ -462,8 +462,7 @@ function nextSeg(mi, miMax, si, siMax, thStepsSeg, rStepsSeg,
   else rEffect = plotRadius / 2 + Math.abs(plotRadius / 2 - rSeg); //tant
 
   if (rEffect > rCrit) { //ball is outside rCrit:
-    rFactor1 = Math.sqrt((RDIST * RDIST +
-      THRAD * THRAD * rEffect * rEffect)) / MOVEDIST;
+    rFactor1 = Math.sqrt((RDIST * RDIST + THRAD * THRAD * rEffect * rEffect)) / MOVEDIST;
     //logEvent(1, 'rFactor1: ' + rFactor1);
     msec *= rFactor1;
   } else { //ball is inside rCrit-- this is shaky at best...
@@ -505,11 +504,50 @@ function nextSeg(mi, miMax, si, siMax, thStepsSeg, rStepsSeg,
   if (msec < 1) msec = 1;
   cmd = "SM," + msec + "," + thStepsOut + "," + rStepsOut + "\r";
 
+  // Row
+  var newR = ((rAccum - thAccum * rthAsp * nestedAxisSign) * rDirSign/ rSPInch)/plotRadius;
+  // Theta
+  var thetaDistHome, modRads, rawRads, shortestRads;
+  rawRads = thAccum / thSPRad;
+  modRads = rawRads % (2 * Math.PI);
+  shortestRads = modRads*-1; //this is verified correct - but theta sign is wrong :(
+  if (modRads > Math.PI) shortestRads = 2 * Math.PI - modRads; //shortestRads = modRads - 2 * Math.PI;
+  if (modRads < -1 * Math.PI) shortestRads = -2 * Math.PI - modRads; //shortestRads = modRads + 2 * Math.PI;
+  var newTh = shortestRads;
+
   sp.write(cmd, function(err, res) {
     sp.drain(function(err, result) {
-      if (err) {
-        logEvent(2, err, result);
-      } else {
+      if (err) logEvent(2, err, result);
+      else {
+        // send to socket
+        try {
+          // Row
+          var newR = ((rAccum - thAccum * rthAsp * nestedAxisSign) * rDirSign/ rSPInch)/plotRadius;
+          // Theta
+          var newTh = thAccum / thSPRad;
+
+          var buf1 = Buffer.from('b', 0, 1);
+          var buf2 =  Buffer.alloc(4);
+          buf2.writeFloatBE(newR, 0);
+          var buf3 =  Buffer.alloc(4);
+          buf3.writeFloatBE(newTh, 0);
+          var buf4 =  Buffer.alloc(4);
+          buf4.writeFloatBE(lastPhotoOut, 0);
+          var totalLength = buf1.length + buf2.length + buf3.length + buf4.length;
+
+          // var d = new Date();
+          // var n = d.getMilliseconds();
+          // logEvent(1, "Millis", n);
+
+          // logEvent(1, "Values: ", newR, newTh, lastPhotoOut, "Buffer Length:", totalLength);
+          message = Buffer.concat([buf1, buf2, buf3, buf4], totalLength);
+
+          sp_lcp.send(message, 0, totalLength, '/tmp/sisyphus_sockets');
+          // logEvent(1,'LCP ' + inp);
+        } catch (err) {
+          // logEvent(2,'Error writing to LCP socket ' + err.message);
+        }
+
         //logEvent(1, cmd);
         si++;
         thAccum += thStepsOut;
@@ -543,8 +581,7 @@ function lookAhead(mi, heading) {
 function go() {
   paused = false;
   setStatus('playing');
-  nextSeg(Rmi, RmiMax, Rsi, RsiMax, RthStepsSeg, RrStepsSeg,
-    RthLOsteps, RrLOsteps, ReLOth, ReLOr, RfracSeg);
+  nextSeg(Rmi, RmiMax, Rsi, RsiMax, RthStepsSeg, RrStepsSeg, RthLOsteps, RrLOsteps, ReLOth, ReLOr, RfracSeg);
 }
 
 //////      GO THETA HOME    ///////////////////////////////////
@@ -566,13 +603,12 @@ function goThetaHome() {
 
   if (THETA_HOME_COUNTER == THETA_HOME_MAX) {
     logEvent(2, 'Failed to find Theta home!');
-    // console.log( 'Failed to find Theta home!');
     //setStatus('waiting');
-    thAccum = 0;
-    WAITING_THETA_HOMED = false;
-    setStatus('home_th_failed');
+  	thAccum = 0;
+  	WAITING_THETA_HOMED = false;
+  	setStatus('home_th_failed');
 
-    photoTimeout = setTimeout(checkPhoto, photoMsec); //restart photosensing for autodim
+  	photoTimeout = setTimeout(checkPhoto, photoMsec); //restart photosensing for autodim
     return;
   }
 
@@ -633,7 +669,6 @@ function goThetaHome() {
 
     }
 
-
   }
 
 }
@@ -641,7 +676,6 @@ function goThetaHome() {
 //////      GO RHO HOME    ///////////////////////////////////
 function goRhoHome() {
   var rhoHomingStr, rhoHomeQueryStr = "PI," + homingRPin + "\r";
-  //R home pin C6
 
   if (IS_SERVO) { //skip sensored homing RHO:
     rAccum = 0;
@@ -691,17 +725,16 @@ function goRhoHome() {
         }
       });
     });
-
   } else { //Rho home sensor activated, confirm it:
     if (RETESTCOUNTER < RETESTNUM) { //not fully confirmed yet:
       RETESTCOUNTER++;
-      logEvent(0, "RETESTCOUNTER: " + RETESTCOUNTER);
+      logEvent(1, "RETESTCOUNTER: " + RETESTCOUNTER);
       sp.write(rhoHomeQueryStr, function(err, res) {
         sp.drain(function(err, result) {
           if (err) {
             logEvent(2, err, result);
           } else {
-            logEvent(0, "Rho Home", rhoHomeQueryStr);
+            logEvent(1, "Rho Home", rhoHomeQueryStr);
 
             // allow time for return of sensor state:
             setTimeout(goRhoHome, 15);
@@ -859,6 +892,33 @@ function jog(axis, direction) {
       } else {
         thAccum += jogThsteps;
         rAccum += jogRsteps;
+
+        // send to socket
+        try {
+          var newR = ((rAccum - thAccum * rthAsp * nestedAxisSign) * rDirSign/ rSPInch)/plotRadius;
+          var newTh = thAccum / thSPRad;
+
+          var buf1 = Buffer.from('b', 0, 1);
+          var buf2 =  Buffer.alloc(4);
+          buf2.writeFloatBE(newR, 0);
+          var buf3 =  Buffer.alloc(4);
+          buf3.writeFloatBE(newTh, 0);
+          var buf4 =  Buffer.alloc(4);
+          buf4.writeFloatBE(lastPhotoOut, 0);
+          var totalLength = buf1.length + buf2.length + buf3.length + buf4.length;
+
+          // var d = new Date();
+          // var n = d.getMilliseconds();
+          // logEvent(1, "Millis", n);
+
+          // logEvent(1, "Values: ", newR, newTh, lastPhotoOut, "Buffer Length:", totalLength);
+          message = Buffer.concat([buf1, buf2, buf3, buf4], totalLength);
+
+          sp_lcp.send(message, 0, totalLength, '/tmp/sisyphus_sockets');
+          // logEvent(1,'LCP ' + inp);
+        } catch (err) {
+          // logEvent(2,'Error writing to LCP socket ' + err.message);
+        }
       }
     });
   });
@@ -1111,6 +1171,8 @@ module.exports = {
 
   // Update the global configuration variables with data form a config file.
   setConfig: function(config) {
+    logEvent(1, "Set Config");
+
     plotRadius = config.radius;
     thSPRev = config.stepsPerThetaRevolution;
     rSPRev = config.stepsPerRadiusRevolution;
@@ -1150,8 +1212,15 @@ module.exports = {
       useFaultSensors = config.isServo;
       IS_SERVO = config.isServo;
     }
-    if (config.faultActiveState) faultActiveState = config.faultActiveState;
-    if (config.twoBallEnabled) twoBallEnabled = config.twoBallEnabled;
+    if (config.faultActiveState)  faultActiveState = config.faultActiveState;
+    if (config.twoBallEnabled)    twoBallEnabled = config.twoBallEnabled;
+
+    // LED Values
+    logEvent(1, "Use config:", _.keys(config).join(','));
+    if (config.useRGBW !== undefined) {
+      logEvent(1, "Use config:", config.useRGBW);
+      useLED = !config.useRGBW;
+    }
   },
 
 
@@ -1188,9 +1257,12 @@ module.exports = {
     sp.write('PO,B,1,1\r'); //set B1 high to enable Rho
     sp.write('PO,B,2,1\r'); //set B2 high to enable Theta
 
-    sp.write("SE,1,100\r"); //turn on low lighting
+    // if (useLED) sp.write("SE,1,100\r"); //turn on low lighting
+    // checkPhoto(); //start ambient light sensing
+  },
 
-    checkPhoto(); //start ambient light sensing
+  useLCPSocket: function (newsock) {
+    sp_lcp = newsock;
   },
 
   // Returns the current state of the machine activity.
@@ -1320,7 +1392,32 @@ module.exports = {
   // get the brightness slider value
   setBrightness: function(value) {
     sliderBrightness = value;
-    //logEvent(1, "sb: " + sliderBrightness);
+		// logEvent(1, "sb: " + sliderBrightness);
+
+    if (autodim !== 'true') {
+      if (value == 0) {
+				sp.write("SE,0\r");
+        pwm = 0;
+      } else {
+        // convert to an integer from 0 - 1023, parabolic scale.
+        // var pwm = value * 20;
+        var pwm = Math.pow(2, value * 10); // - 1;
+        pwm = Math.round(pwm);
+        if (pwm <= 0) pwm = 1; // must be at lease one
+        else if (pwm > 1023) pwm = 1023; // cannot be greater than 1023
+
+				if (useLED) sp.write("SE,1," + pwm +"\r");
+      }
+  		logEvent(1, "brightness: " + value + " pwm: " + pwm);
+      lastPhotoOut = pwm;
+  	}
+  },
+
+  // set useLED
+  setLED: function(value) {
+    logEvent(1, "Set LED "+value);
+    useLED = value;
+    if (useLED == false) sp.write("SE,0\r");
   },
 
   // Set a speed scalar where 1 is normal, 2 is double
@@ -1335,24 +1432,23 @@ module.exports = {
   },
 
   getThetaPosition: function() {
-    var thetaDistHome, modRads, rawRads, shortestRads;
+  	var thetaDistHome, modRads, rawRads, shortestRads;
 
-    rawRads = thAccum / thSPRad;
-    logEvent(1, "thAccum is " + thAccum + " steps");
-    logEvent(1, "raw Theta postion is " + rawRads + " rads");
+  	rawRads = thAccum / thSPRad;
+  	// logEvent(1, "thAccum is " + thAccum + " steps");
+  	// logEvent(1, "raw Theta postion is " + rawRads + " rads");
 
-    modRads = rawRads % (2 * Math.PI);
-    logEvent(1, "modRads = " + modRads);
+  	modRads = rawRads % (2 * Math.PI);
+  	// logEvent(1, "modRads = " + modRads);
 
-    shortestRads = modRads * -1; //this is verified correct - but theta sign is wrong :(
+  	shortestRads = modRads*-1; //this is verified correct - but theta sign is wrong :(
 
-    if (modRads > Math.PI) {
-      shortestRads = 2 * Math.PI - modRads; //shortestRads = modRads - 2 * Math.PI;
-    }
-    if (modRads < -1 * Math.PI) {
-      shortestRads = -2 * Math.PI - modRads; //shortestRads = modRads + 2 * Math.PI;
-    }
-
+  	if (modRads > Math.PI){
+  		shortestRads = 2 * Math.PI - modRads; //shortestRads = modRads - 2 * Math.PI;
+  	}
+  	if (modRads < -1 * Math.PI){
+  		shortestRads = -2 * Math.PI - modRads; //shortestRads = modRads + 2 * Math.PI;
+  	}
 
     return shortestRads;
   },
