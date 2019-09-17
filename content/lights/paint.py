@@ -122,7 +122,7 @@ def update(theta, rho, photo, primary_color, secondary_color, strip):
         # ramp brightness
         t = abs(h_fixed - degrees) / spread
 
-        if t > 0 and t < 1.0:
+        if t > 0 and t <= 1.0:
             percent = easeIn(t) # choose an ease function from above
             strip.setPixelColor(pos, colorBlend(ball_color,strip.getPixelColor(pos),percent))
 

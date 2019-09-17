@@ -74,7 +74,7 @@ def update(theta, rho, photo, primary_color, secondary_color, strip):
     global state, transition, current_primary, current_secondary, time, time_start, length
     if time_start == 0:
         time_start = timer()
-        fill(strip, Color(0,0,0,0))
+        # fill(strip, Color(0,0,0,0))
 
     led_count = strip.numPixels()
 

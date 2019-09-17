@@ -2107,13 +2107,13 @@ var sisbot = {
 	},
 	/* --------------- WIFI ---------------------*/
   _validate_network: function(data, cb) {
-		logEvent(1, "Sisbot validate network");
+		// logEvent(1, "Sisbot validate network");
     var self = this;
 
     exec('route | grep default', {timeout: 5000}, (error, stdout, stderr) => {
       //if (error) return console.error('exec error:',error);
 
-      logEvent(1, "LAN result", stdout, stderr, this._network_retries);
+      // logEvent(1, "LAN result", stdout, stderr, this._network_retries);
 
       var returnValue = "false";
       if (stdout.indexOf("default") > -1) returnValue = "true";
@@ -2131,7 +2131,7 @@ var sisbot = {
         local_ip: self._getIPAddress()
       });
 
-      logEvent(1, "LAN IP", self._getIPAddress());
+      // logEvent(1, "LAN IP", self._getIPAddress());
 
       self.save(null, null);
 
@@ -2141,7 +2141,7 @@ var sisbot = {
     });
   },
 	_validate_internet: function(data, cb) {
-		logEvent(1, "Sisbot validate internet");
+		// logEvent(1, "Sisbot validate internet");
 		var self = this;
 
 		exec('ping -c 1 -W 2 google.com', {timeout: 5000}, (error, stdout, stderr) => {
