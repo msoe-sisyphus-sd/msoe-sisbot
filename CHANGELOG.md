@@ -1,8 +1,7 @@
-# 2019-09-19 1.19.42
-  - CSON selection in Advanced Table Settings
-  - Homing Offset in Advanced Table Settings
-  - Save Advanced Table Settings before installing Python from button
+# 2019-09-19 1.10.42
+  - Name in CSON files
   - CSON RGBW Offset
+  - Homing offset after successful sensored home
 
 # 2019-08-26 1.10.41
   - Light patterns
