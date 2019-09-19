@@ -32,6 +32,7 @@ var ASindex = VminSegs; //accelSegs index
 var baseMS = 1000 / segRate; //msec per segment, no V adjustment
 
 var useJimmyHoming = false; // Moves ball to halfway across sensor when doing sensored home
+var homingOffset = 0; // Move this many steps away from sensor after home, can be +/-
 var useHomeSensors; // True if the bot has sensors. Otherwise the current position is considered home.
 var homingThPin; // SBB board pin for homing theta sensor
 var homingRPin; // SBB board pin for homing rho sensor
@@ -837,6 +838,23 @@ function goRhoHomeSpan() {
 }
 
 function homeSuccess() {
+  // homingOffset
+  if (homingOffset != 0) {
+    var rhoHomingStr = "SM,250,0," + homingOffset * rSPInch + "\r";
+
+    sp.write(rhoHomingStr, function(err, res) {
+      sp.drain(function(err, result) {
+        if (err) {
+          logEvent(2, err, result);
+        } else {
+          _homeSuccess();
+        }
+      });
+    });
+  } else _homeSuccess();
+}
+
+function _homeSuccess() {
   // passed retesting so truly home:
   RETESTCOUNTER = 0;
 
@@ -1191,6 +1209,8 @@ module.exports = {
 
     HOMETHSTEPS = config.homingThSteps * thDirSign;
     HOMERSTEPS = config.homingRSteps;
+
+    if (config.homingOffset) homingOffset = config.homingOffset;
 
     // Jimmy Homing
     if (config.useJimmyHoming) useJimmyHoming = config.useJimmyHoming;

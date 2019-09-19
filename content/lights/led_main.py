@@ -45,6 +45,7 @@ photo           = 0         # 0-1023
 primary_color   = Color(1,1,1,64);
 secondary_color = Color(1,1,1,1);
 
+default_offset  = 0         # Degrees to offset the theta position 0-360 (float), as defined by CSON
 start_pattern   = "white" # what pattern to begin with
 old_photo       = 0 # to reduce recreation of colors
 
@@ -161,6 +162,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--clear', action='store_true', help='clear the display on exit')
     parser.add_argument('-n', '--n', help='number of pixels in LED strip', type=int)
+    parser.add_argument("-o", '--o', help="default theta offset", type=int)
     parser.add_argument("-p", '--p', help="pattern filename without .py")
     args = parser.parse_args()
 
@@ -168,6 +170,9 @@ if __name__ == '__main__':
     if args.n:
         print "LED Count {0}\n".format(args.n)
         led_count = args.n
+    if args.o:
+        print "Default offset {0}\n".format(args.o)
+        default_offset = args.o
     if args.p:
         print "Begin with pattern {0}\n".format(args.p)
         start_pattern = args.p
@@ -310,7 +315,7 @@ if __name__ == '__main__':
                 strip.setBrightness(brightness)
 
             # update, regardless of socket_data
-            update(theta * 57.2958 + led_offset, rho, photo, primary_color, secondary_color, strip)
+            update(theta * 57.2958 + led_offset + default_offset, rho, photo, primary_color, secondary_color, strip)
             # time.sleep(1.0/60.0) # sixty frames/sec
 
             old_photo = photo;

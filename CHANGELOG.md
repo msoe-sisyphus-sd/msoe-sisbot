@@ -1,4 +1,10 @@
-# 2019-08-26 1.10.33
+# 2019-09-19 1.19.42
+  - CSON selection in Advanced Table Settings
+  - Homing Offset in Advanced Table Settings
+  - Save Advanced Table Settings before installing Python from button
+  - CSON RGBW Offset
+
+# 2019-08-26 1.10.41
   - Light patterns
   - Pattern brightness matches slider
   - Light offset added to Advanced Settings - Lights

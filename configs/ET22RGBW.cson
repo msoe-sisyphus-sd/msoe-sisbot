@@ -2,6 +2,8 @@
 
 serialPath: "/dev/ttyACM0"
 
+name: "22 Inch RGBW Endtable"
+
 # Plot size and gearing:
 radius: 8.25 # inches
 stepsPerThetaRevolution: 20800 # (after gearing)
@@ -21,7 +23,6 @@ autodim: true # is autodim allowed in UI
 
 useRGBW: true # pi connected RGBW LEDs
 rgbwCount: 100 # number of rgbw LEDs
-
 
 useHomeSensors: true # false means that a "home" event means to set the current position as home.
 homingThSteps: 30 # Steps per homing check on Theta

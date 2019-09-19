@@ -11,8 +11,10 @@ sudo kill -9 $pypid
 done
 
 cd /home/pi/sisbot-server/sisbot/content/lights
-if [ -n "$1" ] && [ -n "$2" ]; then
-  python led_main.py "$1" "$2" > /var/log/sisyphus/lights.log
+if [ -n "$1" ] && [ -n "$2" ] && [ -n "$3" ] && [ -n "$4" ]; then
+  python led_main.py "$1" "$2" "$3" "$4" >> /var/log/sisyphus/lights.log
+elif [ -n "$1" ] && [ -n "$2" ]; then
+  python led_main.py "$1" "$2" >> /var/log/sisyphus/lights.log
 else
-  python led_main.py > /var/log/sisyphus/lights.log
+  python led_main.py >> /var/log/sisyphus/lights.log
 fi

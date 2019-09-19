@@ -83,8 +83,9 @@ def update(theta, rho, photo, primary_color, secondary_color, strip):
     h_theta = theta
 
     # color of spread by ball
-    ball_color = wheel(int(rho*255))
-    # ball_color = wheel(int(color_pos)%255)
+    ball_color = wheel(int(rho*255)) # change based on rho
+    # ball_color = colorBlend(primary_color, secondary_color, rho) # blend between primary/secondary based on rho
+    # ball_color = wheel(int(color_pos)%255) # change value based on time instead of rho
 
     # spread out the pixel color based on rho
     # max_spread = 85 # degress on either side of pixel to spread white
@@ -100,11 +101,6 @@ def update(theta, rho, photo, primary_color, secondary_color, strip):
         end += led_count
 
     h_fixed = h_theta % 360
-
-    # if transition < 1.0:
-    #     for i in range(strip.numPixels()+1):
-    #         if i < start%led_count or i > end%led_count:
-    #             strip.setPixelColor(i, colorBlend(strip.getPixelColor(i),bg_color,easeOut(transition)))
 
     # print "Rho %s, Theta %s, Adjusted Theta %s, Photo %s, Brightness %s 0.5 %s 0.25 %s\n" % (rho, theta, h_theta, photo, brightness, max(int(brightness/2),1), max(int(brightness/4),1)),
     # sys.stdout.flush()
@@ -129,12 +125,11 @@ def update(theta, rho, photo, primary_color, secondary_color, strip):
             # print "pos {0} ( {1} - {2} ) / {3}, percent {4}\n".format(pos, h_fixed, degrees, spread, t),
             # sys.stdout.flush()
 
-        # strip.setPixelColor(pos, colorBlend(colorBlend(no_color,ball_color,easeIn(rho)),strip.getPixelColor(pos),percent))
     strip.show()
 
     # increment time
     time_end = timer()
     if transition < 1.0:
         transition += time_end - time_start
-    color_pos += (time_end - time_start)*2.0
+    color_pos += (time_end - time_start)*2.0 # if you want color to change over time instead of by rho, line 88
     time_start = time_end

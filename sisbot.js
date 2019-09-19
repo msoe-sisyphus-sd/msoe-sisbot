@@ -113,6 +113,7 @@ var sisbot = {
   homeFirst: true,
 
   led_count: 0,
+  led_default_offset: 0,
 
   _first_home: true, // make sure we do a sensored home on startup
 	_paused: false,
@@ -384,6 +385,7 @@ var sisbot = {
       logEvent(1, "Use RGBW", this.current_state.get('led_primary_color'), this.current_state.get('led_secondary_color'));
       this.current_state.set('led_enabled','true');
       if (cson_config.rgbwCount) this.led_count = cson_config.rgbwCount;
+      if (cson_config.rgbwOffset) this.led_default_offset = cson_config.rgbwOffset;
       // if (this.current_state.get('led_primary_color') == 'false') {
       //   logEvent(2, "Set Primary Color", this.current_state.get('led_primary_color'));
       //   this.current_state.set('led_primary_color', cson_config.rgbwPrimaryColor);
@@ -753,6 +755,10 @@ var sisbot = {
         args.push('-n');
         args.push(this.led_count);
       }
+      if (this.led_default_offset) {
+        args.push('-o');
+        args.push(this.led_default_offset);
+      }
       logEvent(1, "Start LED", args);
   		this.py = spawn('./start_leds.sh',args,{cwd:"/home/pi/sisbot-server/sisbot",detached:true,stdio:'ignore'});
       this.py.on('error', (err) => {
@@ -1052,6 +1058,20 @@ var sisbot = {
 
 		if (cb) cb(null, this.current_state.toJSON());
 	},
+  _set_cson: function(data, cb) {
+    var self = this;
+    logEvent(2, "Set CSON", data);
+
+    // double-check that the given name is in configs directory
+    if (fs.existsSync(self.config.base_dir+'/'+self.config.folders.sisbot+'/'+self.config.folders.config+'/'+data.cson)) {
+      // update whichcson.js file
+      var cson = 'module.exports = "'+data.cson+'";\n';
+      fs.writeFile(self.config.base_dir+'/'+self.config.folders.sisbot+'/'+self.config.folders.config+'/whichcson.js', cson, function(err) {
+        logEvent(0, "CSON Set", data);
+        if (cb) cb(err, data);
+      });
+    }
+  },
   set_hostname: function(data,cb) {
     logEvent(1, "set hostname", data);
 
@@ -1129,6 +1149,7 @@ var sisbot = {
 					// extra checks if passing sisbot changes
 					if (obj.id == self.current_state.id) {
 						if (obj.state) delete obj.state; // don't listen to updates to this, plotter is in control of this
+						if (obj.table_settings && obj.table_settings.cson != self.current_state.get('cson')) self._set_cson(obj.table_settings, null);
 						if (obj.is_autodim != self.current_state.get('is_autodim')) self.set_autodim({value: "true"}, null);
 						if (obj.brightness != self.current_state.get('brightness')) self.set_brightness({value: obj.brightness}, null);
 						if (obj.name != self.current_state.get('name')) {
@@ -1517,67 +1538,98 @@ var sisbot = {
 				if (cb) cb(null, [track.toJSON(), self.current_state.toJSON()]); // send back current_state without track
 			}
 		});
-    },
-    /*********************** UPLOAD TRACK TO CLOUD ************************/
-    get_track_verts: function(data, cb) {
-        logEvent(1, 'track verts', data, cb);
-        fs.readFile(this.config.base_dir + '/' + this.config.folders.sisbot + '/' + this.config.folders.content + '/' + this.config.folders.tracks + '/' + data.id + '.thr', 'utf-8', function(err, data) {
-            if (cb) cb(err, data); // send back track verts
-        });
-    },
-    remove_track: function(data, cb) {
-		if (data.type != 'track') {
-			if (cb) cb("Wrong data type", null);
-			return logEvent(2, "Remove Track sent wrong data type", data.type);
-		}
+  },
+  get_csons: function(data, cb) {
+    logEvent(0, "Get CSONs");
+    var self = this;
 
-		var self = this;
-        logEvent(1, "Sisbot Remove Track", data);
+    // read contents of configs dir
+    fs.readdir(this.config.base_dir + '/' + this.config.folders.sisbot + '/' + this.config.folders.config, function(err, resp) {
+      if (err) cb(err, null);
 
-        // remove from collection
-        this.collection.remove(data.id);
+      var cson_files = [];
+      // loop through files, removing javascript, default.cson
+      _.each(resp, function(file) {
+        if (file.match(/.cson$/) && file != 'default.cson') {
+          cson_files.push(file);
+        }
+      });
 
-        // remove from current_state
-        var all_tracks = this.current_state.get("track_ids");
-        var clean_tracks = [];
-        _.each(all_tracks, function(track_id) {
-            if (track_id != data.id) clean_tracks.push(track_id);
-        });
-        this.current_state.set("track_ids", clean_tracks);
+      // TODO: load the files, pull out the name
+      var return_value = [];
+      _.each(cson_files, function(file) {
+        var cson_config = CSON.load(self.config.base_dir+'/'+self.config.folders.sisbot+'/'+self.config.folders.config+'/'+file);
+        var cson_name = (typeof cson_config.name === 'undefined') ? 'Unnamed' : cson_config.name;
+        return_value.push({id:file, name:cson_name});
+      });
 
-    		// remove from playlists
-    		var playlists = this.current_state.get("playlist_ids");
-    		var return_objs = [];
-    		_.each(playlists, function(playlist_id) {
-    			var playlist = self.collection.get(playlist_id);
-    			var did_remove = false;
+      return_value = _.sortBy(return_value, 'name');
 
-    			var tracks = playlist.get("tracks");
-    	        var clean_tracks = [];
-    			// remove all instances of the track_id
-    			_.each(tracks, function(track_obj) {
-    				if (track_obj.id != data.id) clean_tracks.push(track_obj);
-    				else did_remove = true;
-    			});
+      logEvent(0, "CSONs:", err, return_value);
 
-    			if (did_remove) {
-    		        playlist.set("tracks", clean_tracks);
+      if (cb) cb(err, return_value);
+    });
+  },
+  /*********************** UPLOAD TRACK TO CLOUD ************************/
+  get_track_verts: function(data, cb) {
+      logEvent(1, 'track verts', data, cb);
+      fs.readFile(this.config.base_dir + '/' + this.config.folders.sisbot + '/' + this.config.folders.content + '/' + this.config.folders.tracks + '/' + data.id + '.thr', 'utf-8', function(err, data) {
+          if (cb) cb(err, data); // send back track verts
+      });
+  },
+  remove_track: function(data, cb) {
+	if (data.type != 'track') {
+		if (cb) cb("Wrong data type", null);
+		return logEvent(2, "Remove Track sent wrong data type", data.type);
+	}
 
-    				// fix the sorted order, or just reshuffle
-    				playlist.set_shuffle({ is_shuffle: playlist.get('is_shuffle') });
+	var self = this;
+      logEvent(1, "Sisbot Remove Track", data);
 
-    				return_objs.push(playlist.toJSON());
-    			}
-    		});
+      // remove from collection
+      this.collection.remove(data.id);
 
-    		// add sisbot_state
-    		return_objs.push(this.current_state.toJSON());
+      // remove from current_state
+      var all_tracks = this.current_state.get("track_ids");
+      var clean_tracks = [];
+      _.each(all_tracks, function(track_id) {
+          if (track_id != data.id) clean_tracks.push(track_id);
+      });
+      this.current_state.set("track_ids", clean_tracks);
 
-        this.save(null, null);
+  		// remove from playlists
+  		var playlists = this.current_state.get("playlist_ids");
+  		var return_objs = [];
+  		_.each(playlists, function(playlist_id) {
+  			var playlist = self.collection.get(playlist_id);
+  			var did_remove = false;
 
-        if (cb) cb(null, return_objs);
-    },
-    /*********************** GENERATE THUMBNAILS ******************************/
+  			var tracks = playlist.get("tracks");
+  	        var clean_tracks = [];
+  			// remove all instances of the track_id
+  			_.each(tracks, function(track_obj) {
+  				if (track_obj.id != data.id) clean_tracks.push(track_obj);
+  				else did_remove = true;
+  			});
+
+  			if (did_remove) {
+  		        playlist.set("tracks", clean_tracks);
+
+  				// fix the sorted order, or just reshuffle
+  				playlist.set_shuffle({ is_shuffle: playlist.get('is_shuffle') });
+
+  				return_objs.push(playlist.toJSON());
+  			}
+  		});
+
+  		// add sisbot_state
+  		return_objs.push(this.current_state.toJSON());
+
+      this.save(null, null);
+
+      if (cb) cb(null, return_objs);
+  },
+  /*********************** GENERATE THUMBNAILS ******************************/
 	_regenerate_thumbnails: function(data, cb) {
 		var self = this;
 
