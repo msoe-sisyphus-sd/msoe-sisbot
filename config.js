@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dummy') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.42', // Advanced Table Settings options, CSON RGBW Offset
+			version	: '1.9.43', // Clean Log Files
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -63,7 +63,9 @@ var config = {
 			default_data: default_status,
 			pingTimeout: 1500, // socket pingTimeout
 			pingInterval: 600, // socket pingInterval
-			max_thumbnail_points: 10000
+			max_thumbnail_points: 10000,
+      log_days_to_keep: 7, // number of days to keep dated log files
+      log_max_size: 5000000 // maximum filesize before automatically deleting (5MB)
 		},
 		matt: {
 			folders: {

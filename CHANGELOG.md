@@ -1,7 +1,8 @@
-# 2019-09-19 1.10.42
+# 2019-09-19 1.10.43
   - Name in CSON files
   - CSON RGBW Offset
   - Homing offset after successful sensored home
+  - Clean Log files at midnight each day
 
 # 2019-08-26 1.10.41
   - Light patterns

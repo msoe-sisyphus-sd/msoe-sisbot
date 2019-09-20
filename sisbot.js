@@ -4,7 +4,6 @@ var exec 		= require('child_process').exec;
 var spawn 		= require('child_process').spawn;
 var CSON 		= require('cson');
 var fs 			= require('fs');
-// var iwconfig 	= require('wireless-tools/iwconfig');
 var iw 		   = require('./iw');
 var uuid 		= require('uuid');
 var Backbone 	= require('backbone');
@@ -581,7 +580,7 @@ var sisbot = {
 		}
 
 		// sleep/wake timers
-		this.set_sleep_time(this.current_state.toJSON(), null);
+    this.setup_timers(this.current_state.toJSON(), null);
 
 		return this;
 	},
@@ -2602,42 +2601,57 @@ var sisbot = {
       } else if (cb) cb('Unknown result: '+sync, null);
     });
   },
-	set_sleep_time: function(data, cb) {
-		var self = this;
-		// logEvent(1, "Set Sleep Time:", moment().format(), data.sleep_time, data.wake_time, data.timezone_offset, this.current_state.get('is_sleeping'));
+  setup_timers: function(data, cb) {
+    var self = this;
 
     // check NTP before assigning cron
     this.check_ntp({}, function(err, sync_value) {
       if (err) logEvent(2, "NTP Error", err);
 
-      if (sync_value) {
-        // assign now
-        self._set_sleep_time(data, cb);
-      } else if (self.current_state.get("wifi_network") == "" || self.current_state.get("wifi_network") == "false") {
-        // assign now, it is supposed to be a hotspot
+      if (sync_value || self.current_state.get("wifi_network") == "" || self.current_state.get("wifi_network") == "false") {
+        // load library when needed (to prevent power-cycle time issues)
+        if (!scheduler) {
+          scheduler 	= require('node-schedule');
+
+          // wait an additional 10 seconds
+          setTimeout(function() {
+          // assign, it is supposed to be a hotspot
+            self._schedule_clean_logs(data, null);
+            self._set_sleep_time(data, cb);
+          }, self.config.sleep_init_wait);
+
+          return;
+        }
+
+        self._schedule_clean_logs(data, null);
         self._set_sleep_time(data, cb);
       } else {
         // delay assigning cron
         setTimeout(function() {
-          self.set_sleep_time(data, cb);
+          self.set_timers(data, cb);
         }, self.config.ntp_wait);
       }
     });
   },
-  _set_sleep_time: function(data, cb) {
-    var self = this;
-
-    // load library when needed (to prevent power-cycle time issues)
+	set_sleep_time: function(data, cb) {
+		var self = this;
+		// logEvent(1, "Set Sleep Time:", moment().format(), data.sleep_time, data.wake_time, data.timezone_offset, this.current_state.get('is_sleeping'));
     if (!scheduler) {
       scheduler 	= require('node-schedule');
 
       // wait an additional 10 seconds
       setTimeout(function() {
+      // assign, it is supposed to be a hotspot
         self._set_sleep_time(data, cb);
       }, self.config.sleep_init_wait);
 
       return;
     }
+
+    self._set_sleep_time(data, cb);
+  },
+  _set_sleep_time: function(data, cb) {
+    var self = this;
 
 		// cancel old timers
 		if (self.sleep_timer != null) {
@@ -2721,7 +2735,17 @@ var sisbot = {
 		}
 		if (cb) cb(null, this.current_state.toJSON());
 	},
-	/* ------------------------------------------ */
+	/* --------------------- LOG FILES --------------------- */
+  _schedule_clean_logs: function(data, cb) {
+    var self = this;
+
+    var cron = "0 0 * * *"; // once per day at midnight
+    logEvent(0, "Clear Logs", cron);
+
+    scheduler.scheduleJob(cron, function(){
+      self.clean_log_files(null, cb);
+    });
+  },
 	get_log_file: function(data, cb) {
 		logEvent(1, "Get log file", data);
 		if (this.config.folders.logs && typeof data.filename !== 'undefined') {
@@ -2746,6 +2770,60 @@ var sisbot = {
 			}
 		} else if (cb) cb('No logs found.  No log directory or input data.filename was missing', null);
 	},
+  get_log_filenames: function(data, cb) {
+    var self = this;
+    logEvent(0, "Get Log Filenames", data);
+
+    // read contents of configs dir
+    fs.readdir(this.config.folders.logs, function(err, resp) {
+      if (err) cb(err, null);
+
+      // logEvent(0, "Log Files", resp);
+      if (cb) cb(err, resp);
+    });
+  },
+  clean_log_files: function(data, cb) {
+    var self = this;
+    logEvent(0, "Clean Log Files", data);
+
+    var compare_date = moment().subtract(this.config.log_days_to_keep,'days');
+
+    this.get_log_filenames(data, function(err, resp) {
+      if (err) return cb(err, null);
+
+      // loop through each file
+      _.each(resp, function(file) {
+        var match = file.match(/([0-9]+)_/);
+        if (match) {
+          // delete dated old files
+          var file_date = moment(match[1], 'YYYYMMDD');
+          if (file_date.isBefore(compare_date, 'day')) {
+            fs.unlink(self.config.folders.logs+file, function(err) {
+              if (err) logEvent(2, "Log Delete Err", file, err);
+              logEvent(2, "Deleted Dated File:", file);
+            });
+          } else logEvent(1, "Dated File:", file);
+        } else {
+          // check sizes on non-dated files
+          fs.stat(self.config.folders.logs+file, function(err, stats) {
+            if (err) logEvent(2, "Stats Error", err);
+
+            if (stats.isFile()) { // make sure this is a file
+              if (stats.size > self.config.log_max_size) {
+                fs.unlink(self.config.folders.logs+file, function(err) {
+                  if (err) logEvent(2, "Log Delete Err", file, err);
+                  logEvent(2, "Deleted Non-dated File:", file);
+                });
+              } else logEvent(1, "Non-dated File:", file, stats.size);
+            }
+          });
+        }
+      });
+
+      // return nothing
+      if (cb) cb(null, null);
+    });
+  },
 	/* ------------------------------------------ */
   install_updates: function(data, cb) {
     logEvent(1, "Sisbot Install Updates WRAPPER", data);
