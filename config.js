@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dummy') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.43', // Clean Log Files
+			version	: '1.9.44', // Log files list, Clean/backdate Log Files
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

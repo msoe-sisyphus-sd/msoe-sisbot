@@ -2787,6 +2787,7 @@ var sisbot = {
     logEvent(0, "Clean Log Files", data);
 
     var compare_date = moment().subtract(this.config.log_days_to_keep,'days');
+    var yesterday = moment().subtract(1,'days');
 
     this.get_log_filenames(data, function(err, resp) {
       if (err) return cb(err, null);
@@ -2804,19 +2805,16 @@ var sisbot = {
             });
           } else logEvent(1, "Dated File:", file);
         } else {
-          // check sizes on non-dated files
-          fs.stat(self.config.folders.logs+file, function(err, stats) {
-            if (err) logEvent(2, "Stats Error", err);
+          // move files to dated, previous files
+          exec('cat '+self.config.folders.logs+file+' >> '+self.config.folders.logs+yesterday.format('YYYYMMDD')+'_'+file,(error, stdout, stderr) => {
+    			  if (error) return logEvent(2, 'exec error:',error);
 
-            if (stats.isFile()) { // make sure this is a file
-              if (stats.size > self.config.log_max_size) {
-                fs.unlink(self.config.folders.logs+file, function(err) {
-                  if (err) logEvent(2, "Log Delete Err", file, err);
-                  logEvent(2, "Deleted Non-dated File:", file);
-                });
-              } else logEvent(1, "Non-dated File:", file, stats.size);
-            }
-          });
+            // truncate the existing
+            fs.truncate(self.config.folders.logs+file, function(err) {
+              if (err) logEvent(2, "Log Delete Err", file, err);
+              logEvent(2, "Moved, shortened non-dated file:", file);
+            });
+    			});
         }
       });
 
