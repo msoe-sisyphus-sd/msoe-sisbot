@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dummy') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.45', // Automate Python install, add patterns to default_data
+			version	: '1.9.46', // Pattern Color bugfixes
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

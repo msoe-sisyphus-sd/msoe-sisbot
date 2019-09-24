@@ -164,6 +164,7 @@ if __name__ == '__main__':
     parser.add_argument('-n', '--n', help='number of pixels in LED strip', type=int)
     parser.add_argument("-o", '--o', help="default theta offset", type=int)
     parser.add_argument("-p", '--p', help="pattern filename without .py")
+    parser.add_argument('-q', '--quick', action='store_true', help='skip the startup effects')
     args = parser.parse_args()
 
     # Set led_count based on argument 0 if passed
@@ -191,50 +192,51 @@ if __name__ == '__main__':
     try:
         # colorWipe(strip, white_color,10)  # White wipe just to get started
 
-        # fade to white
-        white_color = Color(1, 1, 1, 255)
-        fill(strip, white_color)
-        strip.setBrightness(1)
-        strip.show()
-
-        fade_time = 0
-        fade_total = 256
-        while fade_time < fade_total:
-            strip.setBrightness(fade_time)
+        if not args.quick:
+            # fade to white
+            white_color = Color(1, 1, 1, 255)
+            fill(strip, white_color)
+            strip.setBrightness(1)
             strip.show()
-            time.sleep(5/1000.0)
-            fade_time += 1
 
-        # fade to color
-        fade_time = 0
-        startup = 0
-        fade_total = 100.0
-        while fade_time < fade_total:
-            fill(strip, colorBlend(white_color, wheel(startup), easeIn(fade_time/fade_total)))
+            fade_time = 0
+            fade_total = 256
+            while fade_time < fade_total:
+                strip.setBrightness(fade_time)
+                strip.show()
+                time.sleep(5/1000.0)
+                fade_time += 1
+
+            # fade to color
+            fade_time = 0
+            startup = 0
+            fade_total = 100.0
+            while fade_time < fade_total:
+                fill(strip, colorBlend(white_color, wheel(startup), easeIn(fade_time/fade_total)))
+                strip.show()
+                time.sleep(10/1000.0)
+                fade_time += 1
+                startup += 1
+
+            while startup<256:
+                fill(strip, wheel(startup)) # Cycle through colors as a means of startup
+                strip.show()
+                time.sleep(10/1000.0)
+                startup += 1
+
+            # fade out
+            end_color = wheel(255)
+            fade_time = 0
+            fade_total = 256
+            while fade_time < fade_total:
+                strip.setBrightness(255-fade_time)
+                strip.show()
+                time.sleep(5/1000.0)
+                fade_time += 1
+
+            # off all colors
+            fill(strip, Color(0,0,0,0))
             strip.show()
-            time.sleep(10/1000.0)
-            fade_time += 1
-            startup += 1
-
-        while startup<256:
-            fill(strip, wheel(startup)) # Cycle through colors as a means of startup
-            strip.show()
-            time.sleep(10/1000.0)
-            startup += 1
-
-        # fade out
-        end_color = wheel(255)
-        fade_time = 0
-        fade_total = 256
-        while fade_time < fade_total:
-            strip.setBrightness(255-fade_time)
-            strip.show()
-            time.sleep(5/1000.0)
-            fade_time += 1
-
-        # off all colors
-        fill(strip, Color(0,0,0,0))
-        strip.show()
 
         # load default python script
         update = dynamic_import(start_pattern, "update")

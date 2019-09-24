@@ -6,11 +6,16 @@
 
 from neopixel import *
 from timeit import default_timer as timer
+from math import sin
 import sys
 
 time_start = 0 # for elapsed time
 transition = 0 # 0-1.0, fade between states
-color_pos = 0
+
+color_pos = 0 # sine wave angle for modifying color
+color_range = 0.2 # radius of sine curve (full is 1.0)
+color_speed = 0.1 # how fast will we move through sine wave
+
 no_color = Color(0,0,0,0) # off color
 
 def init(theta, rho):
@@ -70,7 +75,8 @@ def easeOut(t):
     return pow(2, t * 10.0) / 1024.0
 
 def update(theta, rho, photo, primary_color, secondary_color, strip):
-    global transition, time_start, color_pos, no_color
+    global transition, time_start, color_pos, color_range, color_speed, no_color
+
     if time_start == 0:
         time_start = timer()
         transition = 0
@@ -82,10 +88,18 @@ def update(theta, rho, photo, primary_color, secondary_color, strip):
     # assign h_theta
     h_theta = theta
 
+    # increment sine wave
+    # value = rho + sin(color_pos) * color_range;
+    # if value < 0: # wrap
+    #     value += 256
+
+    # print "Rho %s, Wheel %s\n" % (rho, int(value*255)%255),
+    # sys.stdout.flush()
+
     # color of spread by ball
     ball_color = wheel(int(rho*255)) # change based on rho
     # ball_color = colorBlend(primary_color, secondary_color, rho) # blend between primary/secondary based on rho
-    # ball_color = wheel(int(color_pos)%255) # change value based on time instead of rho
+    # ball_color = wheel(int(value*255)%255) # change based on rho + sine wave variation
 
     # spread out the pixel color based on rho
     # max_spread = 85 # degress on either side of pixel to spread white
@@ -131,5 +145,5 @@ def update(theta, rho, photo, primary_color, secondary_color, strip):
     time_end = timer()
     if transition < 1.0:
         transition += time_end - time_start
-    color_pos += (time_end - time_start)*2.0 # if you want color to change over time instead of by rho, line 88
+    # color_pos += (time_end - time_start) * color_speed;
     time_start = time_end

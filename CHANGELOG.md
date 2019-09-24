@@ -4,6 +4,7 @@
   - Homing offset after successful sensored home
   - Clean Log files at midnight each day
   - Auto-install python requirements
+  - Light Color bugfix
 
 # 2019-08-26 1.10.41
   - Light patterns
