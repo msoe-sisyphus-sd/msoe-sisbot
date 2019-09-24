@@ -2643,7 +2643,7 @@ var sisbot = {
       } else {
         // delay assigning cron
         setTimeout(function() {
-          self.set_timers(data, cb);
+          self.setup_timers(data, cb);
         }, self.config.ntp_wait);
       }
     });
