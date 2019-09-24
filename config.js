@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dummy') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.44', // Log files list, Clean/backdate Log Files
+			version	: '1.9.45', // Automate Python install, add patterns to default_data
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -32,6 +32,7 @@ var config = {
 				tracks: 'tracks', // models
 				cloud: 'siscloud',
 				api: 'sisapi',
+        leds: 'sisbot/content/lights',
   	  	logs: '/var/log/sisyphus/'
 			},
 			api_endpoint : 'https://webcenter.sisyphus-industries.com',

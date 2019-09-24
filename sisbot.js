@@ -385,14 +385,9 @@ var sisbot = {
       this.current_state.set('led_enabled','true');
       if (cson_config.rgbwCount) this.led_count = cson_config.rgbwCount;
       if (cson_config.rgbwOffset) this.led_default_offset = cson_config.rgbwOffset;
-      // if (this.current_state.get('led_primary_color') == 'false') {
-      //   logEvent(2, "Set Primary Color", this.current_state.get('led_primary_color'));
-      //   this.current_state.set('led_primary_color', cson_config.rgbwPrimaryColor);
-      // }
-      // if (this.current_state.get('led_secondary_color') == 'false') {
-      //   logEvent(2, "Set Primary Color", this.current_state.get('led_primary_color'));
-      //   this.current_state.set('led_secondary_color', cson_config.rgbwSecondaryColor);
-      // }
+
+      // Force the default patterns to be available
+      this.current_state.set('led_pattern_ids', ['white','solid','fade','spread','comet','rainbow','paint','demo']);
     } else {
       logEvent(1, "No RGBW");
       this.current_state.set('led_enabled','false');
@@ -735,6 +730,26 @@ var sisbot = {
 
     // turn on LEDs now if enabled by config
     if (this.current_state.get('led_enabled') == 'true') this.set_led({is_rgbw:'true'});
+  },
+  get_led_patterns: function(data, cb) {
+    var self = this;
+    logEvent(0, "Get LED Pattern Filenames", data);
+
+    // read contents of configs dir
+    fs.readdir(this.config.base_dir+'/'+this.config.folders.leds, function(err, resp) {
+      if (err) return cb(err, null);
+
+      var return_values = [];
+
+      // only include .py files
+      _.each(resp, function(filename) {
+        if (filename.match(/.py$/)) return_values.push(filename);
+      });
+
+      // cut out special files
+      return_values = _.without(return_values, 'calibrate.py', 'led_main.py', 'led_startup.py', 'none.py', 'software_update.py');
+      if (cb) cb(err, return_values);
+    });
   },
   set_led: function(data, cb) {
     var self = this;

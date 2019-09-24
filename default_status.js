@@ -7,6 +7,7 @@ module.exports = [{
   "hostname_prompt": "true",
   "favorite_playlist_id": "false",
   "default_playlist_id": "F42695C4-AE32-4956-8C7D-0FF6A7E9D492",
+  "led_pattern_ids": ["white","solid","fade","spread","comet","rainbow","paint","demo"],
   "playlist_ids": ["F42695C4-AE32-4956-8C7D-0FF6A7E9D492", "452e628f-fe10-4858-9ed0-fc4b47b6d2e9"],
   "track_ids": ["2CBDAE96-EC22-48B4-A369-BFC624463C5F", "C3D8BC17-E2E1-4D6D-A91F-80FBB65620B8", "2B34822B-0A27-4398-AE19-23A3C83F1220", "93A90B6B-EAEE-48A3-9742-C688235D837D", "B7407A2F-04C3-4C92-B907-4C3869DA86D6", "7C046710-9F19-4423-B291-7394996F0913", "D14E0B41-E572-4B69-9827-4A07C503D031", "26FBFB10-4BC7-46BF-8D55-85AA52C19ADF", "75518177-0D28-4B2A-9B73-29E4974FB702", "b19a2909-a9f5-490b-9f9a-d990f5a77393", "c0f63e2f-e63d-4228-a8bc-6a29f92da50c", "b33775f0-3abf-47f3-ba46-85e85a2bb0d4", "db96d725-09b9-4c80-80ec-9c77658a74ac", "f1451810-ab23-4878-9b45-cca5cfb5b1e7", "580c9f06-1c74-4e36-b4ab-b63a72d6399b", "103f52ff-fc00-4c41-9098-47f2e0a7e7a1", "1f274aa7-6214-4172-b251-a5ac33d36184", "e0a61484-35eb-4f40-9a0a-7f9d6ee58c37", "3ae084de-cea3-4729-8bf8-0c6e43d47d49", "6209824a-9860-4746-a374-d02091e9f808", "77a9f396-f2a3-459b-8e0d-5da024eb13b6", "cfca6c0c-0d04-4fbc-a78b-3d031fd6434f", "19aa381c-5856-4e3c-8ee1-81f61d44d8ca", "f36a4a58-07fb-4a7b-915f-916e6e5be06f", "c136f436-6962-47e6-8cae-8f35294dbfff", "3ab7f7b3-55a5-4055-b94f-e2e8fb4e5234", "f7552c83-ba4d-4642-9373-a1a269522e0f", "6a27135c-e93b-4925-9dd9-d138b42719f0", "dcaeaee1-446a-4880-a942-32ef05edcd2a", "4e718106-4005-4623-825c-9e3da30a2109", "38cb2dad-23d6-4c53-888f-88ee591a04d6"]
 }, {
@@ -868,7 +869,6 @@ module.exports = [{
     }
   ],
   "sorted_tracks": [0, 1, 2, 3, 4],
-  "history_id": "0621722c-3e58-4e44-aae9-b28488549e16",
   "is_saved": "true",
   "created_at": "2017-08-17 14:44:47",
   "updated_at": "2017-08-17 14:47:05",
@@ -878,4 +878,55 @@ module.exports = [{
   "duration": "",
   "duration_formatted": "",
   "created_by_name": "User Name"
+},{
+  "id": "white",
+  "type": "led_pattern",
+  "name": "White",
+  "is_white": "true"
+},{
+  "id": "solid",
+  "type": "led_pattern",
+  "name": "Solid",
+  "is_primary_color": "true",
+  "led_primary_color": "#0066FF00"
+},{
+  "id": "fade",
+  "type": "led_pattern",
+  "name": "Rho Fade",
+  "is_primary_color": "true",
+  "led_primary_color": "#6699FF00",
+  "is_secondary_color": "true",
+  "led_secondary_color": "#9900FF00"
+},{
+  "id": "spread",
+  "type": "led_pattern",
+  "name": "Spread",
+  "is_primary_color": "true",
+  "led_primary_color": "#FFFFFF00",
+  "is_secondary_color": "true",
+  "led_secondary_color": "#6699FF00"
+},{
+  "id": "comet",
+  "type": "led_pattern",
+  "name": "Comet",
+  "is_primary_color": "true",
+  "led_primary_color": "#FFFFFFFF",
+  "is_secondary_color": "true",
+  "led_secondary_color": "#000e0f00"
+},{
+  "id": "rainbow",
+  "type": "led_pattern",
+  "name": "Rainbow"
+},{
+  "id": "paint",
+  "type": "led_pattern",
+  "name": "Paint"
+},{
+  "id": "calibrate",
+  "type": "led_pattern",
+  "name": "Calibrate"
+},{
+  "id": "demo",
+  "type": "led_pattern",
+  "name": "Demo"
 }]
