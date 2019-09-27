@@ -31,6 +31,8 @@ homingRPin: 'C,6'
 homingThHitState: 0 # The value the sensor reports when triggered. 0 or 1.
 homingRHitState: 0 # The value the sensor reports when triggered. 0 or 1.
 
+useJimmyHoming: true
+
 # Axis directions and nested axis compensation:
 nestedAxisSign:       1 # -1 or 1, or 0 if no Naxis
 directionSignTheta:   -1 # -1 or 1
