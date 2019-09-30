@@ -3,6 +3,8 @@
 
 serialPath: "/dev/ttyACM0"
 
+name: "Mini 1 Ball"
+
 # Plot size and gearing:
 radius: 5.3125# inches
 stepsPerThetaRevolution: 20800 # (after gearing)
@@ -19,6 +21,7 @@ detach_track: '0 0,-1.2 0,-1.2 -0.135,0 -0.135,0 0' # set table specific detach 
 
 useRGBW: true # pi connected RGBW LEDs
 rgbwCount: 68 # number of rgbw LEDs
+rgbwOffset: 100.5 # degrees to offset the default position relative to theta
 
 jogStepsTheta: 100
 jogStepsRadius: 100

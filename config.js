@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dummy') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.41', // Demo pattern changes, led_main.py start_pattern argument added, Paint pattern added
+			version	: '1.9.47', // CSON updates, paint modification, python shared functions
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -32,6 +32,7 @@ var config = {
 				tracks: 'tracks', // models
 				cloud: 'siscloud',
 				api: 'sisapi',
+        leds: 'sisbot/content/lights',
   	  	logs: '/var/log/sisyphus/'
 			},
 			api_endpoint : 'https://webcenter.sisyphus-industries.com',
@@ -63,7 +64,9 @@ var config = {
 			default_data: default_status,
 			pingTimeout: 1500, // socket pingTimeout
 			pingInterval: 600, // socket pingInterval
-			max_thumbnail_points: 10000
+			max_thumbnail_points: 10000,
+      log_days_to_keep: 7, // number of days to keep dated log files
+      log_max_size: 5000000 // maximum filesize before automatically deleting (5MB)
 		},
 		matt: {
 			folders: {

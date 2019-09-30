@@ -3,6 +3,8 @@
 
 serialPath: "/dev/ttyACM0"
 
+name: "22 Inch Endtable"
+
 # Plot size and gearing:
 radius: 8.25 # inches
 stepsPerThetaRevolution: 20800 # (after gearing)
@@ -19,6 +21,7 @@ autodim: true # is autodim allowed in UI
 
 useRGBW: false # pi connected RGBW LEDs
 rgbwCount: 100 # number of rgbw LEDs
+rgbwOffset: 0 # degrees to offset the default position relative to theta
 
 # Default movement parameters
 # 5. Default velocity (in/sec)= 1
@@ -32,6 +35,7 @@ jogStepsRadius: 100
 # 13. Homing velocity for R (inch/s)= .5
 
 useHomeSensors: true # false means that a "home" event means to set the current position as home.
+homingOffset: 0 # Steps to offset after home
 homingThSteps: 30 # Steps per homing check on Theta
 homingRSteps: 24 # Steps per homing check on R (30)
 homingThPin: 'D,2'

@@ -2,6 +2,8 @@
 
 serialPath: "/dev/ttyACM0"
 
+name: "42 Inch Servo"
+
 # Plot size and gearing:
 radius: 16 # inches
 stepsPerThetaRevolution: 24888.8888888888889 # (after gearing) (280/36)*3200

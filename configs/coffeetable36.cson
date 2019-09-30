@@ -2,6 +2,8 @@
 
 serialPath: "/dev/ttyACM0"
 
+name: "36 Inch Coffee Table"
+
 # Plot size and gearing:
 radius: 13.5 # inches
 stepsPerThetaRevolution: 24888.8888888888889 #280 / 36 * 3200

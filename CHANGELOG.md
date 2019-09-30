@@ -1,4 +1,17 @@
-# 2019-08-26 1.10.33
+# 2019-09-19 1.10.43
+  - Name in CSON files
+  - CSON RGBW Offset
+  - Homing offset after successful sensored home
+  - Clean Log files at midnight each day
+  - Auto-install python requirements
+  - Light Color bugfix
+  - Paint modification
+  - Added Python shared functions
+
+# 2019-09-04 1.10.42
+  - version bump, no changes
+
+# 2019-08-26 1.10.41
   - Light patterns
   - Pattern brightness matches slider
   - Light offset added to Advanced Settings - Lights

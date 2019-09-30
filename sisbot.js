@@ -4,7 +4,6 @@ var exec 		= require('child_process').exec;
 var spawn 		= require('child_process').spawn;
 var CSON 		= require('cson');
 var fs 			= require('fs');
-// var iwconfig 	= require('wireless-tools/iwconfig');
 var iw 		   = require('./iw');
 var uuid 		= require('uuid');
 var Backbone 	= require('backbone');
@@ -113,6 +112,7 @@ var sisbot = {
   homeFirst: true,
 
   led_count: 0,
+  led_default_offset: 0,
 
   _first_home: true, // make sure we do a sensored home on startup
 	_paused: false,
@@ -384,14 +384,10 @@ var sisbot = {
       logEvent(1, "Use RGBW", this.current_state.get('led_primary_color'), this.current_state.get('led_secondary_color'));
       this.current_state.set('led_enabled','true');
       if (cson_config.rgbwCount) this.led_count = cson_config.rgbwCount;
-      // if (this.current_state.get('led_primary_color') == 'false') {
-      //   logEvent(2, "Set Primary Color", this.current_state.get('led_primary_color'));
-      //   this.current_state.set('led_primary_color', cson_config.rgbwPrimaryColor);
-      // }
-      // if (this.current_state.get('led_secondary_color') == 'false') {
-      //   logEvent(2, "Set Primary Color", this.current_state.get('led_primary_color'));
-      //   this.current_state.set('led_secondary_color', cson_config.rgbwSecondaryColor);
-      // }
+      if (cson_config.rgbwOffset) this.led_default_offset = cson_config.rgbwOffset;
+
+      // Force the default patterns to be available
+      this.current_state.set('led_pattern_ids', ['white','solid','fade','spread','comet','rainbow','paint','demo']);
     } else {
       logEvent(1, "No RGBW");
       this.current_state.set('led_enabled','false');
@@ -579,7 +575,7 @@ var sisbot = {
 		}
 
 		// sleep/wake timers
-		this.set_sleep_time(this.current_state.toJSON(), null);
+    this.setup_timers(this.current_state.toJSON(), null);
 
 		return this;
 	},
@@ -735,6 +731,26 @@ var sisbot = {
     // turn on LEDs now if enabled by config
     if (this.current_state.get('led_enabled') == 'true') this.set_led({is_rgbw:'true'});
   },
+  get_led_patterns: function(data, cb) {
+    var self = this;
+    logEvent(1, "Get LED Pattern Filenames", data);
+
+    // read contents of configs dir
+    fs.readdir(this.config.base_dir+'/'+this.config.folders.leds, function(err, resp) {
+      if (err) return cb(err, null);
+
+      var return_values = [];
+
+      // only include .py files
+      _.each(resp, function(filename) {
+        if (filename.match(/.py$/)) return_values.push(filename);
+      });
+
+      // cut out special files
+      return_values = _.without(return_values, 'calibrate.py', 'led_main.py', 'led_startup.py', 'none.py', 'software_update.py', 'colorFunctions.py', 'easing.py');
+      if (cb) cb(err, return_values);
+    });
+  },
   set_led: function(data, cb) {
     var self = this;
     // Enable/disable LED lights
@@ -752,6 +768,10 @@ var sisbot = {
       if (this.led_count) {
         args.push('-n');
         args.push(this.led_count);
+      }
+      if (this.led_default_offset) {
+        args.push('-o');
+        args.push(this.led_default_offset);
       }
       logEvent(1, "Start LED", args);
   		this.py = spawn('./start_leds.sh',args,{cwd:"/home/pi/sisbot-server/sisbot",detached:true,stdio:'ignore'});
@@ -813,7 +833,10 @@ var sisbot = {
 
       // change colors
       self.set_led_color(data, function(err, resp) {
-        self.current_state.set('led_pattern', data.id);
+        self.current_state.set('led_pattern', data.id)
+          .set('led_primary_color', data.led_primary_color)
+          .set('led_secondary_color', data.led_secondary_color);
+
         self.save(null, null);
 
         if (cb) cb(null, self.current_state.toJSON());
@@ -829,6 +852,7 @@ var sisbot = {
     //
     if (data.led_primary_color) {
       logEvent(1, "Set primary color", JSON.stringify(data.led_primary_color));
+      var primary = {};
 
       // split from hex into components
       if (_.isString(data.led_primary_color)) {
@@ -839,15 +863,15 @@ var sisbot = {
         if (data.led_primary_color.length > 7) white = parseInt(data.led_primary_color.substr(7, 2), 16);
 
         // logEvent(1, "Primary Colors: ", red, green, blue);
-        data.led_primary_color = { red: red, green: green, blue: blue, white: white };
-      }
+        primary = { red: red, green: green, blue: blue, white: white };
+      } else primary = data.led_primary_color;
 
       var arr = new Uint8Array(5);
       arr[0] = 67; // C
-      if (data.led_primary_color.red) arr[1] = Math.max(0,Math.min(+data.led_primary_color.red, 255));
-      if (data.led_primary_color.green) arr[2] = Math.max(0,Math.min(+data.led_primary_color.green, 255));
-      if (data.led_primary_color.blue) arr[3] = Math.max(0,Math.min(+data.led_primary_color.blue, 255));
-      if (data.led_primary_color.white) arr[4] = Math.max(0,Math.min(+data.led_primary_color.white, 255));
+      if (primary.red) arr[1] = Math.max(0,Math.min(+primary.red, 255));
+      if (primary.green) arr[2] = Math.max(0,Math.min(+primary.green, 255));
+      if (primary.blue) arr[3] = Math.max(0,Math.min(+primary.blue, 255));
+      if (primary.white) arr[4] = Math.max(0,Math.min(+primary.white, 255));
 
       var buf = Buffer.from(arr.buffer);
 
@@ -860,6 +884,7 @@ var sisbot = {
     }
     if (data.led_secondary_color) {
       logEvent(1, "Set secondary color", JSON.stringify(data.led_secondary_color));
+      var secondary = {};
 
       // split from hex into components
       if (_.isString(data.led_secondary_color)) {
@@ -870,14 +895,14 @@ var sisbot = {
         if (data.led_secondary_color.length > 7) white = parseInt(data.led_secondary_color.substr(7, 2), 16);
 
         // logEvent(1, "Secondary Colors: ", red, green, blue);
-        data.led_secondary_color = { red: red, green: green, blue: blue, white: white };
+        secondary = { red: red, green: green, blue: blue, white: white };
       }
       var arr = new Uint8Array(5);
       arr[0] = 99; // c
-      if (data.led_secondary_color.red) arr[1] = Math.max(0,Math.min(+data.led_secondary_color.red, 255));
-      if (data.led_secondary_color.green) arr[2] = Math.max(0,Math.min(+data.led_secondary_color.green, 255));
-      if (data.led_secondary_color.blue) arr[3] = Math.max(0,Math.min(+data.led_secondary_color.blue, 255));
-      if (data.led_secondary_color.white) arr[4] = Math.max(0,Math.min(+data.led_secondary_color.white, 255));
+      if (secondary.red) arr[1] = Math.max(0,Math.min(+secondary.red, 255));
+      if (secondary.green) arr[2] = Math.max(0,Math.min(+secondary.green, 255));
+      if (secondary.blue) arr[3] = Math.max(0,Math.min(+secondary.blue, 255));
+      if (secondary.white) arr[4] = Math.max(0,Math.min(+secondary.white, 255));
 
       var buf = Buffer.from(arr.buffer);
 
@@ -1052,6 +1077,20 @@ var sisbot = {
 
 		if (cb) cb(null, this.current_state.toJSON());
 	},
+  _set_cson: function(data, cb) {
+    var self = this;
+    // logEvent(2, "Set CSON", data);
+
+    // double-check that the given name is in configs directory
+    if (fs.existsSync(self.config.base_dir+'/'+self.config.folders.sisbot+'/'+self.config.folders.config+'/'+data.cson)) {
+      // update whichcson.js file
+      var cson = 'module.exports = "'+data.cson+'";\n';
+      fs.writeFile(self.config.base_dir+'/'+self.config.folders.sisbot+'/'+self.config.folders.config+'/whichcson.js', cson, function(err) {
+        logEvent(1, "CSON Set", data);
+        if (cb) cb(err, data);
+      });
+    }
+  },
   set_hostname: function(data,cb) {
     logEvent(1, "set hostname", data);
 
@@ -1129,6 +1168,7 @@ var sisbot = {
 					// extra checks if passing sisbot changes
 					if (obj.id == self.current_state.id) {
 						if (obj.state) delete obj.state; // don't listen to updates to this, plotter is in control of this
+						if (obj.table_settings && obj.table_settings.cson != self.current_state.get('cson')) self._set_cson(obj.table_settings, null);
 						if (obj.is_autodim != self.current_state.get('is_autodim')) self.set_autodim({value: "true"}, null);
 						if (obj.brightness != self.current_state.get('brightness')) self.set_brightness({value: obj.brightness}, null);
 						if (obj.name != self.current_state.get('name')) {
@@ -1517,67 +1557,98 @@ var sisbot = {
 				if (cb) cb(null, [track.toJSON(), self.current_state.toJSON()]); // send back current_state without track
 			}
 		});
-    },
-    /*********************** UPLOAD TRACK TO CLOUD ************************/
-    get_track_verts: function(data, cb) {
-        logEvent(1, 'track verts', data, cb);
-        fs.readFile(this.config.base_dir + '/' + this.config.folders.sisbot + '/' + this.config.folders.content + '/' + this.config.folders.tracks + '/' + data.id + '.thr', 'utf-8', function(err, data) {
-            if (cb) cb(err, data); // send back track verts
-        });
-    },
-    remove_track: function(data, cb) {
-		if (data.type != 'track') {
-			if (cb) cb("Wrong data type", null);
-			return logEvent(2, "Remove Track sent wrong data type", data.type);
-		}
+  },
+  get_csons: function(data, cb) {
+    // logEvent(0, "Get CSONs");
+    var self = this;
 
-		var self = this;
-        logEvent(1, "Sisbot Remove Track", data);
+    // read contents of configs dir
+    fs.readdir(this.config.base_dir + '/' + this.config.folders.sisbot + '/' + this.config.folders.config, function(err, resp) {
+      if (err) cb(err, null);
 
-        // remove from collection
-        this.collection.remove(data.id);
+      var cson_files = [];
+      // loop through files, removing javascript, default.cson
+      _.each(resp, function(file) {
+        if (file.match(/.cson$/) && file != 'default.cson') {
+          cson_files.push(file);
+        }
+      });
 
-        // remove from current_state
-        var all_tracks = this.current_state.get("track_ids");
-        var clean_tracks = [];
-        _.each(all_tracks, function(track_id) {
-            if (track_id != data.id) clean_tracks.push(track_id);
-        });
-        this.current_state.set("track_ids", clean_tracks);
+      // TODO: load the files, pull out the name
+      var return_value = [];
+      _.each(cson_files, function(file) {
+        var cson_config = CSON.load(self.config.base_dir+'/'+self.config.folders.sisbot+'/'+self.config.folders.config+'/'+file);
+        var cson_name = (typeof cson_config.name === 'undefined') ? 'Unnamed' : cson_config.name;
+        return_value.push({id:file, name:cson_name});
+      });
 
-    		// remove from playlists
-    		var playlists = this.current_state.get("playlist_ids");
-    		var return_objs = [];
-    		_.each(playlists, function(playlist_id) {
-    			var playlist = self.collection.get(playlist_id);
-    			var did_remove = false;
+      return_value = _.sortBy(return_value, 'name');
 
-    			var tracks = playlist.get("tracks");
-    	        var clean_tracks = [];
-    			// remove all instances of the track_id
-    			_.each(tracks, function(track_obj) {
-    				if (track_obj.id != data.id) clean_tracks.push(track_obj);
-    				else did_remove = true;
-    			});
+      // logEvent(0, "CSONs:", err, return_value);
 
-    			if (did_remove) {
-    		        playlist.set("tracks", clean_tracks);
+      if (cb) cb(err, return_value);
+    });
+  },
+  /*********************** UPLOAD TRACK TO CLOUD ************************/
+  get_track_verts: function(data, cb) {
+      logEvent(1, 'track verts', data, cb);
+      fs.readFile(this.config.base_dir + '/' + this.config.folders.sisbot + '/' + this.config.folders.content + '/' + this.config.folders.tracks + '/' + data.id + '.thr', 'utf-8', function(err, data) {
+          if (cb) cb(err, data); // send back track verts
+      });
+  },
+  remove_track: function(data, cb) {
+	if (data.type != 'track') {
+		if (cb) cb("Wrong data type", null);
+		return logEvent(2, "Remove Track sent wrong data type", data.type);
+	}
 
-    				// fix the sorted order, or just reshuffle
-    				playlist.set_shuffle({ is_shuffle: playlist.get('is_shuffle') });
+	var self = this;
+      logEvent(1, "Sisbot Remove Track", data);
 
-    				return_objs.push(playlist.toJSON());
-    			}
-    		});
+      // remove from collection
+      this.collection.remove(data.id);
 
-    		// add sisbot_state
-    		return_objs.push(this.current_state.toJSON());
+      // remove from current_state
+      var all_tracks = this.current_state.get("track_ids");
+      var clean_tracks = [];
+      _.each(all_tracks, function(track_id) {
+          if (track_id != data.id) clean_tracks.push(track_id);
+      });
+      this.current_state.set("track_ids", clean_tracks);
 
-        this.save(null, null);
+  		// remove from playlists
+  		var playlists = this.current_state.get("playlist_ids");
+  		var return_objs = [];
+  		_.each(playlists, function(playlist_id) {
+  			var playlist = self.collection.get(playlist_id);
+  			var did_remove = false;
 
-        if (cb) cb(null, return_objs);
-    },
-    /*********************** GENERATE THUMBNAILS ******************************/
+  			var tracks = playlist.get("tracks");
+  	        var clean_tracks = [];
+  			// remove all instances of the track_id
+  			_.each(tracks, function(track_obj) {
+  				if (track_obj.id != data.id) clean_tracks.push(track_obj);
+  				else did_remove = true;
+  			});
+
+  			if (did_remove) {
+  		        playlist.set("tracks", clean_tracks);
+
+  				// fix the sorted order, or just reshuffle
+  				playlist.set_shuffle({ is_shuffle: playlist.get('is_shuffle') });
+
+  				return_objs.push(playlist.toJSON());
+  			}
+  		});
+
+  		// add sisbot_state
+  		return_objs.push(this.current_state.toJSON());
+
+      this.save(null, null);
+
+      if (cb) cb(null, return_objs);
+  },
+  /*********************** GENERATE THUMBNAILS ******************************/
 	_regenerate_thumbnails: function(data, cb) {
 		var self = this;
 
@@ -2107,13 +2178,13 @@ var sisbot = {
 	},
 	/* --------------- WIFI ---------------------*/
   _validate_network: function(data, cb) {
-		logEvent(1, "Sisbot validate network");
+		// logEvent(1, "Sisbot validate network");
     var self = this;
 
     exec('route | grep default', {timeout: 5000}, (error, stdout, stderr) => {
       //if (error) return console.error('exec error:',error);
 
-      logEvent(1, "LAN result", stdout, stderr, this._network_retries);
+      // logEvent(1, "LAN result", stdout, stderr, this._network_retries);
 
       var returnValue = "false";
       if (stdout.indexOf("default") > -1) returnValue = "true";
@@ -2131,7 +2202,7 @@ var sisbot = {
         local_ip: self._getIPAddress()
       });
 
-      logEvent(1, "LAN IP", self._getIPAddress());
+      // logEvent(1, "LAN IP", self._getIPAddress());
 
       self.save(null, null);
 
@@ -2141,7 +2212,7 @@ var sisbot = {
     });
   },
 	_validate_internet: function(data, cb) {
-		logEvent(1, "Sisbot validate internet");
+		// logEvent(1, "Sisbot validate internet");
 		var self = this;
 
 		exec('ping -c 1 -W 2 google.com', {timeout: 5000}, (error, stdout, stderr) => {
@@ -2550,42 +2621,57 @@ var sisbot = {
       } else if (cb) cb('Unknown result: '+sync, null);
     });
   },
-	set_sleep_time: function(data, cb) {
-		var self = this;
-		// logEvent(1, "Set Sleep Time:", moment().format(), data.sleep_time, data.wake_time, data.timezone_offset, this.current_state.get('is_sleeping'));
+  setup_timers: function(data, cb) {
+    var self = this;
 
     // check NTP before assigning cron
     this.check_ntp({}, function(err, sync_value) {
       if (err) logEvent(2, "NTP Error", err);
 
-      if (sync_value) {
-        // assign now
-        self._set_sleep_time(data, cb);
-      } else if (self.current_state.get("wifi_network") == "" || self.current_state.get("wifi_network") == "false") {
-        // assign now, it is supposed to be a hotspot
+      if (sync_value || self.current_state.get("wifi_network") == "" || self.current_state.get("wifi_network") == "false") {
+        // load library when needed (to prevent power-cycle time issues)
+        if (!scheduler) {
+          scheduler 	= require('node-schedule');
+
+          // wait an additional 10 seconds
+          setTimeout(function() {
+          // assign, it is supposed to be a hotspot
+            self._schedule_clean_logs(data, null);
+            self._set_sleep_time(data, cb);
+          }, self.config.sleep_init_wait);
+
+          return;
+        }
+
+        self._schedule_clean_logs(data, null);
         self._set_sleep_time(data, cb);
       } else {
         // delay assigning cron
         setTimeout(function() {
-          self.set_sleep_time(data, cb);
+          self.setup_timers(data, cb);
         }, self.config.ntp_wait);
       }
     });
   },
-  _set_sleep_time: function(data, cb) {
-    var self = this;
-
-    // load library when needed (to prevent power-cycle time issues)
+	set_sleep_time: function(data, cb) {
+		var self = this;
+		// logEvent(1, "Set Sleep Time:", moment().format(), data.sleep_time, data.wake_time, data.timezone_offset, this.current_state.get('is_sleeping'));
     if (!scheduler) {
       scheduler 	= require('node-schedule');
 
       // wait an additional 10 seconds
       setTimeout(function() {
+      // assign, it is supposed to be a hotspot
         self._set_sleep_time(data, cb);
       }, self.config.sleep_init_wait);
 
       return;
     }
+
+    self._set_sleep_time(data, cb);
+  },
+  _set_sleep_time: function(data, cb) {
+    var self = this;
 
 		// cancel old timers
 		if (self.sleep_timer != null) {
@@ -2669,7 +2755,17 @@ var sisbot = {
 		}
 		if (cb) cb(null, this.current_state.toJSON());
 	},
-	/* ------------------------------------------ */
+	/* --------------------- LOG FILES --------------------- */
+  _schedule_clean_logs: function(data, cb) {
+    var self = this;
+
+    var cron = "0 0 * * *"; // once per day at midnight
+    logEvent(1, "Clear Logs", cron);
+
+    scheduler.scheduleJob(cron, function(){
+      self.clean_log_files(null, cb);
+    });
+  },
 	get_log_file: function(data, cb) {
 		logEvent(1, "Get log file", data);
 		if (this.config.folders.logs && typeof data.filename !== 'undefined') {
@@ -2694,6 +2790,58 @@ var sisbot = {
 			}
 		} else if (cb) cb('No logs found.  No log directory or input data.filename was missing', null);
 	},
+  get_log_filenames: function(data, cb) {
+    var self = this;
+    // logEvent(1, "Get Log Filenames", data);
+
+    // read contents of configs dir
+    fs.readdir(this.config.folders.logs, function(err, resp) {
+      if (err) cb(err, null);
+
+      // logEvent(0, "Log Files", resp);
+      if (cb) cb(err, resp);
+    });
+  },
+  clean_log_files: function(data, cb) {
+    var self = this;
+    logEvent(1, "Clean Log Files", data);
+
+    var compare_date = moment().subtract(this.config.log_days_to_keep,'days');
+    var yesterday = moment().subtract(1,'days');
+
+    this.get_log_filenames(data, function(err, resp) {
+      if (err) return cb(err, null);
+
+      // loop through each file
+      _.each(resp, function(file) {
+        var match = file.match(/([0-9]+)_/);
+        if (match) {
+          // delete dated old files
+          var file_date = moment(match[1], 'YYYYMMDD');
+          if (file_date.isBefore(compare_date, 'day')) {
+            fs.unlink(self.config.folders.logs+file, function(err) {
+              if (err) logEvent(2, "Log Delete Err", file, err);
+              logEvent(2, "Deleted Dated File:", file);
+            });
+          } else logEvent(1, "Dated File:", file);
+        } else {
+          // move files to dated, previous files
+          exec('cat '+self.config.folders.logs+file+' >> '+self.config.folders.logs+yesterday.format('YYYYMMDD')+'_'+file,(error, stdout, stderr) => {
+    			  if (error) return logEvent(2, 'exec error:',error);
+
+            // truncate the existing
+            fs.truncate(self.config.folders.logs+file, function(err) {
+              if (err) logEvent(2, "Log Delete Err", file, err);
+              logEvent(2, "Moved, shortened non-dated file:", file);
+            });
+    			});
+        }
+      });
+
+      // return nothing
+      if (cb) cb(null, null);
+    });
+  },
 	/* ------------------------------------------ */
   install_updates: function(data, cb) {
     logEvent(1, "Sisbot Install Updates WRAPPER", data);
