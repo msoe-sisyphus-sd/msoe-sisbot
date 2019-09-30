@@ -13,6 +13,12 @@ import errno
 import signal
 import struct # convert bytest to float
 
+from colorFunctions import fill
+from colorFunctions import colorWipe
+from colorFunctions import colorBlend
+from colorFunctions import wheel
+from easing import easeIn
+
 # LED strip configuration:
 LED_PIN        = 18      # GPIO pin connected to the pixels (18 uses PWM!).
 #LED_PIN        = 10      # GPIO pin connected to the pixels (10 uses SPI /dev/spidev0.0).
@@ -55,57 +61,6 @@ def signal_handler(sig, frame):
     sys.exit(0)
 
 signal.signal(signal.SIGINT, signal_handler)
-
-# Define functions which animate LEDs in various ways.
-def colorWipe(strip, color, wait_ms=50):
-    """Wipe color across display a pixel at a time."""
-    for i in range(strip.numPixels()+1):
-        strip.setPixelColor(i, color)
-        strip.show()
-        time.sleep(wait_ms/1000.0)
-
-def wheel(pos):
-    # print "wheel %s\n" % (pos),
-    """Generate rainbow colors across 0-255 positions."""
-    if pos < 85:
-        return Color(pos * 3, 255 - pos * 3, 0)
-    elif pos < 170:
-        pos -= 85
-        return Color(255 - pos * 3, 0, pos * 3)
-    else:
-        pos -= 170
-        return Color(0, pos * 3, 255 - pos * 3)
-
-def colorBlend(color1,color2,blend=0):
-    if (blend > 1):
-        blend = 1
-    if (blend < 0):
-        blend = 0
-    # Fade color1 into color2 by blend percent
-    w1 = (color1 >> 24) & 0xFF;
-    r1 = (color1 >> 16) & 0xFF;
-    g1 = (color1 >> 8) & 0xFF;
-    b1 = color1 & 0xFF;
-    w2 = (color2 >> 24) & 0xFF;
-    r2 = (color2 >> 16) & 0xFF;
-    g2 = (color2 >> 8) & 0xFF;
-    b2 = color2 & 0xFF;
-    red = int(r1+(r2-r1)*blend)
-    green = int(g1+(g2-g1)*blend)
-    blue = int(b1+(b2-b1)*blend)
-    white = int(w1+(w2-w1)*blend)
-    return Color(red,green,blue,white)
-
-def easeIn(t):
-    if t > 1.0:
-        t = 1.0
-    elif t < 0:
-        t = 0
-    return 1.0 - pow(2, (1.0 - t) * 10.0) / 1024.0
-
-def fill(strip, color):
-    for i in range(strip.numPixels()+1):
-        strip.setPixelColor(i, color)
 
 # Main program logic follows:
 if __name__ == '__main__':
