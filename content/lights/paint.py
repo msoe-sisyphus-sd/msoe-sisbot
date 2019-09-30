@@ -52,7 +52,8 @@ def update(theta, rho, photo, primary_color, secondary_color, strip):
     # sys.stdout.flush()
 
     # color of spread by ball
-    ball_color = wheel(int(rho*255)) # change based on rho
+    # ball_color = wheel(int(rho*255)) # change based on rho
+    ball_color = wheel(int(rho*255 + theta*0.2) % 255) # change based on rho (and theta)
     # ball_color = colorBlend(primary_color, secondary_color, rho) # blend between primary/secondary based on rho
     # ball_color = wheel(int(value*255)%255) # change based on rho + sine wave variation
 

@@ -5,6 +5,11 @@
   - Clean Log files at midnight each day
   - Auto-install python requirements
   - Light Color bugfix
+  - Paint modification
+  - Added Python shared functions
+
+# 2019-09-04 1.10.42
+  - version bump, no changes
 
 # 2019-08-26 1.10.41
   - Light patterns

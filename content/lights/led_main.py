@@ -117,7 +117,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--clear', action='store_true', help='clear the display on exit')
     parser.add_argument('-n', '--n', help='number of pixels in LED strip', type=int)
-    parser.add_argument("-o", '--o', help="default theta offset", type=int)
+    parser.add_argument("-o", '--o', help="default theta offset", type=float)
     parser.add_argument("-p", '--p', help="pattern filename without .py")
     parser.add_argument('-q', '--quick', action='store_true', help='skip the startup effects')
     args = parser.parse_args()
