@@ -1,8 +1,9 @@
-# Sisbot config for 36" Coffee Table with RGBW 09/11/2019
+# Sisbot config for 36" Coffee Table with RGBW and 2 balls 09/11/2019
+# updated 10/07/2019 to simplify attach/detach
 
 serialPath: "/dev/ttyACM0"
 
-name: "36 Inch RGBW Coffee Table"
+name: "36 Inch RGBW 2 Ball Coffee Table"
 
 # Plot size and gearing:
 radius: 13.5 # inches
@@ -16,14 +17,14 @@ jogStepsTheta: 50
 jogStepsRadius: 100
 
 twoBallEnabled: true
-attach_track: '0 0,-0.6 0,-0.6 -0.0741,0 -0.0741,-0.6 -0.0741,-0.6 0,0 0' # set table specific attach verts
+attach_track: '0 0,0 -0.0741,-0.6 -0.0741,-0.6 0,0 0' # set table specific attach verts
 detach_track: '0 0,-0.6 0,-0.6 -0.0741,0 -0.0741,0 0' # set table specific detach verts
 
 autodim: true # is autodim allowed in UI
 
 useRGBW: true # pi connected RGBW LEDs
 rgbwCount: 167 # number of rgbw LEDs
-
+rgbwOffset: 0
 
 useHomeSensors: true# false means that a "home" event means to set the current $
 homingThSteps: 17# Steps per homing check on Theta

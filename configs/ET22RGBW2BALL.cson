@@ -1,0 +1,44 @@
+# Sisbot config for 22" End Table with RGBW and 2 balls 10/07/2019
+
+serialPath: "/dev/ttyACM0"
+
+name: "22 Inch RGBW 2 Ball Endtable"
+
+# Plot size and gearing:
+radius: 8.25 # inches
+stepsPerThetaRevolution: 20800 # (after gearing)
+stepsPerRadiusRevolution: 3200
+stepsPerRadiusInch: 2573.2841325173814
+
+autoplay: true # when true it will home and play the default playlist sequentially on boot.
+
+jogStepsTheta: 100
+jogStepsRadius: 100
+
+twoBallEnabled: true
+attach_track: '0,0,0 -0.1,-0.6 -0.1,-0.6 0,0 0' # set table specific attach verts
+detach_track: '0 0,-0.6 0,-0.6 -0.1,0 -0.1,0 0' # set table specific detach verts
+
+autodim: true # is autodim allowed in UI
+
+useRGBW: false # pi connected RGBW LEDs
+rgbwCount: 100 # number of rgbw LEDs
+rgbwOffset: 0 # degrees to offset the default position relative to theta
+
+useHomeSensors: true # false means that a "home" event means to set the current position as home.
+homingOffset: 0 # Steps to offset after home
+homingThSteps: 30 # Steps per homing check on Theta
+homingRSteps: 24 # Steps per homing check on R (30)
+homingThPin: 'D,2'
+homingRPin: 'C,6'
+homingThHitState: 0 # The value the sensor reports when triggered. 0 or 1.
+homingRHitState: 0 # The value the sensor reports when triggered. 0 or 1.
+
+useJimmyHoming: true
+homingRSpanSteps: 10 # Steps per sensor check on Jimmy Homing R
+
+
+# Axis directions and nested axis compensation:
+nestedAxisSign:       1 # -1 or 1, or 0 if no Naxis
+directionSignTheta:   -1 # -1 or 1
+directionSignRadius: 1 # -1 or 1
