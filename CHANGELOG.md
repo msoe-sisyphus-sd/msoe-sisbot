@@ -1,4 +1,4 @@
-# 2019-09-19 1.10.43
+# 2019-09-19 1.10.47
   - Name in CSON files
   - CSON RGBW Offset
   - Homing offset after successful sensored home
