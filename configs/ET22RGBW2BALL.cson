@@ -21,8 +21,8 @@ detach_track: '0 0,-0.6 0,-0.6 -0.1,0 -0.1,0 0' # set table specific detach vert
 
 autodim: true # is autodim allowed in UI
 
-useRGBW: false # pi connected RGBW LEDs
-rgbwCount: 100 # number of rgbw LEDs
+useRGBW: true # pi connected RGBW LEDs
+rgbwCount: 99 # number of rgbw LEDs
 rgbwOffset: 0 # degrees to offset the default position relative to theta
 
 useHomeSensors: true # false means that a "home" event means to set the current position as home.

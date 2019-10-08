@@ -22,7 +22,7 @@ detach_track: '0 0,0 0' # set table specific detach verts
 autodim: true # is autodim allowed in UI
 
 useRGBW: true # pi connected RGBW LEDs
-rgbwCount: 100 # number of rgbw LEDs
+rgbwCount: 99 # number of rgbw LEDs
 
 useHomeSensors: true # false means that a "home" event means to set the current position as home.
 homingThSteps: 30 # Steps per homing check on Theta
