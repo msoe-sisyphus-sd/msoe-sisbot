@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dummy') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.47', // CSON updates, paint modification, python shared functions
+			version	: '1.9.48', // Download track images from Webcenter if able
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -36,6 +36,7 @@ var config = {
   	  	logs: '/var/log/sisyphus/'
 			},
 			api_endpoint : 'https://webcenter.sisyphus-industries.com',
+      api_thumb_url: '/uploads/track/thr/', // +track_id+'/thumb_'+xxx+'.png'
 			receiver : true, // receive messages from cloud
 			sisbot_config : which_cson,
 			sisbot_state : 'status.json',
