@@ -16,8 +16,8 @@ jogStepsTheta: 100
 jogStepsRadius: 100
 
 twoBallEnabled: true
-attach_track: '0,0,0 -0.1,-0.6 -0.1,-0.6 0,0 0' # set table specific attach verts
-detach_track: '0 0,-0.6 0,-0.6 -0.1,0 -0.1,0 0' # set table specific detach verts
+attach_track: '0,0,0 -0.0666,-0.6 -0.0666,-0.6 0,0 0' # set table specific attach verts
+detach_track: '0 0,-0.6 0,-0.6 -0.0666,0 -0.0666,0 0' # set table specific detach verts
 
 autodim: true # is autodim allowed in UI
 
