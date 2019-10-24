@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dummy') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.48', // Download track images from Webcenter if able
+			version	: '1.9.49', // RGBW brightness value correct while paused
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
