@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# echo current time
+echo "Startup: $(date)"
+
 # start LED lights?
 if [ -f "/home/pi/sisbot-server/sisbot/content/lights/led_startup.py" ]; then
   cd /home/pi/sisbot-server/sisbot/content/lights/
@@ -99,8 +102,7 @@ start_time="$(date -u +%s)"
 } || {
   end_time="$(date -u +%s)"
   elapsed="$(($end_time-$start_time))"
-  echo "Test failure"
-  echo "$elapsed"
+  echo "Test failure: $elapsed"
   if [ $elapsed -lt 3 ]; then
     echo "Proxy crashed"
 

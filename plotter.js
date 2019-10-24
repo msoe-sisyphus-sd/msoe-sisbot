@@ -521,33 +521,7 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLOstep
       if (err) logEvent(2, err, result);
       else {
         // send to socket
-        try {
-          // Row
-          var newR = ((rAccum - thAccum * rthAsp * nestedAxisSign) * rDirSign/ rSPInch)/plotRadius;
-          // Theta
-          var newTh = thAccum / thSPRad;
-
-          var buf1 = Buffer.from('b', 0, 1);
-          var buf2 =  Buffer.alloc(4);
-          buf2.writeFloatBE(newR, 0);
-          var buf3 =  Buffer.alloc(4);
-          buf3.writeFloatBE(newTh, 0);
-          var buf4 =  Buffer.alloc(4);
-          buf4.writeFloatBE(lastPhotoOut, 0);
-          var totalLength = buf1.length + buf2.length + buf3.length + buf4.length;
-
-          // var d = new Date();
-          // var n = d.getMilliseconds();
-          // logEvent(1, "Millis", n);
-
-          // logEvent(1, "Values: ", newR, newTh, lastPhotoOut, "Buffer Length:", totalLength);
-          message = Buffer.concat([buf1, buf2, buf3, buf4], totalLength);
-
-          sp_lcp.send(message, 0, totalLength, '/tmp/sisyphus_sockets');
-          // logEvent(1,'LCP ' + inp);
-        } catch (err) {
-          // logEvent(2,'Error writing to LCP socket ' + err.message);
-        }
+        send_ball_data();
 
         //logEvent(1, cmd);
         si++;
@@ -911,35 +885,42 @@ function jog(axis, direction) {
         thAccum += jogThsteps;
         rAccum += jogRsteps;
 
-        // send to socket
-        try {
-          var newR = ((rAccum - thAccum * rthAsp * nestedAxisSign) * rDirSign/ rSPInch)/plotRadius;
-          var newTh = thAccum / thSPRad;
-
-          var buf1 = Buffer.from('b', 0, 1);
-          var buf2 =  Buffer.alloc(4);
-          buf2.writeFloatBE(newR, 0);
-          var buf3 =  Buffer.alloc(4);
-          buf3.writeFloatBE(newTh, 0);
-          var buf4 =  Buffer.alloc(4);
-          buf4.writeFloatBE(lastPhotoOut, 0);
-          var totalLength = buf1.length + buf2.length + buf3.length + buf4.length;
-
-          // var d = new Date();
-          // var n = d.getMilliseconds();
-          // logEvent(1, "Millis", n);
-
-          // logEvent(1, "Values: ", newR, newTh, lastPhotoOut, "Buffer Length:", totalLength);
-          message = Buffer.concat([buf1, buf2, buf3, buf4], totalLength);
-
-          sp_lcp.send(message, 0, totalLength, '/tmp/sisyphus_sockets');
-          // logEvent(1,'LCP ' + inp);
-        } catch (err) {
-          // logEvent(2,'Error writing to LCP socket ' + err.message);
-        }
+        send_ball_data();
       }
     });
   });
+}
+
+// Send ball data to lights socket
+function send_ball_data() {
+  if (!sp_lcp) return; // exit if not defined
+
+  // send to socket
+  try {
+    var newR = ((rAccum - thAccum * rthAsp * nestedAxisSign) * rDirSign/ rSPInch)/plotRadius;
+    var newTh = thAccum / thSPRad;
+
+    var buf1 = Buffer.from('b', 0, 1);
+    var buf2 =  Buffer.alloc(4);
+    buf2.writeFloatBE(newR, 0);
+    var buf3 =  Buffer.alloc(4);
+    buf3.writeFloatBE(newTh, 0);
+    var buf4 =  Buffer.alloc(4);
+    buf4.writeFloatBE(lastPhotoOut, 0);
+    var totalLength = buf1.length + buf2.length + buf3.length + buf4.length;
+
+    // var d = new Date();
+    // var n = d.getMilliseconds();
+    // logEvent(1, "Millis", n);
+
+    // logEvent(1, "Values: ", newR, newTh, lastPhotoOut, "Buffer Length:", totalLength);
+    message = Buffer.concat([buf1, buf2, buf3, buf4], totalLength);
+
+    sp_lcp.send(message, 0, totalLength, '/tmp/sisyphus_sockets');
+    // logEvent(1,'LCP ' + inp);
+  } catch (err) {
+    // logEvent(2,'Error writing to LCP socket ' + err.message);
+  }
 }
 
 function reportRgap() {
@@ -1414,23 +1395,26 @@ module.exports = {
     sliderBrightness = value;
 		// logEvent(1, "sb: " + sliderBrightness);
 
-    if (autodim !== 'true') {
-      if (value == 0) {
-				sp.write("SE,0\r");
-        pwm = 0;
-      } else {
-        // convert to an integer from 0 - 1023, parabolic scale.
-        // var pwm = value * 20;
-        var pwm = Math.pow(2, value * 10); // - 1;
-        pwm = Math.round(pwm);
-        if (pwm <= 0) pwm = 1; // must be at lease one
-        else if (pwm > 1023) pwm = 1023; // cannot be greater than 1023
+    if (value == 0) {
+      sp.write("SE,0\r");
+      pwm = 0;
+      lastPhotoOut = 0;
+    } else if (autodim !== 'true') {
+      // convert to an integer from 0 - 1023, parabolic scale.
+      // var pwm = value * 20;
+      var pwm = Math.pow(2, value * 10); // - 1;
+      pwm = Math.round(pwm);
+      if (pwm <= 0) pwm = 1; // must be at lease one
+      else if (pwm > 1023) pwm = 1023; // cannot be greater than 1023
 
-				if (useLED) sp.write("SE,1," + pwm +"\r");
-      }
+			if (useLED) sp.write("SE,1," + pwm +"\r");
+
   		logEvent(1, "brightness: " + value + " pwm: " + pwm);
       lastPhotoOut = pwm;
   	}
+
+    // send to socket
+    send_ball_data();
   },
 
   // set useLED

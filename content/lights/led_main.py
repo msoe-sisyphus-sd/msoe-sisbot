@@ -194,6 +194,8 @@ if __name__ == '__main__':
             strip.show()
 
         # load default python script
+        init = dynamic_import(start_pattern, "init")
+        init(theta * 57.2958 + led_offset, rho)
         update = dynamic_import(start_pattern, "update")
 
         #  Loop and get incoming data from plotter

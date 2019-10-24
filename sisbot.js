@@ -1496,7 +1496,7 @@ var sisbot = {
 	},
 	add_track: function(data, cb) {
 		var self = this;
-		logEvent(1, "Sisbot Add Track", data.id, data.name);
+		logEvent(1, "Sisbot Add Track", data.id, data.name, data.track_id);
 
 		// pull out coordinates
 		var verts = data.verts;
@@ -1507,7 +1507,7 @@ var sisbot = {
 		}
 		delete data.verts;
 
-		// save playlist
+		// save track
 		var new_track = new Track(data);
 		var new_verts = new_track.get_verts_from_data(verts); // so our first/last rho are forced correct
 
@@ -1540,9 +1540,14 @@ var sisbot = {
 			var generate_first = (self._thumbnail_queue.length <= 0);
 
 			// generate three sizes
-			self._thumbnail_queue.push({ id: data.id, dimensions: 400 });
-			self._thumbnail_queue.push({ id: data.id, dimensions: 100 });
-			self._thumbnail_queue.push({ id: data.id, dimensions: 50 });
+      var thumb_obj = { id: data.id, dimensions: 400 };
+      if (data.track_id) thumb_obj.track_id = data.track_id;
+      logEvent(0, "Thumb_obj", JSON.stringify(thumb_obj));
+			self._thumbnail_queue.push(JSON.parse(JSON.stringify(thumb_obj)));
+      thumb_obj.dimensions = 100;
+			self._thumbnail_queue.push(JSON.parse(JSON.stringify(thumb_obj)));
+      thumb_obj.dimensions = 50;
+			self._thumbnail_queue.push(JSON.parse(JSON.stringify(thumb_obj)));
 
 			// generate thumbnail now, if first (and only) in queue
 			if (generate_first) {
@@ -1597,56 +1602,56 @@ var sisbot = {
       });
   },
   remove_track: function(data, cb) {
-	if (data.type != 'track') {
-		if (cb) cb("Wrong data type", null);
-		return logEvent(2, "Remove Track sent wrong data type", data.type);
-	}
+  	if (data.type != 'track') {
+  		if (cb) cb("Wrong data type", null);
+  		return logEvent(2, "Remove Track sent wrong data type", data.type);
+  	}
 
-	var self = this;
-      logEvent(1, "Sisbot Remove Track", data);
+  	var self = this;
+    logEvent(1, "Sisbot Remove Track", data);
 
-      // remove from collection
-      this.collection.remove(data.id);
+    // remove from collection
+    this.collection.remove(data.id);
 
-      // remove from current_state
-      var all_tracks = this.current_state.get("track_ids");
-      var clean_tracks = [];
-      _.each(all_tracks, function(track_id) {
-          if (track_id != data.id) clean_tracks.push(track_id);
-      });
-      this.current_state.set("track_ids", clean_tracks);
+    // remove from current_state
+    var all_tracks = this.current_state.get("track_ids");
+    var clean_tracks = [];
+    _.each(all_tracks, function(track_id) {
+        if (track_id != data.id) clean_tracks.push(track_id);
+    });
+    this.current_state.set("track_ids", clean_tracks);
 
-  		// remove from playlists
-  		var playlists = this.current_state.get("playlist_ids");
-  		var return_objs = [];
-  		_.each(playlists, function(playlist_id) {
-  			var playlist = self.collection.get(playlist_id);
-  			var did_remove = false;
+		// remove from playlists
+		var playlists = this.current_state.get("playlist_ids");
+		var return_objs = [];
+		_.each(playlists, function(playlist_id) {
+			var playlist = self.collection.get(playlist_id);
+			var did_remove = false;
 
-  			var tracks = playlist.get("tracks");
-  	        var clean_tracks = [];
-  			// remove all instances of the track_id
-  			_.each(tracks, function(track_obj) {
-  				if (track_obj.id != data.id) clean_tracks.push(track_obj);
-  				else did_remove = true;
-  			});
+			var tracks = playlist.get("tracks");
+	        var clean_tracks = [];
+			// remove all instances of the track_id
+			_.each(tracks, function(track_obj) {
+				if (track_obj.id != data.id) clean_tracks.push(track_obj);
+				else did_remove = true;
+			});
 
-  			if (did_remove) {
-  		        playlist.set("tracks", clean_tracks);
+			if (did_remove) {
+		        playlist.set("tracks", clean_tracks);
 
-  				// fix the sorted order, or just reshuffle
-  				playlist.set_shuffle({ is_shuffle: playlist.get('is_shuffle') });
+				// fix the sorted order, or just reshuffle
+				playlist.set_shuffle({ is_shuffle: playlist.get('is_shuffle') });
 
-  				return_objs.push(playlist.toJSON());
-  			}
-  		});
+				return_objs.push(playlist.toJSON());
+			}
+		});
 
-  		// add sisbot_state
-  		return_objs.push(this.current_state.toJSON());
+		// add sisbot_state
+		return_objs.push(this.current_state.toJSON());
 
-      this.save(null, null);
+    this.save(null, null);
 
-      if (cb) cb(null, return_objs);
+    if (cb) cb(null, return_objs);
   },
   /*********************** GENERATE THUMBNAILS ******************************/
 	_regenerate_thumbnails: function(data, cb) {
@@ -1686,12 +1691,30 @@ var sisbot = {
 		}
 	},
   thumbnail_generate: function(data, cb) {
-		logEvent(1, "Thumbnail generate", data.id);
+		logEvent(0, "Thumbnail generate", JSON.stringify(data));
     // @id
     var self = this;
 		var coordinates = [];
 
-		if (data.id != 'preview') {
+		if (data.track_id) {
+      logEvent(0, "Download Webcenter Track image", data.track_id, data.id, data.dimensions);
+      self._download_track_image(data, function(err, resp) {
+        if (err) {
+          logEvent(2, "Thumbnail err", err);
+  				if (cb) cb(err, null);
+  			} else if (cb) cb(null, { id: data.id, dimensions: data.dimensions }); // don't send back verts
+
+        self._thumbnail_queue.shift(); // remove first in queue
+        if (self._thumbnail_queue.length > 0) {
+          logEvent(1, "Generate thumbnails left", self._thumbnail_queue.length);
+          // generate next thumbnail in _thumbnail_queue
+          self.thumbnail_generate(self._thumbnail_queue[0], null);
+        } else {
+          logEvent(1, "All thumbnails generated");
+        }
+      });
+      return;
+    } else if (data.id != 'preview') {
 			var track = this.collection.get(data.id);
 			coordinates = track.get_verts();
 		} else {
@@ -1729,6 +1752,50 @@ var sisbot = {
 			} else {
 				logEvent(1, "All thumbnails generated");
 			}
+    });
+  },
+  _download_track_image: function(data, cb) {
+    var self = this;
+
+    if (!data.track_id) cb('Download Track Image: No track_id given', null);
+    if (!data.id) cb('Download Track Image: No id given', null);
+    if (!data.dimensions) cb('Download Track Image: No dimensions given', null);
+
+    //
+    var dest = this.config.base_dir+'/'+this.config.folders.cloud+'/img/tracks/'+data.id+'_'+data.dimensions+'.png';
+    var url = self.config.api_endpoint+self.config.api_thumb_url+data.track_id+'/thumb_'+data.dimensions+'.png';
+
+    var file = fs.createWriteStream(dest);
+    var sendReq = request.get(url);
+
+    // verify response code
+    sendReq.on('response', function(response) {
+        if (response.statusCode !== 200) {
+          // add to cue, without track_id (generate locally)
+			    self._thumbnail_queue.push({ id: data.id, dimensions: data.dimensions });
+          return cb('Response status was ' + response.statusCode);
+        }
+        sendReq.pipe(file);
+
+        logEvent(0, "Send Req finished", data.id);
+    });
+
+    // close() is async, call cb after close completes
+    file.on('finish', function() {
+      file.close(cb);
+      logEvent(0, "File Close", data.id);
+    });
+
+    // check for request errors
+    sendReq.on('error', function(err) {
+      fs.unlink(dest);
+			self._thumbnail_queue.push({ id: data.id, dimensions: data.dimensions }); // add to cue, without track_id (generate locally)
+      return cb(err.message);
+    });
+    file.on('error', function(err) { // Handle errors
+        fs.unlink(dest); // Delete the file async. (But we don't check the result)
+  			self._thumbnail_queue.push({ id: data.id, dimensions: data.dimensions }); // add to cue, without track_id (generate locally)
+        return cb(err.message);
     });
   },
   _thumbnails_generate: function(data, cb) {
@@ -3068,17 +3135,17 @@ var sisbot = {
 		ping.on('result', function(err, ms) {
 		  logEvent(1, this._host+' responded.');
 			request.post(
-			    'http://'+address+'/sisbot/exists',
-			    { },
-			    function (error, response, body) {
-		        if (!error && response.statusCode == 200) {
-					logEvent(1, "Request Exists:", response, body);
-		            if (cb) cb(null, body);
-			        } else {
-						if (response) logEvent(2, "Request Not found:", response.statusCode);
-						if (cb) cb("Not found", null);
-					}
+		    'http://'+address+'/sisbot/exists',
+		    { },
+		    function (error, response, body) {
+	        if (!error && response.statusCode == 200) {
+				    logEvent(1, "Request Exists:", response, body);
+	          if (cb) cb(null, body);
+		      } else {
+		        if (response) logEvent(2, "Request Not found:", response.statusCode);
+		        if (cb) cb("Not found", null);
 			    }
+		    }
 			);
 		});
 		ping.send(); // or ping.start();

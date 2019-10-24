@@ -1,4 +1,8 @@
-# 2019-09-19 1.10.47
+# 2019-10-24 1.10.49
+  - Download track images from Webcenter, create on table if unable
+  - RGBW lights will change brightness when the table is paused (sleep or brightness slider)
+
+# 2019-09-19 1.10.43
   - Name in CSON files
   - CSON RGBW Offset
   - Homing offset after successful sensored home
