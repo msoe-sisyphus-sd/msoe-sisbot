@@ -893,6 +893,8 @@ function jog(axis, direction) {
 
 // Send ball data to lights socket
 function send_ball_data() {
+  if (!sp_lcp) return; // exit if not defined
+
   // send to socket
   try {
     var newR = ((rAccum - thAccum * rthAsp * nestedAxisSign) * rDirSign/ rSPInch)/plotRadius;
