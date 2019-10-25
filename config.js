@@ -1,5 +1,5 @@
 var fs				= require('fs');
-var _               = require('underscore');
+var _         = require('underscore');
 var uuid			= require('uuid');
 var default_status  = require('./default_status.js');
 var which_cson;
@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dummy') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.49', // RGBW brightness value correct while paused
+			version	: '1.10.49', // RGBW brightness value correct while paused
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

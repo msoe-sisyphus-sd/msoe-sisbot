@@ -1542,7 +1542,6 @@ var sisbot = {
 			// generate three sizes
       var thumb_obj = { id: data.id, dimensions: 400 };
       if (data.track_id) thumb_obj.track_id = data.track_id;
-      logEvent(0, "Thumb_obj", JSON.stringify(thumb_obj));
 			self._thumbnail_queue.push(JSON.parse(JSON.stringify(thumb_obj)));
       thumb_obj.dimensions = 100;
 			self._thumbnail_queue.push(JSON.parse(JSON.stringify(thumb_obj)));
@@ -1691,13 +1690,13 @@ var sisbot = {
 		}
 	},
   thumbnail_generate: function(data, cb) {
-		logEvent(0, "Thumbnail generate", JSON.stringify(data));
+		logEvent(1, "Thumbnail generate", JSON.stringify(data));
     // @id
     var self = this;
 		var coordinates = [];
 
 		if (data.track_id) {
-      logEvent(0, "Download Webcenter Track image", data.track_id, data.id, data.dimensions);
+      logEvent(1, "Download Webcenter Track image", data.track_id, data.id, data.dimensions);
       self._download_track_image(data, function(err, resp) {
         if (err) {
           logEvent(2, "Thumbnail err", err);
@@ -1777,13 +1776,13 @@ var sisbot = {
         }
         sendReq.pipe(file);
 
-        logEvent(0, "Send Req finished", data.id);
+        logEvent(1, "Send Req finished", data.id);
     });
 
     // close() is async, call cb after close completes
     file.on('finish', function() {
       file.close(cb);
-      logEvent(0, "File Close", data.id);
+      // logEvent(0, "File Close", data.id);
     });
 
     // check for request errors
