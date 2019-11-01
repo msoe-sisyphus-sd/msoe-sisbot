@@ -311,6 +311,7 @@ var sisbot = {
 		});
     if (this.isServo) this.current_state.set('is_servo', 'true');
 		this.current_state.set("local_ip", this._getIPAddress());
+		this.current_state.set("mac_address", this._getMacAddress());
 		if (this.current_state.get("local_ip") == "192.168.42.1") {
 			this.current_state.set("is_hotspot", "true");
 		} else {
@@ -509,6 +510,7 @@ var sisbot = {
         self._first_home = false; // first homing is complete
 				self.current_state.set({is_homed: "true", _end_rho: 0}); // reset
 
+        // !!! Check if is_sleeping
         if (newState == 'waiting' && self._autoplay && self.current_state.get('installing_updates') == "false") {
           // autoplay after first home
           logEvent(1, "Play next ",self.current_state.get('active_track').name, self.current_state.get('active_track').firstR, "Rho:", self.current_state.get('_end_rho'));
@@ -630,6 +632,25 @@ var sisbot = {
     ble_obj.update_ip_address(ip_address);
 
 	  return ip_address;
+	},
+	_getMacAddress() {
+	  var mac_address = '00:00:00:00:00:00';
+	  var interfaces = os.networkInterfaces();
+
+    logEvent(1, "Interfaces", interfaces);
+	  for (var devName in interfaces) {
+	    var iface = interfaces[devName];
+
+	    for (var i = 0; i < iface.length; i++) {
+	      var alias = iface[i];
+	      if (alias.family === 'IPv4' && alias.mac !== '00:00:00:00:00:00' && !alias.internal) {
+          logEvent(0, "Mac Address alias:", devName, alias);
+	        mac_address = alias.mac;
+        }
+	    }
+	  }
+
+	  return mac_address;
 	},
 	/***************************** Ansible connection ************************/
 	_register: function(self, service) {
@@ -2805,26 +2826,38 @@ var sisbot = {
 		if (cb) cb(null, this.current_state.toJSON());
 	},
 	sleep_sisbot: function(data, cb) {
+    var self = this;
 		logEvent(1, "Sleep Sisbot", this.current_state.get('is_sleeping'));
+
 		if (this.current_state.get('is_sleeping') == 'false') {
-			// fade lights out
-			this.current_state.set('_is_autodim', this.current_state.get('is_autodim')); // remember, so wake resets it
-			this.current_state.set('_brightness', this.current_state.get('brightness')); // remember, so wake resets it
-
-			if (this.current_state.get('is_nightlight') == 'true') {
-				this.set_autodim({value: 'false'}, null);
-				this.set_brightness({value: this.current_state.get('nightlight_brightness')}, null);
-			} else this.set_brightness({value: 0}, null);
-
-			// pause track
-			this.pause(null, null);
-
-			this.current_state.set('is_sleeping', 'true');
-
-			this.socket_update(this.current_state.toJSON());
-		}
-		if (cb) cb(null, this.current_state.toJSON());
+      if (this.current_state.get('state') == 'homing') {
+        // Delay sleep until homing finished
+        setTimeout(function() {
+          self.sleep_sisbot(data, cb);
+        }, 1000);
+      } else {
+        this._sleep_sisbot(data, cb);
+      }
+		} else if (cb) cb(null, this.current_state.toJSON());
 	},
+  _sleep_sisbot: function(data, cb) {
+    // fade lights out
+    this.current_state.set('_is_autodim', this.current_state.get('is_autodim')); // remember, so wake resets it
+    this.current_state.set('_brightness', this.current_state.get('brightness')); // remember, so wake resets it
+
+    if (this.current_state.get('is_nightlight') == 'true') {
+      this.set_autodim({value: 'false'}, null);
+      this.set_brightness({value: this.current_state.get('nightlight_brightness')}, null);
+    } else this.set_brightness({value: 0}, null);
+
+    // pause track
+    this.pause(null, null);
+
+    this.current_state.set('is_sleeping', 'true');
+
+    this.socket_update(this.current_state.toJSON());
+		if (cb) cb(null, this.current_state.toJSON());
+  },
 	/* --------------------- LOG FILES --------------------- */
   _schedule_clean_logs: function(data, cb) {
     var self = this;
