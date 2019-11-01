@@ -489,6 +489,7 @@ var sisbot = {
 					// move ball out and around a bit, and try again
 					logEvent(2, "Failed home!");
 					var track_obj = {
+            name: 'FAILED_HOME',
 						verts: [{th:0,r:0},{th:self.config.failed_home_th,r:self.config.failed_home_rho}],
 						vel: 1,
 						accel: 0.5,
@@ -1331,6 +1332,7 @@ var sisbot = {
     			logEvent(1, "rho dist away form home = " + rhoPosition + " normalized");
 
     			var track_obj = {
+            name: 'DEAD_RECKON',
 						verts: [{th: thetaPosition, r: rhoPosition},{th:0,r:0}],
 						vel: 1,
 						accel: 0.5,
@@ -1371,7 +1373,7 @@ var sisbot = {
       if (this._first_home && !this.isServo) skip_move_out_if_sensors_at_home = false; // force sensored on first homing, if not servo
 
       /////////////////////
-      if (thHome && rhoHome && skip_move_out_if_sensors_at_home) {
+      if (thHome && (rhoHome || this.isServo) && skip_move_out_if_sensors_at_home) {
         logEvent(1, "DEAD RECKONING Home Successful");
         this._sensored = false;
         this._home_next = false;
@@ -1403,6 +1405,7 @@ var sisbot = {
           this._moved_out = true; // call plotter.home() next time instead
           this._home_next = true; // home again after this outward movement
           var track_obj = {
+            name: 'DELAYED_DEAD_RECKON',
             verts: [{th:0,r:0}],
             vel: 1,
             accel: 0.5,
@@ -2042,6 +2045,7 @@ var sisbot = {
     // move to start rho
     if (move_to_rho !== false) {
       var track_obj = {
+        name: 'MOVE_TO_START',
         verts: [{th:0,r:plotter.getRhoPosition()},{th:self.config.auto_th,r:move_to_rho}],
         vel: 1,
         accel: 0.5,
@@ -2791,8 +2795,8 @@ var sisbot = {
 			this.set_autodim({value: this.current_state.get('_is_autodim')}, null);
 			this.set_brightness({value: this.current_state.get('_brightness')}, null); // reset to remembered value
 
-			// play track
-			this.play(null, null);
+			// play track (if not waiting between tracks)
+      if (this.current_state.get('is_waiting_between_tracks') == 'false') this.play(null, null);
 
 			this.current_state.set('is_sleeping', 'false');
 
