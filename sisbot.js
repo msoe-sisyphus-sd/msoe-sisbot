@@ -1230,7 +1230,7 @@ var sisbot = {
 
                 // call next in queue if available
                 if (self._save_queue.length > 0) {
-                  logEvent(1, "Save queue:", self._save_queue.length);
+                  // logEvent(1, "Save queue:", self._save_queue.length);
                   var next_save = self._save_queue.shift();
                   self.save(next_save.data, next_save.cb);
                 }
@@ -2073,6 +2073,7 @@ var sisbot = {
         thvmax: 0.5
       };
       self._paused = false;
+      logEvent(0, "Move to start", _.pluck(track_obj.verts, 'r'))
       self.plotter.playTrack(track_obj);
       self.current_state.set({_end_rho: move_to_rho, repeat_current: 'true'}); // pull from track_obj
       // self._move_to_rho = move_to_rho;
@@ -2276,6 +2277,8 @@ var sisbot = {
       //if (error) return console.error('exec error:',error);
 
       // logEvent(1, "LAN result", stdout, stderr, this._network_retries);
+      var old_network_connected = self.current_state.get('is_network_connected');
+      var old_local_ip = self.current_state.get('local_ip');
 
       var returnValue = "false";
       if (stdout.indexOf("default") > -1) returnValue = "true";
@@ -2295,7 +2298,8 @@ var sisbot = {
 
       // logEvent(1, "LAN IP", self._getIPAddress());
 
-      self.save(null, null);
+      // save if changed
+      if (old_network_connected != returnValue || old_local_ip != self.current_state.get('local_ip')) self.save(null, null);
 
       if (returnValue == "true") this._network_retries = 0;
 
@@ -2308,6 +2312,9 @@ var sisbot = {
 
 		exec('ping -c 1 -W 2 google.com', {timeout: 5000}, (error, stdout, stderr) => {
 			if (error) logEvent(1, 'ping exec error:', error);
+
+      var old_internet_connected = self.current_state.get('is_internet_connected');
+      var old_local_ip = self.current_state.get('local_ip');
 
 			var returnValue = "false";
 			if (stdout.indexOf("1 packets transmitted") > -1) returnValue = "true";
@@ -2325,7 +2332,8 @@ var sisbot = {
 				local_ip: self._getIPAddress()
 			});
 
-		  self.save(null, null);
+      // save if changed
+      if (old_internet_connected != returnValue || old_local_ip != self.current_state.get('local_ip')) self.save(null, null);
 
 			if (cb) cb(null, returnValue);
 		});
