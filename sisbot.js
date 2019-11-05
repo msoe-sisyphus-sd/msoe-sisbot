@@ -3332,8 +3332,11 @@ var _update_status = function() {
   fs.readFile(sisbot.config.base_dir+'/'+sisbot.config.folders.sisbot+'/update_status', 'utf8', function(err, data) {
     if (err) throw err;
     if (data) {
-      logEvent(0, "Software update status", data);
-      sisbot.current_state.set('update_status', data);
+      var old_status = sisbot.current_state.get('update_status');
+      if (old_status != data.trim()) {
+        logEvent(0, "Software update status", data.trim());
+        sisbot.current_state.set('update_status', data.trim());
+      }
     }
   });
 }
