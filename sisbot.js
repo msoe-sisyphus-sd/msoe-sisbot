@@ -301,6 +301,7 @@ var sisbot = {
 			reason_unavailable: "false",
 			is_serial_open: "false",
 			installing_updates: "false",
+      update_status: "false",
 			installing_updates_error: "",
 			factory_resetting: "false",
 			factory_resetting_error: "",
@@ -3330,7 +3331,10 @@ var _update_status = function() {
   logEvent(0, "update_status changed");
   fs.readFile(sisbot.config.base_dir+'/'+sisbot.config.folders.sisbot+'/update_status', 'utf8', function(err, data) {
     if (err) throw err;
-    if (data) logEvent(0, "Software update status", data);
+    if (data) {
+      logEvent(0, "Software update status", data);
+      sisbot.current_state.set('update_status', data);
+    }
   });
 }
 
