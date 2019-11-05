@@ -54,21 +54,33 @@ if [[ $NODE_V != "v8."* ]]; then
 else
   echo "$(node -v)"
 
+  # update_status
+  echo "clear_npm" > /home/pi/sisbot-server/sisbot/update_status
+
   # delete existing node_modules folders, so they get rebuilt fresh
   rm -rf /home/pi/sisbot-server/siscloud/node_modules
   rm -rf /home/pi/sisbot-server/sisbot/node_modules
   rm -rf /home/pi/sisbot-server/sisproxy/node_modules
+
+  # update_status
+  echo "npm_install" > /home/pi/sisbot-server/sisbot/update_status
 
   # run npm install
   cd /home/pi/sisbot-server/siscloud && npm install
   cd /home/pi/sisbot-server/sisbot && npm install
   cd /home/pi/sisbot-server/sisproxy && npm install
 
+  # update_status
+  echo "fix_ownership" > /home/pi/sisbot-server/sisbot/update_status
+
   # make sure pi user is owner of all files
   cd /home/pi/sisbot-server/
   sudo chown -R pi sisbot
   sudo chown -R pi siscloud
   sudo chown -R pi sisproxy
+
+  # update_status
+  echo "startup" > /home/pi/sisbot-server/sisbot/update_status
 
   # remove this step from startup
   cp /home/pi/sisbot-server/sisbot/rc.local /etc

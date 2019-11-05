@@ -12,11 +12,11 @@ save_backup () {
 }
 
 # make backup if master branch
-if [ -z "$1" ] && [ -z "$2" ] && [ -z "$3" ]; then
+#if [ -z "$1" ] && [ -z "$2" ] && [ -z "$3" ]; then
 	# save_backup
-elif [ "$1" = "master" ] && [ "$2" = "master" ] && [ "$3" = "master" ]; then
+#elif [ "$1" = "master" ] && [ "$2" = "master" ] && [ "$3" = "master" ]; then
 	# save_backup
-fi
+#fi
 
 # update_status
 echo "sisbot" > /home/pi/sisbot-server/sisbot/update_status
