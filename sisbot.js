@@ -580,9 +580,18 @@ var sisbot = {
 		// sleep/wake timers
     this.setup_timers(this.current_state.toJSON(), null);
 
+    // make sure update_status file exists, starts as 'false'
+    fs.writeFile(config.base_dir+'/'+config.folders.sisbot+'/update_status', 'false', function(err) {
+      if (err) return logEvent(2, "Software update_status file error", err);
+      fs.chmodSync(config.base_dir+'/'+config.folders.sisbot+'/update_status', 0o666);
+
+      // Software update status
+      fs.watch(self.config.base_dir+'/'+self.config.folders.sisbot+'/update_status', _update_status);
+    });
+
 		return this;
 	},
-	_setupAnsible() {
+	_setupAnsible: function() {
 		var self = this;
 		_.each(self.config.services.sisbot.connect, function(service_name) {
 			//logEvent(1, 'service_name', service_name);
@@ -604,7 +613,7 @@ var sisbot = {
 			}
 		});
 	},
-	_teardownAnsible() {
+	_teardownAnsible: function() {
 		var self = this;
 		_.each(self.config.services.sisbot.connect, function(service_name) {
 			logEvent(1, 'Disconnect', service_name);
@@ -613,7 +622,7 @@ var sisbot = {
 
 		logEvent(1, "Ansible teardown complete");
 	},
-	_getIPAddress() {
+	_getIPAddress: function() {
 	  var ip_address = '0.0.0.0';
 	  var interfaces = os.networkInterfaces();
 
@@ -633,7 +642,7 @@ var sisbot = {
 
 	  return ip_address;
 	},
-	_getMacAddress() {
+	_getMacAddress: function() {
 	  var mac_address = 'false';
 	  var interfaces = os.networkInterfaces();
 
@@ -3316,6 +3325,14 @@ var sisbot = {
 		}, 500);
 	}
 };
+
+var _update_status = function() {
+  logEvent(0, "update_status changed");
+  fs.readFile(sisbot.config.base_dir+'/'+sisbot.config.folders.sisbot+'/update_status', 'utf8', function(err, data) {
+    if (err) throw err;
+    if (data) logEvent(0, "Software update status", data);
+  });
+}
 
 var logEvent = function() {
 	// save to the log file for sisbot

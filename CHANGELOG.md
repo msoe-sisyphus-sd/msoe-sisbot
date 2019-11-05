@@ -1,10 +1,14 @@
-# 2019-11-01 1.10.50
+# 2019-11-01 1.10.51
   - Socket Ping Interval increased to help app not disconnect as often
   - Don't start track if paused between tracks on wake
   - Log files: Name unnamed tracks sent to plotter (i.e.: DEAD_RECKON)
   - Servo table should only care about theta sensor when DR homing is finished
   - Delay sleep until homing is finished (if homing during sleep command)
   - MAC address added to status
+  - Runtime tracks have been named for logging
+  - is_sleep_enabled fix for frontend
+  - no save if network status has not changed (reduces extra log entries)
+  - Software Update status
 
 # 2019-10-24 1.10.49
   - Download track images from Webcenter, create on table if unable

@@ -18,6 +18,9 @@ elif [ "$1" = "master" ] && [ "$2" = "master" ] && [ "$3" = "master" ]; then
 	# save_backup
 fi
 
+# update_status
+echo "sisbot" > /home/pi/sisbot-server/sisbot/update_status
+
 cd /home/pi/sisbot-server/sisbot
 git reset --hard
 if [ -n "$1" ]; then
@@ -25,6 +28,9 @@ if [ -n "$1" ]; then
 else
 	git pull origin master
 fi
+
+# update_status
+echo "siscloud" > /home/pi/sisbot-server/sisbot/update_status
 
 cd /home/pi/sisbot-server/siscloud
 git reset --hard
@@ -34,6 +40,9 @@ else
 	git pull origin master
 fi
 
+# update_status
+echo "sisproxy" > /home/pi/sisbot-server/sisbot/update_status
+
 cd /home/pi/sisbot-server/sisproxy
 git reset --hard
 if [ -n "$3" ]; then
@@ -42,10 +51,16 @@ else
 	git pull origin master
 fi
 
+# update_status
+echo "ownership" > /home/pi/sisbot-server/sisbot/update_status
+
 cd /home/pi/sisbot-server/
 sudo chown -R pi sisbot
 sudo chown -R pi siscloud
 sudo chown -R pi sisproxy
+
+# update_status
+echo "cleanup" > /home/pi/sisbot-server/sisbot/update_status
 
 if [ -n "$4" ]; then
 	sudo /home/pi/sisbot-server/sisbot/update_finish.sh "$4"

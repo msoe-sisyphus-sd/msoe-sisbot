@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dummy') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.50', // RGBW brightness value correct while paused
+			version	: '1.9.51', // Software Update Status
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

@@ -34,14 +34,23 @@ else
 	sudo /etc/init.d/ssh restart
 fi
 
+# update_status
+echo "timedate" > /home/pi/sisbot-server/sisbot/update_status
+
 # make sure ntp is enabled
 timedatectl set-ntp true
+
+# update_status
+echo "factory_reset" > /home/pi/sisbot-server/sisbot/update_status
 
 # fix factory reset issue
 cp /home/pi/sisbot-server/sisbot/factory_reset.sh /home/pi/sisbot-server/
 
 # make sure log file location existsSync
 mkdir -p /var/log/sisyphus
+
+# update_status
+echo "webcenter" > /home/pi/sisbot-server/sisbot/update_status
 
 # Change the git repos over to webcenter
 pushd /home/pi/sisbot-server/sisbot
@@ -56,13 +65,22 @@ pushd /home/pi/sisbot-server/sisproxy
 git remote set-url origin pi@webcenter.sisyphus-industries.com:/git/sisproxy.git
 popd
 
+# update_status
+echo "node" > /home/pi/sisbot-server/sisbot/update_status
+
 # make sure we are on node 8.x.x
 sudo /home/pi/sisbot-server/sisbot/node_update.sh > /var/log/sisyphus/node_update.log
+
+# update_status
+echo "python" > /home/pi/sisbot-server/sisbot/update_status
 
 # make sure python is installed
 sudo /home/pi/sisbot-server/sisbot/install_python.sh
 
 echo "Upgrade_Finish completed"
+
+# update_status
+echo "false" > /home/pi/sisbot-server/sisbot/update_status
 
 # 1.0-1.2 reboot necessity, to make sure bluetooth updates self
 if [ -z "$1" ]; then
