@@ -62,12 +62,12 @@ else
   rm -rf /home/pi/sisbot-server/sisbot/node_modules
   rm -rf /home/pi/sisbot-server/sisproxy/node_modules
 
-  # update_status
-  echo "npm_install" > /home/pi/sisbot-server/sisbot/update_status
-
   # run npm install
+  echo "siscloud_npm_install" > /home/pi/sisbot-server/sisbot/update_status
   cd /home/pi/sisbot-server/siscloud && npm install
+  echo "sisbot_npm_install" > /home/pi/sisbot-server/sisbot/update_status
   cd /home/pi/sisbot-server/sisbot && npm install
+  echo "sisproxy_npm_install" > /home/pi/sisbot-server/sisbot/update_status
   cd /home/pi/sisbot-server/sisproxy && npm install
 
   # update_status
