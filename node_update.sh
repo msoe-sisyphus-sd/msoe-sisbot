@@ -46,6 +46,11 @@ if [[ $NODE_V != "v8."* ]]; then
       # remove state file from proxy
       rm /home/pi/sisbot-server/sisproxy/state.json
 
+      # delete existing node_modules folders, so they get rebuilt fresh
+      rm -rf /home/pi/sisbot-server/siscloud/node_modules
+      rm -rf /home/pi/sisbot-server/sisbot/node_modules
+      rm -rf /home/pi/sisbot-server/sisproxy/node_modules
+
       # restart pi
       sleep 5
       reboot
@@ -54,33 +59,27 @@ if [[ $NODE_V != "v8."* ]]; then
 else
   echo "$(node -v)"
 
-  # update_status
-  echo "clear_npm" > /home/pi/sisbot-server/sisbot/update_status
-
   # delete existing node_modules folders, so they get rebuilt fresh
   rm -rf /home/pi/sisbot-server/siscloud/node_modules
   rm -rf /home/pi/sisbot-server/sisbot/node_modules
   rm -rf /home/pi/sisbot-server/sisproxy/node_modules
 
   # run npm install
-  echo "siscloud_npm_install" > /home/pi/sisbot-server/sisbot/update_status
+  echo "6" > /home/pi/sisbot-server/sisbot/update_status
   cd /home/pi/sisbot-server/siscloud && npm install
-  echo "sisbot_npm_install" > /home/pi/sisbot-server/sisbot/update_status
+  echo "7" > /home/pi/sisbot-server/sisbot/update_status
   cd /home/pi/sisbot-server/sisbot && npm install
-  echo "sisproxy_npm_install" > /home/pi/sisbot-server/sisbot/update_status
+  echo "8" > /home/pi/sisbot-server/sisbot/update_status
   cd /home/pi/sisbot-server/sisproxy && npm install
 
   # update_status
-  echo "fix_ownership" > /home/pi/sisbot-server/sisbot/update_status
+  echo "9" > /home/pi/sisbot-server/sisbot/update_status
 
   # make sure pi user is owner of all files
   cd /home/pi/sisbot-server/
   sudo chown -R pi sisbot
   sudo chown -R pi siscloud
   sudo chown -R pi sisproxy
-
-  # update_status
-  echo "startup" > /home/pi/sisbot-server/sisbot/update_status
 
   # remove this step from startup
   cp /home/pi/sisbot-server/sisbot/rc.local /etc
