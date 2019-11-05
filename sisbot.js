@@ -3336,6 +3336,8 @@ var _update_status = function() {
       if (old_status != data.trim()) {
         logEvent(0, "Software update status", data.trim());
         sisbot.current_state.set('update_status', data.trim());
+
+  			sisbot.socket_update(sisbot.current_state.toJSON()); // notify all connected UI
       }
     }
   });
