@@ -634,7 +634,7 @@ var sisbot = {
 	  return ip_address;
 	},
 	_getMacAddress() {
-	  var mac_address = '00:00:00:00:00:00';
+	  var mac_address = 'false';
 	  var interfaces = os.networkInterfaces();
 
     logEvent(1, "Interfaces", interfaces);
@@ -644,7 +644,7 @@ var sisbot = {
 	    for (var i = 0; i < iface.length; i++) {
 	      var alias = iface[i];
 	      if (alias.family === 'IPv4' && alias.mac !== '00:00:00:00:00:00' && !alias.internal) {
-          logEvent(0, "Mac Address alias:", devName, alias);
+          logEvent(0, "Mac Address alias:", devName, alias.mac);
 	        mac_address = alias.mac;
         }
 	    }
@@ -2786,7 +2786,7 @@ var sisbot = {
 		if (data.sleep_time != "false") {
 			var sleep = moment(data.sleep_time+' '+data.timezone_offset, 'H:mm A Z');
 			var cron = sleep.minute()+" "+sleep.hour()+" * * *";
-			logEvent(1, "Sleep", sleep.format('mm HH'), cron);
+			logEvent(0, "Sleep Timer", data.sleep_time, data.timezone_offset, cron);
 
 			self.sleep_timer = scheduler.scheduleJob(cron, function(){
 				self.sleep_sisbot(null, null);
@@ -2795,7 +2795,7 @@ var sisbot = {
 		if (data.wake_time != "false") {
 			var wake = moment(data.wake_time+' '+data.timezone_offset, 'H:mm A Z');
 			var cron = wake.minute()+" "+wake.hour()+" * * *";
-			logEvent(1, "Wake", wake.format('mm HH'), cron);
+			logEvent(0, "Wake Timer", data.wake_time, data.timezone_offset, cron);
 
 			self.wake_timer = scheduler.scheduleJob(cron, function(){
 				self.wake_sisbot(null, null);
@@ -2806,6 +2806,7 @@ var sisbot = {
 
 		// save to state
 		self.current_state.set({
+      is_sleep_enabled: data.is_sleep_enabled,
 			sleep_time: data.sleep_time,
 			wake_time: data.wake_time,
 			timezone_offset: data.timezone_offset,

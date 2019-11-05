@@ -13,9 +13,9 @@ save_backup () {
 
 # make backup if master branch
 if [ -z "$1" ] && [ -z "$2" ] && [ -z "$3" ]; then
-	save_backup
+	# save_backup
 elif [ "$1" = "master" ] && [ "$2" = "master" ] && [ "$3" = "master" ]; then
-	save_backup
+	# save_backup
 fi
 
 cd /home/pi/sisbot-server/sisbot
