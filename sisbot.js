@@ -3054,7 +3054,7 @@ var sisbot = {
 		exec('/home/pi/sisbot-server/sisbot/update.sh '+this.config.service_branches.sisbot+' '+this.config.service_branches.app+' '+this.config.service_branches.proxy+' false >> /var/log/sisyphus/'+moment().format('YYYYMMDD')+'_update.log', (error, stdout, stderr) => {
 			self.current_state.set({installing_updates: 'false'});
 		  if (error) {
-				return logEvent(plo2, 'exec error:',error);
+				return logEvent(2, 'exec error:',error);
 			}
 			logEvent(1, "Install complete");
 
