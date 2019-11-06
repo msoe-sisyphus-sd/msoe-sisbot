@@ -21,6 +21,14 @@ save_backup () {
 # update_status
 echo "1" > /home/pi/sisbot-server/sisbot/update_status
 
+# backup each of the package files
+cd /home/pi/sisbot-server/sisbot
+cp package.json package.json.bak
+cd /home/pi/sisbot-server/siscloud
+cp package.json package.json.bak
+cd /home/pi/sisbot-server/sisproxy
+cp package.json package.json.bak
+
 cd /home/pi/sisbot-server/sisbot
 git reset --hard
 if [ -n "$1" ]; then

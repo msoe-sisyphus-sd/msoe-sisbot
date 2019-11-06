@@ -70,9 +70,6 @@ sudo /home/pi/sisbot-server/sisbot/install_python.sh
 
 echo "Upgrade_Finish completed"
 
-# update_status
-echo "11" > /home/pi/sisbot-server/sisbot/update_status
-
 # 1.0-1.2 reboot necessity, to make sure bluetooth updates self
 if [ -z "$1" ]; then
 	sudo reboot

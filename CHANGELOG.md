@@ -9,6 +9,7 @@
   - is_sleep_enabled fix for frontend
   - no save if network status has not changed (reduces extra log entries)
   - Software Update status
+  - Download log file fix for files without dates
 
 # 2019-10-24 1.10.49
   - Download track images from Webcenter, create on table if unable

@@ -60,13 +60,8 @@ var app = function(given_config,ansible) {
 		var file_loc		= config.folders.logs + filename + '.log';
 
 		// if asking for today's proxy, and a datestamped copy doesn't exist
-		if (!fs.existsSync(filename)) {
-			var match = filename.match(/^([0-9]+)_([a-z]+)/);
-			if (match.length > 0 && match[2] == 'proxy' && moment().format('YYYYMMDD') == match[1]) {
-				filename = 'proxy';
-				file_loc		= config.folders.logs + filename + '.log';
-				logEvent(1, 'Proxy loc:', file_loc);
-			}
+		if (!fs.existsSync(file_loc)) {
+			logEvent(2, 'Download log file unavailable:', file_loc);
 		}
 
 		try {
