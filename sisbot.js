@@ -3317,7 +3317,7 @@ var sisbot = {
 		if (cb) cb(null, this.current_state.toJSON());
 
 		// disconnect all socket connections first
-		this.socket_update("disconnect");
+		this.socket_update("close");
 
 		setTimeout(function() {
 			exec('sudo reboot', (error, stdout, stderr) => {

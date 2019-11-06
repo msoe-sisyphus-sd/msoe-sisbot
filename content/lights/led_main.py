@@ -280,14 +280,13 @@ if __name__ == '__main__':
 
             # update, regardless of socket_data
             update(theta * 57.2958 + led_offset + default_offset, rho, photo, primary_color, secondary_color, strip)
-            # time.sleep(1.0/60.0) # sixty frames/sec
 
-            time_end = timer()
-            time_diff = time_end - time_start
-            if time_diff < 0.016667:
-                time.sleep(0.016667 - time_diff) # sixty frames/sec
-
-            time_start = time_end
+            # time_end = timer()
+            # time_diff = time_end - time_start
+            # if time_diff < 0.016667:
+            #     time.sleep(0.016667 - time_diff) # sixty frames/sec
+            #
+            # time_start = time_end
 
             old_photo = photo;
 

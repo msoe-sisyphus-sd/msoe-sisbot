@@ -134,13 +134,24 @@ var app = function(given_config,ansible) {
 	function socket_update(data) {
 		if (data != null) {
 			//logEvent(1, "socket_update()  data=", data);
-			_.each(sockets, function(socket, id) {
-				if (data == "disconnect") {
-					socket.disconnect(true);
-				} else {
-					socket.emit('set', data);
-				}
-			});
+			if (data == "close") {
+				// logEvent(0, "Close connected sockets", sockets.length);
+				// _.each(sockets, function(socket, id) {
+				// 	socket.disconnect(true);
+				// });
+				logEvent(0, "Close socket_server");
+				socket_server.close(function() {
+					logEvent(0, "Socket Server closed");
+				});
+			} else {
+				_.each(sockets, function(socket, id) {
+					if (data == "disconnect") {
+						socket.disconnect(true);
+					} else {
+						socket.emit('set', data);
+					}
+				});
+			}
 		}
 	}
 
@@ -155,10 +166,17 @@ var app = function(given_config,ansible) {
 				else line += "\t"+obj;
 			});
 
-			// console.log(line);
 			fs.appendFile(filename, line + '\n', function(err, resp) {
 			  if (err) console.log("Log err", err);
 			});
+
+			if (process.env.NODE_ENV != undefined) {
+	      if (process.env.NODE_ENV.indexOf('_dev') >= 0) {
+	        if (arguments[0] == 0 || arguments[0] == '0') line = '\x1b[32m'+line+'\x1b[0m'; // Green
+	        if (arguments[0] == 2 || arguments[0] == '2') line = '\x1b[31m'+line+'\x1b[0m'; // Red
+	    		console.log(line);
+	      }
+	    }
 		} else console.log(arguments);
 	}
 
@@ -189,7 +207,7 @@ var app = function(given_config,ansible) {
 
 		socket.on('disconnect', function(data) {
 			logEvent(0, "Socket disconnect: ", data);
-			delete sockets[data.id];
+			if (data && data.id) delete sockets[data.id];
 		});
 	});
 

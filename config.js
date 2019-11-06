@@ -63,7 +63,7 @@ var config = {
       ntp_wait: 5000, // five seconds
       sleep_init_wait: 10000, // ten seconds
 			default_data: default_status,
-			pingTimeout: 9000, // socket pingTimeout
+			pingTimeout: 7000, // socket pingTimeout
 			pingInterval: 1000, // socket pingInterval
 			max_thumbnail_points: 10000,
       log_days_to_keep: 7, // number of days to keep dated log files
