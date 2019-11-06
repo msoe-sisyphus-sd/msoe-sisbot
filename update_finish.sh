@@ -34,9 +34,6 @@ else
 	sudo /etc/init.d/ssh restart
 fi
 
-# update_status
-echo "5" > /home/pi/sisbot-server/sisbot/update_status
-
 # make sure ntp is enabled
 timedatectl set-ntp true
 
@@ -63,7 +60,7 @@ popd
 sudo /home/pi/sisbot-server/sisbot/node_update.sh > /var/log/sisyphus/node_update.log
 
 # update_status
-echo "10" > /home/pi/sisbot-server/sisbot/update_status
+echo "9" > /home/pi/sisbot-server/sisbot/update_status
 
 # make sure python is installed
 sudo /home/pi/sisbot-server/sisbot/install_python.sh

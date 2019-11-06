@@ -65,15 +65,15 @@ else
   rm -rf /home/pi/sisbot-server/sisproxy/node_modules
 
   # run npm install
-  echo "6" > /home/pi/sisbot-server/sisbot/update_status
+  echo "5" > /home/pi/sisbot-server/sisbot/update_status
   cd /home/pi/sisbot-server/siscloud && npm install
-  echo "7" > /home/pi/sisbot-server/sisbot/update_status
+  echo "6" > /home/pi/sisbot-server/sisbot/update_status
   cd /home/pi/sisbot-server/sisbot && npm install
-  echo "8" > /home/pi/sisbot-server/sisbot/update_status
+  echo "7" > /home/pi/sisbot-server/sisbot/update_status
   cd /home/pi/sisbot-server/sisproxy && npm install
 
   # update_status
-  echo "9" > /home/pi/sisbot-server/sisbot/update_status
+  echo "8" > /home/pi/sisbot-server/sisbot/update_status
 
   # make sure pi user is owner of all files
   cd /home/pi/sisbot-server/
