@@ -299,6 +299,7 @@ var sisbot = {
 			state: "waiting",
 			is_available: "true",
 			reason_unavailable: "false",
+      fault_status: "false",
 			is_serial_open: "false",
 			installing_updates: "false",
       update_status: "false",
@@ -397,23 +398,24 @@ var sisbot = {
     }
 
 		plotter.onServoThFault(function() {
-      if (self.current_state.get('reason_unavailable') != 'servo_th_fault') logEvent(2, "Servo Th Fault!");
+      if (self.current_state.get('fault_status') != 'servo_th_fault') logEvent(2, "Servo Th Fault!");
 			self.pause(null, null);
-			self.current_state.set("reason_unavailable", "servo_th_fault");
+			// self.current_state.set("reason_unavailable", "servo_th_fault").set("fault_status", "servo_th_fault");
+			self.current_state.set("fault_status", "servo_th_fault");
 			self.socket_update(self.current_state.toJSON()); // notify all connected UI
 			clearTimeout(self._network_check); // stop internet checks
 		});
 		plotter.onServoRhoFault(function() {
-      if (self.current_state.get('reason_unavailable') != 'servo_rho_fault') logEvent(2, "Servo Rho Fault!");
+      if (self.current_state.get('fault_status') != 'servo_rho_fault') logEvent(2, "Servo Rho Fault!");
 			self.pause(null, null);
-			self.current_state.set("reason_unavailable", "servo_rho_fault");
+			self.current_state.set("fault_status", "servo_rho_fault");
 			self.socket_update(self.current_state.toJSON()); // notify all connected UI
 			clearTimeout(self._network_check); // stop internet checks
 		});
 		plotter.onServoThRhoFault(function() {
-      if (self.current_state.get('reason_unavailable') != 'servo_th_rho_fault') logEvent(2, 'Servo Th and Rho Fault!');
+      if (self.current_state.get('fault_status') != 'servo_th_rho_fault') logEvent(2, 'Servo Th and Rho Fault!');
 			self.pause(null, null);
-			self.current_state.set("reason_unavailable", "servo_th_rho_fault");
+			self.current_state.set("fault_status", "servo_th_rho_fault");
 			self.socket_update(self.current_state.toJSON()); // notify all connected UI
 			clearTimeout(self._network_check); // stop internet checks
 		});
@@ -1043,7 +1045,7 @@ var sisbot = {
 		this.serial.write(command+'\r');
 	},
 	_validateConnection: function() {
-    if (this.current_state.get('reason_unavailable').indexOf('_fault') >= 0) {
+    if (this.current_state.get('fault_status') != 'false') {
 		  logEvent(2, 'Fault state, not a valid connection');
       return false;
     }
@@ -2367,9 +2369,9 @@ var sisbot = {
 						});
 
 						// leave current state alone if fault
-						if (self.current_state.get('reason_unavailable').indexOf('_fault') < 0) {
+						// if (self.current_state.get('fault_status') == 'false') {
 							self.current_state.set("reason_unavailable", "false");
-						}
+						// }
 
 						self._network_retries = 0; // successful network connection, reset
 
