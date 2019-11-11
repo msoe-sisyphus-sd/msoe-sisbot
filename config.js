@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dummy') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.52', // Servo fault_status instead of reason_unavailable
+			version	: '1.9.53', // Respect autoplay of CSON
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

@@ -187,6 +187,8 @@ var sisbot = {
     logEvent(1, "this.isServo: " + this.isServo);
     this.homeFirst = (typeof cson_config.homeFirst === 'undefined') ? true : cson_config.homeFirst;
     logEvent(1, "this.homeFirst: " + this.homeFirst);
+    this._autoplay = cson_config.autoplay;
+    logEvent(0, "CSON Autoplay", cson_config.autoplay);
 
     this.pause_play_lockout_msec = (typeof cson_config.pause_play_lockout_msec === 'undefined') ? 3000 : cson_config.pause_play_lockout_msec;
 
@@ -1004,8 +1006,8 @@ var sisbot = {
 				self.set_brightness({value:self.current_state.get("brightness")}, null);
 				self.set_speed({value:self.current_state.get("speed")}, null);
 
-				if (self.config.autoplay) {
-					logEvent(1, "Autoplay:", self.current_state.get("active_playlist_id"));
+				if (self._autoplay) {
+					logEvent(0, "Autoplay:", self.current_state.get("active_playlist_id"));
           var playlist_id = self.current_state.get("active_playlist_id");
           if (!playlist_id || playlist_id == 'false') playlist_id = self.current_state.get('default_playlist_id');
 
@@ -1026,7 +1028,10 @@ var sisbot = {
 							self.socket_update(resp);
 						});
 					}
-				}
+				} else {
+          logEvent(0, "Do not Autoplay, just home");
+          self.home();
+        }
 			});
     } catch(err) {
       console.error('Connect err', err);
