@@ -2287,11 +2287,15 @@ var sisbot = {
 	},
 	/* --------------- WIFI ---------------------*/
   _validate_network: function(data, cb) {
-		// logEvent(1, "Sisbot validate network");
+		logEvent(0, "Sisbot validate network");
     var self = this;
 
+    // optional other command: ip r
     exec('route | grep default', {timeout: 5000}, (error, stdout, stderr) => {
-      //if (error) return console.error('exec error:',error);
+      if (error) {
+        if (cb) cb(null, 'false');
+        return logEvent(2, '_validate_network error:',error);
+      }
 
       // logEvent(1, "LAN result", stdout, stderr, this._network_retries);
       var old_network_connected = self.current_state.get('is_network_connected');
@@ -2299,10 +2303,11 @@ var sisbot = {
 
       var returnValue = "false";
       if (stdout.indexOf("default") > -1) returnValue = "true";
+      else logEvent(2, '_validate_network: ', stdout);
       // logEvent(1, 'stdout:', stdout);
-      // logEvent(1, 'stderr:', stderr);
+      if (stderr) logEvent(2, '_validate_network stderr:', stderr);
 
-      if (self.current_state.get('is_network_connected') != returnValue) logEvent(1, "LAN Internet Connected Check", returnValue, self.current_state.get("local_ip"));
+      if (old_network_connected != returnValue) logEvent(1, "LAN Internet Connected Check", returnValue, self.current_state.get("local_ip"));
 
       // make sure connected to remote
       if (returnValue == "true" && self.current_state.get("share_log_files") == "true") self._setupAnsible();
@@ -2313,7 +2318,7 @@ var sisbot = {
         local_ip: self._getIPAddress()
       });
 
-      // logEvent(1, "LAN IP", self._getIPAddress());
+      if (process.env.NODE_ENV.indexOf('_dev') >= 0) logEvent(0, "LAN IP", self.current_state.get('local_ip'));
 
       // save if changed
       if (old_network_connected != returnValue || old_local_ip != self.current_state.get('local_ip')) self.save(null, null);
@@ -2553,7 +2558,7 @@ var sisbot = {
 			wifi_password: "false",
 			wifi_error: "false",
 			is_internet_connected: "false",
-      		is_network_connected: "false",
+  		is_network_connected: "false",
 			reason_unavailable: "disconnect_from_wifi"
 		});
 
@@ -2583,7 +2588,7 @@ var sisbot = {
 			reason_unavailable: "reset_to_hotspot",
 			is_hotspot: "true",
 			is_internet_connected: "false",
-      		is_network_connected: "false"
+  		is_network_connected: "false"
 		});
 
 		// forget bad network values (from cloud)

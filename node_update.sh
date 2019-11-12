@@ -59,6 +59,9 @@ if [[ $NODE_V != "v8."* ]]; then
 else
   echo "$(node -v)"
 
+  # TODO: check if package.json.bak exists, compare to package.json, if diff, reinstall
+  
+
   # delete existing node_modules folders, so they get rebuilt fresh
   rm -rf /home/pi/sisbot-server/siscloud/node_modules
   rm -rf /home/pi/sisbot-server/sisbot/node_modules

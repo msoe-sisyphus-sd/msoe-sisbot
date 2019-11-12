@@ -206,7 +206,7 @@ var app = function(given_config,ansible) {
 		}
 
 		socket.on('disconnect', function(data) {
-			logEvent(0, "Socket disconnect: ", data);
+			logEvent(1, "Socket disconnect: ", data);
 			if (data && data.id) delete sockets[data.id];
 		});
 	});
