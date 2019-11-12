@@ -60,20 +60,50 @@ else
   echo "$(node -v)"
 
   # TODO: check if package.json.bak exists, compare to package.json, if diff, reinstall
-  
-
-  # delete existing node_modules folders, so they get rebuilt fresh
-  rm -rf /home/pi/sisbot-server/siscloud/node_modules
-  rm -rf /home/pi/sisbot-server/sisbot/node_modules
-  rm -rf /home/pi/sisbot-server/sisproxy/node_modules
-
-  # run npm install
   echo "5" > /home/pi/sisbot-server/sisbot/update_status
-  cd /home/pi/sisbot-server/siscloud && npm install
+  if [ -f "/home/pi/sisbot-server/siscloud/package.json.bak" ]; then
+    if cmp -s /home/pi/sisbot-server/siscloud/package.json.bak /home/pi/sisbot-server/siscloud/package.json; then
+      echo 'The siscloud package file is the same\n'
+    else
+      echo 'The siscloud package file is different\n'
+      rm -rf /home/pi/sisbot-server/siscloud/node_modules
+      cd /home/pi/sisbot-server/siscloud && npm install
+    fi
+  else
+    echo 'The siscloud package backup is not there\n'
+    rm -rf /home/pi/sisbot-server/siscloud/node_modules
+    cd /home/pi/sisbot-server/siscloud && npm install
+  fi
+
   echo "6" > /home/pi/sisbot-server/sisbot/update_status
-  cd /home/pi/sisbot-server/sisbot && npm install
+  if [ -f "/home/pi/sisbot-server/sisbot/package.json.bak" ]; then
+    if cmp -s /home/pi/sisbot-server/sisbot/package.json.bak /home/pi/sisbot-server/sisbot/package.json; then
+      echo 'The sisbot package file is the same\n'
+    else
+      echo 'The sisbot package file is different\n'
+      rm -rf /home/pi/sisbot-server/sisbot/node_modules
+      cd /home/pi/sisbot-server/sisbot && npm install
+    fi
+  else
+    echo 'The sisbot package backup is not there\n'
+    rm -rf /home/pi/sisbot-server/sisbot/node_modules
+    cd /home/pi/sisbot-server/sisbot && npm install
+  fi
+
   echo "7" > /home/pi/sisbot-server/sisbot/update_status
-  cd /home/pi/sisbot-server/sisproxy && npm install
+  if [ -f "/home/pi/sisbot-server/sisproxy/package.json.bak" ]; then
+    if cmp -s /home/pi/sisbot-server/sisproxy/package.json.bak /home/pi/sisbot-server/sisproxy/package.json; then
+      echo 'The sisproxy package file is the same\n'
+    else
+      echo 'The sisproxy package file is different\n'
+      rm -rf /home/pi/sisbot-server/sisproxy/node_modules
+      cd /home/pi/sisbot-server/sisproxy && npm install
+    fi
+  else
+    echo 'The sisproxy package backup is not there\n'
+    rm -rf /home/pi/sisbot-server/sisproxy/node_modules
+    cd /home/pi/sisbot-server/sisproxy && npm install
+  fi
 
   # update_status
   echo "8" > /home/pi/sisbot-server/sisbot/update_status
