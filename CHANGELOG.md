@@ -1,4 +1,4 @@
-# 2019-11-01 1.10.53
+# 2019-11-01 1.10.54
   - Socket Ping Interval increased to help app not disconnect as often
   - Don't start track if paused between tracks on wake
   - Log files: Name unnamed tracks sent to plotter (i.e.: DEAD_RECKON)
@@ -12,6 +12,8 @@
   - Download log file fix for files without dates
   - Servo fault state uses fault_status instead of reason_unavailable, won't block UI
   - Respect autoplay value of CSON
+  - Additional validate_network debug logs
+  - Firmware update will skip NPM install if no changes to package.json
 
 # 2019-10-24 1.10.49
   - Download track images from Webcenter, create on table if unable

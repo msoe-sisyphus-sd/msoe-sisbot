@@ -188,7 +188,7 @@ var sisbot = {
     this.homeFirst = (typeof cson_config.homeFirst === 'undefined') ? true : cson_config.homeFirst;
     logEvent(1, "this.homeFirst: " + this.homeFirst);
     this._autoplay = cson_config.autoplay;
-    logEvent(0, "CSON Autoplay", cson_config.autoplay);
+    logEvent(1, "CSON Autoplay", cson_config.autoplay);
 
     this.pause_play_lockout_msec = (typeof cson_config.pause_play_lockout_msec === 'undefined') ? 3000 : cson_config.pause_play_lockout_msec;
 
@@ -658,7 +658,7 @@ var sisbot = {
 	    for (var i = 0; i < iface.length; i++) {
 	      var alias = iface[i];
 	      if (alias.family === 'IPv4' && alias.mac !== '00:00:00:00:00:00' && !alias.internal) {
-          logEvent(0, "Mac Address alias:", devName, alias.mac);
+          logEvent(1, "Mac Address alias:", devName, alias.mac);
 	        mac_address = alias.mac;
         }
 	    }
@@ -1007,7 +1007,7 @@ var sisbot = {
 				self.set_speed({value:self.current_state.get("speed")}, null);
 
 				if (self._autoplay) {
-					logEvent(0, "Autoplay:", self.current_state.get("active_playlist_id"));
+					logEvent(1, "Autoplay:", self.current_state.get("active_playlist_id"));
           var playlist_id = self.current_state.get("active_playlist_id");
           if (!playlist_id || playlist_id == 'false') playlist_id = self.current_state.get('default_playlist_id');
 
@@ -1029,7 +1029,7 @@ var sisbot = {
 						});
 					}
 				} else {
-          logEvent(0, "Do not Autoplay, just home");
+          logEvent(1, "Do not Autoplay, just home");
           self.home();
         }
 			});
@@ -2090,7 +2090,7 @@ var sisbot = {
         thvmax: 0.5
       };
       self._paused = false;
-      logEvent(0, "Move to start", _.pluck(track_obj.verts, 'r'))
+      logEvent(1, "Move to start", _.pluck(track_obj.verts, 'r'))
       self.plotter.playTrack(track_obj);
       self.current_state.set({_end_rho: move_to_rho, repeat_current: 'true'}); // pull from track_obj
       // self._move_to_rho = move_to_rho;
@@ -2287,7 +2287,7 @@ var sisbot = {
 	},
 	/* --------------- WIFI ---------------------*/
   _validate_network: function(data, cb) {
-		logEvent(0, "Sisbot validate network");
+		// logEvent(0, "Sisbot validate network");
     var self = this;
 
     // optional other command: ip r
@@ -2808,7 +2808,7 @@ var sisbot = {
 		if (data.sleep_time != "false") {
 			var sleep = moment(data.sleep_time+' '+data.timezone_offset, 'H:mm A Z');
 			var cron = sleep.minute()+" "+sleep.hour()+" * * *";
-			logEvent(0, "Sleep Timer", data.sleep_time, data.timezone_offset, cron);
+			logEvent(1, "Sleep Timer", data.sleep_time, data.timezone_offset, cron);
 
 			self.sleep_timer = scheduler.scheduleJob(cron, function(){
 				self.sleep_sisbot(null, null);
@@ -2817,7 +2817,7 @@ var sisbot = {
 		if (data.wake_time != "false") {
 			var wake = moment(data.wake_time+' '+data.timezone_offset, 'H:mm A Z');
 			var cron = wake.minute()+" "+wake.hour()+" * * *";
-			logEvent(0, "Wake Timer", data.wake_time, data.timezone_offset, cron);
+			logEvent(1, "Wake Timer", data.wake_time, data.timezone_offset, cron);
 
 			self.wake_timer = scheduler.scheduleJob(cron, function(){
 				self.wake_sisbot(null, null);
@@ -3340,13 +3340,13 @@ var sisbot = {
 };
 
 var _update_status = function() {
-  logEvent(0, "update_status changed");
+  // logEvent(1, "update_status changed");
   fs.readFile(sisbot.config.base_dir+'/'+sisbot.config.folders.sisbot+'/update_status', 'utf8', function(err, data) {
     if (err) throw err;
     if (data) {
       var old_status = sisbot.current_state.get('update_status');
       if (old_status != data.trim()) {
-        logEvent(0, "Software update status", data.trim());
+        logEvent(1, "Software update status", data.trim());
         sisbot.current_state.set('update_status', data.trim());
 
   			sisbot.socket_update(sisbot.current_state.toJSON()); // notify all connected UI

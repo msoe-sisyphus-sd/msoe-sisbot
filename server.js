@@ -139,9 +139,9 @@ var app = function(given_config,ansible) {
 				// _.each(sockets, function(socket, id) {
 				// 	socket.disconnect(true);
 				// });
-				logEvent(0, "Close socket_server");
+				// logEvent(0, "Close socket_server");
 				socket_server.close(function() {
-					logEvent(0, "Socket Server closed");
+					logEvent(1, "Socket Server closed");
 				});
 			} else {
 				_.each(sockets, function(socket, id) {
