@@ -3317,6 +3317,8 @@ var sisbot = {
       }, 2000);
 
       return;
+    } else if (this.current_state.get('state') == 'playing') {
+      this.pause();
     }
 
     this._reboot(data, cb);
@@ -3329,7 +3331,7 @@ var sisbot = {
 		if (cb) cb(null, this.current_state.toJSON());
 
 		// disconnect all socket connections first
-		this.socket_update("close");
+		this.socket_update("disconnect"); // close
 
 		setTimeout(function() {
 			exec('sudo reboot', (error, stdout, stderr) => {
