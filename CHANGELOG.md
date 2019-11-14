@@ -14,6 +14,7 @@
   - Respect autoplay value of CSON
   - Additional validate_network debug logs
   - Firmware update will skip NPM install if no changes to package.json
+  - Playlist initialization bugfix
 
 # 2019-10-24 1.10.49
   - Download track images from Webcenter, create on table if unable

@@ -29,7 +29,7 @@ var playlist = Backbone.Model.extend({
 			this.set("sorted_tracks", sorted_tracks);
 			this.set("next_tracks", sorted_tracks);
 
-			this.reset_tracks();
+			// this.reset_tracks(); // 11/14/19: removed as the collection may not be available yet
 		}
 	},
 	reset_tracks: function() { // get unchanged values from collection
