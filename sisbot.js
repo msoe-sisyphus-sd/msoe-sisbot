@@ -3325,15 +3325,17 @@ var sisbot = {
   },
   _reboot: function(data,cb) {
 		logEvent(1, "Sisbot Reboot", data);
+    var self = this;
+
 		this.current_state.set({is_available: "false", reason_unavailable: "rebooting"});
 		this.socket_update(this.current_state.toJSON());
 
 		if (cb) cb(null, this.current_state.toJSON());
 
-		// disconnect all socket connections first
-		this.socket_update("disconnect"); // close
-
 		setTimeout(function() {
+  		// disconnect all socket connections first
+  		self.socket_update("disconnect"); // close
+
 			exec('sudo reboot', (error, stdout, stderr) => {
 			  if (error) return logEvent(2, 'exec error:',error);
 			});
