@@ -2559,7 +2559,7 @@ var sisbot = {
 			wifi_error: "false",
 			is_internet_connected: "false",
   		is_network_connected: "false",
-			reason_unavailable: "disconnect_from_wifi"
+			reason_unavailable: "disconnect_from_wifi" // TODO: is this necessary? Could just be "reset_to_hotspot", UI shows same for both
 		});
 
 		// make sure we don't throw an error, we wanted to disconnect
