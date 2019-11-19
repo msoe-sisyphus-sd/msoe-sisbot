@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dummy') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.54', // Firmware update will skip npm install if no changes
+			version	: '1.10.54', // Firmware update will skip npm install if no changes
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

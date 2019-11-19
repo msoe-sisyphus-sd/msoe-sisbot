@@ -59,7 +59,7 @@ if [[ $NODE_V != "v8."* ]]; then
 else
   echo "$(node -v)"
 
-  # TODO: check if package.json.bak exists, compare to package.json, if diff, reinstall
+  # check if package.json.bak exists, compare to package.json, if diff, reinstall
   echo "5" > /home/pi/sisbot-server/sisbot/update_status
   if [ -f "/home/pi/sisbot-server/siscloud/package.json.bak" ]; then
     if cmp -s /home/pi/sisbot-server/siscloud/package.json.bak /home/pi/sisbot-server/siscloud/package.json; then
