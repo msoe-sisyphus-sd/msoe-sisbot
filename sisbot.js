@@ -2307,7 +2307,7 @@ var sisbot = {
       // logEvent(1, 'stdout:', stdout);
       if (stderr) logEvent(2, '_validate_network stderr:', stderr);
 
-      if (old_network_connected != returnValue) logEvent(1, "LAN Internet Connected Check", returnValue, self.current_state.get("local_ip"));
+      if (old_network_connected != returnValue || returnValue == 'false') logEvent(1, "LAN Internet Connected Check", returnValue, self.current_state.get("local_ip"));
 
       // make sure connected to remote
       if (returnValue == "true" && self.current_state.get("share_log_files") == "true") self._setupAnsible();
