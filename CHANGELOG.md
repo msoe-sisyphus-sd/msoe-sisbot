@@ -1,3 +1,7 @@
+# 2019-12-02 1.10.55
+  - Fix playlist_add errors
+  - Skip copy/date log files if empty
+
 # 2019-11-01 1.10.54
   - Socket Ping Interval increased to help app not disconnect as often
   - Don't start track if paused between tracks on wake

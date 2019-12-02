@@ -19,6 +19,7 @@ var playlist = Backbone.Model.extend({
 	},
 	collection: null,
 	initialize: function() {
+		// console.log("Playlist: init");
 		// build sorted_tracks if empty
 		if (this.get("sorted_tracks").length == 0) {
 			var sorted_tracks = [];
@@ -33,6 +34,7 @@ var playlist = Backbone.Model.extend({
 		}
 	},
 	reset_tracks: function() { // get unchanged values from collection
+		// console.log("Playlist: reset_tracks");
 		var self = this;
 
 		var current_track = this.get_current_track();
@@ -41,15 +43,19 @@ var playlist = Backbone.Model.extend({
 
 		_.each(this.get('tracks'), function(obj, index) {
 			var track_model = self.collection.get(obj.id);
-			obj.name = track_model.get('name');
-			obj._index = index;
-			if (obj._index == retain_obj._index) {
-				// console.log("Don't change "+index+", "+obj._index+" r"+obj.firstR+""+obj.lastR);
-				// console.log("Retained "+index+", "+retain_obj._index+" r"+retain_obj.firstR+""+retain_obj.lastR);
+			if (!track_model) {
+				console.log("Playlist: reset_tracks, No track found", obj.id);
 			} else {
-				obj.firstR = track_model.get('firstR');
-				obj.lastR = track_model.get('lastR');
-				obj.reversed = "false";
+				obj.name = track_model.get('name');
+				obj._index = index;
+				if (obj._index == retain_obj._index) {
+					// console.log("Don't change "+index+", "+obj._index+" r"+obj.firstR+""+obj.lastR);
+					// console.log("Retained "+index+", "+retain_obj._index+" r"+retain_obj.firstR+""+retain_obj.lastR);
+				} else {
+					obj.firstR = track_model.get('firstR');
+					obj.lastR = track_model.get('lastR');
+					obj.reversed = "false";
+				}
 			}
 		});
 	},
@@ -62,7 +68,7 @@ var playlist = Backbone.Model.extend({
 		return track_obj;
 	},
 	get_next_track_id: function(data) {
-		// console.log("Get Next Track ID", data);
+		// console.log("Playlist: Get Next Track ID", data);
 		var return_value = "false";
 		var track_index = this.get("active_track_index");
 		var sorted_tracks = this.get("sorted_tracks");
@@ -111,13 +117,18 @@ var playlist = Backbone.Model.extend({
 		return return_value;
 	},
 	get_current_track: function() {
+		// console.log("Playlist: get_current_track");
 		var track_index = this.get("active_track_index");
 		if (!_.isNumber(track_index)) track_index = -1;
 		if (track_index < 0) return { id: "false", _index: -1 };
 
-		return this.get("tracks")[this.get("sorted_tracks")[track_index]];
+		var tracks = this.get('tracks');
+		if (tracks.length <= track_index) return { id: "false", _index: -1 };
+
+		return tracks[this.get("sorted_tracks")[track_index]];
 	},
 	get_next_track: function(data) { // increments the active_track_index and returns the id
+		// console.log("Playlist: get_next_track");
 		var track_id = this.get_next_track_id(data);
 		if (track_id != "false") return this.get("tracks")[this.get("sorted_tracks")[this.get("active_track_index")]];
 
@@ -125,10 +136,8 @@ var playlist = Backbone.Model.extend({
 		return { id: "false" };
 	},
 	set_shuffle: function(data) {
-		// console.log("Set Shuffle:", data);
+		// console.log("Playlist: Set Shuffle:", data);
 		var current_track = JSON.parse(JSON.stringify(this.get_current_track()));
-		//console.log("Current Track Before", current_track);
-		// console.log("Playlist set shuffle", data);
 
 		var start_rho = -1;
 		if (_.isObject(data) && data.start_rho >= 0) start_rho = data.start_rho;
@@ -138,7 +147,6 @@ var playlist = Backbone.Model.extend({
 		this.set("is_shuffle", is_shuffle); // set to "true" or "false"
 
 		if (is_shuffle == "true" && this.get('tracks').length > 0) {
-			// console.log("Randomize Current");
 			var sorted_tracks = this._randomize({
 				start_index: current_track._index,
 				start_rho: start_rho
@@ -175,6 +183,7 @@ var playlist = Backbone.Model.extend({
 		}
 
 		var after_track = JSON.parse(JSON.stringify(this.get_current_track()));
+		// console.log("Playlist: set_shuffle after_track", after_track);
 		if (current_track.id != "false" && (current_track.firstR != after_track.firstR || current_track.lastR != after_track.lastR)) {
 			console.log("ERROR!!!", current_track, after_track);
 		}
@@ -184,7 +193,7 @@ var playlist = Backbone.Model.extend({
 	},
 	_randomize: function(data) {
 		var self = this;
-		// console.log("Randomize Playlist", data);
+		// console.log("Playlist: Randomize", data);
 
 		// insert random value to end (if it verifies),
 		// else next, or if end and doesn't fit either, start over
@@ -330,7 +339,7 @@ var playlist = Backbone.Model.extend({
 		return final_order;
 	},
 	_update_tracks: function(data) { // fix reversed state for non-randomized list
-		// console.log("Update tracks", data);
+		// console.log("Playlist: Update tracks", data);
 		var self		= this;
 		var sorted_list = this.get('sorted_tracks');
 		if (sorted_list.length < 1) return false;
@@ -354,16 +363,24 @@ var playlist = Backbone.Model.extend({
 		// console.log("Playlist: _update_tracks", start_rho, "current_index", retain_obj._index, sorted_list);
 
 		var tracks = this.get('tracks');
+		// reset the indexing
+		_.each(tracks, function(track, index) {
+			track._index = index;
+		});
 
-		// if (this.get("is_shuffle") == "false") {
-			var track0 = tracks[sorted_list[0]];
-			if (track0._index != retain_obj._index && track0.firstR != start_rho) {
-				if (track0.lastR != track0.firstR) { // reversible
-					// console.log("Reverse First Track", track0);
-					this._reverseTrack(track0);
+		try {
+			if (tracks.length > 0) {
+				var track0 = tracks[sorted_list[0]];
+				if (track0._index != retain_obj._index && track0.firstR != start_rho) {
+					if (track0.lastR != track0.firstR) { // reversible
+						// console.log("Reverse First Track", track0);
+						this._reverseTrack(track0);
+					}
 				}
 			}
-		// }
+		} catch(err) {
+			console.log("Tracks err:", err);
+		}
 
 		for(var i=0; i<sorted_list.length-1; i++) {
 			var track0 = tracks[sorted_list[i]];

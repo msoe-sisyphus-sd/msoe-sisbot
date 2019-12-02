@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dummy') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.54', // Firmware update will skip npm install if no changes
+			version	: '1.9.55', // Playlist bugfixes, log files don't date if empty
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -86,6 +86,9 @@ var config = {
 		stopped: { // set NODE_ENV=sisbot_stopped to make it start without autoplaying
 			autoplay: false,
 		},
+    wc: {
+      api_endpoint : 'http://192.168.86.20',
+    },
 		testing: {
 			testing: true,
 		},

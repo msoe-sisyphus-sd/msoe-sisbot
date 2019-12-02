@@ -129,6 +129,7 @@ var sisbot = {
 	_detach_first: false, // for tables with multiple balls, after first home
 	_move_to_rho: 0,
 	_saving: false,
+  _thumbnail_playing: false, // was the table playing prior to generating thumbnail?
 
   _save_queue: [],
 	_thumbnail_queue: [],
@@ -150,6 +151,9 @@ var sisbot = {
 		logEvent(1, "Init Sisbot");
 
 		this.socket_update = socket_update;
+
+    // clean log files if in dev mode
+    // if (process.env.NODE_ENV.indexOf('_dev') >= 0) this.clean_log_files(null, null);
 
 		if (this.config.autoplay) this._autoplay = this.config.autoplay;
 
@@ -1472,6 +1476,7 @@ var sisbot = {
 		var playlist = this.collection.add(new_playlist, {merge: true});
 		playlist.collection = this.collection;
 		playlist.config = this.config;
+    playlist.reset_tracks(); // fix missing _index
 		playlist.set_shuffle({ is_shuffle: playlist.get('is_shuffle') }); // update sorted list, tracks objects
 
 		// add to current_state
@@ -1486,31 +1491,7 @@ var sisbot = {
 		if (cb) cb(null, [playlist.toJSON(), this.current_state.toJSON()]); // send back current_state and the playlist
 
 		// tell all connected devices
-		self.socket_update([playlist.toJSON(), this.current_state.toJSON()]);
-	},
-	add_playlist: function(data, cb) {
-		logEvent(1, "Sisbot Add Playlist", data);
-
-		// save playlist
-		var new_playlist = new Playlist(data);
-		var playlist = this.collection.add(new_playlist, {merge: true});
-		playlist.collection = this.collection;
-		playlist.config = this.config;
-		playlist.set_shuffle({ is_shuffle: playlist.get('is_shuffle') }); // update sorted list, tracks objects
-
-		// add to current_state
-		var playlists = this.current_state.get("playlist_ids");
-		if (playlists.indexOf(playlist.get("id")) < 0) {
-			playlists.push(playlist.get("id"));
-			this.current_state.set("playlist_ids", playlists);
-		}
-
-		this.save(null, null);
-
-		if (cb) cb(null, [playlist.toJSON(), this.current_state.toJSON()]); // send back current_state and the playlist
-
-		// tell all connected devices
-		self.socket_update([playlist.toJSON(), this.current_state.toJSON()]);
+		this.socket_update([playlist.toJSON(), this.current_state.toJSON()]);
 	},
 	remove_playlist: function(data, cb) {
 		if (data.type != 'playlist') {
@@ -1619,7 +1600,7 @@ var sisbot = {
         }
       });
 
-      // TODO: load the files, pull out the name
+      // load the files, pull out the name
       var return_value = [];
       _.each(cson_files, function(file) {
         var cson_config = CSON.load(self.config.base_dir+'/'+self.config.folders.sisbot+'/'+self.config.folders.config+'/'+file);
@@ -1713,6 +1694,11 @@ var sisbot = {
 
     var self = this;
 
+    // pause table if playing
+    if (!this._paused) this._thumbnail_playing = true;
+    else this._thumbnail_playing = false;
+    this.pause();
+
 		// add to front of queue
 		if (self._thumbnail_queue.length == 0) self._thumbnail_queue.push(data);
 		else {
@@ -1791,6 +1777,8 @@ var sisbot = {
 				self.thumbnail_generate(self._thumbnail_queue[0], null);
 			} else {
 				logEvent(1, "All thumbnails generated");
+        if (self._thumbnail_playing) self.play();
+        self._thumbnail_playing = false; // force back to false
 			}
     });
   },
@@ -1884,8 +1872,8 @@ var sisbot = {
     logEvent(1, '#### MAKE WEBSHOT', thumbs_file, base_url);
 
     webshot(html, thumbs_file, opts, function(err) {
-    logEvent(1, '#### WEBSHOT FINISHED', thumbs_file, err);
-		if (data.cb) data.cb(err, { 'id':data.id });
+      logEvent(1, '#### WEBSHOT FINISHED', thumbs_file, err);
+  		if (data.cb) data.cb(err, { 'id':data.id });
       if (cb) cb(err, null);
     });
   },
@@ -2959,16 +2947,24 @@ var sisbot = {
             });
           } else logEvent(1, "Dated File:", file);
         } else {
-          // move files to dated, previous files
-          exec('cat '+self.config.folders.logs+file+' >> '+self.config.folders.logs+yesterday.format('YYYYMMDD')+'_'+file,(error, stdout, stderr) => {
-    			  if (error) return logEvent(2, 'exec error:',error);
+          // Make sure file is not empty
+          var stats = fs.statSync(self.config.folders.logs+file);
+          var fileSizeInBytes = stats["size"];
 
-            // truncate the existing
-            fs.truncate(self.config.folders.logs+file, function(err) {
-              if (err) logEvent(2, "Log Delete Err", file, err);
-              logEvent(2, "Moved, shortened non-dated file:", file);
-            });
-    			});
+          if (fileSizeInBytes > 0) {
+            // move files to dated, previous files
+            exec('cat '+self.config.folders.logs+file+' >> '+self.config.folders.logs+yesterday.format('YYYYMMDD')+'_'+file,(error, stdout, stderr) => {
+      			  if (error) return logEvent(2, 'exec error:',error);
+
+              // truncate the existing
+              fs.truncate(self.config.folders.logs+file, function(err) {
+                if (err) logEvent(2, "Log Delete Err", file, err);
+                logEvent(2, "Moved, shortened non-dated file:", file);
+              });
+      			});
+          } else {
+            logEvent(1, file+" is empty, skip copy");
+          }
         }
       });
 
@@ -3241,7 +3237,6 @@ var sisbot = {
     this._factory_reset(data, cb);
 
   },
-
 	_factory_reset: function(data, cb) {
 		logEvent(1, "Sisbot Factory Reset", data);
 		this.current_state.set({is_available: "false", reason_unavailable: "resetting"});
