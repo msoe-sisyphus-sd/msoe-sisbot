@@ -1810,18 +1810,18 @@ var sisbot = {
 
     // close() is async, call cb after close completes
     file.on('finish', function() {
-      file.close(cb);
+      file.close(cb, function(err) { if (err) logEvent(2, "File close err:", err); });
       // logEvent(0, "File Close", data.id);
     });
 
     // check for request errors
     sendReq.on('error', function(err) {
-      fs.unlink(dest);
+      fs.unlink(dest, function(err) { if (err) logEvent(2, "File unlink err:", err); });
 			self._thumbnail_queue.push({ id: data.id, dimensions: data.dimensions }); // add to cue, without track_id (generate locally)
       return cb(err.message);
     });
     file.on('error', function(err) { // Handle errors
-        fs.unlink(dest); // Delete the file async. (But we don't check the result)
+        fs.unlink(dest, function(err) { if (err) logEvent(2, "File unlink err:", err); }); // Delete the file async. (But we don't check the result)
   			self._thumbnail_queue.push({ id: data.id, dimensions: data.dimensions }); // add to cue, without track_id (generate locally)
         return cb(err.message);
     });

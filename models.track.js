@@ -108,7 +108,8 @@ var track = Backbone.Model.extend({
 				if (this.get('firstR') == this.get('lastR')) {
 					this.set('reversible', 'false');
 				} else {
-					this.set('reversible', 'true');
+					console.log("Skip track reversible", this.id, this.get('reversible'));
+					// this.set('reversible', 'true');
 				}
 			} else {
 				console.log("No verts found!", this.get('id'), this.get('name'));

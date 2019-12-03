@@ -46,8 +46,10 @@ var playlist = Backbone.Model.extend({
 			if (!track_model) {
 				console.log("Playlist: reset_tracks, No track found", obj.id);
 			} else {
+				if (index == 0) console.log("Playlist: reset_tracks, ", self.get('start_rho'), obj._index, retain_obj._index);
 				obj.name = track_model.get('name');
 				obj._index = index;
+				obj.reversible = track_model.get('reversible').toString(); // make sure string
 				if (obj._index == retain_obj._index) {
 					// console.log("Don't change "+index+", "+obj._index+" r"+obj.firstR+""+obj.lastR);
 					// console.log("Retained "+index+", "+retain_obj._index+" r"+retain_obj.firstR+""+retain_obj.lastR);
@@ -153,7 +155,6 @@ var playlist = Backbone.Model.extend({
 			});
 			this.set({ sorted_tracks: sorted_tracks, active_track_index: 0 });
 
-			// console.log("Randomize Next");
 			var next_tracks = this._randomize({
 				start_index: sorted_tracks[sorted_tracks.length-1]
 			});
@@ -208,9 +209,8 @@ var playlist = Backbone.Model.extend({
 
 		_.each(remaining_tracks, function(track, index) {
 			track._index = index;
-			if (track.firstR != track.lastR) track.reversible = "true";
+			// if (track.firstR != track.lastR) track.reversible = "true";
 		}); // */
-		//console.log("Remaining Tracks", remaining_tracks.length);
 
 		if (active_index >= 0 && active_index < remaining_tracks.length) {
 			// var current_track = this.get_current_track();
@@ -225,6 +225,8 @@ var playlist = Backbone.Model.extend({
 			// }
 		}
 
+		// console.log("Remaining Tracks", remaining_tracks.length);
+
 		while (remaining_tracks.length > 0) {
 			//console.log("Remaining Tracks", remaining_tracks.length);
 			var rand = Math.floor(Math.random()*remaining_tracks.length);
@@ -238,23 +240,23 @@ var playlist = Backbone.Model.extend({
 
 				// add to end
 				if (last_track.id == track_obj.id) {
-					//console.log("Skip same track", last_track);
+					// console.log("Skip same track", last_track);
 				} else if (last_track.lastR == track_obj.firstR) {
-					//console.log("Track success L/F", last_track._index, last_track.lastR, track_obj._index, track_obj.firstR);
+					// console.log("Track success L/F", last_track._index, last_track.lastR, track_obj._index, track_obj.firstR);
 					randomized_tracks.push(track_obj);
 					success = true;
 				} else if (last_track.lastR == track_obj.lastR && track_obj.reversible != undefined && track_obj.reversible == "true") {
 					var reversed_track = self._reverseTrack(track_obj);
-					//console.log("Track success Rev", last_track._index, last_track.lastR, reversed_track._index, reversed_track.firstR);
+					// console.log("Track success Rev", last_track._index, last_track.lastR, reversed_track._index, reversed_track.firstR);
 					randomized_tracks.push(reversed_track);
 					success = true;
 				} else {
-					//console.log("Track unable to fit", last_track._index, last_track.lastR, track_obj);
+					// console.log("Track unable to fit", last_track._index, last_track.lastR, track_obj);
 				}
 				// if (success) console.log("Track comparison", last_track.lastR, track_obj.firstR);
 			} else { // first track
 				// force first rho value if passed
-				// console.log(data.start_rho, "First: r"+track_obj.firstR+track_obj.lastR);
+				console.log(data.start_rho, "First: r"+track_obj.firstR+track_obj.lastR);
 				if (data.start_rho >= 0) {
 					if (track_obj.firstR == data.start_rho) {
 						// console.log("Start with", track_obj);
@@ -281,13 +283,13 @@ var playlist = Backbone.Model.extend({
 				if (randomized_tracks.length <= 0 && data.start_rho >= 0) {
 					// console.log("Can we find one beginning with "+data.start_rho);
 					_.each(remaining_tracks, function(track_obj) {
-						if (data.start_rho == track_obj.firstR || data.start_rho == track_obj.lastR) {
+						if ((data.start_rho == track_obj.firstR || data.start_rho == track_obj.lastR) && track_obj.reversible == 'true') {
 							no_win = false;
 						}
 					});
 				} else {
 					_.each(remaining_tracks, function(track_obj) {
-						if ((last_track.lastR == track_obj.firstR || last_track.lastR == track_obj.lastR) && last_track.id != track_obj.id) {
+						if ((last_track.lastR == track_obj.firstR || last_track.lastR == track_obj.lastR) && track_obj.reversible == 'true' && last_track.id != track_obj.id) {
 							no_win = false;
 						}
 					});
@@ -315,7 +317,7 @@ var playlist = Backbone.Model.extend({
 
 						_.each(remaining_tracks, function(track, index) {
 							track._index = index;
-							if (track.firstR != track.lastR) track.reversible = "true";
+							// if (track.firstR != track.lastR) track.reversible = "true";
 						});
 
 						if (active_index >= 0 && active_index < remaining_tracks.length) {
@@ -334,6 +336,7 @@ var playlist = Backbone.Model.extend({
 				//console.log("Try again", last_track.name, last_track._index, last_track.lastR);
 			}
 		}
+		// console.log("Randomize tracks finish");
 
 		var final_order = _.pluck(randomized_tracks,'_index');
 		return final_order;
@@ -368,18 +371,14 @@ var playlist = Backbone.Model.extend({
 			track._index = index;
 		});
 
-		try {
-			if (tracks.length > 0) {
-				var track0 = tracks[sorted_list[0]];
-				if (track0._index != retain_obj._index && track0.firstR != start_rho) {
-					if (track0.lastR != track0.firstR) { // reversible
-						// console.log("Reverse First Track", track0);
-						this._reverseTrack(track0);
-					}
+		if (tracks.length > 0) {
+			var track0 = tracks[sorted_list[0]];
+			if (track0._index != retain_obj._index && track0.firstR != start_rho) {
+				if (track0.reversible == 'true') { // reversible
+					// console.log("Reverse First Track", track0);
+					this._reverseTrack(track0);
 				}
 			}
-		} catch(err) {
-			console.log("Tracks err:", err);
 		}
 
 		for(var i=0; i<sorted_list.length-1; i++) {
@@ -389,7 +388,7 @@ var playlist = Backbone.Model.extend({
 			if (track1._index == retain_obj._index) {
 				// console.log(track1._index, "Don't change this: ", track1.firstR, track1.lastR);
 			} else if (track0.lastR != track1.firstR) {
-				if (track1.lastR != track1.firstR) { // reversible
+				if (track1.reversible == 'true') { // reversible
 					this._reverseTrack(track1);
 				} else {
 					//console.log("Unable to transition between", track0._index, track0.lastR, track1._index, track1.firstR);
