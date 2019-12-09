@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dummy') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.55', // Playlist bugfixes, log files don't date if empty
+			version	: '1.9.56', // 
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -65,7 +65,7 @@ var config = {
 			default_data: default_status,
 			pingTimeout: 7000, // socket pingTimeout
 			pingInterval: 1000, // socket pingInterval
-			max_thumbnail_points: 10000,
+			max_thumbnail_points: 15000, // 50000 == webcenter, may be too much for Pi
       log_days_to_keep: 7, // number of days to keep dated log files
       log_max_size: 5000000 // maximum filesize before automatically deleting (5MB)
 		},
@@ -87,6 +87,7 @@ var config = {
 			autoplay: false,
 		},
     wc: {
+      // api_endpoint : 'http://54.237.23.209',
       api_endpoint : 'http://192.168.86.20',
     },
 		testing: {

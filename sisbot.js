@@ -1717,7 +1717,7 @@ var sisbot = {
 		}
 	},
   thumbnail_generate: function(data, cb) {
-		logEvent(1, "Thumbnail generate", JSON.stringify(data));
+		logEvent(1, "Thumbnail generate", data.track_id, data.id, data.name, data.dimensions);
     // @id
     var self = this;
 		var coordinates = [];
@@ -1866,7 +1866,7 @@ var sisbot = {
         <script src="js/libs/lib.d3.min.js"></script>\
         <script src="js/libs/lib.gen_thumbnails.js"></script>\
     </head><body><div class="print">\
-                    <div class="d3" data-coors="' + data.raw_coors + '" data-dimensions="' + data.dimensions + '"></div>\
+                    <div class="d3" data-name="'+ data.id + '" data-coors="' + data.raw_coors + '" data-dimensions="' + data.dimensions + '"></div>\
             </div></body></html>';
 
     logEvent(1, '#### MAKE WEBSHOT', thumbs_file, base_url);
