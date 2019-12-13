@@ -1,6 +1,5 @@
 # 2019-12-09 1.10.56
   - Increase points allowed in preview image generation (10000 -> 15000)
-  - Image preview generation named for faster rendering (this is referenced in siscloud lib.gen_thumbnails.js)
 # 2019-12-02 1.10.55
   - Fix playlist_add errors
   - Skip copy/date log files if empty
