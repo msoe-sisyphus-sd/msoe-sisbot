@@ -1,0 +1,44 @@
+# Sisbot config for 36 servo
+
+serialPath: "/dev/ttyACM0"
+
+name: "36 Inch Servo"
+
+# Plot size and gearing:
+radius: 13.5 # inches
+stepsPerThetaRevolution: 24888.8888888888889 # (after gearing) (280/36)*3200
+stepsPerRadiusRevolution: 3200
+stepsPerRadiusInch: 2037.18327576029 # (1*Pi/32) *16*3200
+
+autoplay: true
+
+useRGBW: true
+rgbwCount: 157
+
+jogStepsTheta: 50
+jogStepsRadius: 100
+
+isServo: true
+faultActiveState: 1
+twoBallEnabled: true
+attach_track: '0 0,-0.6 0,-0.6 -0.0741,0 -0.0741,-0.6 -0.0741,-0.6 0,0 0' # set table specific attach verts
+detach_track: '0 0,-0.6 0,-0.6 -0.0741,0 -0.0741,0 0' # set table specific detach verts
+
+max_speed: 4
+
+useHomeSensors: true# false means that a "home" event means to set the current $
+homingThSteps: 17# Steps per homing check on Theta
+homingRSteps: 25 # Steps per homing check on R
+homingThPin: 'D,2'
+homingRPin: 'C,6'
+homingThHitState: 0 # The value the sensor reports when triggered. 0 or 1.
+homingRHitState: 0 # The value the sensor reports when triggered. 0 or 1.
+
+#useFaultSensors: true# false means that a "home" event means to set the current $
+#faultThHitState: 1 # The value the sensor reports when triggered. 0 or 1.
+#faultRHitState: 1 #
+
+# Axis directions and nested axis compensation:
+nestedAxisSign:       1 # -1 or 1, or 0 if no Naxis
+directionSignTheta:   -1 # -1 or 1
+directionSignRadius:  1 # -1 or 1
