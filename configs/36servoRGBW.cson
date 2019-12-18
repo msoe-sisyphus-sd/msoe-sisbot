@@ -2,7 +2,7 @@
 
 serialPath: "/dev/ttyACM0"
 
-name: "36 Inch Servo"
+name: "36 Inch RGBW Servo"
 
 # Plot size and gearing:
 radius: 13.5 # inches
