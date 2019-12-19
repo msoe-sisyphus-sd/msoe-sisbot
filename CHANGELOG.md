@@ -1,6 +1,5 @@
 # 2019-12-09 1.10.56
   - Increase points allowed in preview image generation (10000 -> 15000)
-# 2019-12-02 1.10.55
   - Fix playlist_add errors
   - Skip copy/date log files if empty
 # 2019-11-01 1.10.54

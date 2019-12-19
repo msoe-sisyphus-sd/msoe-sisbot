@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dummy') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.56', // 
+			version	: '1.9.56', //
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -87,7 +87,7 @@ var config = {
 			autoplay: false,
 		},
     wc: {
-      // api_endpoint : 'http://54.237.23.209',
+      // api_endpoint : 'http://dev.webcenter.sisyphus-industries.com',
       api_endpoint : 'http://192.168.86.20',
     },
 		testing: {

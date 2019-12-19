@@ -2385,7 +2385,7 @@ var sisbot = {
     					if (resp == "true") {
     						if (self.config.debug) logEvent(1, "Internet connected.",self.current_state.get("is_internet_connected"));
 
-                // TODO: only post if IP address changed
+                // only post if IP address changed
                 var ip_address = self._getIPAddress();
                 if (self._old_ip != ip_address) {
                   self._post_state_to_cloud();
