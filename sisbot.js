@@ -1570,6 +1570,9 @@ var sisbot = {
       thumb_obj.dimensions = 50;
 			self._thumbnail_queue.push(JSON.parse(JSON.stringify(thumb_obj)));
 
+      self.current_state.set("thumbnail_queue_length", self._thumbnail_queue.length);
+      self.socket_update(self.current_state.toJSON());
+
 			// generate thumbnail now, if first (and only) in queue
 			if (generate_first) {
 				self.thumbnail_generate(self._thumbnail_queue[0], function(err, resp) {
@@ -1675,19 +1678,44 @@ var sisbot = {
     if (cb) cb(null, return_objs);
   },
   /*********************** GENERATE THUMBNAILS ******************************/
-	_regenerate_thumbnails: function(data, cb) {
+	regenerate_thumbnails: function(data, cb) {
 		var self = this;
 
-		function gen_next_track() {
-			if (all_tracks.length > 0)
-				self.thumbnail_generate({id: all_tracks.pop()}, gen_next_track);
-			else
-				if (cb) cb(null, "Complete");
-		}
-
 		var all_tracks = this.current_state.get("track_ids");
-		if (all_tracks.length > 0)
-			self.thumbnail_generate({id: all_tracks.pop()}, gen_next_track);
+		if (all_tracks.length > 0) {
+      if (data.track_id) { // regenerate specific track
+        var thumb_obj = { id: data.track_id, dimensions: 400 };
+        self._thumbnail_queue.push(JSON.parse(JSON.stringify(thumb_obj)));
+        thumb_obj.dimensions = 100;
+        self._thumbnail_queue.push(JSON.parse(JSON.stringify(thumb_obj)));
+        thumb_obj.dimensions = 50;
+        self._thumbnail_queue.push(JSON.parse(JSON.stringify(thumb_obj)));
+      } else { // Loop through all tracks
+        _.each(all_tracks, function(track_id) {
+          var thumb_obj = { id: track_id, dimensions: 400 };
+    			self._thumbnail_queue.push(JSON.parse(JSON.stringify(thumb_obj)));
+          thumb_obj.dimensions = 100;
+    			self._thumbnail_queue.push(JSON.parse(JSON.stringify(thumb_obj)));
+          thumb_obj.dimensions = 50;
+    			self._thumbnail_queue.push(JSON.parse(JSON.stringify(thumb_obj)));
+        });
+      }
+
+      logEvent(0, "Images to Regenerate", self._thumbnail_queue.length);
+
+      self.current_state.set("thumbnail_queue_length", self._thumbnail_queue.length);
+      self.socket_update(self.current_state.toJSON());
+
+      self.thumbnail_generate(self._thumbnail_queue[0], function(err, resp) {
+        logEvent(0, "Regenerate finished", err, resp);
+
+        // send back current_state and the track
+        if (cb) cb(null, self.current_state.toJSON());
+
+        // tell all connected devices
+        self.socket_update(self.current_state.toJSON());
+      });
+    }
 	},
 	thumbnail_preview_generate: function(data, cb) {
 		logEvent(1, "Thumbnail preview", data.name);
@@ -1706,6 +1734,9 @@ var sisbot = {
 			self._thumbnail_queue.splice(1, 0, data);
 		}
 
+    self.current_state.set("thumbnail_queue_length", self._thumbnail_queue.length);
+    self.socket_update(self.current_state.toJSON());
+
 		if (self._thumbnail_queue.length == 1) {
 			self.thumbnail_generate(self._thumbnail_queue[0], function(err, resp) {
 				// send back current_state and the track
@@ -1715,6 +1746,8 @@ var sisbot = {
 		    logEvent(1, "Thumbnails queue", self._thumbnail_queue.length);
 			// if (cb) cb(null, null);
 		}
+
+    self.socket_update(self.current_state.toJSON());
 	},
   thumbnail_generate: function(data, cb) {
 		logEvent(1, "Thumbnail generate", data.track_id, data.id, data.name, data.dimensions);
@@ -1731,6 +1764,9 @@ var sisbot = {
   			} else if (cb) cb(null, { id: data.id, dimensions: data.dimensions }); // don't send back verts
 
         self._thumbnail_queue.shift(); // remove first in queue
+        self.current_state.set("thumbnail_queue_length", self._thumbnail_queue.length);
+        self.socket_update(self.current_state.toJSON());
+
         if (self._thumbnail_queue.length > 0) {
           logEvent(1, "Generate thumbnails left", self._thumbnail_queue.length);
           // generate next thumbnail in _thumbnail_queue
@@ -1771,6 +1807,9 @@ var sisbot = {
 			} else if (cb) cb(null, { id: data.id, dimensions: data.dimensions }); // don't send back verts
 
 			self._thumbnail_queue.shift(); // remove first in queue
+      self.current_state.set("thumbnail_queue_length", self._thumbnail_queue.length);
+      self.socket_update(self.current_state.toJSON());
+
 			if (self._thumbnail_queue.length > 0) {
 				logEvent(1, "Generate thumbnails left", self._thumbnail_queue.length);
 				// generate next thumbnail in _thumbnail_queue

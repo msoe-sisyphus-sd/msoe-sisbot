@@ -1,3 +1,6 @@
+# 2020-01-02 1.10.57
+  - Fixed up regenerate_thumbnails()
+  - Table is aware of number of thumbnails in generation queue
 # 2019-12-09 1.10.56
   - Increase points allowed in preview image generation (10000 -> 15000)
   - Fix playlist_add errors
