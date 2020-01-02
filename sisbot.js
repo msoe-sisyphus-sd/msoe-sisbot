@@ -1778,7 +1778,8 @@ var sisbot = {
       return;
     } else if (data.id != 'preview') {
 			var track = this.collection.get(data.id);
-			coordinates = track.get_verts();
+			if (track) coordinates = track.get_verts();
+      else logEvent(2, "Track not found for thumbnail generation", data.id);
 		} else {
 			var temp_track = new Track(data);
 			coordinates = temp_track.get_verts_from_data(data.raw_coors);
