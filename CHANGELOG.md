@@ -1,7 +1,13 @@
-# 2020-01-02 1.10.57
+# 2020-01-02 1.10.57-58
   - Fixed up regenerate_thumbnails()
   - Table is aware of number of thumbnails in generation queue
   - Fixed crash when track deleted before all thumbnails generated
+  - Fix regenerate of non-shuffle playlist ordering
+  - DR homing can home to rho 1
+    - If changing track in same playlist, rho order is maintained
+    - If non-shuffled playlist, rho order of non-shuffled maintained
+    - If shuffled playlist, starts at closest rho
+    - If single track, starts at closest rho (unless unable)
 # 2019-12-09 1.10.56
   - Increase points allowed in preview image generation (10000 -> 15000)
   - Fix playlist_add errors

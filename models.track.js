@@ -19,7 +19,7 @@ var track = Backbone.Model.extend({
 	},
 	collection: null,
 	get_plotter_obj: function(plotter_data, auto_track_start_rho) {
-		//console.log("Get Plotter Obj", this.get("name"), plotter_data);
+		// console.log("Get Plotter Obj", this.get("name"), plotter_data);
 		var return_obj = {};
 		var this_json = this.toJSON();
 		delete this_json.verts;
@@ -45,7 +45,7 @@ var track = Backbone.Model.extend({
 
 		if (plotter_data.start != this_json.firstR && this_json.reversible == 'true') {
 			// WE NEED TO REVERSE THE TRACK
-			// console.log("Reverse track");
+			// console.log("Reverse track", plotter_data, this.json);
 			return_obj.verts.reverse();
 			return_obj.firstR	= this_json.lastR;
 			return_obj.lastR	= this_json.firstR;
@@ -108,8 +108,7 @@ var track = Backbone.Model.extend({
 				if (this.get('firstR') == this.get('lastR')) {
 					this.set('reversible', 'false');
 				} else {
-					console.log("Skip track reversible", this.id, this.get('reversible'));
-					// this.set('reversible', 'true');
+					// console.log("Skip track reversible", this.id, this.get('reversible'));
 				}
 			} else {
 				console.log("No verts found!", this.get('id'), this.get('name'));

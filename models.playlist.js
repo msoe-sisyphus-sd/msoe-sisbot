@@ -46,7 +46,7 @@ var playlist = Backbone.Model.extend({
 			if (!track_model) {
 				console.log("Playlist: reset_tracks, No track found", obj.id);
 			} else {
-				if (index == 0) console.log("Playlist: reset_tracks, ", self.get('start_rho'), obj._index, retain_obj._index);
+				if (index == 0) console.log("Playlist: reset_tracks, ", obj._index, retain_obj._index);
 				obj.name = track_model.get('name');
 				obj._index = index;
 				obj.reversible = track_model.get('reversible').toString(); // make sure string
@@ -256,7 +256,7 @@ var playlist = Backbone.Model.extend({
 				// if (success) console.log("Track comparison", last_track.lastR, track_obj.firstR);
 			} else { // first track
 				// force first rho value if passed
-				console.log(data.start_rho, "First: r"+track_obj.firstR+track_obj.lastR);
+				// console.log(data.start_rho, "First: r"+track_obj.firstR+track_obj.lastR);
 				if (data.start_rho >= 0) {
 					if (track_obj.firstR == data.start_rho) {
 						// console.log("Start with", track_obj);
@@ -342,9 +342,9 @@ var playlist = Backbone.Model.extend({
 		return final_order;
 	},
 	_update_tracks: function(data) { // fix reversed state for non-randomized list
-		// console.log("Playlist: Update tracks", data);
 		var self		= this;
 		var sorted_list = this.get('sorted_tracks');
+		// console.log("Playlist: Update tracks", data, sorted_list);
 		if (sorted_list.length < 1) return false;
 		var start_rho	= 0; // homed
 		if (data != undefined && data.start_rho) start_rho = data.start_rho;
@@ -359,6 +359,7 @@ var playlist = Backbone.Model.extend({
 			// console.log("Retain Given", sorted_list[data.current_track_index], current_track);
 		}
 		if (current_track.id != "false" && data.start_rho >= 0 && current_track.firstR != data.start_rho && current_track.lastR == data.start_rho) {
+			// console.log("Reverse Track", current_track);
 			this._reverseTrack(current_track);
 		}
 		var retain_obj = JSON.parse(JSON.stringify(current_track));
@@ -391,7 +392,7 @@ var playlist = Backbone.Model.extend({
 				if (track1.reversible == 'true') { // reversible
 					this._reverseTrack(track1);
 				} else {
-					//console.log("Unable to transition between", track0._index, track0.lastR, track1._index, track1.firstR);
+					// console.log("Unable to transition between", track0._index, track0.lastR, track1._index, track1.firstR);
 				}
 			}
 			// console.log(track0._index, "Vs", track0.lastR, track1.firstR);

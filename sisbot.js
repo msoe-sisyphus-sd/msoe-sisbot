@@ -1370,12 +1370,12 @@ var sisbot = {
 
     			thetaPosition = self.plotter.getThetaPosition();
     			logEvent(1, "shortest theta dist away from home = " + thetaPosition + " rads");
-    			rhoPosition = plotter.getRhoPosition();
+    			rhoPosition = self.plotter.getRhoPosition();
     			logEvent(1, "rho dist away form home = " + rhoPosition + " normalized");
 
     			var track_obj = {
             name: 'DEAD_RECKON',
-						verts: [{th: thetaPosition, r: rhoPosition},{th:0,r:0}],
+						verts: [{th: thetaPosition, r: rhoPosition},{th:0,r:this._move_to_rho}],
 						vel: 1,
 						accel: 0.5,
 						thvmax: 0.5
@@ -1415,20 +1415,23 @@ var sisbot = {
       if (this._first_home && !this.isServo) skip_move_out_if_sensors_at_home = false; // force sensored on first homing, if not servo
 
       /////////////////////
-      if (thHome && (rhoHome || this.isServo) && skip_move_out_if_sensors_at_home) {
+      if (thHome && (rhoHome || this.isServo || this._move_to_rho == 1) && skip_move_out_if_sensors_at_home) {
         logEvent(1, "DEAD RECKONING Home Successful");
         this._sensored = false;
         this._home_next = false;
         this._home_requested = false;
-				this.current_state.set({state: "waiting", is_homed: "true", _end_rho: 0});
+        this.current_state.set({state: "waiting", is_homed: "true", _end_rho: this._move_to_rho});
+
+        this._move_to_rho = 0; // set back to zero
 
         // play next track as intended
         if (self.current_state.get('active_track').id != "false") {
-					logEvent(1, "Force next track, start Rho: ", self.current_state.get('_end_rho'));
-					self._play_given_track(self.current_state.get('active_track'), null);
-				} else {
-					logEvent(1, "No Next Track", self.current_state.get('active_track'));
-				}
+          logEvent(0, "Force next track, start Rho: ", self.current_state.get('_end_rho'));
+          // reverse the track?
+          self._play_given_track(self.current_state.get('active_track'), null);
+        } else {
+          logEvent(1, "No Next Track", self.current_state.get('active_track'));
+        }
 
         // send callback to UI
         if (cb)	cb(null, this.current_state.toJSON());
@@ -1437,6 +1440,8 @@ var sisbot = {
 
         if (thHome && rhoHome) this._moved_out = false; // move out if we are on sensors and need to force sensored home
 	      if (this.isServo == true) this._moved_out = true; // no move out for servo tables
+
+        this._move_to_rho = 0; // set back to zero
 
         if (this._moved_out) {
 					if (this._first_home) logEvent(1, "First home, use sensors");
@@ -1933,6 +1938,9 @@ var sisbot = {
 			delete data.skip_save;
 		}
 
+    var old_playlist_id = this.current_state.get('active_playlist_id');
+    var current_rho = this.plotter.getRhoPosition();
+
 		// check if we are shuffled, and need to grab track from next_tracks
 		if (data.is_shuffle && data.is_current && do_save) { // skip_save is used on bootup, don't pull from next tracks in that case
 			var current_playlist = this.collection.get(this.current_state.get('active_playlist_id'));
@@ -1959,13 +1967,19 @@ var sisbot = {
 		var playlist = this.collection.add(new_playlist, {merge: true});
 		playlist.collection = this.collection;
 		playlist.config = this.config;
-		if (data.is_shuffle && !data.is_current) playlist.set_shuffle({ is_shuffle: data.is_shuffle });
+		if (data.is_shuffle && !data.is_current) {
+      playlist.set_shuffle({
+        is_shuffle: data.is_shuffle,
+        start_rho: Math.min(Math.max(Math.round(current_rho), 0), 1) // 0 or 1
+      });
+      logEvent(0, "Start Rho confirm", Math.min(Math.max(Math.round(current_rho), 0), 1));
+    }
 
 		// clean playlist tracks
-		if (!data.is_shuffle) {
+		if (!data.is_shuffle || data.is_shuffle == 'false') {
 			var active_index = data.active_track_index;
 			playlist.set('active_track_index', -1); // allow this track to start at 1, if it is supposed to
-			playlist._update_tracks();
+      playlist.set_shuffle({ is_shuffle: data.is_shuffle }); // fix track ordering
 			playlist.set('active_track_index', active_index);
 		}
 
@@ -1978,10 +1992,24 @@ var sisbot = {
 			is_loop: data.is_loop,
 			is_waiting_between_tracks: "false"
 		});
-		logEvent(1, "Current track", this.current_state.get('active_track'));
+
 		if (this.current_state.get('state') == "playing") {
 			plotter.pause();
 			this._home_next = true;
+
+      // TODO: set next value for rho (closest to 0/1)
+      var track = this.current_state.get('active_track');
+			if (track != undefined && track != "false") {
+  		    logEvent(1, "Current track", track);
+        if (old_playlist_id == data.id) { // TODO: if same playlist, maintain order, move to track firstR
+          logEvent(0, "Same Playlist, move to track start", track.firstR);
+        } else if (!data.is_shuffle || data.is_shuffle == 'false') { // TODO: if new playlist && not shuffled, move to track firstR
+          logEvent(0, "New Playlist, not shuffled, move to track start", track.firstR);
+        } else { // TODO: if new playlist && shuffled, move to nearest value
+          logEvent(0, "New Playlist, shuffled, move to nearest rho", Math.min(Math.max(Math.round(current_rho), 0), 1), track.firstR);
+        }
+        this._move_to_rho = track.firstR;
+      }
 		} else if (this.current_state.get('state') == "waiting" || this.current_state.get('state') == "paused") {
 			var track = playlist.get_current_track();
 			if (track != undefined && track != "false")	{
@@ -2035,6 +2063,16 @@ var sisbot = {
 		if (this.current_state.get('state') == "playing") {
 			plotter.pause();
 			this._home_next = true;
+
+      // set next value for rho (closest to 0/1)
+      if (track.get('reversible') == 'true') {
+        var current_rho = this.plotter.getRhoPosition();
+        this._move_to_rho = Math.min(Math.max(Math.round(current_rho), 0), 1); // round to 0 or 1
+        logEvent(0, "set_track() Current Rho:", current_rho, "Next Rho:", this._move_to_rho);
+      } else {
+        this._move_to_rho = track.get('firstR');
+        logEvent(0, "set_track() Not Reversible:", this.plotter.getRhoPosition(), "Next Rho:", this._move_to_rho);
+      }
 		} else if (this.current_state.get('state') == "waiting" || this.current_state.get('state') == "paused") {
 			this._autoplay = true;
 			this._play_track(track.toJSON(), null);
@@ -2047,7 +2085,7 @@ var sisbot = {
 	},
 	_play_track: function(data, cb) {
 		var self = this;
-		logEvent(1, "Sisbot Play Track", data.name, "r:"+data.firstR+data.lastR, "reversed:", data.reversed, "Table R:", self.current_state.get('_end_rho'), this.current_state.get('state'));
+		logEvent(0, "Sisbot Play Track", data.name, "r:"+data.firstR+data.lastR, "reversed:", data.reversed, "Table R:", self.current_state.get('_end_rho'), this.current_state.get('state'));
 		if (data == undefined || data == null || data == "false") {
 			logEvent(2, "No Track given");
 			if (cb) cb("No track", null);
@@ -2106,7 +2144,10 @@ var sisbot = {
     var move_to_rho = false; // do we even need to?
 
     // if (self.current_state.get("active_playlist_id") == "false") {
-    if (track.firstR != undefined && track.firstR != self.current_state.get('_end_rho')) move_to_rho = track.firstR;
+    // reverse track?
+    if (track.firstR != self.current_state.get('_end_rho') && track.lastR == self.current_state.get('_end_rho') && track.reversible == 'true') {
+      logEvent(0, "Reverse track", track);
+    } else if (track.firstR != undefined && track.firstR != self.current_state.get('_end_rho')) move_to_rho = track.firstR;
     // }
     // move to start rho
     if (move_to_rho !== false) {
@@ -2118,7 +2159,7 @@ var sisbot = {
         thvmax: 0.5
       };
       self._paused = false;
-      logEvent(1, "Move to start", _.pluck(track_obj.verts, 'r'))
+      logEvent(0, "Force move to start", _.pluck(track_obj.verts, 'r'))
       self.plotter.playTrack(track_obj);
       self.current_state.set({_end_rho: move_to_rho, repeat_current: 'true'}); // pull from track_obj
       // self._move_to_rho = move_to_rho;
