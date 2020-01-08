@@ -1108,10 +1108,10 @@ function parseReceivedSerialData(data) {
               onServoThRhoFault();
             } else if (thFaultState == faultActiveState) {
               logEvent(2, "Theta faulted!");
-              onServoThFault();
+              onServoThFault(true);
             } else if (rFaultState == faultActiveState) {
               logEvent(2, "Rho faulted!");
-              onServoRhoFault();
+              onServoRhoFault(true);
             }
           }
         }
@@ -1321,6 +1321,38 @@ module.exports = {
   // Move the rho motor a single nudge inward
   jogRhoInward: function() {
     jog('rho', 'neg');
+  },
+
+  //////// SERVO ENABLE //////////
+  servo_enable: function(data) {
+    var motor_pin = 1; // rho
+    if (data == 'theta') motor_pin = 2;
+
+    logEvent(0, "Enable Servo", data, motor_pin);
+
+    // bring low
+    sp.write("PO,B," + motor_pin + ",0\r", function(err, res) {
+      sp.drain(function(err, result) {
+        if (err) {
+          logEvent(2, err, result);
+        } else {
+          // TODO: wait 100ms, re-enable
+          setTimeout(function() {
+            sp.write("PO,B," + motor_pin + ",1\r", function(err, res) {
+              sp.drain(function(err, result) {
+                if (err) {
+                  logEvent(2, err, result);
+                } else {
+                  logEvent(1, "Servo enabled", motor_pin);
+                  if (motor_pin == 2) onServoThFault(false);
+                  else onServoRhoFault(false);
+                }
+              });
+            });
+          }, 100);
+        }
+      });
+    });
   },
 
   // Pause drawing.

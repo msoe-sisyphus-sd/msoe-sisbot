@@ -403,18 +403,27 @@ var sisbot = {
       this.current_state.set('is_rgbw','false');
     }
 
-		plotter.onServoThFault(function() {
-      if (self.current_state.get('fault_status') != 'servo_th_fault') logEvent(2, "Servo Th Fault!");
-			self.pause(null, null);
-			// self.current_state.set("reason_unavailable", "servo_th_fault").set("fault_status", "servo_th_fault");
-			self.current_state.set("fault_status", "servo_th_fault");
+		plotter.onServoThFault(function(is_fault) {
+      if (is_fault && self.current_state.get('fault_status') != 'servo_th_fault') logEvent(2, "Servo Th Fault!");
+			if (is_fault) {
+        self.pause(null, null);
+        self.current_state.set("fault_status", "servo_th_fault");
+      } else {
+        if (self.current_state.get('fault_status') == 'servo_th_fault') self.current_state.set("fault_status", "false");
+        else if (self.current_state.get('fault_status') == 'servo_th_rho_fault') self.current_state.set("fault_status", "servo_rho_fault");
+      }
 			self.socket_update(self.current_state.toJSON()); // notify all connected UI
 			clearTimeout(self._network_check); // stop internet checks
 		});
-		plotter.onServoRhoFault(function() {
-      if (self.current_state.get('fault_status') != 'servo_rho_fault') logEvent(2, "Servo Rho Fault!");
-			self.pause(null, null);
-			self.current_state.set("fault_status", "servo_rho_fault");
+		plotter.onServoRhoFault(function(is_fault) {
+      if (is_fault && self.current_state.get('fault_status') != 'servo_rho_fault') logEvent(2, "Servo Rho Fault!");
+			if (is_fault) {
+  			self.pause(null, null);
+  			self.current_state.set("fault_status", "servo_rho_fault");
+      } else {
+        if (self.current_state.get('fault_status') == 'servo_rho_fault') self.current_state.set("fault_status", "false");
+        else if (self.current_state.get('fault_status') == 'servo_th_rho_fault') self.current_state.set("fault_status", "servo_th_fault");
+      }
 			self.socket_update(self.current_state.toJSON()); // notify all connected UI
 			clearTimeout(self._network_check); // stop internet checks
 		});
@@ -3153,6 +3162,11 @@ var sisbot = {
   		self._reboot(null,null);
 		});
 	},
+  servo_enable: function(data, cb) {
+    logEvent(1, "Sisbot Servo Enable", data);
+
+    this.plotter.servo_enable(data.motor); // expects rho|theta
+  },
   install_python: function(data, cb) {
     logEvent(1, "Sisbot Install Python WRAPPER", data);
     if (this.isServo && this.homeFirst) {
