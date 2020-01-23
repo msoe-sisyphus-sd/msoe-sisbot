@@ -9,6 +9,7 @@
     - If shuffled playlist, starts at closest rho
     - If single track, starts at closest rho (unless unable)
   - Re-enable Servo faults
+  - Fix slanted apostrophe in SSID of wifi network list
 # 2019-12-09 1.10.56
   - Increase points allowed in preview image generation (10000 -> 15000)
   - Fix playlist_add errors
