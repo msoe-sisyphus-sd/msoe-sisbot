@@ -2549,6 +2549,7 @@ var sisbot = {
         // fix unnamed ssid's
         _.each(resp, function(network, index) {
           if (!network.ssid || network.ssid == '') network.ssid = 'Unnamed Network';
+          network.ssid = network.ssid.replace(/\\xe2\\x80\\x99/gi, "’"); // fix apostrophe
         });
 
         if (cb) cb(err, resp);
