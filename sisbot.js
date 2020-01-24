@@ -607,6 +607,9 @@ var sisbot = {
       fs.watch(self.config.base_dir+'/'+self.config.folders.sisbot+'/update_status', _update_status);
     });
 
+    // Check for missing thumbnails
+    this.find_missing_thumbnails({}, null);
+
 		return this;
 	},
 	_setupAnsible: function() {
@@ -852,7 +855,7 @@ var sisbot = {
     // Set LED offset
     logEvent(1, 'Set led offset', data);
 
-    if (data.offset) {
+    if (_.isFinite(data.offset)) {
       // keep within range
       data.offset = +data.offset % 360;
 
@@ -1692,6 +1695,44 @@ var sisbot = {
     if (cb) cb(null, return_objs);
   },
   /*********************** GENERATE THUMBNAILS ******************************/
+  find_missing_thumbnails: function(data, cb) {
+    logEvent(1, "Find Missing Thumbnails");
+    var self = this;
+
+    // get all track models
+    var tracks = [];
+    this.collection.each(function(model) {
+      if (model.get('type') == 'track') tracks.push(model.id);
+    });
+
+    // Loop through all tracks, and find any missing .png files
+    logEvent(1, "Tracks to search for:", tracks.length);
+    var missing_thumbnails = [];
+    var img_folder = this.config.servers.app.dir+'/img/tracks/';
+    _.each(tracks, function(track_id) {
+      // look inside siscloud/img/tracks for this id_50,100,400.png
+      if (!fs.existsSync(img_folder+track_id+'_50.png')) missing_thumbnails.push({ id: track_id, dimensions: 50 });
+      if (!fs.existsSync(img_folder+track_id+'_100.png')) missing_thumbnails.push({ id: track_id, dimensions: 100 });
+      if (!fs.existsSync(img_folder+track_id+'_400.png')) missing_thumbnails.push({ id: track_id, dimensions: 400 });
+    });
+
+    if (missing_thumbnails.length > 0) {
+      logEvent(2, "Missing Thumbnails ("+missing_thumbnails.length+")", missing_thumbnails);
+      var empty_queue = self._thumbnail_queue.length == 0;
+
+      _.each(missing_thumbnails, function(obj) {
+        self._thumbnail_queue.push(JSON.parse(JSON.stringify(obj)));
+      });
+
+      if (empty_queue) {
+        self.thumbnail_generate(self._thumbnail_queue[0], function(err, resp) {
+          logEvent(0, "Missing Thumbnail Regenerate finished", err, resp);
+        });
+      }
+    } else logEvent(1, "No Missing Thumbnails");
+
+    if (cb) cb(null, "OK");
+  },
 	regenerate_thumbnails: function(data, cb) {
 		var self = this;
 

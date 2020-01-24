@@ -58,13 +58,17 @@ old_photo       = 0 # to reduce recreation of colors
 
 time_start = 0 # for elapsed time
 
+# values passed in by slider, converted to 0-255
+brightness_table = {0:0, 1:1, 2:2, 3:4, 4:5, 6:7, 8:10, 11:13, 16:18, 23:25, 32:34, 45:44, 64:57, 91:72, 128:86, 181:98, 256:109, 362:121, 512:144, 724:186, 1023:255}
+
 # on quit
 def signal_handler(sig, frame):
     print('You pressed Ctrl+C!')
     print("-" * 20)
     print("Shutting down...")
     server.close()
-    colorWipe(strip, Color(0,0,0,0), 10) # clear lights regardless of -c flag
+    if not args.quick:
+        colorWipe(strip, Color(0,0,0,0), 10) # clear lights regardless of -c flag
     fill(strip, Color(0,0,0,0))
     strip.show()
     os.remove("/tmp/sisyphus_sockets")
@@ -268,12 +272,28 @@ if __name__ == '__main__':
 
             # update brightness, if changed
             if photo != old_photo:
+                # photo_diff = photo - old_photo
+                # if abs(photo_diff) < 1:
+                #     old_photo = photo
+                # else:
+                #     photo = old_photo + photo_diff * 0.75
+
                 brightness = 0
                 if photo >= 1023:
-                    brightness = 255
-                elif photo > 0:
+                    photo = 1023
+                elif photo < 0:
+                    photo = 0
+
+                if photo in brightness_table:
+                    brightness = brightness_table[photo]
+                else:
                     adjustment = pow(2,(1-(photo/1023))*10)/256+1
                     brightness = int(round(photo/1023*adjustment*255)) # int(round(photo/1023.0*255))
+                    # if brightness > 255:
+                    #     brightness = 255
+                    # elif brightness < 0:
+                    #     brightness = 0
+
                 # print "Brightness {0} => {1} {2}\n".format(photo, brightness, strip.getBrightness()),
                 # sys.stdout.flush()
                 strip.setBrightness(brightness)
