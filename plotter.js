@@ -1328,7 +1328,7 @@ module.exports = {
     var motor_pin = 1; // rho
     if (data == 'theta') motor_pin = 2;
 
-    logEvent(0, "Enable Servo", data, motor_pin);
+    logEvent(1, "Enable Servo", data, motor_pin);
 
     // bring low
     sp.write("PO,B," + motor_pin + ",0\r", function(err, res) {

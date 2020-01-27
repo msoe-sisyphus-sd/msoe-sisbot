@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dummy') == -1) {
 
 var config = {
 		base: {
-			version	: '1.9.59', // Re-enable servo faults
+			version	: '1.10.59', // Re-enable servo faults
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {

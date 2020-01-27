@@ -1435,7 +1435,7 @@ var sisbot = {
 
         // play next track as intended
         if (self.current_state.get('active_track').id != "false") {
-          logEvent(0, "Force next track, start Rho: ", self.current_state.get('_end_rho'));
+          logEvent(1, "Force next track, start Rho: ", self.current_state.get('_end_rho'));
           // reverse the track?
           self._play_given_track(self.current_state.get('active_track'), null);
         } else {
@@ -1715,13 +1715,13 @@ var sisbot = {
         });
       }
 
-      logEvent(0, "Images to Regenerate", self._thumbnail_queue.length);
+      logEvent(1, "Images to Regenerate", self._thumbnail_queue.length);
 
       self.current_state.set("thumbnail_queue_length", self._thumbnail_queue.length);
       self.socket_update(self.current_state.toJSON());
 
       self.thumbnail_generate(self._thumbnail_queue[0], function(err, resp) {
-        logEvent(0, "Regenerate finished", err, resp);
+        logEvent(1, "Regenerate finished", err, resp);
 
         // send back current_state and the track
         if (cb) cb(null, self.current_state.toJSON());
@@ -1981,7 +1981,7 @@ var sisbot = {
         is_shuffle: data.is_shuffle,
         start_rho: Math.min(Math.max(Math.round(current_rho), 0), 1) // 0 or 1
       });
-      logEvent(0, "Start Rho confirm", Math.min(Math.max(Math.round(current_rho), 0), 1));
+      logEvent(1, "Start Rho confirm", Math.min(Math.max(Math.round(current_rho), 0), 1));
     }
 
 		// clean playlist tracks
@@ -2011,11 +2011,11 @@ var sisbot = {
 			if (track != undefined && track != "false") {
   		    logEvent(1, "Current track", track);
         if (old_playlist_id == data.id) { // TODO: if same playlist, maintain order, move to track firstR
-          logEvent(0, "Same Playlist, move to track start", track.firstR);
+          logEvent(1, "Same Playlist, move to track start", track.firstR);
         } else if (!data.is_shuffle || data.is_shuffle == 'false') { // TODO: if new playlist && not shuffled, move to track firstR
-          logEvent(0, "New Playlist, not shuffled, move to track start", track.firstR);
+          logEvent(1, "New Playlist, not shuffled, move to track start", track.firstR);
         } else { // TODO: if new playlist && shuffled, move to nearest value
-          logEvent(0, "New Playlist, shuffled, move to nearest rho", Math.min(Math.max(Math.round(current_rho), 0), 1), track.firstR);
+          logEvent(1, "New Playlist, shuffled, move to nearest rho", Math.min(Math.max(Math.round(current_rho), 0), 1), track.firstR);
         }
         this._move_to_rho = track.firstR;
       }
@@ -2077,10 +2077,10 @@ var sisbot = {
       if (track.get('reversible') == 'true') {
         var current_rho = this.plotter.getRhoPosition();
         this._move_to_rho = Math.min(Math.max(Math.round(current_rho), 0), 1); // round to 0 or 1
-        logEvent(0, "set_track() Current Rho:", current_rho, "Next Rho:", this._move_to_rho);
+        logEvent(1, "set_track() Current Rho:", current_rho, "Next Rho:", this._move_to_rho);
       } else {
         this._move_to_rho = track.get('firstR');
-        logEvent(0, "set_track() Not Reversible:", this.plotter.getRhoPosition(), "Next Rho:", this._move_to_rho);
+        logEvent(1, "set_track() Not Reversible:", this.plotter.getRhoPosition(), "Next Rho:", this._move_to_rho);
       }
 		} else if (this.current_state.get('state') == "waiting" || this.current_state.get('state') == "paused") {
 			this._autoplay = true;
@@ -2094,7 +2094,7 @@ var sisbot = {
 	},
 	_play_track: function(data, cb) {
 		var self = this;
-		logEvent(0, "Sisbot Play Track", data.name, "r:"+data.firstR+data.lastR, "reversed:", data.reversed, "Table R:", self.current_state.get('_end_rho'), this.current_state.get('state'));
+		logEvent(1, "Sisbot Play Track", data.name, "r:"+data.firstR+data.lastR, "reversed:", data.reversed, "Table R:", self.current_state.get('_end_rho'), this.current_state.get('state'));
 		if (data == undefined || data == null || data == "false") {
 			logEvent(2, "No Track given");
 			if (cb) cb("No track", null);
@@ -2155,7 +2155,7 @@ var sisbot = {
     // if (self.current_state.get("active_playlist_id") == "false") {
     // reverse track?
     if (track.firstR != self.current_state.get('_end_rho') && track.lastR == self.current_state.get('_end_rho') && track.reversible == 'true') {
-      logEvent(0, "Reverse track", track);
+      logEvent(1, "Reverse track", track);
     } else if (track.firstR != undefined && track.firstR != self.current_state.get('_end_rho')) move_to_rho = track.firstR;
     // }
     // move to start rho
@@ -2168,7 +2168,7 @@ var sisbot = {
         thvmax: 0.5
       };
       self._paused = false;
-      logEvent(0, "Force move to start", _.pluck(track_obj.verts, 'r'))
+      logEvent(1, "Force move to start", _.pluck(track_obj.verts, 'r'))
       self.plotter.playTrack(track_obj);
       self.current_state.set({_end_rho: move_to_rho, repeat_current: 'true'}); // pull from track_obj
       // self._move_to_rho = move_to_rho;
@@ -2396,7 +2396,7 @@ var sisbot = {
         local_ip: self._getIPAddress()
       });
 
-      if (process.env.NODE_ENV.indexOf('_dev') >= 0) logEvent(0, "LAN IP", self.current_state.get('local_ip'));
+      if (process.env.NODE_ENV.indexOf('_dev') >= 0) logEvent(1, "LAN IP", self.current_state.get('local_ip'));
 
       // save if changed
       if (old_network_connected != returnValue || old_local_ip != self.current_state.get('local_ip')) self.save(null, null);
