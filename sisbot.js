@@ -129,7 +129,9 @@ var sisbot = {
 	_detach_first: false, // for tables with multiple balls, after first home
 	_move_to_rho: 0,
 	_saving: false,
+
   _thumbnail_playing: false, // was the table playing prior to generating thumbnail?
+  _sleep_playing: false, // was the table playing when put to sleep?
 
   _save_queue: [],
 	_thumbnail_queue: [],
@@ -2018,6 +2020,7 @@ var sisbot = {
 		playlist.collection = this.collection;
 		playlist.config = this.config;
 		if (data.is_shuffle && !data.is_current) {
+      // starts new playlist at nearest rho (0|1)
       playlist.set_shuffle({
         is_shuffle: data.is_shuffle,
         start_rho: Math.min(Math.max(Math.round(current_rho), 0), 1) // 0 or 1
@@ -2047,16 +2050,16 @@ var sisbot = {
 			plotter.pause();
 			this._home_next = true;
 
-      // TODO: set next value for rho (closest to 0/1)
+      // set next value for rho based on active_track
       var track = this.current_state.get('active_track');
 			if (track != undefined && track != "false") {
-  		    logEvent(1, "Current track", track);
-        if (old_playlist_id == data.id) { // TODO: if same playlist, maintain order, move to track firstR
-          logEvent(0, "Same Playlist, move to track start", track.firstR);
-        } else if (!data.is_shuffle || data.is_shuffle == 'false') { // TODO: if new playlist && not shuffled, move to track firstR
-          logEvent(0, "New Playlist, not shuffled, move to track start", track.firstR);
-        } else { // TODO: if new playlist && shuffled, move to nearest value
-          logEvent(0, "New Playlist, shuffled, move to nearest rho", Math.min(Math.max(Math.round(current_rho), 0), 1), track.firstR);
+		    logEvent(1, "Current track", track);
+        if (old_playlist_id == data.id) { // if same playlist, maintain order, move to track firstR
+          logEvent(1, "Same Playlist, move to track start", track.firstR);
+        } else if (!data.is_shuffle || data.is_shuffle == 'false') { // if new playlist && not shuffled, move to track firstR
+          logEvent(1, "New Playlist, not shuffled, move to track start", track.firstR);
+        } else { // if new playlist && shuffled, move to nearest value
+          logEvent(1, "New Playlist, shuffled, move to nearest rho", Math.min(Math.max(Math.round(current_rho), 0), 1), track.firstR);
         }
         this._move_to_rho = track.firstR;
       }
@@ -2604,7 +2607,7 @@ var sisbot = {
 	},
 	change_to_wifi: function(data, cb) {
 		var self = this;
-		logEvent(1, "Sisbot change to wifi", data.ssid);
+		logEvent(0, "Sisbot change to wifi", data);
 		if (data.ssid == undefined || data.ssid == "" || data.ssid == "false") {
 			if (cb) cb("No network name given", null);
       self.current_state.set({ wifi_forget: "false" });
@@ -2637,7 +2640,8 @@ var sisbot = {
 
         var connection = "'"+data.ssid.replace("'", '\'"\'"\'')+"'";
         if (data.psk) connection += " '"+data.psk.replace("'", '\'"\'"\'')+"'";
-				logEvent(1, "Connect To Wifi", data.ssid);
+				logEvent(2, "Connect To Wifi", data.ssid);
+				logEvent(0, "Connection", connection);
 
         setTimeout(function () {
           exec("sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "+connection, (error, stdout, stderr) => {
@@ -2955,6 +2959,7 @@ var sisbot = {
 			is_nightlight: data.is_nightlight,
 			nightlight_brightness: data.nightlight_brightness
 		});
+    if (data.is_play_on_wake) self.current_state.set('is_play_on_wake', data.is_play_on_wake);
 
 		self.save(null, null);
 
@@ -2967,10 +2972,13 @@ var sisbot = {
 			this.set_autodim({value: this.current_state.get('_is_autodim')}, null);
 			this.set_brightness({value: this.current_state.get('_brightness')}, null); // reset to remembered value
 
-			// play track (if not waiting between tracks)
-      if (this.current_state.get('is_waiting_between_tracks') == 'false') this.play(null, null);
-
 			this.current_state.set('is_sleeping', 'false');
+
+			// play track?
+      if (this.current_state.get('is_play_on_wake') == 'true' || this._sleep_playing) {
+        this.play(null, null);
+        logEvent(1, "Play Track", this._paused);
+      }
 
 			this.socket_update(this.current_state.toJSON());
 		}
@@ -3000,6 +3008,9 @@ var sisbot = {
       this.set_autodim({value: 'false'}, null);
       this.set_brightness({value: this.current_state.get('nightlight_brightness')}, null);
     } else this.set_brightness({value: 0}, null);
+
+    // save play/pause state
+    this._sleep_playing = !this._paused;
 
     // pause track
     this.pause(null, null);

@@ -30,6 +30,7 @@ var sisbot_state = Backbone.Model.extend({
 		brightness						: 0.8,
 		is_autodim						: "true",
 		is_nightlight					: "false",
+		is_play_on_wake				: "false",
 		nightlight_brightness	: 0.2,
 		speed									: 0.35,
 		is_shuffle						: "true",
