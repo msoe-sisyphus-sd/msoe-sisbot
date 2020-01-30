@@ -2,6 +2,7 @@
   - Find Missing Thumbnails on startup
   - Improved speed on RGBW brightness change
   - LED offset of 0 is correctly changed/displayed
+  - Always play on wake added
 # 2020-01-02 1.10.57-59
   - Fixed up regenerate_thumbnails()
   - Table is aware of number of thumbnails in generation queue
