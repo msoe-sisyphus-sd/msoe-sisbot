@@ -61,6 +61,7 @@ var sisbot_state = Backbone.Model.extend({
 
 		wifi_network				: "",
 		wifi_password				: "",
+		wifi_is_hidden			: "false", // if true, don't bother checking if network name appears nearby
 		wifi_forget					: "false", // forget wifi credentials on fail to connect (from cloud)
 		wifi_error					: "false", // flag to know if should be trying to reconnect to wifi
 		failed_to_connect_to_wifi: "false",

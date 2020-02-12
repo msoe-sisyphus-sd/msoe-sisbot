@@ -18,7 +18,6 @@ var moment 		= require('moment');
 var unix_dg   = require('unix-dgram');
 
 /**************************** BLE *********************************************/
-
 var ble_obj = {
   initialize: function(sisbot_id) {
 		logEvent(1, "ble_obj initialize()");
@@ -2603,11 +2602,18 @@ var sisbot = {
 	connect_to_wifi: function(data, cb) {
 		// forward to old connection endpoint
 		this.current_state.set({ wifi_forget: "true" });
+
+    // remember if this is a hidden network
+    if (data.is_hidden) {
+      logEvent(0, "Wifi_is_hidden:", data.is_hidden);
+      this.current_state.set('wifi_is_hidden', data.is_hidden);
+    }
+
 		this.change_to_wifi(data, cb);
 	},
 	change_to_wifi: function(data, cb) {
 		var self = this;
-		logEvent(0, "Sisbot change to wifi", data);
+		// logEvent(0, "Sisbot change to wifi", data);
 		if (data.ssid == undefined || data.ssid == "" || data.ssid == "false") {
 			if (cb) cb("No network name given", null);
       self.current_state.set({ wifi_forget: "false" });
@@ -2640,8 +2646,8 @@ var sisbot = {
 
         var connection = "'"+data.ssid.replace("'", '\'"\'"\'')+"'";
         if (data.psk) connection += " '"+data.psk.replace("'", '\'"\'"\'')+"'";
-				logEvent(2, "Connect To Wifi", data.ssid);
-				logEvent(0, "Connection", connection);
+				// logEvent(2, "Connect To Wifi", data.ssid);
+				// logEvent(0, "Connection", connection);
 
         setTimeout(function () {
           exec("sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "+connection, (error, stdout, stderr) => {
@@ -2791,13 +2797,19 @@ var sisbot = {
         // logEvent(1, JSON.stringify(self.current_state.toJSON()));
         logEvent(1, "Networks found, looking for ", wifi_network);
         var network_found = false;
-				_.each(resp, function(network_obj) {
-          logEvent(1, "Network", network_obj.ssid);
-					if (network_obj && network_obj.ssid && network_obj.ssid == wifi_network) {
-						logEvent(1, "Found Network", wifi_network, "try to connect");
-						network_found = true;
-					}
-				});
+
+        if (self.get('wifi_is_hidden') == 'true') {
+          network_found = true;
+          logEvent(1, "Hidden Network ", wifi_network, "try to connect");
+        } else {
+  				_.each(resp, function(network_obj) {
+            logEvent(1, "Network", network_obj.ssid);
+  					if (network_obj && network_obj.ssid && network_obj.ssid == wifi_network) {
+  						logEvent(1, "Found Network", wifi_network, "try to connect");
+  						network_found = true;
+  					}
+  				});
+        }
 
 				if (network_found) { // connect!
           self._network_retries++;
