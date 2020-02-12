@@ -2676,6 +2676,8 @@ var sisbot = {
 	disconnect_wifi: function(data, cb) {
     if (this.current_state.get('installing_updates') == 'true') return cb('Cannot Disconnect during Updates', null);
 
+    logEvent(0, "Disconnect Wifi", data);
+
 		// This will remove old network/password
 		this.current_state.set({
 			wifi_network: "false",
