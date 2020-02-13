@@ -212,6 +212,7 @@ var sisbot = {
           logEvent(1,"reading track from state ", obj.name);
           if (obj.name == 'Attach') { is_2ball_track = true; }
           if (obj.name == 'Detach') { is_2ball_track = true; }
+          if (obj.id == '2CBDAE96-EC22-48B4-A369-BFC624463C5F') obj.is_deletable = 'false'; // force Erase track to not be deletable
           logEvent(1, "track switch 2ball ", is_2ball , " track_type ", is_2ball_track);
 
           if (is_2ball || is_2ball_track == false) {
@@ -377,14 +378,14 @@ var sisbot = {
 			if (cson_config.attach_track) {
         logEvent(1, "Generate Attach track", cson_config.attach_track);
         var a_verts = cson_config.attach_track.split(',').join('\n');
-        this.add_track({id:'attach',name:'Attach',verts:a_verts},null);
+        this.add_track({id:'attach',name:'Attach',verts:a_verts,is_deletable:'false'},null);
         // this._attach_track = cson_config.attach_track;
       }
 
 			if (cson_config.detach_track) {
         logEvent(1, "Generate Detach track", cson_config.detach_track);
         var d_verts = cson_config.detach_track.split(',').join('\n');
-        this.add_track({id:'detach',name:'Detach',verts:d_verts},null);
+        this.add_track({id:'detach',name:'Detach',verts:d_verts,is_deletable:'false'},null);
         // this._detach_track = cson_config.detach_track;
 			}
 		}
