@@ -2799,7 +2799,7 @@ var sisbot = {
         logEvent(1, "Networks found, looking for ", wifi_network);
         var network_found = false;
 
-        if (self.get('wifi_is_hidden') == 'true') {
+        if (self.current_state.get('wifi_is_hidden') == 'true') {
           network_found = true;
           logEvent(1, "Hidden Network ", wifi_network, "try to connect");
         } else {
