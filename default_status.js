@@ -352,6 +352,7 @@ module.exports = [{
   "id": "2CBDAE96-EC22-48B4-A369-BFC624463C5F",
   "type": "track","created_by_name": "Sisyphus Industries",
   "name": "Erase",
+  "is_deletable": "false",
   "default_vel": 3,
   "default_accel": 0.5,
   "default_thvmax": 1

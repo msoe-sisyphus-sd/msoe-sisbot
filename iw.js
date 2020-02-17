@@ -168,6 +168,17 @@ function parse_scan(show_hidden, callback) {
   };
 }
 
+function parse_ssids(callback) {
+  return function(error, stdout, stderr) {
+    if (error) callback(error);
+    else {
+      callback(error, stdout
+      .split(/^|\n\t/g)
+      .map(parse_cell));
+    }
+  };
+}
+
 /**
  * The **iw scan** command is used to scan for wireless networks
  * visible to a wireless interface. For convenience, the networks are
@@ -192,6 +203,6 @@ function scan(options, callback) {
     if (options.timeout) exec_opts.timeout = options.timeout;
   }
 
-  console.log('iw exec:', 'iw dev ' + interface + ' scan' + flags);
-  this.exec('iw dev ' + interface + ' scan' + flags, exec_opts, parse_scan(show_hidden, callback));
+  // console.log('iw exec:', 'iw dev ' + interface + ' scan' + flags);
+  this.exec('iw dev ' + interface + ' scan' + flags + '| grep SSID:', exec_opts, parse_ssids(callback));
 }

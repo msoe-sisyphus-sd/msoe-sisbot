@@ -30,6 +30,7 @@ var sisbot_state = Backbone.Model.extend({
 		brightness						: 0.8,
 		is_autodim						: "true",
 		is_nightlight					: "false",
+		is_play_on_wake				: "false",
 		nightlight_brightness	: 0.2,
 		speed									: 0.35,
 		is_shuffle						: "true",
@@ -60,6 +61,7 @@ var sisbot_state = Backbone.Model.extend({
 
 		wifi_network				: "",
 		wifi_password				: "",
+		wifi_is_hidden			: "false", // if true, don't bother checking if network name appears nearby
 		wifi_forget					: "false", // forget wifi credentials on fail to connect (from cloud)
 		wifi_error					: "false", // flag to know if should be trying to reconnect to wifi
 		failed_to_connect_to_wifi: "false",
