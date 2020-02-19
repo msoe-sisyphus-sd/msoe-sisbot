@@ -6,6 +6,7 @@
   - Network scan reduces results to just the SSIDs found (hopefully decreasing scan failures)
   - If SSID is typed, skip confirmation of network name appearing when attempting reconnect
   - Erase, Attach, Detach tracks marked as not deletable
+  - Track reversible values set in default_status
 # 2020-01-02 1.10.57-59
   - Fixed up regenerate_thumbnails()
   - Table is aware of number of thumbnails in generation queue
