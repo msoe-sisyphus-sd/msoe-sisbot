@@ -3126,6 +3126,10 @@ var sisbot = {
         }
       });
 
+      // log current state
+      var state = self.current_state.toJSON();
+      logEvent(1, "Current state", _.omit(state, ['wifi_password']) );
+
       // return nothing
       if (cb) cb(null, null);
     });
