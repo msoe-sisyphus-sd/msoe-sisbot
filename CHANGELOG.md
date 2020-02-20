@@ -8,6 +8,7 @@
   - Erase, Attach, Detach tracks marked as not deletable
   - Track reversible values set in default_status
   - Log status on daily clean_log_files
+  - Adjustment of network recheck timing
 # 2020-01-02 1.10.57-59
   - Fixed up regenerate_thumbnails()
   - Table is aware of number of thumbnails in generation queue

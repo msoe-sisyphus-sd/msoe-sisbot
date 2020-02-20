@@ -585,10 +585,10 @@ var sisbot = {
 
 		// wifi connect
 		if (this.current_state.get("is_hotspot") == "false") {
-      logEvent(1, "Init: Not hotspot, check in 5 sec...");
+      logEvent(1, "Init: Not hotspot, check in 15 sec...");
       // this._internet_lanonly_check = false;
       this._first_retry = true; // if it fails, retry connecting to known network sooner
-			this._query_internet(5000); // check for internet connection after 5 seconds
+			this._query_internet(this.config.wifi_check_network_timeout); // check for internet connection after 15 seconds
 		} else {
 			// check if we should try reconnecting to wifi
 			if (this.current_state.get("wifi_network") != "" && this.current_state.get("wifi_network") != "false" && this.current_state.get("wifi_password") != "" && this.current_state.get("wifi_password") != "false") {
@@ -1052,7 +1052,7 @@ var sisbot = {
         }
 			});
     } catch(err) {
-      console.error('Connect err', err);
+      logEvent(2, 'Plotter connect err', err);
     }
 	},
 	// VERSIONS OF CODE
@@ -1189,7 +1189,7 @@ var sisbot = {
 			if (data.hostname+'.local' != self.current_state.get('hostname')) { // set new hostname
         logEvent(1, "Sisbot Set Hostname exec script ", data.hostname);
 				exec('sudo /home/pi/sisbot-server/sisbot/set_hostname.sh "'+data.hostname+'"', (error, stdout, stderr) => {
-					if (error) return console.error('exec error:',error);
+					if (error) return logEvent(2, 'set_hostname exec error:', error);
 					self.current_state.set({hostname: data.hostname+'.local',hostname_prompt: "true"});
 					self.save(null, null);
 
@@ -2624,8 +2624,8 @@ var sisbot = {
 			this._network_retries = 0; // clear retry count
 
 			// Make sure password is valid
-			// ValidPasswordRegex = new RegExp("^([^\s\"]{8,64})$");
-			if (!data.psk || /^([^\r\n]{8,64})$/g.test(data.psk)) {
+			// ValidPasswordRegex = new RegExp("^([^\s\"]{8,63})$");
+			if (!data.psk || /^([^\r\n]{8,63})$/g.test(data.psk)) {
 				self.current_state.set({
 					is_available: "false",
     			reason_unavailable: "connect_to_wifi",
@@ -2640,6 +2640,7 @@ var sisbot = {
 				// logEvent(1, "New State:", self.current_state.toJSON());
 				self.save(null, null);
 
+        // respond to UI
 				if (cb) cb(null, self.current_state.toJSON());
 
 				// disconnect all socket connections first
@@ -2647,16 +2648,17 @@ var sisbot = {
 
         var connection = "'"+data.ssid.replace("'", '\'"\'"\'')+"'";
         if (data.psk) connection += " '"+data.psk.replace("'", '\'"\'"\'')+"'";
-				// logEvent(2, "Connect To Wifi", data.ssid);
+				logEvent(1, "Connect To Wifi", data.ssid);
 				// logEvent(0, "Connection", connection);
 
         setTimeout(function () {
           exec("sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "+connection, (error, stdout, stderr) => {
-  					if (error) return console.error('exec error:',error);
+  					if (error) return logEvent(2, 'Stop_hotspot exec error:', error);
   				});
     		}, 100);
 
-				self._query_internet(8000); // check again in 8 seconds
+        // check for successful connection, starting in 15 seconds
+				self._query_internet(self.config.wifi_check_network_timeout);
 			} else if (cb) {
 				logEvent(2, "Invalid Password", data.psk);
 				cb("Invalid password", null);

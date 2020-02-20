@@ -57,9 +57,10 @@ var config = {
 			// check_internet_interval Changed because dropped LAN or changed wifi will not be detected by a bot for this long (used to be 30 minutes)
 			// unless the bot has a web or phone client connected to it before the LAN drops
 			network_retries: 5, // retry # of times before resetting to hotspot
-			retry_network_interval: 3000, // three seconds later
-			wifi_error_retry_interval: 60000, // one minute
-      wifi_first_retry_interval: 5000, // five seconds
+			wifi_check_network_timeout: 15000, // when connecting to network (or startup), wait 15 seconds to validate network/internet
+			retry_network_interval: 5000, // if network not connected, check again five seconds later
+      wifi_first_retry_interval: 5000, // if network lost, try right away in five seconds
+			wifi_error_retry_interval: 60000, // if network lost (after first attempt), try to reconnect in one minute
       ntp_wait: 5000, // five seconds
       sleep_init_wait: 10000, // ten seconds
 			default_data: default_status,
