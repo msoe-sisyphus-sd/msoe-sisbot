@@ -2782,7 +2782,7 @@ var sisbot = {
     var wifi_network = self.current_state.get("wifi_network");
     if (!wifi_network || wifi_network == 'false') return;
 
-		self.get_wifi({ iface: 'wlan0', show_hidden: true }, function(err, resp) {
+		self.get_wifi({ iface: 'wlan0' }, function(err, resp) {
 			if (err) {
 				logEvent(2, "Wifi list error:", err);
 
@@ -2803,9 +2803,10 @@ var sisbot = {
           network_found = true;
           logEvent(1, "Hidden Network ", wifi_network, "try to connect");
         } else {
-  				_.each(resp, function(network_obj) {
-            logEvent(1, "Network", network_obj.ssid);
-  					if (network_obj && network_obj.ssid && network_obj.ssid == wifi_network) {
+          var networks = _.uniq(_.pluck(resp, 'ssid'));
+          logEvent(1, "Networks found:", networks);
+  				_.each(networks, function(network_obj) {
+  					if (network_obj && network_obj == wifi_network) {
   						logEvent(1, "Found Network", wifi_network, "try to connect");
   						network_found = true;
   					}
