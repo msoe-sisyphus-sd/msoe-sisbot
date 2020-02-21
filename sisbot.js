@@ -1728,7 +1728,7 @@ var sisbot = {
 
       if (empty_queue) {
         self.thumbnail_generate(self._thumbnail_queue[0], function(err, resp) {
-          logEvent(0, "Missing Thumbnail Regenerate finished", err, resp);
+          logEvent(1, "Missing Thumbnail Regenerate finished", err, resp);
         });
       }
     } else logEvent(1, "No Missing Thumbnails");
