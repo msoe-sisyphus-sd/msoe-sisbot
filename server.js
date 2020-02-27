@@ -158,7 +158,7 @@ var app = function(given_config,ansible) {
 					if (data == "disconnect") {
 						socket.disconnect(true);
 					} else {
-						socket.emit('set', data);
+						if (socket.connected) socket.emit('set', data);
 					}
 				});
 			}
