@@ -778,7 +778,7 @@ var sisbot = {
 			service_connected[service] = "false";
       this.current_state.set("service_connected", service_connected);
 
-      logEvent(0, "_connectionClosed() Socket Update", JSON.stringify(self.current_state.toJSON()).length);
+      logEvent(0, "_connectionClosed() Socket Update", JSON.stringify(this.current_state.toJSON()).length);
       var min_resp = _.pick(this.current_state.toJSON(), ['id','service_connected']);
       this.socket_update(min_resp);
 		}
