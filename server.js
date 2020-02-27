@@ -119,8 +119,8 @@ var app = function(given_config,ansible) {
 
 		var cb		= function (err, resp) {
 			res.json({ err: err, resp: resp });
-			if (!err && endpoint != "state")	{
-		    logEvent(0, "Endpoint Socket Update:"+endpoint+"()", JSON.stringify(resp).length);
+			if (!err && endpoint != "state" && endpoint != "connect")	{
+		    logEvent(0, "Endpoint Socket Update: "+endpoint+"()", JSON.stringify(resp).length);
 				socket_update(resp);
 			}
 		};

@@ -1101,7 +1101,7 @@ var sisbot = {
 		return true;
 	},
 	connect: function(data, cb) {
-		logEvent(1, "Sisbot Connect", data);
+		logEvent(1, "Sisbot Connect()", data);
 		if (cb) cb(null, this.collection.toJSON());
 	},
   state: function(data, cb) {
