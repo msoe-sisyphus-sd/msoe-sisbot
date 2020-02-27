@@ -2576,7 +2576,7 @@ var sisbot = {
 
               // update table with info
               logEvent(0, "_query_internet() Socket Update", JSON.stringify(self.current_state.toJSON()).length);
-              var min_resp = _.pick(self.current_state.toJSON(), ['id','reason_unavailable','is_available','failed_to_connect_to_wifi','wifi_forget','wifi_error']);
+              var min_resp = _.pick(self.current_state.toJSON(), ['id','reason_unavailable','is_available','failed_to_connect_to_wifi','wifi_forget','wifi_error','is_network_connected','is_internet_connected']);
     					self.socket_update(min_resp);
 
     					if (err) return logEvent(2, "Internet check err", err);
@@ -2801,6 +2801,9 @@ var sisbot = {
 			});
       this._network_retries = 0;
 		}
+
+    var min_resp = _.pick(this.current_state.toJSON(), ['id','is_available','reason_unavailable','is_hotspot','is_internet_connected','is_network_connected','wifi_network','wifi_password','wifi_error','wifi_forget']);
+    this.socket_update(min_resp);
 
 		if (cb) cb(null, this.current_state.toJSON());
 
