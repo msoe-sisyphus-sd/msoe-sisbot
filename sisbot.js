@@ -2394,6 +2394,7 @@ var sisbot = {
               var min_track = _.pick(track.toJSON(), ['id','firstR','lastR']);
               var min_state = _.pick(self.current_state.toJSON(), ['id','_end_rho']);
     					self.socket_update([min_track, min_state]);
+
 							if (cb)	cb(null, [track.toJSON(),self.current_state.toJSON()]);
 						} else {
 							logEvent(2, "Continuous play not possible, skip this");
