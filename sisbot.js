@@ -16,6 +16,7 @@ var bleno 		= require('bleno');
 var io 			= require('socket.io');
 var moment 		= require('moment');
 var unix_dg   = require('unix-dgram');
+var GPIO      = require('onoff').Gpio;
 
 /**************************** BLE *********************************************/
 var ble_obj = {
@@ -97,6 +98,9 @@ var sisbot = {
 	plotter: plotter,
 	socket_update: null,
   py: null, // python process for LEDs
+
+  gpios: {},
+  _gpio_timer: null,
 
 	sleep_timer: null,
 	wake_timer: null,
@@ -627,6 +631,24 @@ var sisbot = {
     // Check for missing thumbnails
     this.find_missing_thumbnails({}, null);
 
+    // Set up GPIOs
+    this.set_gpio({
+        gpio: 2,
+        gpio_type: 'in',
+        cb: function(err, resp) {
+          if (err) return logEvent(2, "GPIO callback err", err);
+          self._gpio_testing(resp, null);
+        }
+      }, function(err,resp) {
+        logEvent(1, "GPIO button set:", err, resp);
+      });
+    this.set_gpio({ gpio: 3, gpio_type: 'out', initial_state: 1 }, function(err,resp) {
+      logEvent(1, "GPIO Red LED set:", err, resp);
+    });
+    this.set_gpio({ gpio: 4, gpio_type: 'out', initial_state: 1 }, function(err,resp) {
+      logEvent(1, "GPIO Green LED set:", err, resp);
+    });
+
 		return this;
 	},
 	_setupAnsible: function() {
@@ -785,7 +807,146 @@ var sisbot = {
 
 		this._connectionError(service);
 	},
+  /***************************** GPIO **************************************/
+  set_gpio: function(data, cb) {
+    var self = this;
 
+    // create the gpio obj
+    if (data.gpio != "false") {
+      logEvent(1, "Set GPIO", data);
+
+      // gpio setup
+      var button = new GPIO(data.gpio, data.gpio_type, 'both');
+      this.gpios['gpio'+data.gpio] = {
+        gpio: button,
+        data: {
+          current_state: data.initial_state,
+          gpio: data.gpio,
+          gpio_type: data.gpio_type
+        }
+      }
+
+      // watcher
+      if (data.gpio_type == 'in') {
+        // get current value
+        self.read_gpio(self.gpios['gpio'+data.gpio].data, function(err, resp) {
+          logEvent(1, "GPIO Value", resp);
+          self.gpios['gpio'+data.gpio].data.current_state = resp;
+
+          // respond with values
+          if (cb) cb(null, self.gpios['gpio'+data.gpio].data);
+        });
+
+        if (data.cb) {
+          this.gpios['gpio'+data.gpio].cb = data.cb;
+
+          // watch for future changes
+          button.watch(function (err, value) {
+            if (err) return console.log(err);
+
+            self._gpio_change(data.gpio, value);
+          });
+        }
+      } else { // output gpio
+        this.write_gpio({gpio:data.gpio,state:data.initial_state}, null);
+
+        if (cb) cb(null, self.gpios['gpio'+data.gpio].data);
+      }
+    }
+  },
+  unset_gpio: function(data, cb) {
+    logEvent(1, "Unset GPIO", data);
+    try {
+      var gpio_obj = this.gpios['gpio'+data.gpio];
+      gpio_obj.gpio.unwatchAll();
+      gpio_obj.gpio.unexport();
+
+      delete this.gpios['gpio'+data.gpio]; // remove from gpios list
+    } catch(err) {
+      logEvent(2, "Unset GPIO Error", data.gpio, err);
+    }
+  },
+  read_gpio: function(data, cb) {
+    logEvent(1, "Read GPIO", data, _.keys(this.gpios));
+    try {
+      var gpio_obj = this.gpios['gpio'+data.gpio];
+      gpio_obj.gpio.read(cb);
+    } catch(err) {
+      logEvent(2, "Read GPIO Error", data.gpio, err);
+    }
+  },
+  write_gpio: function(data, cb) {
+    logEvent(1, "Write GPIO", data);
+    // {gpio, state}
+    try {
+      var gpio_obj = this.gpios['gpio'+data.gpio];
+      gpio_obj.gpio.write(data.state,cb);
+    } catch(err) {
+      logEvent(2, "Write GPIO Error", data.gpio, err);
+    }
+  },
+  _gpio_change: function(gpio, value) {
+    var self = this;
+
+    logEvent(1, "GPIO Change", gpio, value);
+    self.gpios['gpio'+gpio].data.current_state = value;
+
+    // TODO: do something about press/release
+    if (self.gpios['gpio'+gpio].cb && _.isFunction(self.gpios['gpio'+gpio].cb))
+      self.gpios['gpio'+gpio].cb(null, self.gpios['gpio'+gpio].data);
+  },
+  _gpio_testing: function(data, cb) {
+    var self = this;
+    logEvent(0, "GPIO button changed:", data);
+
+    // turn Green light on/off
+    if (data.current_state == 0) self.write_gpio({gpio:4,state:0}); // on
+    else self.write_gpio({gpio:4,state:1}); // off
+
+    if (this.current_state.get('is_hotspot') == 'false') {
+      if (data.current_state == 0) {
+        logEvent(0, "Not hotspot, revert?");
+
+        self._gpio_timer = setTimeout(function() {
+          // recheck for hotspot
+          if (self.current_state.get('is_hotspot') == 'false') {
+            logEvent(0, "Not hotspot, revert to hotspot");
+            self.write_gpio({gpio:4,state:1}); // turn off green
+            self._flash_red(null, null); // flash red
+
+            self.disconnect_wifi(null, null); // disconnect if not in firmware update
+          }
+        }, self.config.gpio_hold_time);
+      } else {
+        clearTimeout(self._gpio_timer);
+      }
+    }
+  },
+  _flash_red: function(data, cb) {
+    var count = 2; // flashes 3 times
+    var self = this;
+
+    function red_on() {
+      self.write_gpio({gpio:3,state:0}); // on
+
+      setTimeout(function() {
+        red_off();
+      }, 1000);
+    }
+
+    function red_off() {
+      self.write_gpio({gpio:3,state:1}); // off
+
+      if (count > 0) {
+        count--;
+        setTimeout(function() {
+          red_on();
+        }, 1000);
+      }
+    }
+
+    red_on();
+  },
   /***************************** Connect PI light controller  program ******************/
   // _reconnect_lcp: function() {
   //   this.lcp_socket = unix_dg.createSocket('unix_dgram');
@@ -2408,8 +2569,14 @@ var sisbot = {
 		var percent = this._clamp(+data.value, 0.0, 1.0); // 0.0-1.0f
 		var speed = this.config.min_speed + percent * (this.config.max_speed - this.config.min_speed);
 		logEvent(1, "Sisbot Set Speed", speed);
-    	plotter.setSpeed(speed);
+
+  	plotter.setSpeed(speed);
 		this.current_state.set('speed', percent);
+
+    // update table with info
+    logEvent(0, "set_speed() Socket Update", JSON.stringify(this.current_state.toJSON()).length);
+    var min_resp = _.pick(this.current_state.toJSON(), ['id','speed']);
+		this.socket_update(min_resp);
 
 		this.save(null, null);
 
@@ -2422,6 +2589,11 @@ var sisbot = {
 		plotter.setAutodim(data.value);// notify plotter of autodim setting
 
 		this.set_brightness({ value: this.current_state.get("brightness") });
+
+    // update table with info
+    logEvent(0, "set_autodim() Socket Update", JSON.stringify(this.current_state.toJSON()).length);
+    var min_resp = _.pick(this.current_state.toJSON(), ['id','is_autodim']);
+		this.socket_update(min_resp);
 
 		this.save(null, null);
 
@@ -2441,6 +2613,11 @@ var sisbot = {
 
 	  plotter.setBrightness(value);
 
+    // update table with info
+    logEvent(0, "set_brightness() Socket Update", JSON.stringify(this.current_state.toJSON()).length);
+    var min_resp = _.pick(this.current_state.toJSON(), ['id','brightness']);
+		this.socket_update(min_resp);
+
 		this.save(null, null);
 
 		if (cb)	cb(null, this.current_state.toJSON());
@@ -2450,6 +2627,11 @@ var sisbot = {
 		logEvent(1, 'Sisbot set pause between tracks', data);
 
 		this.current_state.set('is_paused_between_tracks', data.is_paused_between_tracks);
+
+    // update table with info
+    logEvent(0, "set_pause_between_tracks() Socket Update", JSON.stringify(this.current_state.toJSON()).length);
+    var min_resp = _.pick(this.current_state.toJSON(), ['id','is_paused_between_tracks']);
+		this.socket_update(min_resp);
 
 		this.save(null, null);
 
@@ -2466,6 +2648,11 @@ var sisbot = {
 		}
 
 		this.current_state.set('share_log_files', data.value);
+
+    // update table with info
+    logEvent(0, "set_pause_between_tracks() Socket Update", JSON.stringify(this.current_state.toJSON()).length);
+    var min_resp = _.pick(this.current_state.toJSON(), ['id','share_log_files']);
+		this.socket_update(min_resp);
 
 		if (cb)	cb(null, this.current_state.toJSON());
 	},
