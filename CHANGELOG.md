@@ -1,9 +1,10 @@
-# 2020-02-26 1.10.63-64
+# 2020-02-26 1.10.63-65
   - Exists() returns limited data
   - Incoming Post requests correctly filter out password values from logs in arrays of models
   - Log Connect() data, Siscloud/app version 1.10.01 will send data about device connecting
   - Socket_update sent data limited to keys that may change via given endpoint
   - Hold GPIO button for 3 seconds during play resets the table to hotspot, red light flashes three times when triggered
+  - Start_hotspot always clears wpa_supplicant file
 # 2020-01-23 1.10.60-62
   - Find Missing Thumbnails on startup
   - Improved speed on RGBW brightness change
