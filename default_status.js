@@ -351,7 +351,7 @@ module.exports = [{
 }, {
   "id": "2CBDAE96-EC22-48B4-A369-BFC624463C5F",
   "type": "track",
-  "created_by_name": "Sisyphus Industries",
+  "created_by_name": "bshapiro",
   "name": "Erase",
   "is_deletable": "false",
   "default_vel": 3,
@@ -361,7 +361,7 @@ module.exports = [{
 }, {
   "id": "C3D8BC17-E2E1-4D6D-A91F-80FBB65620B8",
   "type": "track",
-  "created_by_name": "Sisyphus Industries",
+  "created_by_name": "bshapiro",
   "name": "Tensig 1",
   "default_vel": 1,
   "default_accel": 0.5,
@@ -370,7 +370,7 @@ module.exports = [{
 }, {
   "id": "2B34822B-0A27-4398-AE19-23A3C83F1220",
   "type": "track",
-  "created_by_name": "Sisyphus Industries",
+  "created_by_name": "Alex Wayne",
   "name": "Sine",
   "default_vel": 1,
   "default_accel": 0.5,
@@ -378,7 +378,7 @@ module.exports = [{
 }, {
   "id": "93A90B6B-EAEE-48A3-9742-C688235D837D",
   "type": "track",
-  "created_by_name": "Sisyphus Industries",
+  "created_by_name": "bshapiro",
   "name": "Circam 2S",
   "default_vel": 1,
   "default_accel": 0.5,
@@ -387,7 +387,7 @@ module.exports = [{
 }, {
   "id": "B7407A2F-04C3-4C92-B907-4C3869DA86D6",
   "type": "track",
-  "created_by_name": "Sisyphus Industries",
+  "created_by_name": "bshapiro",
   "name": "C Warp 3B",
   "default_vel": 1,
   "default_accel": 0.5,
@@ -396,7 +396,7 @@ module.exports = [{
 }, {
   "id": "7C046710-9F19-4423-B291-7394996F0913",
   "type": "track",
-  "created_by_name": "Sisyphus Industries",
+  "created_by_name": "bshapiro",
   "name": "D Ces 4P",
   "default_vel": 1,
   "default_accel": 0.5,
@@ -404,7 +404,7 @@ module.exports = [{
 }, {
   "id": "D14E0B41-E572-4B69-9827-4A07C503D031",
   "type": "track",
-  "created_by_name": "Sisyphus Industries",
+  "created_by_name": "bshapiro",
   "name": "Hep",
   "default_vel": 1,
   "default_accel": 0.5,
@@ -413,7 +413,7 @@ module.exports = [{
 }, {
   "id": "26FBFB10-4BC7-46BF-8D55-85AA52C19ADF",
   "type": "track",
-  "created_by_name": "Sisyphus Industries",
+  "created_by_name": "bshapiro",
   "name": "India 1P",
   "default_vel": 1,
   "default_accel": 0.5,
@@ -421,7 +421,7 @@ module.exports = [{
 }, {
   "id": "75518177-0D28-4B2A-9B73-29E4974FB702",
   "type": "track",
-  "created_by_name": "Sisyphus Industries",
+  "created_by_name": "bshapiro",
   "name": "Para 2B",
   "default_vel": 1,
   "default_accel": 0.5,
@@ -430,7 +430,7 @@ module.exports = [{
 }, {
 //   "id": "906de7a3-4769-4964-96cd-2bcf80bad2f5",
 //   "type": "track",
-//   "created_by_name": "Sisyphus Industries",
+//   "created_by_name": "bshapiro",
 //   "name": "apache1",
 //   "default_vel": 1,
 //   "default_accel": 0.5,
@@ -439,7 +439,7 @@ module.exports = [{
 // }, {
   "id": "b19a2909-a9f5-490b-9f9a-d990f5a77393",
   "type": "track",
-  "created_by_name": "Sisyphus Industries",
+  "created_by_name": "bshapiro",
   "name": "e10",
   "default_vel": 1,
   "default_accel": 0.5,
@@ -448,7 +448,7 @@ module.exports = [{
 }, {
 //   "id": "6796b5c5-0f4b-47e2-b871-f30d9e967d6b",
 //   "type": "track",
-//   "created_by_name": "Sisyphus Industries",
+//   "created_by_name": "bshapiro",
 //   "name": "ellweave1$p",
 //   "default_vel": 1,
 //   "default_accel": 0.5,
@@ -457,7 +457,7 @@ module.exports = [{
 // }, {
 //   "id": "bd89c7f7-d272-44dd-b80c-aa4c1ece36f2",
 //   "type": "track",
-//   "created_by_name": "Sisyphus Industries",
+//   "created_by_name": "bshapiro",
 //   "name": "fox1warp1",
 //   "default_vel": 1,
 //   "default_accel": 0.5,
@@ -466,7 +466,7 @@ module.exports = [{
 // }, {
   "id": "c0f63e2f-e63d-4228-a8bc-6a29f92da50c",
   "type": "track",
-  "created_by_name": "Sisyphus Industries",
+  "created_by_name": "bshapiro",
   "name": "hb5_4w1p",
   "default_vel": 1,
   "default_accel": 0.5,
@@ -474,7 +474,7 @@ module.exports = [{
 }, {
   "id": "b33775f0-3abf-47f3-ba46-85e85a2bb0d4",
   "type": "track",
-  "created_by_name": "Sisyphus Industries",
+  "created_by_name": "bshapiro",
   "name": "lasso1",
   "default_vel": 1,
   "default_accel": 0.5,
@@ -483,7 +483,7 @@ module.exports = [{
 }, {
   "id": "db96d725-09b9-4c80-80ec-9c77658a74ac",
   "type": "track",
-  "created_by_name": "Sisyphus Industries",
+  "created_by_name": "bshapiro",
   "name": "lasso4a",
   "default_vel": 1,
   "default_accel": 0.5,
@@ -492,7 +492,7 @@ module.exports = [{
 }, {
 //   "id": "45540bac-3422-4386-a804-2b185776d921",
 //   "type": "track",
-//   "created_by_name": "Sisyphus Industries",
+//   "created_by_name": "bshapiro",
 //   "name": "peoni1",
 //   "default_vel": 1,
 //   "default_accel": 0.5,
@@ -501,7 +501,7 @@ module.exports = [{
 // }, {
   "id": "f1451810-ab23-4878-9b45-cca5cfb5b1e7",
   "type": "track",
-  "created_by_name": "Sisyphus Industries",
+  "created_by_name": "bshapiro",
   "name": "seash5",
   "default_vel": 1,
   "default_accel": 0.5,
@@ -510,7 +510,7 @@ module.exports = [{
 }, {
   "id": "580c9f06-1c74-4e36-b4ab-b63a72d6399b",
   "type": "track",
-  "created_by_name": "Sisyphus Industries",
+  "created_by_name": "bshapiro",
   "name": "sisvort1",
   "default_vel": 1,
   "default_accel": 0.5,
@@ -518,7 +518,7 @@ module.exports = [{
 }, {
 //   "id": "3872a018-f176-4661-b580-a988e0788299",
 //   "type": "track",
-//   "created_by_name": "Sisyphus Industries",
+//   "created_by_name": "bshapiro",
 //   "name": "sola3",
 //   "default_vel": 1,
 //   "default_accel": 0.5,
@@ -527,7 +527,7 @@ module.exports = [{
 // }, {
   "id": "103f52ff-fc00-4c41-9098-47f2e0a7e7a1",
   "type": "track",
-  "created_by_name": "Sisyphus Industries",
+  "created_by_name": "bshapiro",
   "name": "spmrph1r",
   "default_vel": 1,
   "default_accel": 0.5,
@@ -536,7 +536,7 @@ module.exports = [{
 }, {
   "id": "1f274aa7-6214-4172-b251-a5ac33d36184",
   "type": "track",
-  "created_by_name": "Sisyphus Industries",
+  "created_by_name": "bshapiro",
   "name": "swirl1b",
   "default_vel": 1,
   "default_accel": 0.5,
@@ -545,7 +545,7 @@ module.exports = [{
 }, {
   "id": "e0a61484-35eb-4f40-9a0a-7f9d6ee58c37",
   "type": "track",
-  "created_by_name": "Sisyphus Industries",
+  "created_by_name": "bshapiro",
   "name": "tensig2$",
   "default_vel": 1,
   "default_accel": 0.5,
@@ -554,7 +554,7 @@ module.exports = [{
 }, {
   "id": "3ae084de-cea3-4729-8bf8-0c6e43d47d49",
   "type": "track",
-  "created_by_name": "Sisyphus Industries",
+  "created_by_name": "bshapiro",
   "name": "trialdn1",
   "default_vel": 1,
   "default_accel": 0.5,
@@ -563,7 +563,7 @@ module.exports = [{
 }, {
   "id": "6209824a-9860-4746-a374-d02091e9f808",
   "type": "track",
-  "created_by_name": "Sisyphus Industries",
+  "created_by_name": "bshapiro",
   "name": "trwirl1",
   "default_vel": 1,
   "default_accel": 0.5,
@@ -572,7 +572,7 @@ module.exports = [{
 }, {
   "id": "77a9f396-f2a3-459b-8e0d-5da024eb13b6",
   "type": "track",
-  "created_by_name": "Sisyphus Industries",
+  "created_by_name": "bshapiro",
   "name": "zowie1r$b",
   "default_vel": 1,
   "default_accel": 0.5,
@@ -581,7 +581,7 @@ module.exports = [{
 }, {
   "id": "cfca6c0c-0d04-4fbc-a78b-3d031fd6434f",
   "type": "track",
-  "created_by_name": "Sisyphus Industries",
+  "created_by_name": "bugmorgan",
   "name": "Sailboat2",
   "default_vel": 1,
   "default_accel": 0.5,
@@ -589,7 +589,7 @@ module.exports = [{
 }, {
   "id": "19aa381c-5856-4e3c-8ee1-81f61d44d8ca",
   "type": "track",
-  "created_by_name": "Sisyphus Industries",
+  "created_by_name": "Quibe",
   "name": "faces1b$",
   "default_vel": 1,
   "default_accel": 0.5,
@@ -597,7 +597,7 @@ module.exports = [{
 }, {
   "id": "f36a4a58-07fb-4a7b-915f-916e6e5be06f",
   "type": "track",
-  "created_by_name": "Sisyphus Industries",
+  "created_by_name": "Salventius",
   "name": "Salv2b",
   "default_vel": 1,
   "default_accel": 0.5,
@@ -605,7 +605,7 @@ module.exports = [{
 }, {
   "id": "c136f436-6962-47e6-8cae-8f35294dbfff",
   "type": "track",
-  "created_by_name": "Sisyphus Industries",
+  "created_by_name": "Will Scobie",
   "name": "serpent1$",
   "default_vel": 1,
   "default_accel": 0.5,
@@ -613,7 +613,7 @@ module.exports = [{
 }, {
   "id": "3ab7f7b3-55a5-4055-b94f-e2e8fb4e5234",
   "type": "track",
-  "created_by_name": "Sisyphus Industries",
+  "created_by_name": "Adobe Stock Image",
   "name": "snowboarder1$",
   "default_vel": 1,
   "default_accel": 0.5,
@@ -795,7 +795,7 @@ module.exports = [{
 }, {
   "id": "f7552c83-ba4d-4642-9373-a1a269522e0f",
   "type": "track",
-  "created_by_name": "Sisyphus Industries",
+  "created_by_name": "bshapiro",
   "name": "fox1warp2",
   "default_vel": 1,
   "default_accel": 0.5,
@@ -804,7 +804,7 @@ module.exports = [{
 }, {
   "id": "6a27135c-e93b-4925-9dd9-d138b42719f0",
   "type": "track",
-  "created_by_name": "Sisyphus Industries",
+  "created_by_name": "bshapiro",
   "name": "apache1",
   "default_vel": 1,
   "default_accel": 0.5,
@@ -813,7 +813,7 @@ module.exports = [{
 }, {
   "id": "dcaeaee1-446a-4880-a942-32ef05edcd2a",
   "type": "track",
-  "created_by_name": "Sisyphus Industries",
+  "created_by_name": "bshapiro",
   "name": "ellweave1$p",
   "default_vel": 1,
   "default_accel": 0.5,
@@ -822,7 +822,7 @@ module.exports = [{
 }, {
   "id": "4e718106-4005-4623-825c-9e3da30a2109",
   "type": "track",
-  "created_by_name": "Sisyphus Industries",
+  "created_by_name": "bshapiro",
   "name": "peoni1",
   "default_vel": 1,
   "default_accel": 0.5,
@@ -831,7 +831,7 @@ module.exports = [{
 }, {
   "id": "38cb2dad-23d6-4c53-888f-88ee591a04d6",
   "type": "track",
-  "created_by_name": "Sisyphus Industries",
+  "created_by_name": "bshapiro",
   "name": "sola3",
   "default_vel": 1,
   "default_accel": 0.5,
@@ -877,7 +877,7 @@ module.exports = [{
     {
       "id": "cfca6c0c-0d04-4fbc-a78b-3d031fd6434f",
       "type": "track",
-      "created_by_name": "Sisyphus Industries",
+      "created_by_name": "bugmorgan",
       "name": "Sailboat2 ",
       "default_vel": 1,
       "default_accel": 0.5,
