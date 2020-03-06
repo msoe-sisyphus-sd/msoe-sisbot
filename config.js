@@ -16,7 +16,7 @@ if (process.env.NODE_ENV.indexOf('dummy') == -1) {
 
 var config = {
 		base: {
-			version	: '1.10.62',
+			version	: '1.9.66',
 			debug   : false,
 			default_domain: 'sisyphus.local',
 			cert: function() {
@@ -61,6 +61,7 @@ var config = {
 			retry_network_interval: 5000, // if network not connected, check again five seconds later
       wifi_first_retry_interval: 5000, // if network lost, try right away in five seconds
 			wifi_error_retry_interval: 60000, // if network lost (after first attempt), try to reconnect in one minute
+			gpio_hold_time: 3000, // time to hold down gpio button for reset to hotspot
       ntp_wait: 5000, // five seconds
       sleep_init_wait: 10000, // ten seconds
 			default_data: default_status,

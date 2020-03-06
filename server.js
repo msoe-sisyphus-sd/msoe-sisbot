@@ -85,40 +85,44 @@ var app = function(given_config,ansible) {
     //var hdr = JSON.stringify(req.headers);
     //logEvent(1, "Headers for HOST were " + hdr);
 
-    var hip = host.split('.');
-    var oct2 = parseInt(hip[1]);
-
-    if (hip[0] == "10"  || (hip[0] == "192" && hip[1] == "168")  || (hip[0] == "172" && oct2 > 15 && oct2 < 32) )
-    {
-      if (config.debug) logEvent(1, "POST host " + host + " is whitelisted");
-    }
-    else
-    {
-      if (host.match("\.local$") != null)
-      {
-         if (config.debug) logEvent(1, "POST from bonjour is whitelisted " + host);
-      }
-      else
-      {
-        logEvent(1, "POST host " + host + " is DENIED");
-        //res.status(401).send({ error: "host " + host + " is not whitelisted" });
-        //return;
-      }
-    }
-
+    // var hip = host.split('.');
+    // var oct2 = parseInt(hip[1]);
+		//
+    // if (hip[0] == "10"  || (hip[0] == "192" && hip[1] == "168")  || (hip[0] == "172" && oct2 > 15 && oct2 < 32) ) {
+    //   if (config.debug) logEvent(1, "POST host " + host + " is whitelisted");
+    // } else {
+    //   if (host.match("\.local$") != null) {
+    //      if (config.debug) logEvent(1, "POST from bonjour is whitelisted " + host);
+    //   } else {
+    //     if (config.debug) logEvent(1, "POST host " + host + " is DENIED");
+    //     //res.status(401).send({ error: "host " + host + " is not whitelisted" });
+    //     //return;
+    //   }
+    // }
 
 		var data = (_.isString(req.body.data)) ? JSON.parse(req.body.data) : req.body.data;
 		data = data.data;
 
-		// TODO: remove add_track as well, or at least don't log the verts
 		if (endpoint != "state") {
-			var truncated_data = _.omit(data, 'verts', 'raw_coors', 'wifi_password', 'password', 'psk'); // add any keys to skip from logging
-			logEvent(1, "Post:",service, endpoint,truncated_data);
+			// check if data is an array, loop through if so
+			if (_.isArray(data)) {
+				var truncated_data = [];
+				_.each(data, function(obj) {
+					truncated_data.push(_.omit(obj, 'verts', 'raw_coors', 'wifi_password', 'password', 'psk')); // add any keys to skip from logging
+				});
+				logEvent(1, "Post Array:", service, endpoint, truncated_data);
+			} else {
+				var truncated_data = _.omit(data, 'verts', 'raw_coors', 'wifi_password', 'password', 'psk'); // add any keys to skip from logging
+				logEvent(1, "Post:", service, endpoint, truncated_data);
+			}
 		}
 
 		var cb		= function (err, resp) {
 			res.json({ err: err, resp: resp });
-			if (!err)	socket_update(resp);
+			if (!err && endpoint != "state" && endpoint != "connect")	{
+		    // logEvent(1, "Endpoint Socket Update: "+endpoint+"()", JSON.stringify(resp).length);
+				socket_update(resp);
+			}
 		};
 		try {
 			services[service][endpoint](data,cb);
@@ -130,7 +134,6 @@ var app = function(given_config,ansible) {
 	var server = http.createServer(static).listen(config.services.sisbot.port);
 
 	/**************************** HELPER FUNCTIONS ***************************************/
-
 	function socket_update(data) {
 		if (data != null) {
 			//logEvent(1, "socket_update()  data=", data);
@@ -144,11 +147,14 @@ var app = function(given_config,ansible) {
 					logEvent(1, "Socket Server closed");
 				});
 			} else {
+				// How much data is sent?
+				if (process.env.NODE_ENV.indexOf('_dev') >= 0) logEvent(0, "Socket Update:", JSON.stringify(data).length);
+
 				_.each(sockets, function(socket, id) {
 					if (data == "disconnect") {
 						socket.disconnect(true);
 					} else {
-						socket.emit('set', data);
+						if (socket.connected) socket.emit('set', data);
 					}
 				});
 			}
@@ -198,6 +204,7 @@ var app = function(given_config,ansible) {
 			try {
 				services['sisbot'].state({}, function(err, resp) {
 					if (err) return;
+					// logEvent(1, "Socket Connect Set:", JSON.stringify(resp).length);
 					socket.emit('set', resp);
 				});
 			} catch(err) {
