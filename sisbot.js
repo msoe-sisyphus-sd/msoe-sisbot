@@ -1488,7 +1488,8 @@ var sisbot = {
   		logEvent(1, "Sisbot Play", data);
       if (this._pause_timestamp != null && (Date.now() - this._pause_timestamp) < this.pause_play_lockout_msec) {
         logEvent(1,"Sisbot refused to Play, Still in lockout time window after a Pause command");
-        if (cb) cb('Still waiting for Pause to complete', null);
+        var min_resp = _.pick(this.current_state.toJSON(), ['id','state']);
+        if (cb) cb('Still waiting for Pause to complete', min_resp);
         return;
       }
 
