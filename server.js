@@ -120,7 +120,7 @@ var app = function(given_config,ansible) {
 		var cb		= function (err, resp) {
 			res.json({ err: err, resp: resp });
 			if (!err && endpoint != "state" && endpoint != "connect")	{
-		    logEvent(0, "Endpoint Socket Update: "+endpoint+"()", JSON.stringify(resp).length);
+		    // logEvent(1, "Endpoint Socket Update: "+endpoint+"()", JSON.stringify(resp).length);
 				socket_update(resp);
 			}
 		};
@@ -147,12 +147,8 @@ var app = function(given_config,ansible) {
 					logEvent(1, "Socket Server closed");
 				});
 			} else {
-				// TODO: How much data is sent?
-				logEvent(0, "Socket Update:", JSON.stringify(data).length);
-	      // if (process.env.NODE_ENV.indexOf('_dev') >= 0) {
-				// 	var socket_keys = _.keys(sockets);
-					// if (socket_keys.length > 0) logEvent(0, "Socket Update ("+socket_keys.length+"):", JSON.stringify(data).length);
-				// }
+				// How much data is sent?
+				if (process.env.NODE_ENV.indexOf('_dev') >= 0) logEvent(0, "Socket Update:", JSON.stringify(data).length);
 
 				_.each(sockets, function(socket, id) {
 					if (data == "disconnect") {
@@ -208,7 +204,7 @@ var app = function(given_config,ansible) {
 			try {
 				services['sisbot'].state({}, function(err, resp) {
 					if (err) return;
-					logEvent(0, "Socket Connect Set:", JSON.stringify(resp).length);
+					// logEvent(1, "Socket Connect Set:", JSON.stringify(resp).length);
 					socket.emit('set', resp);
 				});
 			} catch(err) {

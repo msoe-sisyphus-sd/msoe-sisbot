@@ -418,7 +418,7 @@ var sisbot = {
         if (self.current_state.get('fault_status') == 'servo_th_fault') self.current_state.set("fault_status", "false");
         else if (self.current_state.get('fault_status') == 'servo_th_rho_fault') self.current_state.set("fault_status", "servo_rho_fault");
       }
-      logEvent(0, "onServoThFault() Socket Update");
+      // logEvent(1, "onServoThFault() Socket Update");
       var min_resp = _.pick(self.current_state.toJSON(), ['id','fault_status','state']);
       self.socket_update(min_resp); // notify all connected UI
 			clearTimeout(self._network_check); // stop internet checks
@@ -432,7 +432,7 @@ var sisbot = {
         if (self.current_state.get('fault_status') == 'servo_rho_fault') self.current_state.set("fault_status", "false");
         else if (self.current_state.get('fault_status') == 'servo_th_rho_fault') self.current_state.set("fault_status", "servo_th_fault");
       }
-      logEvent(0, "onServoRhoFault() Socket Update");
+      // logEvent(1, "onServoRhoFault() Socket Update");
       var min_resp = _.pick(self.current_state.toJSON(), ['id','fault_status','state']);
       self.socket_update(min_resp); // notify all connected UI
 			clearTimeout(self._network_check); // stop internet checks
@@ -441,7 +441,7 @@ var sisbot = {
       if (self.current_state.get('fault_status') != 'servo_th_rho_fault') logEvent(2, 'Servo Th and Rho Fault!');
 			self.pause(null, null);
 			self.current_state.set("fault_status", "servo_th_rho_fault");
-      logEvent(0, "onServoThRhoFault() Socket Update");
+      // logEvent(1, "onServoThRhoFault() Socket Update");
       var min_resp = _.pick(self.current_state.toJSON(), ['id','fault_status','state']);
       self.socket_update(min_resp); // notify all connected UI
 			clearTimeout(self._network_check); // stop internet checks
@@ -468,7 +468,7 @@ var sisbot = {
 				// make sure playlist was not deleted
 				if (!playlist) {
 					self.current_state.set('active_playlist_id', 'false');
-          logEvent(0, "onFinishTrack() no playlist Socket Update", JSON.stringify(self.current_state.toJSON()).length);
+          // logEvent(1, "onFinishTrack() no playlist Socket Update", JSON.stringify(self.current_state.toJSON()).length);
           var min_resp = _.pick(self.current_state.toJSON(), ['id', 'active_playlist_id', 'ball_count','state']);
 					return self.socket_update(min_resp);
 				}
@@ -489,7 +489,7 @@ var sisbot = {
 				self.current_state.set('repeat_current', 'false');
 
 				// update UI
-        logEvent(0, "onFinishTrack() playlist Socket Update", JSON.stringify([self.current_state.toJSON(),playlist.toJSON()]).length);
+        // logEvent(1, "onFinishTrack() playlist Socket Update", JSON.stringify([self.current_state.toJSON(),playlist.toJSON()]).length);
         var min_state = _.pick(self.current_state.toJSON(), ['id','state', 'active_playlist_id', 'ball_count','repeat_current','is_waiting_between_tracks','active_track']);
         var min_playlist = _.pick(playlist.toJSON(), ['id','is_shuffle','is_loop','active_track_index','active_track_id','tracks','sorted_tracks','next_tracks']);
         self.socket_update([min_state, min_playlist]);
@@ -504,7 +504,7 @@ var sisbot = {
 				self.current_state.set('repeat_current', 'false');
 
 				// update UI
-        logEvent(0, "onFinishTrack() single track Socket Update", JSON.stringify(self.current_state.toJSON()).length);
+        // logEvent(1, "onFinishTrack() single track Socket Update", JSON.stringify(self.current_state.toJSON()).length);
         var min_resp = _.pick(self.current_state.toJSON(), ['id','state', 'active_playlist_id', 'ball_count','repeat_current','is_waiting_between_tracks']);
         self.socket_update(min_resp);
 			}
@@ -586,7 +586,7 @@ var sisbot = {
 			}
 
 			// update UI
-      logEvent(0, "onStateChanged() Socket Update", JSON.stringify(self.current_state.toJSON()).length);
+      // logEvent(1, "onStateChanged() Socket Update", JSON.stringify(self.current_state.toJSON()).length);
       var min_resp = _.pick(self.current_state.toJSON(), ['id', 'state', '_end_rho', 'repeat_current', 'is_homed']);
       self.socket_update(min_resp);
 		});
@@ -761,7 +761,7 @@ var sisbot = {
 		service_connected.api = "true"
 		self.current_state.set("service_connected", service_connected);
 
-    logEvent(0, "_ready() Socket Update", JSON.stringify(self.current_state.toJSON()).length);
+    // logEvent(1, "_ready() Socket Update", JSON.stringify(self.current_state.toJSON()).length);
     var min_resp = _.pick(self.current_state.toJSON(), ['id','state','service_connected']);
     this.socket_update(min_resp);
 	},
@@ -800,7 +800,7 @@ var sisbot = {
 			service_connected[service] = "false";
       this.current_state.set("service_connected", service_connected);
 
-      logEvent(0, "_connectionClosed() Socket Update", JSON.stringify(this.current_state.toJSON()).length);
+      // logEvent(1, "_connectionClosed() Socket Update", JSON.stringify(this.current_state.toJSON()).length);
       var min_resp = _.pick(this.current_state.toJSON(), ['id','state','service_connected']);
       this.socket_update(min_resp);
 		}
@@ -897,7 +897,7 @@ var sisbot = {
   },
   _gpio_testing: function(data, cb) {
     var self = this;
-    logEvent(0, "GPIO button changed:", data);
+    logEvent(1, "GPIO button changed:", data);
 
     // turn Green light on/off
     if (data.current_state == 0) self.write_gpio({gpio:4,state:0}); // on
@@ -905,12 +905,12 @@ var sisbot = {
 
     if (this.current_state.get('is_hotspot') == 'false') {
       if (data.current_state == 0) {
-        logEvent(0, "Not hotspot, revert?");
+        // logEvent(1, "Not hotspot, revert?");
 
         self._gpio_timer = setTimeout(function() {
           // recheck for hotspot
           if (self.current_state.get('is_hotspot') == 'false') {
-            logEvent(0, "Not hotspot, revert to hotspot");
+            logEvent(1, "GPIO: Not hotspot, revert to hotspot");
             self.write_gpio({gpio:4,state:1}); // turn off green
             self._flash_red(null, null); // flash red
 
@@ -1223,7 +1223,7 @@ var sisbot = {
 
 						self.set_playlist(playlist_obj, function(err, resp) {
 							if (err) return logEvent(1, "Set initial playlist", err);
-              // logEvent(0, "_connect() Socket Update", JSON.stringify(resp).length);
+              // logEvent(1, "_connect() Socket Update", JSON.stringify(resp).length);
     					// self.socket_update(resp);
 						});
 					}
@@ -1314,7 +1314,7 @@ var sisbot = {
     }
     this.current_state.set('reason_unavailable', data.value);
 
-    logEvent(0, "test_unavailable() Socket Update", JSON.stringify(this.current_state.toJSON()).length);
+    // logEvent(1, "test_unavailable() Socket Update", JSON.stringify(this.current_state.toJSON()).length);
     var min_resp = _.pick(this.current_state.toJSON(), ['id','state','reason_unavailable']);
     this.socket_update(min_resp); // notify all connected UI
     clearTimeout(this._network_check); // stop internet checks
@@ -1488,7 +1488,8 @@ var sisbot = {
   		logEvent(1, "Sisbot Play", data);
       if (this._pause_timestamp != null && (Date.now() - this._pause_timestamp) < this.pause_play_lockout_msec) {
         logEvent(1,"Sisbot refused to Play, Still in lockout time window after a Pause command");
-        if (cb) cb('Still waiting for Pause to complete', null);
+        var min_resp = _.pick(this.current_state.toJSON(), ['id','state']);
+        if (cb) cb('Still waiting for Pause to complete', min_resp);
         return;
       }
 
@@ -1509,7 +1510,7 @@ var sisbot = {
 					}
 
 					// this.current_state.set('active_track', playlist.get_next_track({ start_rho: this.current_state.get('_end_rho') }));
-          logEvent(0, "Play() Socket Update", JSON.stringify(playlist.toJSON()).length);
+          // logEvent(1, "Play() Socket Update", JSON.stringify(playlist.toJSON()).length);
           var min_playlist = _.pick(playlist.toJSON(), ['id','active_track_index','active_track_id','tracks']);
 					this.socket_update(min_playlist);
 				}
@@ -1532,7 +1533,7 @@ var sisbot = {
 				plotter.resume();
 			}
 
-      logEvent(0, "Play() Socket Update 2", JSON.stringify(this.current_state.toJSON()).length);
+      // logEvent(1, "Play() Socket Update 2", JSON.stringify(this.current_state.toJSON()).length);
       var min_resp = _.pick(this.current_state.toJSON(), ['id','is_waiting_between_tracks','state','active_track']);
       this.socket_update(min_resp);
 
@@ -1711,7 +1712,7 @@ var sisbot = {
 		if (cb) cb(null, [playlist.toJSON(), this.current_state.toJSON()]); // send back current_state and the playlist
 
 		// tell all connected devices
-    logEvent(0, "add_playlist() Socket Update", JSON.stringify([playlist.toJSON(), this.current_state.toJSON()]).length);
+    // logEvent(1, "add_playlist() Socket Update", JSON.stringify([playlist.toJSON(), this.current_state.toJSON()]).length);
     var min_playlist = _.pick(playlist.toJSON(), ['id','is_shuffle','tracks','sorted_tracks','next_tracks']);
     var min_state = _.pick(this.current_state.toJSON(), ['id','state','playlist_ids']);
     this.socket_update([min_playlist, min_state]);
@@ -1794,7 +1795,7 @@ var sisbot = {
 			self._thumbnail_queue.push(JSON.parse(JSON.stringify(thumb_obj)));
 
       self.current_state.set("thumbnail_queue_length", self._thumbnail_queue.length);
-      logEvent(0, "add_track() Socket Update", JSON.stringify(self.current_state.toJSON()).length);
+      // logEvent(1, "add_track() Socket Update", JSON.stringify(self.current_state.toJSON()).length);
       var min_state = _.pick(self.current_state.toJSON(), ['id','state','track_ids']);
       self.socket_update(min_state);
 
@@ -1805,7 +1806,7 @@ var sisbot = {
 					if (cb) cb(null, [track.toJSON(), self.current_state.toJSON()]);
 
 					// tell all connected devices
-          logEvent(0, "add_track() thumbnail_generate Socket Update", JSON.stringify([track.toJSON(), self.current_state.toJSON()]).length);
+          // logEvent(1, "add_track() thumbnail_generate Socket Update", JSON.stringify([track.toJSON(), self.current_state.toJSON()]).length);
           var min_track = _.pick(track.toJSON(), ['id','name','track_id']);
           var min_state = _.pick(self.current_state.toJSON(), ['id','state','thumbnail_queue_length']);
 					self.socket_update([min_track, min_state]);
@@ -1937,7 +1938,7 @@ var sisbot = {
 
       if (empty_queue) {
         self.thumbnail_generate(self._thumbnail_queue[0], function(err, resp) {
-          logEvent(0, "Missing Thumbnail Regenerate finished", err, resp);
+          logEvent(1, "Missing Thumbnail Regenerate finished", err, resp);
         });
       }
     } else logEvent(1, "No Missing Thumbnails");
@@ -1970,7 +1971,7 @@ var sisbot = {
       logEvent(1, "Images to Regenerate", self._thumbnail_queue.length);
 
       self.current_state.set("thumbnail_queue_length", self._thumbnail_queue.length);
-      logEvent(0, "regenerate_thumbnails() Socket Update", JSON.stringify(self.current_state.toJSON()).length);
+      // logEvent(1, "regenerate_thumbnails() Socket Update", JSON.stringify(self.current_state.toJSON()).length);
       var min_resp = _.pick(self.current_state.toJSON(), ['id','state','thumbnail_queue_length']);
       self.socket_update(min_resp);
 
@@ -1981,7 +1982,7 @@ var sisbot = {
         if (cb) cb(null, self.current_state.toJSON());
 
         // tell all connected devices
-        logEvent(0, "regenerate_thumbnails() finished Socket Update", JSON.stringify(self.current_state.toJSON()).length);
+        // logEvent(1, "regenerate_thumbnails() finished Socket Update", JSON.stringify(self.current_state.toJSON()).length);
         var min_resp = _.pick(self.current_state.toJSON(), ['id','state','thumbnail_queue_length']);
         self.socket_update(min_resp);
       });
@@ -2005,7 +2006,7 @@ var sisbot = {
 		}
 
     self.current_state.set("thumbnail_queue_length", self._thumbnail_queue.length);
-    logEvent(0, "thumbnail_preview_generate() Socket Update", JSON.stringify(self.current_state.toJSON()).length);
+    // logEvent(1, "thumbnail_preview_generate() Socket Update", JSON.stringify(self.current_state.toJSON()).length);
     var min_resp = _.pick(self.current_state.toJSON(), ['id','state','thumbnail_queue_length']);
     self.socket_update(min_resp);
 
@@ -2035,7 +2036,7 @@ var sisbot = {
 
         self._thumbnail_queue.shift(); // remove first in queue
         self.current_state.set("thumbnail_queue_length", self._thumbnail_queue.length);
-        logEvent(0, "thumbnail_generate() Socket Update", JSON.stringify(self.current_state.toJSON()).length);
+        // logEvent(1, "thumbnail_generate() Socket Update", JSON.stringify(self.current_state.toJSON()).length);
         var min_resp = _.pick(self.current_state.toJSON(), ['id','state','thumbnail_queue_length']);
         self.socket_update(min_resp);
 
@@ -2081,7 +2082,7 @@ var sisbot = {
 
 			self._thumbnail_queue.shift(); // remove first in queue
       self.current_state.set("thumbnail_queue_length", self._thumbnail_queue.length);
-      logEvent(0, "_thumbnails_generate() finished Socket Update", JSON.stringify(self.current_state.toJSON()).length);
+      // logEvent(1, "_thumbnails_generate() finished Socket Update", JSON.stringify(self.current_state.toJSON()).length);
       var min_resp = _.pick(self.current_state.toJSON(), ['id','state','thumbnail_queue_length']);
       self.socket_update(min_resp);
 
@@ -2125,7 +2126,7 @@ var sisbot = {
     // close() is async, call cb after close completes
     file.on('finish', function() {
       file.close(cb, function(err) { if (err) logEvent(2, "File close err:", err); });
-      // logEvent(0, "File Close", data.id);
+      // logEvent(1, "File Close", data.id);
     });
 
     // check for request errors
@@ -2289,7 +2290,7 @@ var sisbot = {
 		}
 
 		// tell sockets
-    logEvent(0, "set_playlist() Socket Update", JSON.stringify([playlist.toJSON(), this.current_state.toJSON()]).length);
+    // logEvent(1, "set_playlist() Socket Update", JSON.stringify([playlist.toJSON(), this.current_state.toJSON()]).length);
     var min_state = _.pick(this.current_state.toJSON(), ['id','state','is_homed','active_playlist_id','active_track','is_shuffle','is_loop','is_waiting_between_tracks']);
     var min_playlist = _.pick(playlist.toJSON(),['id','is_shuffle','is_loop','active_track_index','active_track_id','tracks','sorted_tracks','next_tracks']);
     this.socket_update([min_playlist, min_state]);
@@ -2390,7 +2391,7 @@ var sisbot = {
   							this.save(null, null);
               }
 
-              logEvent(0, "_play_track() Socket Update", JSON.stringify([track.toJSON(),self.current_state.toJSON()]).length);
+              // logEvent(1, "_play_track() Socket Update", JSON.stringify([track.toJSON(),self.current_state.toJSON()]).length);
               var min_track = _.pick(track.toJSON(), ['id','firstR','lastR']);
               var min_state = _.pick(self.current_state.toJSON(), ['id','state','_end_rho']);
     					self.socket_update([min_track, min_state]);
@@ -2575,7 +2576,7 @@ var sisbot = {
 		this.current_state.set('speed', percent);
 
     // update table with info
-    logEvent(0, "set_speed() Socket Update", JSON.stringify(this.current_state.toJSON()).length);
+    // logEvent(1, "set_speed() Socket Update", JSON.stringify(this.current_state.toJSON()).length);
     var min_resp = _.pick(this.current_state.toJSON(), ['id','state','speed']);
 		this.socket_update(min_resp);
 
@@ -2592,7 +2593,7 @@ var sisbot = {
 		this.set_brightness({ value: this.current_state.get("brightness") });
 
     // update table with info
-    logEvent(0, "set_autodim() Socket Update", JSON.stringify(this.current_state.toJSON()).length);
+    // logEvent(1, "set_autodim() Socket Update", JSON.stringify(this.current_state.toJSON()).length);
     var min_resp = _.pick(this.current_state.toJSON(), ['id','state','is_autodim']);
 		this.socket_update(min_resp);
 
@@ -2615,7 +2616,7 @@ var sisbot = {
 	  plotter.setBrightness(value);
 
     // update table with info
-    logEvent(0, "set_brightness() Socket Update", JSON.stringify(this.current_state.toJSON()).length);
+    // logEvent(1, "set_brightness() Socket Update", JSON.stringify(this.current_state.toJSON()).length);
     var min_resp = _.pick(this.current_state.toJSON(), ['id','state','brightness']);
 		this.socket_update(min_resp);
 
@@ -2630,7 +2631,7 @@ var sisbot = {
 		this.current_state.set('is_paused_between_tracks', data.is_paused_between_tracks);
 
     // update table with info
-    logEvent(0, "set_pause_between_tracks() Socket Update", JSON.stringify(this.current_state.toJSON()).length);
+    // logEvent(1, "set_pause_between_tracks() Socket Update", JSON.stringify(this.current_state.toJSON()).length);
     var min_resp = _.pick(this.current_state.toJSON(), ['id','state','is_paused_between_tracks']);
 		this.socket_update(min_resp);
 
@@ -2651,7 +2652,7 @@ var sisbot = {
 		this.current_state.set('share_log_files', data.value);
 
     // update table with info
-    logEvent(0, "set_pause_between_tracks() Socket Update", JSON.stringify(this.current_state.toJSON()).length);
+    // logEvent(1, "set_pause_between_tracks() Socket Update", JSON.stringify(this.current_state.toJSON()).length);
     var min_resp = _.pick(this.current_state.toJSON(), ['id','state','share_log_files']);
 		this.socket_update(min_resp);
 
@@ -2763,7 +2764,7 @@ var sisbot = {
               self._query_internet(self.config.check_internet_interval);
 
               // update table with info
-              logEvent(0, "_query_internet() Socket Update", JSON.stringify(self.current_state.toJSON()).length);
+              // logEvent(1, "_query_internet() Socket Update", JSON.stringify(self.current_state.toJSON()).length);
               var min_resp = _.pick(self.current_state.toJSON(), ['id','state','reason_unavailable','is_available','failed_to_connect_to_wifi','wifi_forget','wifi_error','is_network_connected','is_internet_connected']);
     					self.socket_update(min_resp);
 
@@ -2866,7 +2867,7 @@ var sisbot = {
 	},
 	change_to_wifi: function(data, cb) {
 		var self = this;
-		// logEvent(0, "Sisbot change to wifi", data);
+		// logEvent(1, "Sisbot change to wifi", data);
 		if (data.ssid == undefined || data.ssid == "" || data.ssid == "false") {
 			if (cb) cb("No network name given", null);
       self.current_state.set({ wifi_forget: "false" });
@@ -2901,7 +2902,7 @@ var sisbot = {
         var connection = "'"+data.ssid.replace("'", '\'"\'"\'')+"'";
         if (data.psk) connection += " '"+data.psk.replace("'", '\'"\'"\'')+"'";
 				logEvent(1, "Connect To Wifi", data.ssid);
-				// logEvent(0, "Connection", connection);
+				// logEvent(1, "Connection", connection);
 
         setTimeout(function () {
           exec("sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "+connection, (error, stdout, stderr) => {
@@ -3253,7 +3254,7 @@ var sisbot = {
         logEvent(1, "Play Track", this._paused);
       }
 
-      logEvent(0, "wake_sisbot() Socket Update", JSON.stringify(this.current_state.toJSON()).length);
+      // logEvent(1, "wake_sisbot() Socket Update", JSON.stringify(this.current_state.toJSON()).length);
       var min_resp = _.pick(this.current_state.toJSON(), ['id','state', 'is_sleeping']);
       this.socket_update(min_resp);
 		}
@@ -3292,7 +3293,7 @@ var sisbot = {
 
     this.current_state.set('is_sleeping', 'true');
 
-    logEvent(0, "_sleep_sisbot() Socket Update", JSON.stringify(this.current_state.toJSON()).length);
+    // logEvent(1, "_sleep_sisbot() Socket Update", JSON.stringify(this.current_state.toJSON()).length);
     var min_resp = _.pick(this.current_state.toJSON(), ['id','state','is_sleeping','nightlight_brightness','_is_autodim','_brightness']);
     this.socket_update(min_resp);
 		if (cb) cb(null, min_resp);
@@ -3752,7 +3753,7 @@ var sisbot = {
     var self = this;
 
 		this.current_state.set({is_available: "false", reason_unavailable: "rebooting"});
-    logEvent(0, "_reboot() Socket Update", JSON.stringify(this.current_state.toJSON()).length);
+    // logEvent(1, "_reboot() Socket Update", JSON.stringify(this.current_state.toJSON()).length);
     var min_resp = _.pick(this.current_state.toJSON(), ['id','state','is_available','reason_unavailable']);
     this.socket_update(min_resp);
 
@@ -3779,7 +3780,7 @@ var _update_status = function() {
         logEvent(1, "Software update status", data.trim());
         sisbot.current_state.set('update_status', data.trim());
 
-        logEvent(0, "_update_status() Socket Update", JSON.stringify(sisbot.current_state.toJSON()).length);
+        // logEvent(1, "_update_status() Socket Update", JSON.stringify(sisbot.current_state.toJSON()).length);
         var min_resp = _.pick(sisbot.current_state.toJSON(), ['id','state', 'update_status']);
         sisbot.socket_update(min_resp); // notify all connected UI
       }
