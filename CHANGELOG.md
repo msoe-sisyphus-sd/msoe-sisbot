@@ -1,4 +1,4 @@
-# 2020-02-26 1.10.63-65
+# 2020-02-26 1.10.63-66 ecea860a2156b8b91524045584aecd1fa0b7f3dc
   - Exists() returns limited data
   - Incoming Post requests correctly filter out password values from logs in arrays of models
   - Log Connect() data, Siscloud/app version 1.10.01 will send data about device connecting
