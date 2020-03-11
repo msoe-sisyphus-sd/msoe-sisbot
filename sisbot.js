@@ -903,23 +903,28 @@ var sisbot = {
     if (data.current_state == 0) self.write_gpio({gpio:4,state:0}); // on
     else self.write_gpio({gpio:4,state:1}); // off
 
-    if (this.current_state.get('is_hotspot') == 'false') {
-      if (data.current_state == 0) {
-        // logEvent(1, "Not hotspot, revert?");
+    if (data.current_state == 0) {
+      // logEvent(1, "Not hotspot, revert?");
 
-        self._gpio_timer = setTimeout(function() {
-          // recheck for hotspot
-          if (self.current_state.get('is_hotspot') == 'false') {
-            logEvent(1, "GPIO: Not hotspot, revert to hotspot");
-            self.write_gpio({gpio:4,state:1}); // turn off green
-            self._flash_red(null, null); // flash red
+      self._gpio_timer = setTimeout(function() {
+        self.write_gpio({gpio:4,state:1}); // turn off green
+        self._flash_red(null, null); // flash red
 
-            self.disconnect_wifi(null, null); // disconnect if not in firmware update
-          }
-        }, self.config.gpio_hold_time);
-      } else {
-        clearTimeout(self._gpio_timer);
-      }
+        // clear passcode
+        var passcode = self.current_state.get('passcode');
+        if (passcode && passcode != 'false') {
+          logEvent(1, "GPIO: Clear Passcode");
+          self.current_state.set('passcode', 'false'); // clear passcode
+        }
+
+        // recheck for hotspot
+        if (self.current_state.get('is_hotspot') == 'false') {
+          logEvent(1, "GPIO: Not hotspot, revert to hotspot");
+          self.disconnect_wifi(null, null); // disconnect if not in firmware update
+        }
+      }, self.config.gpio_hold_time);
+    } else {
+      clearTimeout(self._gpio_timer);
     }
   },
   _flash_red: function(data, cb) {
@@ -1263,6 +1268,7 @@ var sisbot = {
 	},
 	connect: function(data, cb) {
 		logEvent(1, "Sisbot Connect()", data);
+
 		if (cb) cb(null, this.collection.toJSON());
 	},
   state: function(data, cb) {

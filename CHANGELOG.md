@@ -1,3 +1,5 @@
+# 2020-03-11 1.10.67
+  - Clear passcode on GPIO hold
 # 2020-02-26 1.10.63-66 ecea860a2156b8b91524045584aecd1fa0b7f3dc
   - Exists() returns limited data
   - Incoming Post requests correctly filter out password values from logs in arrays of models

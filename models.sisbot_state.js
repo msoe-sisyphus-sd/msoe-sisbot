@@ -59,6 +59,8 @@ var sisbot_state = Backbone.Model.extend({
 		wake_time						: "false", // time to wake up: H:MM A | false
 		timezone_offset			: "-06:00", // Central time
 
+		passcode						: "false",
+		
 		wifi_network				: "",
 		wifi_password				: "",
 		wifi_is_hidden			: "false", // if true, don't bother checking if network name appears nearby
