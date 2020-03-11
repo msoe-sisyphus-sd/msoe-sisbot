@@ -18,7 +18,7 @@ transition = 0 # 0-1.0, fade between states
 
 h_theta = 0 # head theta
 h_r = 5 # head radius (in lights)
-h_easing = 0.9 # head easing
+h_easing = 0.999 # head easing
 t_theta = 0 # tail theta (offset from h_theta)
 t_r = 5 # tail radius (in lights)
 t_easing = 0.075 # tail easing
@@ -38,8 +38,10 @@ def update(theta, rho, photo, primary_color, secondary_color, strip):
     if time_start == 0:
         time_start = timer()
         transition = 0
-        # print "Start solid timer {0}\n".format(time_start),
+        print "Start solid timer {0}\n".format(time_start),
         sys.stdout.flush()
+        h_theta = theta
+        t_theta = theta
 
     led_count = strip.numPixels()
 
@@ -53,7 +55,10 @@ def update(theta, rho, photo, primary_color, secondary_color, strip):
         ball_color = primary_color
     tail_color = colorBlend(ball_color, bg_color, easeIn(0.5))
 
+    time_diff = timer() - time_start
     elapsed = 1.0/60.0 # assume correct timing
+    # print "Time diff %s, Elapsed %s\n" % (time_diff, elapsed),
+    # sys.stdout.flush()
 
     # ease h_theta into theta
     if (h_easing < 1.0):
@@ -86,12 +91,12 @@ def update(theta, rho, photo, primary_color, secondary_color, strip):
     spread = diff
 
     # head positions
-    h_spread = 360 / led_count * h_r
+    h_spread = 360.0 / float(led_count) * h_r
     h_start = h_x - h_r
     h_end = h_x + h_r+1
 
     # tail positions
-    t_spread = 360 / led_count * t_r
+    t_spread = 360.0 / float(led_count) * t_r
     t_start = t_x - t_r
     t_end = t_x + t_r+1
 
@@ -146,10 +151,8 @@ def update(theta, rho, photo, primary_color, secondary_color, strip):
     # print "Theta %s, Head %s, Tail %s\n" % (theta, h_x, t_x),
     # sys.stdout.flush()
 
-    strip.show()
-
     # increment time
+    time_end = timer()
     if transition < 2.0:
-        time_end = timer()
         transition += time_end - time_start
-        time_start = time_end
+    time_start = time_end

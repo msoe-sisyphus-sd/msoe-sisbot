@@ -35,7 +35,6 @@ def update(theta, rho, photo, primary_color, secondary_color, strip):
             strip.setPixelColor(i, colorBlend(strip.getPixelColor(i),primary_color,easeOut(transition)))
     else:
         fill(strip, primary_color) # fill with white
-    strip.show()
 
     # increment time
     if transition < 1.0:

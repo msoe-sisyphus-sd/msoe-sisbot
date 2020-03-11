@@ -95,8 +95,6 @@ def update(theta, rho, photo, primary_color, secondary_color, strip):
             # print "pos {0} ( {1} - {2} ) / {3}, percent {4}\n".format(pos, h_fixed, degrees, spread, t),
             # sys.stdout.flush()
 
-    strip.show()
-
     # increment time
     time_end = timer()
     if transition < 1.0:

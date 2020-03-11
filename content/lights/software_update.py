@@ -43,7 +43,6 @@ def update(theta, rho, photo, primary_color, secondary_color, strip):
         fill(strip, colorBlend(white,blue,percent)) # fill with color based on rho only
 
     breathe_fade += 0.005
-    strip.show()
 
     # increment time
     if transition < 1.0:

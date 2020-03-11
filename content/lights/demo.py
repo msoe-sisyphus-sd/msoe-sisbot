@@ -107,8 +107,6 @@ def update(theta, rho, photo, primary_color, secondary_color, strip):
         else:
             fill(strip, current_primary) # default color
 
-    strip.show()
-
     # increment time
     time_end = timer()
     time += time_end - time_start

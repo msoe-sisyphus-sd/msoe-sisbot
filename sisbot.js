@@ -2907,6 +2907,7 @@ var sisbot = {
 
         var connection = "'"+data.ssid.replace("'", '\'"\'"\'')+"'";
         if (data.psk) connection += " '"+data.psk.replace("'", '\'"\'"\'')+"'";
+        if (data.is_hidden) connection += " 1";
 				logEvent(1, "Connect To Wifi", data.ssid);
 				// logEvent(1, "Connection", connection);
 

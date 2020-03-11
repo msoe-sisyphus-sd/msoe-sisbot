@@ -84,7 +84,6 @@ def update(theta, rho, photo, primary_color, secondary_color, strip):
 
         strip.setPixelColor(pos, colorBlend(ball_color,bg_color,percent))
         # strip.setPixelColor(pos, ball_color)
-    strip.show()
 
     # increment time
     if transition < 1.0:

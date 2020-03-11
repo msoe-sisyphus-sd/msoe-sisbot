@@ -56,7 +56,7 @@ default_offset  = 0         # Degrees to offset the theta position 0-360 (float)
 start_pattern   = "white" # what pattern to begin with
 old_photo       = 0 # to reduce recreation of colors
 
-time_start = 0 # for elapsed time
+g_time_start = 0 # for elapsed time
 
 # values passed in by slider, converted to 0-255
 brightness_table = {0:0, 1:1, 2:2, 3:4, 4:5, 6:7, 8:10, 11:13, 16:18, 23:25, 32:34, 45:44, 64:57, 91:72, 128:86, 181:98, 256:109, 362:121, 512:144, 724:186, 1023:255}
@@ -205,19 +205,21 @@ if __name__ == '__main__':
         init(theta * 57.2958 + led_offset, rho)
         update = dynamic_import(start_pattern, "update")
 
-        time_start = timer()
+        g_time_start = timer()
 
         #  Loop and get incoming data from plotter
         while True:
             new_color = False # do we need to update actual_colors
             bytes = get_data(server)
-            if bytes > 0:
+            while bytes > 0:
                 command = socket_bytes[0]
 
                 if command == 98: # b: ball data
                     [rho] = struct.unpack_from('>f', socket_bytes, 1)
                     [theta] = struct.unpack_from('>f', socket_bytes, 5)
                     [photo] = struct.unpack_from('>f', socket_bytes, 9)
+                    # print "Ball data {0} {1} {2}\n".format(rho,theta,photo),
+                    # sys.stdout.flush()
                 elif command == 67: # C: primary color data
                     [red] = struct.unpack_from('>B', socket_bytes, 1)
                     [green] = struct.unpack_from('>B', socket_bytes, 2)
@@ -269,6 +271,8 @@ if __name__ == '__main__':
                 else:
                     print "command %s\n" % (command),
                     sys.stdout.flush()
+                # check again
+                bytes = get_data(server)
 
             # update brightness, if changed
             if photo != old_photo:
@@ -299,14 +303,19 @@ if __name__ == '__main__':
                 strip.setBrightness(brightness)
 
             # update, regardless of socket_data
+            # print "update() %s\n" % (timer()),
+            # sys.stdout.flush()
             update(theta * 57.2958 + led_offset + default_offset, rho, photo, primary_color, secondary_color, strip)
 
+            strip.show()
+            
             # time_end = timer()
-            # time_diff = time_end - time_start
+            # time_diff = time_end - g_time_start
             # if time_diff < 0.016667:
-            #     time.sleep(0.016667 - time_diff) # sixty frames/sec
+            #     time.sleep(0.016667 - time_diff) # 60 frames/sec
+            #     time_end = timer()
             #
-            # time_start = time_end
+            # g_time_start = time_end
 
             old_photo = photo;
 

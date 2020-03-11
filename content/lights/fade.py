@@ -37,8 +37,6 @@ def update(theta, rho, photo, primary_color, secondary_color, strip):
     else:
         fill(strip, colorBlend(secondary_color,primary_color,percent)) # fill with color based on rho only
 
-    strip.show()
-
     # increment time
     if transition < 1.0:
         time_end = timer()
