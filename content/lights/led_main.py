@@ -308,7 +308,7 @@ if __name__ == '__main__':
             update(theta * 57.2958 + led_offset + default_offset, rho, photo, primary_color, secondary_color, strip)
 
             strip.show()
-            
+
             # time_end = timer()
             # time_diff = time_end - g_time_start
             # if time_diff < 0.016667:

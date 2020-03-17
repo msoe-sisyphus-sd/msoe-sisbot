@@ -2712,7 +2712,7 @@ var sisbot = {
 		var self = this;
 
 		exec('ping -c 1 -W 2 google.com', {timeout: 5000}, (error, stdout, stderr) => {
-			if (error) logEvent(1, 'ping exec error:', error);
+			if (error) logEvent(2, 'ping exec error:', error);
 
       var old_internet_connected = self.current_state.get('is_internet_connected');
       var old_local_ip = self.current_state.get('local_ip');
