@@ -2,7 +2,7 @@
 
 # makes change to a file
 add_after() {
-  lua - "$1" "$2" "$3" <<EOF > "$3.bak"
+  lua - "$1" "$2" "$3" <<EOF > "$3.lua_bak"
 local key=assert(arg[1])
 local value=assert(arg[2])
 local fn=assert(arg[3])
@@ -19,7 +19,7 @@ if made_change==false then
         print(line)
 end
 EOF
-sudo mv "$3.bak" "$3"
+sudo mv "$3.lua_bak" "$3"
 }
 
 if [ -n "$1" ]; then

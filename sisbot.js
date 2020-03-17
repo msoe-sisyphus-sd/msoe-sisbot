@@ -2876,6 +2876,8 @@ var sisbot = {
     if (data.is_hidden) {
       logEvent(1, "Wifi_is_hidden:", data.is_hidden);
       this.current_state.set('wifi_is_hidden', data.is_hidden);
+    } else {
+      this.current_state.set('wifi_is_hidden', 'false');
     }
 
 		this.change_to_wifi(data, cb);
@@ -2916,8 +2918,8 @@ var sisbot = {
 
         var connection = "'"+data.ssid.replace("'", '\'"\'"\'')+"'";
         if (data.psk) connection += " '"+data.psk.replace("'", '\'"\'"\'')+"'";
-        if (data.is_hidden) connection += " 1";
-				logEvent(1, "Connect To Wifi", data.ssid);
+        if (self.current_state.get('wifi_is_hidden') != 'false') connection += " 1";
+				logEvent(1, "Connect To Wifi", data.ssid, self.current_state.get('wifi_is_hidden'));
 				// logEvent(1, "Connection", connection);
 
         setTimeout(function () {
@@ -3094,7 +3096,8 @@ var sisbot = {
             logEvent(1, "Last time to try  Wifi");
   					self.connect_to_wifi({
   						ssid: self.current_state.get("wifi_network"),
-  						psk: self.current_state.get("wifi_password")
+  						psk: self.current_state.get("wifi_password"),
+              is_hidden: self.current_state.get("wifi_is_hidden")
   					}, null);
           } else {
   					self.change_to_wifi({
