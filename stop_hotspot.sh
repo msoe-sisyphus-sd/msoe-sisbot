@@ -26,8 +26,7 @@ if [ -n "$1" ]; then
 	sudo service hostapd stop
 	sudo service isc-dhcp-server stop
 
-	sudo ip link set wlan0 down
-	# sudo ifdown wlan0
+	sudo ifdown wlan0
 	sudo cp /etc/network/interfaces.bak /etc/network/interfaces
 	sudo cp /etc/wpa_supplicant/wpa_supplicant.conf.bak /etc/wpa_supplicant/wpa_supplicant.conf
 
@@ -45,8 +44,7 @@ if [ -n "$1" ]; then
 }" >> /etc/wpa_supplicant/wpa_supplicant.conf
 	fi
 
-	sudo ip link set wlan0 up
-	# sudo ifup wlan0
+	sudo ifup wlan0
 
 	echo "Restarting wlan0..."
 else
