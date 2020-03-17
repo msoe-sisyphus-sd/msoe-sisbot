@@ -1261,9 +1261,18 @@ var sisbot = {
 		if (!this.serial || !this.serial.isOpen) {
 		  logEvent(2, 'No serial connection');
 		  this.current_state.set("is_serial_open", "false");
+
+      var min_resp = _.pick(this.current_state.toJSON(), ['id','state','is_serial_open']);
+      this.socket_update(min_resp); // notify all connected UI
 		  return false;
 		}
+    var _was_serial_open = this.current_state.get("is_serial_open");
 		this.current_state.set("is_serial_open", "true");
+
+    if (_was_serial_open  == 'false') {
+      var min_resp = _.pick(this.current_state.toJSON(), ['id','state','is_serial_open']);
+      this.socket_update(min_resp); // notify all connected UI
+    }
 		return true;
 	},
 	connect: function(data, cb) {

@@ -108,6 +108,7 @@ var app = function(given_config,ansible) {
 			}
 		};
 		try {
+			if (endpoint.charAt(0) == '_') logEvent(2, 'Sisbot Private endpoint called:', endpoint); // TODO: do not respond to these
 			services[service][endpoint](data,cb);
 		} catch (err) {
 			logEvent(2, "Error:", service, endpoint, err);
