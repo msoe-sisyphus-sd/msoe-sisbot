@@ -232,6 +232,22 @@ var sisbot = {
             }
           }
 
+          // TODO: fix the created_by_name for original tracks
+          try {
+            var created_by_name = track.get('created_by_name');
+            if (!created_by_name || created_by_name == 'false' || created_by_name == 'Sisyphus Industries') {
+              var default_track = _.where(self.config.default_data, {id: obj.id}); // find in default_data
+              if (default_track && default_track.length == 1) {
+                if (default_track[0].created_by_name) {
+                  logEvent(0, "Default track found, update created_by_name", default_track[0]);
+                  track.set('created_by_name', default_track[0].created_by_name);
+                }
+              }
+            }
+          } catch (err) {
+            logEvent(2, "Created_by_name error", err);
+          }
+
 					break;
 				case "playlist":
           var newPlaylist = new Playlist(obj);
