@@ -1,5 +1,6 @@
-# 2020-03-11 1.10.67
+# 2020-03-11 1.10.67-68
   - Clear passcode on GPIO hold
+  - Prevent crash if trying to generate thumbnail and thr file is (somehow) missing
 # 2020-02-26 1.10.63-66 ecea860a2156b8b91524045584aecd1fa0b7f3dc
   - Exists() returns limited data
   - Incoming Post requests correctly filter out password values from logs in arrays of models

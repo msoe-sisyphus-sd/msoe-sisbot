@@ -2159,6 +2159,13 @@ var sisbot = {
   _thumbnails_generate: function(data, cb) {
     // id, host_url, raw_coors, dimensions
 
+    // exit if no coordinates
+    if (data.raw_coors == '') {
+      if (data.cb) data.cb('No coordinates given', { 'id':data.id });
+      if (cb) cb('No coordinates given', null);
+      return;
+    }
+
     var thumbs_dir = this.config.base_dir + '/' + this.config.folders.cloud + '/img/tracks';
     var thumbs_file = thumbs_dir + '/' + data.id + '_' + data.dimensions + '.png';
 

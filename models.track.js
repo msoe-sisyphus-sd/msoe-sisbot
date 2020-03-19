@@ -125,7 +125,10 @@ var track = Backbone.Model.extend({
 		//console.log("Get Verts",this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+this.get('id')+'.thr');
 		var self = this;
 
-		var data = fs.readFileSync(this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+this.get('id')+'.thr', 'utf8');
+		var data = '';
+		if (fs.existsSync(this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+this.get('id')+'.thr')) {
+			data = fs.readFileSync(this.config.base_dir+'/'+this.config.folders.sisbot+'/'+this.config.folders.content+'/'+this.config.folders.tracks+'/'+this.get('id')+'.thr', 'utf8');
+		}
 
 		return this.get_verts_from_data(data);
 	}
