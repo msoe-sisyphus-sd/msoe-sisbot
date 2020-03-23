@@ -29,7 +29,7 @@ def init(theta, rho):
     # print "Init spread pattern {0} {1}\n".format(time_start, transition),
     sys.stdout.flush()
 
-def update(theta, rho, photo, primary_color, secondary_color, strip):
+def update(theta, rho, photo, primary_color, secondary_color, balls, strip):
     global transition, time_start, color_pos, color_range, color_speed, no_color
 
     if time_start == 0:
@@ -48,7 +48,7 @@ def update(theta, rho, photo, primary_color, secondary_color, strip):
     # if value < 0: # wrap
     #     value += 256
 
-    # print "Rho %s, Wheel %s\n" % (rho, int(value*255)%255),
+    # print "Balls %s, Wheel %s\n" % (balls, int(rho*255 + theta*0.2) % 255),
     # sys.stdout.flush()
 
     # color of spread by ball
@@ -56,6 +56,7 @@ def update(theta, rho, photo, primary_color, secondary_color, strip):
     ball_color = wheel(int(rho*255 + theta*0.2) % 255) # change based on rho (and theta)
     # ball_color = colorBlend(primary_color, secondary_color, rho) # blend between primary/secondary based on rho
     # ball_color = wheel(int(value*255)%255) # change based on rho + sine wave variation
+    second_color = wheel(int(rho*255 + theta*0.2 - 128) % 255) # change based on rho (and theta)
 
     # spread out the pixel color based on rho
     # max_spread = 85 # degress on either side of pixel to spread white
@@ -94,6 +95,38 @@ def update(theta, rho, photo, primary_color, secondary_color, strip):
 
             # print "pos {0} ( {1} - {2} ) / {3}, percent {4}\n".format(pos, h_fixed, degrees, spread, t),
             # sys.stdout.flush()
+
+    # second ball coloring
+    if balls > 1:
+        h_theta = h_theta + 180
+
+        spread = 10 # force to specific width
+        spread_l = h_theta - spread
+        spread_r = h_theta + spread
+
+        start = int( (spread_l * led_count) / 360 )
+        end = int( (spread_r * led_count) / 360 ) + 1
+        if (end < start):
+            end += led_count
+
+        h_fixed = h_theta % 360
+
+        for x in range(start, end):
+            pos = x % led_count
+            degrees = (float(pos * 360) / led_count)
+
+            # fix wrapping degrees
+            if (degrees > h_fixed + 180):
+                degrees -= 360
+            elif (degrees < h_fixed - 180):
+                degrees += 360
+
+            # ramp brightness
+            t = abs(h_fixed - degrees) / spread
+
+            if t > 0 and t <= 1.0:
+                percent = easeIn(t) # choose an ease function from above
+                strip.setPixelColor(pos, colorBlend(second_color,strip.getPixelColor(pos),percent))
 
     # increment time
     time_end = timer()

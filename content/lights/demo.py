@@ -35,7 +35,7 @@ def init(theta, rho):
     # print "Init demo pattern {0} {1}\n".format(time_start, transition),
     sys.stdout.flush()
 
-def update(theta, rho, photo, primary_color, secondary_color, strip):
+def update(theta, rho, photo, primary_color, secondary_color, balls, strip):
     global state, transition, current_primary, current_secondary, time, time_start, length
     if time_start == 0:
         time_start = timer()

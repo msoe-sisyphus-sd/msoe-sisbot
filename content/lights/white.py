@@ -22,7 +22,7 @@ def init(start_theta, start_rho):
     # print "Init white pattern {0} {1}\n".format(time_start, transition),
     sys.stdout.flush()
 
-def update(theta, rho, photo, primary_color, secondary_color, strip):
+def update(theta, rho, photo, primary_color, secondary_color, balls, strip):
     global transition, time_start
     if time_start == 0:
         time_start = timer()

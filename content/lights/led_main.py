@@ -51,6 +51,7 @@ theta           = 0
 photo           = 0         # 0-1023
 primary_color   = Color(1,1,1,64);
 secondary_color = Color(1,1,1,1);
+balls           = 1
 
 default_offset  = 0         # Degrees to offset the theta position 0-360 (float), as defined by CSON
 start_pattern   = "white" # what pattern to begin with
@@ -218,6 +219,14 @@ if __name__ == '__main__':
                     [rho] = struct.unpack_from('>f', socket_bytes, 1)
                     [theta] = struct.unpack_from('>f', socket_bytes, 5)
                     [photo] = struct.unpack_from('>f', socket_bytes, 9)
+                    balls = 1
+                    # print "Ball data {0} {1} {2}\n".format(rho,theta,photo),
+                    # sys.stdout.flush()
+                elif command == 66: # B: two-ball data
+                    [rho] = struct.unpack_from('>f', socket_bytes, 1)
+                    [theta] = struct.unpack_from('>f', socket_bytes, 5)
+                    [photo] = struct.unpack_from('>f', socket_bytes, 9)
+                    balls = 2
                     # print "Ball data {0} {1} {2}\n".format(rho,theta,photo),
                     # sys.stdout.flush()
                 elif command == 67: # C: primary color data
@@ -305,7 +314,7 @@ if __name__ == '__main__':
             # update, regardless of socket_data
             # print "update() %s\n" % (timer()),
             # sys.stdout.flush()
-            update(theta * 57.2958 + led_offset + default_offset, rho, photo, primary_color, secondary_color, strip)
+            update(theta * 57.2958 + led_offset + default_offset, rho, photo, primary_color, secondary_color, balls, strip)
 
             strip.show()
 

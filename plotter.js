@@ -900,7 +900,9 @@ function send_ball_data() {
     var newR = ((rAccum - thAccum * rthAsp * nestedAxisSign) * rDirSign/ rSPInch)/plotRadius;
     var newTh = thAccum / thSPRad;
 
-    var buf1 = Buffer.from('b', 0, 1);
+    var ball_char = 'b';
+    if (balls == 2) ball_char = 'B';
+    var buf1 = Buffer.from(ball_char, 0, 1);
     var buf2 =  Buffer.alloc(4);
     buf2.writeFloatBE(newR, 0);
     var buf3 =  Buffer.alloc(4);

@@ -27,7 +27,7 @@ def init(theta, rho):
     # print "Init software_update pattern {0} {1}\n".format(time_start, transition),
     sys.stdout.flush()
 
-def update(theta, rho, photo, primary_color, secondary_color, strip):
+def update(theta, rho, photo, primary_color, secondary_color, balls, strip):
     global transition, time_start, breathe_fade, blue, white
     if time_start == 0:
         time_start = timer()

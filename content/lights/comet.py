@@ -32,7 +32,7 @@ def init(theta, rho):
     # print "Init comet pattern {0} {1}\n".format(theta, rho),
     sys.stdout.flush()
 
-def update(theta, rho, photo, primary_color, secondary_color, strip):
+def update(theta, rho, photo, primary_color, secondary_color, balls, strip):
     global h_theta,h_r,h_easing,t_theta,t_r,t_easing,transition, time_start
 
     if time_start == 0:
