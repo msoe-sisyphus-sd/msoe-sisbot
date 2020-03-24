@@ -249,6 +249,19 @@ var sisbot = {
           }
 
 					break;
+        case "artist":
+          if (obj.tracks) { // mistakenly made as a playlist, fix this
+            logEvent(2, "Artist model saved as playlist, fixing...", obj);
+            // change to new id, type
+            obj.id = uuid();
+            obj.type = "playlist";
+            var newPlaylist = new Playlist(obj);
+  					var playlist = self.collection.add(newPlaylist);
+            if (playlists.indexOf(playlist.get("id")) < 0) {
+              playlists.push(playlist.get("id"));
+            }
+          }
+          break;
 				case "playlist":
           var newPlaylist = new Playlist(obj);
           logEvent(1,"reading in playlist during init " + newPlaylist.get('name'));
