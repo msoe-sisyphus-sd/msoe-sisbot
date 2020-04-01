@@ -232,7 +232,7 @@ var sisbot = {
             }
           }
 
-          // TODO: fix the created_by_name for original tracks
+          // fix the created_by_name for original tracks
           try {
             var created_by_name = track.get('created_by_name');
             if (!created_by_name || created_by_name == 'false' || created_by_name == 'Sisyphus Industries') {
@@ -246,6 +246,13 @@ var sisbot = {
             }
           } catch (err) {
             logEvent(2, "Created_by_name error", err);
+          }
+
+          // fix is_reversible
+          try {
+            if (!obj.is_reversible && obj.reversible) obj.is_reversible = obj.reversible;
+          } catch (err) {
+            logEvent(2, "is_reversible error", err);
           }
 
 					break;

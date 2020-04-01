@@ -15,7 +15,7 @@ var track = Backbone.Model.extend({
 		firstR			: -1, // so we can auto-collect from thr if not given
 		lastR			: -1, // so we can auto-collect from thr if not given
 		r_type			: "r", // so we can auto-collect from thr if not given
-		is_reversible : "true" //
+		reversible : "true" // WC value for is_reversible
 	},
 	collection: null,
 	get_plotter_obj: function(plotter_data, auto_track_start_rho) {
