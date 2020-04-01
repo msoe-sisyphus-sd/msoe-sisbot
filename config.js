@@ -90,7 +90,7 @@ var config = {
 		},
     wc: {
       // api_endpoint : 'http://dev.webcenter.sisyphus-industries.com',
-      api_endpoint : 'http://192.168.86.20',
+      api_endpoint : 'http://192.168.86.20:3333',
     },
 		testing: {
 			testing: true,

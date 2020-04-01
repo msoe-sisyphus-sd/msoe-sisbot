@@ -2390,7 +2390,7 @@ var sisbot = {
 			this._home_next = true;
 
       // set next value for rho (closest to 0/1)
-      if (track.get('reversible') == 'true') {
+      if (track.get('is_reversible') == 'true') {
         var current_rho = this.plotter.getRhoPosition();
         this._move_to_rho = Math.min(Math.max(Math.round(current_rho), 0), 1); // round to 0 or 1
         logEvent(1, "set_track() Current Rho:", current_rho, "Next Rho:", this._move_to_rho);
@@ -2849,6 +2849,7 @@ var sisbot = {
 	},
   _post_state_to_cloud: function () {
     // THIS IS HELPFUL FOR ANDROID DEVICES
+    logEvent(0, "Post State to Webcenter", this.config.api_endpoint);
     var self = this;
 
     // logEvent(1, 'LETS TRY AND GET TO CLOUD', this.current_state.toJSON());
@@ -2865,6 +2866,7 @@ var sisbot = {
         if (!error && response.statusCode == 200) {
           logEvent(1, "Post to cloud", body);
         } else {
+          if (error) logEvent(2, "Post state Error:", error);
           if (response) logEvent(2, "Request Not found:", response.statusCode);
         }
       }

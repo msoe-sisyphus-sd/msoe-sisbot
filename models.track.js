@@ -15,7 +15,7 @@ var track = Backbone.Model.extend({
 		firstR			: -1, // so we can auto-collect from thr if not given
 		lastR			: -1, // so we can auto-collect from thr if not given
 		r_type			: "r", // so we can auto-collect from thr if not given
-		reversible		: "true"
+		is_reversible : "true" //
 	},
 	collection: null,
 	get_plotter_obj: function(plotter_data, auto_track_start_rho) {
@@ -43,7 +43,7 @@ var track = Backbone.Model.extend({
 		//console.log('#### RETURN OBJ', return_obj);
 		//console.log('#### ERROR CHECKING', plotter_data.start, return_obj.firstR, plotter_data.reversed, return_obj.reversible);
 
-		if (plotter_data.start != this_json.firstR && this_json.reversible == 'true') {
+		if (plotter_data.start != this_json.firstR && this_json.is_reversible == 'true') {
 			// WE NEED TO REVERSE THE TRACK
 			// console.log("Reverse track", plotter_data, this.json);
 			return_obj.verts.reverse();
@@ -106,7 +106,7 @@ var track = Backbone.Model.extend({
 					this.set({lastR: return_value[return_value.length-1].r, r_type:"r"+this.get("firstR")+return_value[return_value.length-1].r});
 				}
 				if (this.get('firstR') == this.get('lastR')) {
-					this.set('reversible', 'false');
+					this.set('is_reversible', 'false');
 				} else {
 					// console.log("Skip track reversible", this.id, this.get('reversible'));
 				}
