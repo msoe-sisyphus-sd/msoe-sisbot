@@ -242,6 +242,11 @@ var sisbot = {
                   logEvent(0, "Default track found, update created_by_name", default_track[0]);
                   track.set('created_by_name', default_track[0].created_by_name);
                 }
+                // Fix default_vel if different (Erase in particular)
+                if (track.default_vel && default_track[0].default_vel && track.default_vel != default_track[0].default_vel) {
+                  logEvent(0, "Default track, update default_vel", default_track[0]);
+                  track.set('default_vel', default_track[0].default_vel);
+                }
               }
             }
           } catch (err) {
@@ -355,8 +360,8 @@ var sisbot = {
 			factory_resetting: "false",
 			factory_resetting_error: "",
 			installed_updates: "false",
-			is_internet_connected: "false",
-      is_network_connected: "false",
+			// is_internet_connected: "false",
+      // is_network_connected: "false",
 			software_version: this.config.version
 		});
     if (this.isServo) this.current_state.set('is_servo', 'true');
