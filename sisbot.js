@@ -234,24 +234,23 @@ var sisbot = {
 
           // fix the created_by_name for original tracks
           try {
-            var created_by_name = track.get('created_by_name');
-            if (!created_by_name || created_by_name == 'false' || created_by_name == 'Sisyphus Industries') {
-              var default_track = _.where(self.config.default_data, {id: obj.id}); // find in default_data
-              if (default_track && default_track.length == 1) {
+            var default_track = _.where(self.config.default_data, {id: obj.id}); // find in default_data
+
+            if (default_track && default_track.length == 1) {
+              // fix created_by_name
+              var created_by_name = track.get('created_by_name');
+              if (!created_by_name || created_by_name == 'false' || created_by_name == 'Sisyphus Industries') {
                 if (default_track[0].created_by_name) {
                   logEvent(1, "Default track found, update created_by_name", default_track[0]);
                   track.set('created_by_name', default_track[0].created_by_name);
                 }
-                // Fix default_vel if different (Erase in particular)
-                if (track.default_vel && default_track[0].default_vel && track.default_vel != default_track[0].default_vel) {
-                  logEvent(2, "Default track, update default_vel", default_track[0]);
-                  track.set('default_vel', default_track[0].default_vel);
-                }
-                // Fix is_deletable if different (Erase in particular)
-                if (track.is_deletable && default_track[0].is_deletable && track.is_deletable != default_track[0].is_deletable) {
-                  logEvent(2, "Default track, update is_deletable", default_track[0]);
-                  track.set('is_deletable', default_track[0].is_deletable);
-                }
+              }
+
+              // Fix default_vel if different (Erase in particular)
+              var default_vel = track.get('default_vel');
+              if (default_vel && default_track[0].default_vel && default_vel != default_track[0].default_vel) {
+                logEvent(2, "Default track, update default_vel", default_track[0].name, default_track[0].default_vel);
+                track.set('default_vel', default_track[0].default_vel);
               }
             }
           } catch (err) {
@@ -2866,7 +2865,7 @@ var sisbot = {
 	},
   _post_state_to_cloud: function () {
     // THIS IS HELPFUL FOR ANDROID DEVICES
-    logEvent(0, "Post State to Webcenter", this.config.api_endpoint);
+    logEvent(1, "Post State to Webcenter", this.config.api_endpoint);
     var self = this;
 
     // logEvent(1, 'LETS TRY AND GET TO CLOUD', this.current_state.toJSON());
