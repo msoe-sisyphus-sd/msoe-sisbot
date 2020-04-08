@@ -239,13 +239,18 @@ var sisbot = {
               var default_track = _.where(self.config.default_data, {id: obj.id}); // find in default_data
               if (default_track && default_track.length == 1) {
                 if (default_track[0].created_by_name) {
-                  logEvent(0, "Default track found, update created_by_name", default_track[0]);
+                  logEvent(1, "Default track found, update created_by_name", default_track[0]);
                   track.set('created_by_name', default_track[0].created_by_name);
                 }
                 // Fix default_vel if different (Erase in particular)
                 if (track.default_vel && default_track[0].default_vel && track.default_vel != default_track[0].default_vel) {
-                  logEvent(0, "Default track, update default_vel", default_track[0]);
+                  logEvent(2, "Default track, update default_vel", default_track[0]);
                   track.set('default_vel', default_track[0].default_vel);
+                }
+                // Fix is_deletable if different (Erase in particular)
+                if (track.is_deletable && default_track[0].is_deletable && track.is_deletable != default_track[0].is_deletable) {
+                  logEvent(2, "Default track, update is_deletable", default_track[0]);
+                  track.set('is_deletable', default_track[0].is_deletable);
                 }
               }
             }
