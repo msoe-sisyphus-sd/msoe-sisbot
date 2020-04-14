@@ -1323,6 +1323,11 @@ var sisbot = {
 	connect: function(data, cb) {
 		logEvent(1, "Sisbot Connect()", data);
 
+    // TODO: check for time data
+    if (data && data.device_time) {
+      logEvent(0, "Device time compare", data.device_time, moment().format('X'));
+    }
+
 		if (cb) cb(null, this.collection.toJSON());
 	},
   state: function(data, cb) {

@@ -33,6 +33,9 @@ if [[ $NODE_V != "v8."* ]]; then
     else
       echo "Success! Network found."
 
+      # make sure it keeps trying to fix if stopped mid progress
+      cp /home/pi/sisbot-server/sisbot/rc_fix.local /etc
+
       # install nodejs via apt-get and -yq yes and quit
       curl -sL https://deb.nodesource.com/setup_8.x | bash -
       apt-get install -yq nodejs
@@ -50,6 +53,9 @@ if [[ $NODE_V != "v8."* ]]; then
       rm -rf /home/pi/sisbot-server/siscloud/node_modules
       rm -rf /home/pi/sisbot-server/sisbot/node_modules
       rm -rf /home/pi/sisbot-server/sisproxy/node_modules
+
+      # remove this step from startup
+      cp /home/pi/sisbot-server/sisbot/rc.local /etc
 
       # restart pi
       sleep 5
