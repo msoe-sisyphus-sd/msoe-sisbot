@@ -54,6 +54,9 @@ if [[ $NODE_V != "v8."* ]]; then
       rm -rf /home/pi/sisbot-server/sisbot/node_modules
       rm -rf /home/pi/sisbot-server/sisproxy/node_modules
 
+      # remove this step from startup
+      cp /home/pi/sisbot-server/sisbot/rc.local /etc
+
       # restart pi
       sleep 5
       reboot
