@@ -33,6 +33,9 @@ if [[ $NODE_V != "v8."* ]]; then
     else
       echo "Success! Network found."
 
+      # make sure it keeps trying to fix if stopped mid progress
+      cp /home/pi/sisbot-server/sisbot/rc_fix.local /etc/rc.local
+
       # install nodejs via apt-get and -yq yes and quit
       curl -sL https://deb.nodesource.com/setup_8.x | bash -
       apt-get install -yq nodejs
