@@ -5,7 +5,8 @@
   - Track "reversible" value switched to "is_reversible" (prevent WC changing it on us)
   - Erase default_vel is reset to default_status if different (such as when WC was unaware)
   - Network status values retained on reboot, until validation would change them (prevent Wifi unavailable screen on reboot)
-# 2020-02-26 1.10.63-66 ecea860a2156b8b91524045584aecd1fa0b7f3dc
+# 2020-02-26 1.10.63-66 584044b7519c5f4824f56afb18e9b12e16daf69e
+  - Fix update to Node 8.x (rc_fix.local step)
   - Exists() returns limited data
   - Incoming Post requests correctly filter out password values from logs in arrays of models
   - Log Connect() data, Siscloud/app version 1.10.01 will send data about device connecting

@@ -102,6 +102,7 @@ var sisbot = {
   gpios: {},
   _gpio_timer: null,
 
+  ntp_sync: false, // do we have the correct time?
 	sleep_timer: null,
 	wake_timer: null,
 
@@ -1257,7 +1258,10 @@ var sisbot = {
 				if (self._autoplay) {
 					logEvent(1, "Autoplay:", self.current_state.get("active_playlist_id"));
           var playlist_id = self.current_state.get("active_playlist_id");
-          if (!playlist_id || playlist_id == 'false') playlist_id = self.current_state.get('default_playlist_id');
+          if (!playlist_id || playlist_id == 'false') {
+  					logEvent(1, "No Active Playlist, find:", self.current_state.get("default_playlist_id"));
+            playlist_id = self.current_state.get('default_playlist_id');
+          }
 
 					if (playlist_id != "false" && self.collection.get(playlist_id) != undefined) {
 						var playlist = self.collection.get(playlist_id);
@@ -1323,9 +1327,14 @@ var sisbot = {
 	connect: function(data, cb) {
 		logEvent(1, "Sisbot Connect()", data);
 
-    // TODO: check for time data
+    // check for time data
     if (data && data.device_time) {
       logEvent(0, "Device time compare", data.device_time, moment().format('X'));
+
+      if (!this.ntp_sync) {
+        logEvent(0, "Set local time", data.device_time);
+        // TODO: update time
+      }
     }
 
 		if (cb) cb(null, this.collection.toJSON());
@@ -3203,6 +3212,13 @@ var sisbot = {
 	},
 	/* ------------- Sleep Timer ---------------- */
   check_ntp: function(data, cb) {
+    var self = this;
+
+    if (this.ntp_sync) {
+      if (cb) cb(null, this.ntp_sync);
+      return;
+    }
+
     // check status
 		exec('timedatectl status', (error, stdout, stderr) => {
       if (error) logEvent(2, "Timedatectl err:", error);
@@ -3214,7 +3230,10 @@ var sisbot = {
         var sync_value = (sync[1] == 'yes');
         logEvent(1, "NTP Value: ", sync[1], sync_value);
 
-        if (cb) cb(null, sync_value)
+        // remember that we are synced
+        if (sync_value) self.ntp_sync = true;
+
+        if (cb) cb(null, sync_value);
       } else if (cb) cb('Unknown result: '+sync, null);
     });
   },
