@@ -49,7 +49,9 @@ var playlist = Backbone.Model.extend({
 				if (index == 0) console.log("Playlist: reset_tracks, ", obj._index, retain_obj._index);
 				obj.name = track_model.get('name');
 				obj._index = index;
-				obj.reversible = track_model.get('is_reversible').toString(); // make sure string
+				var reversible = track_model.get('is_reversible');
+				if (!reversible) reversible = 'true'; // set to true if undefined
+				obj.reversible = reversible.toString(); // make sure string
 				if (obj._index == retain_obj._index) {
 					// console.log("Don't change "+index+", "+obj._index+" r"+obj.firstR+""+obj.lastR);
 					// console.log("Retained "+index+", "+retain_obj._index+" r"+retain_obj.firstR+""+retain_obj.lastR);

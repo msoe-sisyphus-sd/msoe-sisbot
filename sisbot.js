@@ -220,6 +220,13 @@ var sisbot = {
           if (obj.id == '2CBDAE96-EC22-48B4-A369-BFC624463C5F') obj.is_deletable = 'false'; // force Erase track to not be deletable
           logEvent(1, "track switch 2ball ", is_2ball , " track_type ", is_2ball_track);
 
+          // fix is_reversible
+          try {
+            if (!obj.is_reversible && obj.reversible) obj.is_reversible = obj.reversible;
+          } catch (err) {
+            logEvent(2, "is_reversible error", err);
+          }
+
           if (is_2ball || is_2ball_track == false) {
             logEvent(1, "adding track named to self.collection ", obj.name);
             var newTrack = new Track(obj);
@@ -256,13 +263,6 @@ var sisbot = {
             }
           } catch (err) {
             logEvent(2, "Created_by_name error", err);
-          }
-
-          // fix is_reversible
-          try {
-            if (!obj.is_reversible && obj.reversible) obj.is_reversible = obj.reversible;
-          } catch (err) {
-            logEvent(2, "is_reversible error", err);
           }
 
 					break;
@@ -1265,6 +1265,8 @@ var sisbot = {
 
 					if (playlist_id != "false" && self.collection.get(playlist_id) != undefined) {
 						var playlist = self.collection.get(playlist_id);
+            if (!playlist) logEvent(2, "Playlist not found:", playlist_id);
+            else logEvent(1, "Playlist found", playlist.get('name'));
 						playlist.set({active_track_id: "false", active_track_index: -1});
 						playlist.reset_tracks(); // start with non-reversed list
 						playlist.set_shuffle({ is_shuffle: "true", start_rho: 0 }); // update order, active tracks indexing
@@ -1280,7 +1282,9 @@ var sisbot = {
               // logEvent(1, "_connect() Socket Update", JSON.stringify(resp).length);
     					// self.socket_update(resp);
 						});
-					}
+					} else {
+            logEvent(2, "Active Playlist not Found:", playlist_id);
+          }
 				} else {
           logEvent(1, "Do not Autoplay, just home");
           self.home();
