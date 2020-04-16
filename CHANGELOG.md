@@ -1,10 +1,11 @@
-# 2020-03-11 1.10.67-69
+# 2020-03-11 1.10.67-70
   - Clear passcode on GPIO hold
   - Prevent crash if trying to generate thumbnail and thr file is (somehow) missing
   - Fix Artist models that were saved as Playlists (preventing edit from working)
   - Track "reversible" value switched to "is_reversible" (prevent WC changing it on us)
   - Erase default_vel is reset to default_status if different (such as when WC was unaware)
   - Network status values retained on reboot, until validation would change them (prevent Wifi unavailable screen on reboot)
+  - Waits to set up Sleep/Wake/Clear_log timers until synced with NTP or app
 # 2020-02-26 1.10.63-66 584044b7519c5f4824f56afb18e9b12e16daf69e
   - Fix update to Node 8.x (rc_fix.local step)
   - Exists() returns limited data

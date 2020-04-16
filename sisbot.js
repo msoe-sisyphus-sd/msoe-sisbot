@@ -370,11 +370,12 @@ var sisbot = {
 			software_version: this.config.version
 		});
     if (this.isServo) this.current_state.set('is_servo', 'true');
-		this.current_state.set("local_ip", this._getIPAddress());
 		this.current_state.set("mac_address", this._getMacAddress());
+		// this.current_state.set("local_ip", this._getIPAddress());
 		if (this.current_state.get("local_ip") == "192.168.42.1") {
 			this.current_state.set("is_hotspot", "true");
 		} else {
+      logEvent(1, "Starting IP:", this.current_state.get("local_ip"));
 			this.current_state.set("is_hotspot", "false");
 		}
 		this.current_state.set("hostname", os.hostname()+".local");
@@ -663,7 +664,7 @@ var sisbot = {
 		}
 
 		// sleep/wake timers
-    this.setup_timers(this.current_state.toJSON(), null);
+    if (this.current_state.get("is_hotspot") == 'false') this.setup_timers(this.current_state.toJSON(), null);
 
     // make sure update_status file exists, starts as 'false'
     fs.writeFile(config.base_dir+'/'+config.folders.sisbot+'/update_status', 'false', function(err) {
@@ -1333,11 +1334,25 @@ var sisbot = {
 
     // check for time data
     if (data && data.device_time) {
-      logEvent(0, "Device time compare", data.device_time, moment().format('X'));
+      logEvent(1, "Device time compare", data.device_time, moment().format('X'));
 
       if (!this.ntp_sync) {
-        logEvent(0, "Set local time", data.device_time);
-        // TODO: update time
+        var self = this;
+
+        var command = "date";
+        logEvent(1, "Set local time", command);
+
+        // TODO: run command, set ntp_sync = true;
+    		var ls = spawn(command,['--set','@'+data.device_time],{cwd:"/home/pi/",detached:true,stdio:'ignore'});
+    		ls.on('error', (err) => {
+    			logEvent(2, 'Failed to set start date.');
+    		});
+    		ls.on('close', (code) => {
+          if (code == 0) {
+            self.ntp_sync = true;
+            self.setup_timers(self.current_state.toJSON(), null); // setup sleep/wake/clear_logs
+          }
+    		});
       }
     }
 
@@ -2803,6 +2818,9 @@ var sisbot = {
 
 			if (self.current_state.get('is_internet_connected') != returnValue) logEvent(1, "Internet Connected Check", returnValue, self.current_state.get("local_ip"));
 
+      // setup timers if now connected
+      if (!self.ntp_sync && returnValue == "true") self.setup_timers(self.current_state.toJSON(), null);
+
 			// make sure connected to remote
 			if (returnValue == "true" && self.current_state.get("share_log_files") == "true") self._setupAnsible();
 
@@ -3248,7 +3266,10 @@ var sisbot = {
     this.check_ntp({}, function(err, sync_value) {
       if (err) logEvent(2, "NTP Error", err);
 
-      if (sync_value || self.current_state.get("wifi_network") == "" || self.current_state.get("wifi_network") == "false") {
+      // setup sleep/wake/clean_logs if synced
+      if (sync_value) {
+        logEvent(1, "Setup_timers");
+
         // load library when needed (to prevent power-cycle time issues)
         if (!scheduler) {
           scheduler 	= require('node-schedule');
@@ -3265,17 +3286,12 @@ var sisbot = {
 
         self._schedule_clean_logs(data, null);
         self._set_sleep_time(data, cb);
-      } else {
-        // delay assigning cron
-        setTimeout(function() {
-          self.setup_timers(data, cb);
-        }, self.config.ntp_wait);
       }
     });
   },
 	set_sleep_time: function(data, cb) {
 		var self = this;
-		// logEvent(1, "Set Sleep Time:", moment().format(), data.sleep_time, data.wake_time, data.timezone_offset, this.current_state.get('is_sleeping'));
+		logEvent(1, "Set Sleep Time:", moment().format(), data.sleep_time, data.wake_time, data.timezone_offset, this.current_state.get('is_sleeping'));
     if (!scheduler) {
       scheduler 	= require('node-schedule');
 

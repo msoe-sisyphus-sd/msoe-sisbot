@@ -11,7 +11,7 @@ var sisbot_state = Backbone.Model.extend({
 		firmware_version		: "1.0",
 		software_version		: "1.0",
 		hostname						: "sisyphus.local",
-		local_ip						: "",
+		local_ip						: "192.168.42.1", // default to hotspot
 		cson								: "false",
 
 		is_available					: "true",
@@ -60,7 +60,7 @@ var sisbot_state = Backbone.Model.extend({
 		timezone_offset			: "-06:00", // Central time
 
 		passcode						: "false",
-		
+
 		wifi_network				: "",
 		wifi_password				: "",
 		wifi_is_hidden			: "false", // if true, don't bother checking if network name appears nearby
