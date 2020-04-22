@@ -1204,8 +1204,20 @@ var sisbot = {
 
     // call save if told here
     if (is_change && data._save) {
-      if (data.led_primary_color) this.current_state.set('led_primary_color', data.led_primary_color);
-      if (data.led_secondary_color) this.current_state.set('led_secondary_color', data.led_secondary_color);
+      var pattern = this.collection.get(this.current_state.get('led_pattern'));
+
+      if (data.led_primary_color) {
+        this.current_state.set('led_primary_color', data.led_primary_color);
+
+        // TODO: update current pattern with this new color
+        pattern.set('led_primary_color', data.led_primary_color);
+      }
+      if (data.led_secondary_color) {
+        this.current_state.set('led_secondary_color', data.led_secondary_color);
+
+        // TODO: update current pattern with this new color
+        pattern.set('led_secondary_color', data.led_secondary_color);
+      }
       logEvent(0, "Save color change", data.led_primary_color, data.led_secondary_color);
       this.save(null, null);
     }
