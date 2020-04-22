@@ -1125,7 +1125,9 @@ var sisbot = {
 
         self.save(null, null);
 
-        if (cb) cb(null, self.current_state.toJSON());
+        var min_resp = _.pick(self.current_state.toJSON(), ['id','state','led_enabled','led_pattern','led_offset','led_primary_color','led_secondary_color']);
+
+        if (cb) cb(null, min_resp);
       });
 
     });
@@ -3354,7 +3356,8 @@ var sisbot = {
 
 		self.save(null, null);
 
-		if (cb) cb(null, self.current_state.toJSON());
+    var min_resp = _.pick(self.current_state.toJSON(), ['id','state','is_sleeping','is_sleep_enabled','sleep_time','wake_time','timezone_offset','is_nightlight','nightlight_brightness','is_play_on_wake'])
+		if (cb) cb(null, min_resp);
 	},
 	wake_sisbot: function(data, cb) {
 		logEvent(1, "Wake Sisbot", this.current_state.get('is_sleeping'));
@@ -3372,7 +3375,7 @@ var sisbot = {
       }
 
       // logEvent(1, "wake_sisbot() Socket Update", JSON.stringify(this.current_state.toJSON()).length);
-      var min_resp = _.pick(this.current_state.toJSON(), ['id','state', 'is_sleeping']);
+      var min_resp = _.pick(this.current_state.toJSON(), ['id','state','is_sleeping']);
       this.socket_update(min_resp);
 		}
 		if (cb) cb(null, min_resp);
@@ -3390,7 +3393,10 @@ var sisbot = {
       } else {
         this._sleep_sisbot(data, cb);
       }
-		} else if (cb) cb(null, this.current_state.toJSON());
+		} else if (cb) {
+      var min_resp = _.pick(this.current_state.toJSON(), ['id','state','is_sleeping']);
+      cb(null, min_resp);
+    }
 	},
   _sleep_sisbot: function(data, cb) {
     // fade lights out
