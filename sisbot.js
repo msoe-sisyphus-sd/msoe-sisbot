@@ -3249,7 +3249,7 @@ var sisbot = {
       logEvent(1, "Timedatectl stdout:", stdout);
       if (stderr) logEvent(2, "Timedatectl stderr:", stderr);
 
-      var sync = stdout.match(/NTP synchronized: (yes|no)/);
+      var sync = stdout.match(/(NTP|System clock) synchronized: (yes|no)/);
       if (_.isArray(sync) && sync.length > 1) {
         var sync_value = (sync[1] == 'yes');
         logEvent(1, "NTP Value: ", sync[1], sync_value);
