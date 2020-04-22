@@ -1202,7 +1202,16 @@ var sisbot = {
       is_change = true;
     }
 
-    if (cb) cb(null, data);
+    // call save if told here
+    if (is_change && data._save) {
+      if (data.led_primary_color) this.current_state.set('led_primary_color', data.led_primary_color);
+      if (data.led_secondary_color) this.current_state.set('led_secondary_color', data.led_secondary_color);
+      logEvent(0, "Save color change", data.led_primary_color, data.led_secondary_color);
+      this.save(null, null);
+    }
+
+    var min_resp = _.pick(this.current_state.toJSON(), ['id','state','led_primary_color','led_secondary_color']);
+    if (cb) cb(null, min_resp);
   },
   lcpWrite: function(data, cb) {
     logEvent(1, 'LCP-write:',data.value);
@@ -3251,7 +3260,7 @@ var sisbot = {
 
       var sync = stdout.match(/(NTP|System clock) synchronized: (yes|no)/);
       if (_.isArray(sync) && sync.length > 1) {
-        var sync_value = (sync[1] == 'yes');
+        var sync_value = (sync[2] == 'yes');
         logEvent(1, "NTP Value: ", sync[1], sync_value);
 
         // remember that we are synced
