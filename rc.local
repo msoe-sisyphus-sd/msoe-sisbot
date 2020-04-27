@@ -1,6 +1,6 @@
 #!/bin/sh -e
 
-if [ -f "/home/pi/sisbot-server/sisbot/startup.sh" ]; then
+if [ -f "/home/pi/sisbot-server/sisbot/startup.sh" ] && [ -s "/home/pi/sisbot-server/sisbot/startup.sh" ]; then
   echo "Sisyphus Startup"
   /home/pi/sisbot-server/sisbot/startup.sh >> /var/log/sisyphus/startup.log  2>&1 &
 else
