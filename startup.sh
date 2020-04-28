@@ -66,9 +66,8 @@ else
     echo "Failure! Unable to connect to network, please retry."
   else
     # if package.json doesn't exist or is empty, reset head
-    if [ -f "package.json" ] && [ -s "package.json" ]; then
-      # do nothing
-    else
+    if [ ! -f "package.json" ] || [ ! -s "package.json" ]; then
+      echo "Package.json missing/empty, git reset"
       git reset --hard
     fi
 
@@ -86,12 +85,11 @@ else
     echo "Failure! Unable to connect to network, please retry."
   else
     # if package.json doesn't exist or is empty, reset head
-    if [ -f "package.json" ] && [ -s "package.json" ]; then
-      # do nothing
-    else
+    if [ ! -f "package.json" ] || [ ! -s "package.json" ]; then
+      echo "Package.json missing/empty, git reset"
       git reset --hard
     fi
-    
+
     sudo -u pi npm install
   fi
 fi
