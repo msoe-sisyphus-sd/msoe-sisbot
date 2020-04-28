@@ -913,7 +913,8 @@ module.exports = [{
   "type": "led_pattern",
   "name": "White",
   "is_white": "true",
-  "white_value": 0.5
+  "white_value": 0.5,
+  "led_primary_color": "#FFFFFFFF"
 },{
   "id": "solid",
   "type": "led_pattern",
