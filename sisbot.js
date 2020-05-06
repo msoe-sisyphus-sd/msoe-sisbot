@@ -3050,7 +3050,7 @@ var sisbot = {
 	},
 	change_to_wifi: function(data, cb) {
 		var self = this;
-		// logEvent(1, "Sisbot change to wifi", data);
+		logEvent(0, "Sisbot change to wifi", data);
 		if (data.ssid == undefined || data.ssid == "" || data.ssid == "false") {
 			if (cb) cb("No network name given", null);
       self.current_state.set({ wifi_forget: "false" });
@@ -3091,6 +3091,8 @@ var sisbot = {
         setTimeout(function () {
           exec("sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "+connection, (error, stdout, stderr) => {
   					if (error) return logEvent(2, 'Stop_hotspot exec error:', error);
+
+            ble_obj.update_ip_address('0.0.0.0'); // clear IP address
   				});
     		}, 100);
 
