@@ -132,7 +132,7 @@ var app = function(given_config,ansible) {
 				});
 			} else {
 				// How much data is sent?
-				if (process.env.NODE_ENV.indexOf('_dev') >= 0) logEvent(0, "Socket Update:", JSON.stringify(data).length);
+				if (process.env.NODE_ENV.indexOf('_dev') >= 0) logEvent(1, "Socket Update:", JSON.stringify(data).length);
 
 				_.each(sockets, function(socket, id) {
 					if (data == "disconnect") {
