@@ -598,7 +598,7 @@ var sisbot = {
         // !!! Check if is_sleeping
         if (newState == 'waiting' && self._autoplay && self.current_state.get('installing_updates') == "false") {
           // autoplay after first home
-          logEvent(0, "Play next ",self.current_state.get('active_track').name, self.current_state.get('active_track').firstR, "Rho:", self.current_state.get('_end_rho'), self._move_to_rho);
+          logEvent(1, "Play next ",self.current_state.get('active_track').name, self.current_state.get('active_track').firstR, "Rho:", self.current_state.get('_end_rho'), self._move_to_rho);
 
           // _detach_first?
           if (self._detach_first) {
@@ -616,7 +616,7 @@ var sisbot = {
             // TODO: check if we need to start at 1
             if (self._start_move_to_rho_1 && track.firstR == 1) {
               self._move_to_rho = 1;
-              logEvent(0, "Start Move to 1", self._move_to_rho, self.current_state.get('_end_rho'),self.current_state.get('active_track'));
+              logEvent(1, "Start Move to 1", self._move_to_rho, self.current_state.get('_end_rho'),self.current_state.get('active_track'));
               self._start_move_to_rho_1 = false; // clear
 
               track.reversible = 'false';
@@ -643,7 +643,7 @@ var sisbot = {
           // if just starting, make us move to the right start rho
           if (self._start_move_to_rho_1 && track.firstR == 1) {
             self._move_to_rho = 1;
-            logEvent(0, "Start Move to 1", self._move_to_rho, self.current_state.get('_end_rho'),self.current_state.get('active_track'));
+            logEvent(1, "Start Move to 1", self._move_to_rho, self.current_state.get('_end_rho'),self.current_state.get('active_track'));
             self._start_move_to_rho_1 = false; // clear
 
             track.reversible = 'false';
@@ -1242,7 +1242,7 @@ var sisbot = {
         // update current pattern with this new color
         pattern.set('led_secondary_color', data.led_secondary_color);
       }
-      logEvent(0, "Save color change", data.led_primary_color, data.led_secondary_color);
+      logEvent(1, "Save color change", data.led_primary_color, data.led_secondary_color);
       this.save(null, null);
     }
 
@@ -1322,7 +1322,7 @@ var sisbot = {
           			var track = playlist.get_current_track();
                 if (track.firstR == 1) {
                   self._start_move_to_rho_1 = true;
-                  logEvent(0, "Start Playlist, do not reverse start track!", track);
+                  logEvent(1, "Start Playlist, do not reverse start track!", track);
                 }
               }
   						// playlist.set({active_track_id: "false", active_track_index: -1});
@@ -1799,7 +1799,7 @@ var sisbot = {
           // if just starting, make us move to the right start rho
           if (self._start_move_to_rho_1 && track.firstR == 1) {
             self._move_to_rho = 1;
-            logEvent(0, "Start Move to 1", self._move_to_rho, self.current_state.get('_end_rho'),self.current_state.get('active_track'));
+            logEvent(1, "Start Move to 1", self._move_to_rho, self.current_state.get('_end_rho'),self.current_state.get('active_track'));
             self._start_move_to_rho_1 = false; // clear
             track.reversible = "false"; // disallow reversing
           }
@@ -2454,7 +2454,7 @@ var sisbot = {
 			if (track != undefined && track != "false")	{
 				this._autoplay = true;
         if (!data.is_shuffle || data.is_shuffle == 'false') { // if new playlist && not shuffled, move to track firstR
-          logEvent(0, "New Playlist, not shuffled, move to track start", track.firstR);
+          logEvent(1, "New Playlist, not shuffled, move to track start", track.firstR);
           this._move_to_rho = track.firstR;
         }
 				this._play_track(track, null);
@@ -2555,7 +2555,7 @@ var sisbot = {
 
               // compare to be sure we can start this track
               if (self.current_state.get('_end_rho') !== track_obj.firstR) {
-                logEvent(0, "Track mismatch, move to start rho", track_obj.firstR);
+                logEvent(1, "Track mismatch, move to start rho", track_obj.firstR);
                 this._play_given_track(track_obj, null);
               } else {
                 logEvent(1, "Plotter: play track", self.current_state.get('_end_rho'), _.omit(track_obj, 'verts'));
@@ -2600,7 +2600,7 @@ var sisbot = {
       logEvent(1, "Reverse track", track);
     } else if (track.firstR != undefined && track.firstR != self.current_state.get('_end_rho')) {
       move_to_rho = track.firstR;
-      logEvent(0, "Not reversible, move to rho:", move_to_rho);
+      logEvent(1, "Not reversible, move to rho:", move_to_rho);
     }
     // }
     // move to start rho
@@ -3050,7 +3050,7 @@ var sisbot = {
 	},
 	change_to_wifi: function(data, cb) {
 		var self = this;
-		logEvent(0, "Sisbot change to wifi", data);
+		// logEvent(1, "Sisbot change to wifi", data);
 		if (data.ssid == undefined || data.ssid == "" || data.ssid == "false") {
 			if (cb) cb("No network name given", null);
       self.current_state.set({ wifi_forget: "false" });
