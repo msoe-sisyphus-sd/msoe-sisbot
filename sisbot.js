@@ -1716,7 +1716,10 @@ var sisbot = {
       this._home_requested = true; // keep from calling multiple times
 			if (data) { // special instructions?
 				if (data.stop) this._autoplay = false; // home without playing anything afterward
-				if (data.clear_tracks) this.current_state.set({active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
+				if (data.clear_tracks) {
+          this._move_to_rho = 0;
+          this.current_state.set({active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
+        }
 			}
 
       if (this.current_state.get("state") == "playing") {

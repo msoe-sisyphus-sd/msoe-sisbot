@@ -8,6 +8,7 @@
   - Waits to set up Sleep/Wake/Clear_log timers until synced with NTP or app
   - On reboot, playlist continues with order from previous save. Maintains rho start of active track (i.e.: moves out to start rho of 1)
   - Clear IP on connect to wifi (so app doesn't retry connecting to hotspot IP)
+  - Homing with clear_tracks value forces homing to 0 rho
 # 2020-02-26 1.10.63-66 584044b7519c5f4824f56afb18e9b12e16daf69e
   - Fix update to Node 8.x (rc_fix.local step)
   - Exists() returns limited data
