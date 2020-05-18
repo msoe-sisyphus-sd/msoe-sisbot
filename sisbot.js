@@ -132,6 +132,7 @@ var sisbot = {
 	_detach_track: false, // for tables with multiple balls
 	_detach_first: false, // for tables with multiple balls, after first home
 	_move_to_rho: 0,
+  _start_move_to_rho_1: false, // for startup from already playing playlist
 	_saving: false,
 
   _thumbnail_playing: false, // was the table playing prior to generating thumbnail?
@@ -567,7 +568,7 @@ var sisbot = {
 
 			if (oldState == 'homing') {
 				if (newState == 'home_th_failed') {
-					// TODO: something, never run into this before
+          logEvent(2, "Failed home (theta)!");
 					return;
 				}
 				if (newState == 'home_rho_failed') {
@@ -597,12 +598,12 @@ var sisbot = {
         // !!! Check if is_sleeping
         if (newState == 'waiting' && self._autoplay && self.current_state.get('installing_updates') == "false") {
           // autoplay after first home
-          logEvent(1, "Play next ",self.current_state.get('active_track').name, self.current_state.get('active_track').firstR, "Rho:", self.current_state.get('_end_rho'));
+          logEvent(0, "Play next ",self.current_state.get('active_track').name, self.current_state.get('active_track').firstR, "Rho:", self.current_state.get('_end_rho'), self._move_to_rho);
 
           // _detach_first?
           if (self._detach_first) {
             var track = self.collection.get('detach'); // detach id is always 'detach'
-            logEvent(1, "Detach First", track.toJSON());
+            logEvent(1, "Detach First", track.toJSON(), self._move_to_rho);
 
             self.current_state.set('repeat_current', 'true'); // don't step over wanted first track
 
@@ -610,7 +611,18 @@ var sisbot = {
 
             self._detach_first = false;
           } else if (self.current_state.get('active_track').id != "false") {
-            self._play_given_track(self.current_state.get('active_track'));
+            var track = self.current_state.get('active_track');
+
+            // TODO: check if we need to start at 1
+            if (self._start_move_to_rho_1 && track.firstR == 1) {
+              self._move_to_rho = 1;
+              logEvent(0, "Start Move to 1", self._move_to_rho, self.current_state.get('_end_rho'),self.current_state.get('active_track'));
+              self._start_move_to_rho_1 = false; // clear
+
+              track.reversible = 'false';
+            }
+
+            self._play_given_track(track, null);
           }
         }
       }
@@ -626,7 +638,19 @@ var sisbot = {
 					}, 1000);
 				} else if (self.current_state.get('active_track').id != "false") {
 					logEvent(1, "Play next track. Rho: ", self.current_state.get('_end_rho'));
-					self._play_track(self.current_state.get('active_track'), null); // autoplay after first home
+          var track = self.current_state.get('active_track');
+
+          // if just starting, make us move to the right start rho
+          if (self._start_move_to_rho_1 && track.firstR == 1) {
+            self._move_to_rho = 1;
+            logEvent(0, "Start Move to 1", self._move_to_rho, self.current_state.get('_end_rho'),self.current_state.get('active_track'));
+            self._start_move_to_rho_1 = false; // clear
+
+            track.reversible = 'false';
+            self._play_given_track(track, null);
+          } else {
+  					self._play_track(track, null); // autoplay after first home
+          }
 				} else {
 					logEvent(1, "No Next Track", self.current_state.get('active_track'));
 				}
@@ -938,7 +962,7 @@ var sisbot = {
     logEvent(1, "GPIO Change", gpio, value);
     self.gpios['gpio'+gpio].data.current_state = value;
 
-    // TODO: do something about press/release
+    // do something about press/release
     if (self.gpios['gpio'+gpio].cb && _.isFunction(self.gpios['gpio'+gpio].cb))
       self.gpios['gpio'+gpio].cb(null, self.gpios['gpio'+gpio].data);
   },
@@ -1125,7 +1149,9 @@ var sisbot = {
 
         self.save(null, null);
 
-        if (cb) cb(null, self.current_state.toJSON());
+        var min_resp = _.pick(self.current_state.toJSON(), ['id','state','led_enabled','led_pattern','led_offset','led_primary_color','led_secondary_color']);
+
+        if (cb) cb(null, min_resp);
       });
 
     });
@@ -1200,7 +1226,28 @@ var sisbot = {
       is_change = true;
     }
 
-    if (cb) cb(null, data);
+    // call save if told here
+    if (is_change && data._save) {
+      var pattern = this.collection.get(this.current_state.get('led_pattern'));
+
+      if (data.led_primary_color) {
+        this.current_state.set('led_primary_color', data.led_primary_color);
+
+        // update current pattern with this new color
+        pattern.set('led_primary_color', data.led_primary_color);
+      }
+      if (data.led_secondary_color) {
+        this.current_state.set('led_secondary_color', data.led_secondary_color);
+
+        // update current pattern with this new color
+        pattern.set('led_secondary_color', data.led_secondary_color);
+      }
+      logEvent(0, "Save color change", data.led_primary_color, data.led_secondary_color);
+      this.save(null, null);
+    }
+
+    var min_resp = _.pick(this.current_state.toJSON(), ['id','state','led_primary_color','led_secondary_color']);
+    if (cb) cb(null, min_resp);
   },
   lcpWrite: function(data, cb) {
     logEvent(1, 'LCP-write:',data.value);
@@ -1267,22 +1314,33 @@ var sisbot = {
 					if (playlist_id != "false" && self.collection.get(playlist_id) != undefined) {
 						var playlist = self.collection.get(playlist_id);
             if (!playlist) logEvent(2, "Playlist not found:", playlist_id);
-            else logEvent(1, "Playlist found", playlist.get('name'));
-						playlist.set({active_track_id: "false", active_track_index: -1});
-						playlist.reset_tracks(); // start with non-reversed list
-						playlist.set_shuffle({ is_shuffle: "true", start_rho: 0 }); // update order, active tracks indexing
-						playlist.set({active_track_index: 0});
+            else {
+              logEvent(1, "Playlist found", playlist.get('name'));
+              // keep playlist as ordered
+              if (playlist.get('active_track_id') != 'false') {
+                // get track
+          			var track = playlist.get_current_track();
+                if (track.firstR == 1) {
+                  self._start_move_to_rho_1 = true;
+                  logEvent(0, "Start Playlist, do not reverse start track!", track);
+                }
+              }
+  						// playlist.set({active_track_id: "false", active_track_index: -1});
+  						// playlist.reset_tracks(); // start with non-reversed list
+  						// playlist.set_shuffle({ is_shuffle: "true", start_rho: 0 }); // update order, active tracks indexing
+  						// playlist.set({active_track_index: 0});
 
-						var playlist_obj = playlist.toJSON();
-						logEvent(1, "Playlist Active Index:", playlist_obj.active_track_index);
-						playlist_obj.skip_save = true;
-						playlist_obj.is_current = true; // we already set the randomized pattern
+  						var playlist_obj = playlist.toJSON();
+  						logEvent(1, "Playlist Active Index:", playlist_obj.active_track_index);
+  						playlist_obj.skip_save = true;
+  						playlist_obj.is_current = true; // we already set the randomized pattern
 
-						self.set_playlist(playlist_obj, function(err, resp) {
-							if (err) return logEvent(1, "Set initial playlist", err);
-              // logEvent(1, "_connect() Socket Update", JSON.stringify(resp).length);
-    					// self.socket_update(resp);
-						});
+  						self.set_playlist(playlist_obj, function(err, resp) {
+  							if (err) return logEvent(1, "Set initial playlist", err);
+                // logEvent(1, "_connect() Socket Update", JSON.stringify(resp).length);
+      					// self.socket_update(resp);
+  						});
+            }
 					} else {
             logEvent(2, "Active Playlist not Found:", playlist_id);
           }
@@ -1342,7 +1400,7 @@ var sisbot = {
         var command = "date";
         logEvent(1, "Set local time", command);
 
-        // TODO: run command, set ntp_sync = true;
+        // set time, set ntp_sync = true;
     		var ls = spawn(command,['--set','@'+data.device_time],{cwd:"/home/pi/",detached:true,stdio:'ignore'});
     		ls.on('error', (err) => {
     			logEvent(2, 'Failed to set start date.');
@@ -1363,7 +1421,7 @@ var sisbot = {
     var ret_state = this.current_state.toJSON();
     delete ret_state.wifi_password;
     delete ret_state.wifi_network;
-    // TODO: test removing playlist_ids, track_ids
+    // remove playlist_ids, track_ids
     delete ret_state.playlist_ids;
     delete ret_state.track_ids;
 
@@ -1372,7 +1430,7 @@ var sisbot = {
 		var playlist_id = this.current_state.get('active_playlist_id');
 		if (playlist_id != 'false') {
       var ret_playlist = this.collection.get(playlist_id).toJSON();
-      // TODO: test removing tracks
+      // remove tracks
       delete ret_playlist.tracks;
 
       return_objs.push(ret_playlist);
@@ -1505,7 +1563,7 @@ var sisbot = {
 
 			var returnObjects = [];
 
-			// TODO: merge the given data into collection and save
+			// merge the given data into collection and save
 			if (data != null) {
 				if (!_.isArray(data)) data = [data];
 				_.each(data, function(obj) {
@@ -1725,7 +1783,7 @@ var sisbot = {
 
       /////////////////////
       if (thHome && (rhoHome || this.isServo || this._move_to_rho == 1) && skip_move_out_if_sensors_at_home) {
-        logEvent(1, "DEAD RECKONING Home Successful");
+        logEvent(1, "DEAD RECKONING Home Successful", self._move_to_rho);
         this._sensored = false;
         this._home_next = false;
         this._home_requested = false;
@@ -1736,8 +1794,18 @@ var sisbot = {
         // play next track as intended
         if (self.current_state.get('active_track').id != "false") {
           logEvent(1, "Force next track, start Rho: ", self.current_state.get('_end_rho'));
+          var track = self.current_state.get('active_track');
+
+          // if just starting, make us move to the right start rho
+          if (self._start_move_to_rho_1 && track.firstR == 1) {
+            self._move_to_rho = 1;
+            logEvent(0, "Start Move to 1", self._move_to_rho, self.current_state.get('_end_rho'),self.current_state.get('active_track'));
+            self._start_move_to_rho_1 = false; // clear
+            track.reversible = "false"; // disallow reversing
+          }
+
           // reverse the track?
-          self._play_given_track(self.current_state.get('active_track'), null);
+          self._play_given_track(track, null);
         } else {
           logEvent(1, "No Next Track", self.current_state.get('active_track'));
         }
@@ -2385,6 +2453,10 @@ var sisbot = {
 			var track = playlist.get_current_track();
 			if (track != undefined && track != "false")	{
 				this._autoplay = true;
+        if (!data.is_shuffle || data.is_shuffle == 'false') { // if new playlist && not shuffled, move to track firstR
+          logEvent(0, "New Playlist, not shuffled, move to track start", track.firstR);
+          this._move_to_rho = track.firstR;
+        }
 				this._play_track(track, null);
 			}
 		}
@@ -2475,16 +2547,18 @@ var sisbot = {
 				var track = this.collection.get(data.id);
 				if (track != undefined) {
 			    if (this.current_state.get("is_homed") == "true") {
-						_.extend(data, {start:self.current_state.get('_end_rho')});
+						_.extend(data, {start: self.current_state.get('_end_rho')});
+
 						var track_obj = track.get_plotter_obj(data, self.config.auto_track_start_rho);
 						if (track_obj != "false") {
 							this._paused = false;
 
               // compare to be sure we can start this track
               if (self.current_state.get('_end_rho') !== track_obj.firstR) {
-                logEvent(1, "Track mismatch, move to start rho", track_obj.firstR);
+                logEvent(0, "Track mismatch, move to start rho", track_obj.firstR);
                 this._play_given_track(track_obj, null);
               } else {
+                logEvent(1, "Plotter: play track", self.current_state.get('_end_rho'), _.omit(track_obj, 'verts'));
   							this.plotter.playTrack(track_obj);
   							this.current_state.set('_end_rho', track_obj.lastR); // pull from track_obj
 
@@ -2521,11 +2595,13 @@ var sisbot = {
     if (track == undefined) return logEvent(2, "No Given Track");
     var move_to_rho = false; // do we even need to?
 
-    // if (self.current_state.get("active_playlist_id") == "false") {
     // reverse track?
     if (track.firstR != self.current_state.get('_end_rho') && track.lastR == self.current_state.get('_end_rho') && track.reversible == 'true') {
       logEvent(1, "Reverse track", track);
-    } else if (track.firstR != undefined && track.firstR != self.current_state.get('_end_rho')) move_to_rho = track.firstR;
+    } else if (track.firstR != undefined && track.firstR != self.current_state.get('_end_rho')) {
+      move_to_rho = track.firstR;
+      logEvent(0, "Not reversible, move to rho:", move_to_rho);
+    }
     // }
     // move to start rho
     if (move_to_rho !== false) {
@@ -2974,7 +3050,7 @@ var sisbot = {
 	},
 	change_to_wifi: function(data, cb) {
 		var self = this;
-		// logEvent(1, "Sisbot change to wifi", data);
+		logEvent(0, "Sisbot change to wifi", data);
 		if (data.ssid == undefined || data.ssid == "" || data.ssid == "false") {
 			if (cb) cb("No network name given", null);
       self.current_state.set({ wifi_forget: "false" });
@@ -3015,6 +3091,8 @@ var sisbot = {
         setTimeout(function () {
           exec("sudo /home/pi/sisbot-server/sisbot/stop_hotspot.sh "+connection, (error, stdout, stderr) => {
   					if (error) return logEvent(2, 'Stop_hotspot exec error:', error);
+
+            ble_obj.update_ip_address('0.0.0.0'); // clear IP address
   				});
     		}, 100);
 
@@ -3247,9 +3325,9 @@ var sisbot = {
       logEvent(1, "Timedatectl stdout:", stdout);
       if (stderr) logEvent(2, "Timedatectl stderr:", stderr);
 
-      var sync = stdout.match(/NTP synchronized: (yes|no)/);
+      var sync = stdout.match(/(NTP|System clock) synchronized: (yes|no)/);
       if (_.isArray(sync) && sync.length > 1) {
-        var sync_value = (sync[1] == 'yes');
+        var sync_value = (sync[2] == 'yes');
         logEvent(1, "NTP Value: ", sync[1], sync_value);
 
         // remember that we are synced
@@ -3354,7 +3432,8 @@ var sisbot = {
 
 		self.save(null, null);
 
-		if (cb) cb(null, self.current_state.toJSON());
+    var min_resp = _.pick(self.current_state.toJSON(), ['id','state','is_sleeping','is_sleep_enabled','sleep_time','wake_time','timezone_offset','is_nightlight','nightlight_brightness','is_play_on_wake'])
+		if (cb) cb(null, min_resp);
 	},
 	wake_sisbot: function(data, cb) {
 		logEvent(1, "Wake Sisbot", this.current_state.get('is_sleeping'));
@@ -3372,7 +3451,7 @@ var sisbot = {
       }
 
       // logEvent(1, "wake_sisbot() Socket Update", JSON.stringify(this.current_state.toJSON()).length);
-      var min_resp = _.pick(this.current_state.toJSON(), ['id','state', 'is_sleeping']);
+      var min_resp = _.pick(this.current_state.toJSON(), ['id','state','is_sleeping']);
       this.socket_update(min_resp);
 		}
 		if (cb) cb(null, min_resp);
@@ -3390,7 +3469,10 @@ var sisbot = {
       } else {
         this._sleep_sisbot(data, cb);
       }
-		} else if (cb) cb(null, this.current_state.toJSON());
+		} else if (cb) {
+      var min_resp = _.pick(this.current_state.toJSON(), ['id','state','is_sleeping']);
+      cb(null, min_resp);
+    }
 	},
   _sleep_sisbot: function(data, cb) {
     // fade lights out
@@ -3693,13 +3775,13 @@ var sisbot = {
 		var self = this;
 		var sisbots = [];
 
-		// TODO: remove next line to do actual scan
+		// only allow while testing
 		if (!this.config.testing) {
 			if (cb) return cb(null, sisbots);
 			else return;
 		}
 
-		// TODO: take local_ip, ping exists on 1-254 (except self)
+		// take local_ip, ping exists on 1-254 (except self)
 		this.current_state.set("local_ip", this._getIPAddress());
 		if (this.current_state.get("local_ip") == "192.168.42.1") {
 			this.current_state.set({is_hotspot: "true"});

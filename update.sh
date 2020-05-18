@@ -30,6 +30,10 @@ cd /home/pi/sisbot-server/sisproxy
 cp package.json package.json.bak
 
 cd /home/pi/sisbot-server/sisbot
+# Check for .git/index.lock
+if [ -f ".git/index.lock" ]; then
+	rm .git/index.lock
+fi
 git reset --hard
 if [ -n "$1" ]; then
 	git pull origin "$1"
@@ -41,6 +45,10 @@ fi
 echo "2" > /home/pi/sisbot-server/sisbot/update_status
 
 cd /home/pi/sisbot-server/siscloud
+# Check for .git/index.lock
+if [ -f ".git/index.lock" ]; then
+	rm .git/index.lock
+fi
 git reset --hard
 if [ -n "$2" ]; then
 	git pull origin "$2"
@@ -52,6 +60,10 @@ fi
 echo "3" > /home/pi/sisbot-server/sisbot/update_status
 
 cd /home/pi/sisbot-server/sisproxy
+# Check for .git/index.lock
+if [ -f ".git/index.lock" ]; then
+	rm .git/index.lock
+fi
 git reset --hard
 if [ -n "$3" ]; then
 	git pull origin "$3"
