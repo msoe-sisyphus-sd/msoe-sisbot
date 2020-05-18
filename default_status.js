@@ -7,7 +7,7 @@ module.exports = [{
   "hostname_prompt": "true",
   "favorite_playlist_id": "false",
   "default_playlist_id": "F42695C4-AE32-4956-8C7D-0FF6A7E9D492",
-  "led_pattern_ids": ["white","solid","fade","spread","comet","rainbow","paint","demo"],
+  "led_pattern_ids": ["white", "solid", "fade", "spread", "comet", "rainbow", "paint", "demo"],
   "led_pattern": "white",
   "led_primary_color": "#FFFFFFFF",
   "playlist_ids": ["F42695C4-AE32-4956-8C7D-0FF6A7E9D492", "452e628f-fe10-4858-9ed0-fc4b47b6d2e9"],
@@ -344,7 +344,7 @@ module.exports = [{
     "name": "apache1"
   }],
   "sorted_tracks": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28],
-  "description": "Description of Default Playlist",
+  "description": "",
   "created_at": "2017-08-17 14:16:22",
   "updated_at": "2017-08-17 14:16:22",
   "created_by_id": "false",
@@ -430,15 +430,15 @@ module.exports = [{
   "default_thvmax": 1,
   "reversible": "true"
 }, {
-//   "id": "906de7a3-4769-4964-96cd-2bcf80bad2f5",
-//   "type": "track",
-//   "created_by_name": "bshapiro",
-//   "name": "apache1",
-//   "default_vel": 1,
-//   "default_accel": 0.5,
-//   "default_thvmax": 1,
-//   "reversible": "true"
-// }, {
+  //   "id": "906de7a3-4769-4964-96cd-2bcf80bad2f5",
+  //   "type": "track",
+  //   "created_by_name": "bshapiro",
+  //   "name": "apache1",
+  //   "default_vel": 1,
+  //   "default_accel": 0.5,
+  //   "default_thvmax": 1,
+  //   "reversible": "true"
+  // }, {
   "id": "b19a2909-a9f5-490b-9f9a-d990f5a77393",
   "type": "track",
   "created_by_name": "bshapiro",
@@ -448,24 +448,24 @@ module.exports = [{
   "default_thvmax": 1,
   "reversible": "true"
 }, {
-//   "id": "6796b5c5-0f4b-47e2-b871-f30d9e967d6b",
-//   "type": "track",
-//   "created_by_name": "bshapiro",
-//   "name": "ellweave1$p",
-//   "default_vel": 1,
-//   "default_accel": 0.5,
-//   "default_thvmax": 1,
-//   "reversible": "true"
-// }, {
-//   "id": "bd89c7f7-d272-44dd-b80c-aa4c1ece36f2",
-//   "type": "track",
-//   "created_by_name": "bshapiro",
-//   "name": "fox1warp1",
-//   "default_vel": 1,
-//   "default_accel": 0.5,
-//   "default_thvmax": 1,
-//   "reversible": "true"
-// }, {
+  //   "id": "6796b5c5-0f4b-47e2-b871-f30d9e967d6b",
+  //   "type": "track",
+  //   "created_by_name": "bshapiro",
+  //   "name": "ellweave1$p",
+  //   "default_vel": 1,
+  //   "default_accel": 0.5,
+  //   "default_thvmax": 1,
+  //   "reversible": "true"
+  // }, {
+  //   "id": "bd89c7f7-d272-44dd-b80c-aa4c1ece36f2",
+  //   "type": "track",
+  //   "created_by_name": "bshapiro",
+  //   "name": "fox1warp1",
+  //   "default_vel": 1,
+  //   "default_accel": 0.5,
+  //   "default_thvmax": 1,
+  //   "reversible": "true"
+  // }, {
   "id": "c0f63e2f-e63d-4228-a8bc-6a29f92da50c",
   "type": "track",
   "created_by_name": "bshapiro",
@@ -492,15 +492,15 @@ module.exports = [{
   "default_thvmax": 1,
   "reversible": "true"
 }, {
-//   "id": "45540bac-3422-4386-a804-2b185776d921",
-//   "type": "track",
-//   "created_by_name": "bshapiro",
-//   "name": "peoni1",
-//   "default_vel": 1,
-//   "default_accel": 0.5,
-//   "default_thvmax": 1,
-//   "reversible": "true"
-// }, {
+  //   "id": "45540bac-3422-4386-a804-2b185776d921",
+  //   "type": "track",
+  //   "created_by_name": "bshapiro",
+  //   "name": "peoni1",
+  //   "default_vel": 1,
+  //   "default_accel": 0.5,
+  //   "default_thvmax": 1,
+  //   "reversible": "true"
+  // }, {
   "id": "f1451810-ab23-4878-9b45-cca5cfb5b1e7",
   "type": "track",
   "created_by_name": "bshapiro",
@@ -518,15 +518,15 @@ module.exports = [{
   "default_accel": 0.5,
   "default_thvmax": 1
 }, {
-//   "id": "3872a018-f176-4661-b580-a988e0788299",
-//   "type": "track",
-//   "created_by_name": "bshapiro",
-//   "name": "sola3",
-//   "default_vel": 1,
-//   "default_accel": 0.5,
-//   "default_thvmax": 1,
-//   "reversible": "true"
-// }, {
+  //   "id": "3872a018-f176-4661-b580-a988e0788299",
+  //   "type": "track",
+  //   "created_by_name": "bshapiro",
+  //   "name": "sola3",
+  //   "default_vel": 1,
+  //   "default_accel": 0.5,
+  //   "default_thvmax": 1,
+  //   "reversible": "true"
+  // }, {
   "id": "103f52ff-fc00-4c41-9098-47f2e0a7e7a1",
   "type": "track",
   "created_by_name": "bshapiro",
@@ -620,14 +620,14 @@ module.exports = [{
   "default_vel": 1,
   "default_accel": 0.5,
   "default_thvmax": 1
-},  {
+}, {
   "id": "attach",
   "type": "track",
   "name": "Attach",
   "default_vel": 1,
   "default_accel": 0.5,
   "default_thvmax": 1
-},  {
+}, {
   "id": "detach",
   "type": "track",
   "name": "Detach",
@@ -848,7 +848,7 @@ module.exports = [{
   "active_track_index": -1,
   "active_track_id": "false",
   "tracks": [
-     {
+    {
       "id": "attach",
       "type": "track",
       "name": "Attach",
@@ -909,20 +909,20 @@ module.exports = [{
   "duration": "",
   "duration_formatted": "",
   "created_by_name": "User Name"
-},{
+}, {
   "id": "white",
   "type": "led_pattern",
   "name": "White",
   "is_white": "true",
   "white_value": 0.5,
   "led_primary_color": "#FFFFFFFF"
-},{
+}, {
   "id": "solid",
   "type": "led_pattern",
   "name": "Solid",
   "is_primary_color": "true",
   "led_primary_color": "#0066FF00"
-},{
+}, {
   "id": "fade",
   "type": "led_pattern",
   "name": "Rho Fade",
@@ -930,7 +930,7 @@ module.exports = [{
   "led_primary_color": "#6699FF00",
   "is_secondary_color": "true",
   "led_secondary_color": "#9900FF00"
-},{
+}, {
   "id": "spread",
   "type": "led_pattern",
   "name": "Spread",
@@ -938,7 +938,7 @@ module.exports = [{
   "led_primary_color": "#FFFFFF00",
   "is_secondary_color": "true",
   "led_secondary_color": "#6699FF00"
-},{
+}, {
   "id": "comet",
   "type": "led_pattern",
   "name": "Comet",
@@ -946,19 +946,19 @@ module.exports = [{
   "led_primary_color": "#FFFFFFFF",
   "is_secondary_color": "true",
   "led_secondary_color": "#000e0f00"
-},{
+}, {
   "id": "rainbow",
   "type": "led_pattern",
   "name": "Rainbow"
-},{
+}, {
   "id": "paint",
   "type": "led_pattern",
   "name": "Paint"
-},{
+}, {
   "id": "calibrate",
   "type": "led_pattern",
   "name": "Calibrate"
-},{
+}, {
   "id": "demo",
   "type": "led_pattern",
   "name": "Demo"
