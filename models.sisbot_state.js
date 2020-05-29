@@ -11,7 +11,7 @@ var sisbot_state = Backbone.Model.extend({
 		firmware_version		: "1.0",
 		software_version		: "1.0",
 		hostname						: "sisyphus.local",
-		local_ip						: "192.168.42.1", // default to hotspot
+		local_ip						: "0.0.0.0", // default to unknown
 		cson								: "false",
 
 		is_available					: "true",
