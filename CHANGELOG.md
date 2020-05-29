@@ -1,4 +1,5 @@
 # 2020-05-22 1.10.71
+  - Auto-generates "All Tracks Playlist"
   - Hotspot password
 # 2020-03-11 1.10.67-70
   - Clear passcode on GPIO hold

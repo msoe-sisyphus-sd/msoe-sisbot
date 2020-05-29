@@ -312,9 +312,40 @@ var sisbot = {
 
 		this.current_state = this.collection.findWhere({type: "sisbot"});
 
-    // logEvent(1,"setting track_ids to ", tracks);
     this.current_state.set("track_ids", tracks);
-    // logEvent(1,"done setting track_ids");
+
+    // remove all_tracks_playlist from playlists
+    var generate_all_tracks_playlist = true;
+    var all_tracks_playlist = this.current_state.get('all_tracks_playlist_id');
+    if (all_tracks_playlist && all_tracks_playlist != 'false') {
+      playlists = _.without(playlists, all_tracks_playlist);
+
+      if (self.collection.get(all_tracks_playlist)) generate_all_tracks_playlist = false;
+    }
+    if (generate_all_tracks_playlist){
+      logEvent(0, "Create all_tracks_playlist");
+      var tracks_array = [];
+      _.each(tracks, function(track_id) {
+        if (track_id != 'attach' && track_id != 'detach') {
+          var track = self.collection.get(track_id);
+          var track_obj = {
+      			id		: track_id,
+      			vel		: track.get('default_vel'),
+      			accel	: track.get('default_accel'),
+      			thvmax	: track.get('default_thvmax'),
+      			firstR	: track.get('firstR'),
+      			lastR	: track.get('lastR'),
+            name  : track.get('name')
+      		};
+          tracks_array.push(track_obj);
+        }
+      });
+      tracks_array = _.sortBy(tracks_array, function (i) { return i.name.toLowerCase(); });
+      var newPlaylist = new Playlist({id: "all_tracks_playlist", name:"All Tracks", tracks:tracks_array});
+      this.collection.add(newPlaylist);
+      this.current_state.set('all_tracks_playlist_id', 'all_tracks_playlist')
+      logEvent(0, "all_tracks_playlist added", tracks_array);
+    }
     this.current_state.set("playlist_ids", playlists);
 
     logEvent(1, "CSON:", config.sisbot_config);
@@ -613,7 +644,7 @@ var sisbot = {
           } else if (self.current_state.get('active_track').id != "false") {
             var track = self.current_state.get('active_track');
 
-            // TODO: check if we need to start at 1
+            // check if we need to start at 1
             if (self._start_move_to_rho_1 && track.firstR == 1) {
               self._move_to_rho = 1;
               logEvent(1, "Start Move to 1", self._move_to_rho, self.current_state.get('_end_rho'),self.current_state.get('active_track'));
@@ -1945,6 +1976,26 @@ var sisbot = {
 				else return;
 			}
 
+      // TODO: save to all_tracks_playlist
+      if (data.id != 'attach' && data.id != 'detach') {
+        var all_tracks_playlist = self.collection.get('all_tracks_playlist');
+        if (all_tracks_playlist) {
+          var tracks_array = all_tracks_playlist.get('tracks');
+          var track_obj = {
+            id		: data.id,
+            vel		: track.get('default_vel'),
+            accel	: track.get('default_accel'),
+            thvmax	: track.get('default_thvmax'),
+            firstR	: track.get('firstR'),
+            lastR	: track.get('lastR'),
+            name  : track.get('name')
+          };
+          tracks_array.push(track_obj);
+          tracks_array = _.sortBy(tracks_array, function (i) { return i.name.toLowerCase(); });
+          all_tracks_playlist.set('tracks', tracks_array);
+        }
+      }
+
 			self.save(null, null);
 
 			var generate_first = (self._thumbnail_queue.length <= 0);
@@ -1973,6 +2024,7 @@ var sisbot = {
           // logEvent(1, "add_track() thumbnail_generate Socket Update", JSON.stringify([track.toJSON(), self.current_state.toJSON()]).length);
           var min_track = _.pick(track.toJSON(), ['id','name','track_id']);
           var min_state = _.pick(self.current_state.toJSON(), ['id','state','thumbnail_queue_length']);
+          // TODO: add all_tracks_playlist
 					self.socket_update([min_track, min_state]);
 				});
 			} else {
@@ -2040,27 +2092,30 @@ var sisbot = {
 
 		// remove from playlists
 		var playlists = this.current_state.get("playlist_ids");
+    playlists.push('all_tracks_playlist'); // add all_tracks_playlist
 		var return_objs = [];
 		_.each(playlists, function(playlist_id) {
 			var playlist = self.collection.get(playlist_id);
-			var did_remove = false;
+      if (playlist) {
+  			var did_remove = false;
 
-			var tracks = playlist.get("tracks");
-      var clean_tracks = [];
-			// remove all instances of the track_id
-			_.each(tracks, function(track_obj) {
-				if (track_obj.id != data.id) clean_tracks.push(track_obj);
-				else did_remove = true;
-			});
+  			var tracks = playlist.get("tracks");
+        var clean_tracks = [];
+  			// remove all instances of the track_id
+  			_.each(tracks, function(track_obj) {
+  				if (track_obj.id != data.id) clean_tracks.push(track_obj);
+  				else did_remove = true;
+  			});
 
-			if (did_remove) {
-        playlist.set("tracks", clean_tracks);
+  			if (did_remove) {
+          playlist.set("tracks", clean_tracks);
 
-				// fix the sorted order, or just reshuffle
-				playlist.set_shuffle({ is_shuffle: playlist.get('is_shuffle') });
+  				// fix the sorted order, or just reshuffle
+  				playlist.set_shuffle({ is_shuffle: playlist.get('is_shuffle') });
 
-				return_objs.push(playlist.toJSON());
-			}
+  				return_objs.push(playlist.toJSON());
+  			}
+      }
 		});
 
 		// add sisbot_state
@@ -3136,7 +3191,7 @@ var sisbot = {
 			wifi_error: "false",
 			is_internet_connected: "false",
   		is_network_connected: "false",
-			reason_unavailable: "disconnect_from_wifi" // TODO: is this necessary? Could just be "reset_to_hotspot", UI shows same for both
+			reason_unavailable: "disconnect_from_wifi" // is this necessary? Could just be "reset_to_hotspot", UI shows same for both
 		});
 
 		// make sure we don't throw an error, we wanted to disconnect
