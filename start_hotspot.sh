@@ -34,26 +34,26 @@ sudo cp /etc/network/interfaces.hotspot /etc/network/interfaces
 sudo cp /etc/wpa_supplicant/wpa_supplicant.conf.bak /etc/wpa_supplicant/wpa_supplicant.conf # clear wpa_supplicant
 
 # set password if given
-if [ -n "$1" ]; then
+# if [ -n "$1" ]; then
   # comment 'wpa=2' false /etc/hostapd/hostapd.conf
   # comment 'wpa_passphrase=sisyphus' false /etc/hostapd/hostapd.conf
   # #wpa_passphrase=$1
   # comment 'wpa_key_mgmt=WPA' false /etc/hostapd/hostapd.conf
   # comment 'wpa_pairwise=CCMP' false /etc/hostapd/hostapd.conf
   # comment 'wpa_group_rekey=86400' false /etc/hostapd/hostapd.conf
-else
+# else
   #wpa=2
   #wpa_passphrase=sisyphus
   #wpa_key_mgmt=WPA
   #wpa_pairwise=CCMP
   #wpa_group_rekey=86400
-  comment 'wpa=2' true /etc/hostapd/hostapd.conf
-  comment 'wpa_passphrase=sisyphus' true /etc/hostapd/hostapd.conf
+  # comment 'wpa=2' true /etc/hostapd/hostapd.conf
+  # comment 'wpa_passphrase=sisyphus' true /etc/hostapd/hostapd.conf
   #wpa_passphrase=$1
-  comment 'wpa_key_mgmt=WPA' true /etc/hostapd/hostapd.conf
-  comment 'wpa_pairwise=CCMP' true /etc/hostapd/hostapd.conf
-  comment 'wpa_group_rekey=86400' true /etc/hostapd/hostapd.conf
-fi
+#   comment 'wpa_key_mgmt=WPA' true /etc/hostapd/hostapd.conf
+#   comment 'wpa_pairwise=CCMP' true /etc/hostapd/hostapd.conf
+#   comment 'wpa_group_rekey=86400' true /etc/hostapd/hostapd.conf
+# fi
 
 sudo ifup wlan0
 #sudo ifconfig wlan0 192.168.42.1
