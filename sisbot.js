@@ -121,6 +121,7 @@ var sisbot = {
   _first_home: true, // make sure we do a sensored home on startup
 	_paused: false,
   _pause_timestamp: null,
+  _pause_timer: null, // for waiting between tracks
 	_play_next: false,
 	_autoplay: false,
 	_home_next: false,
@@ -557,6 +558,18 @@ var sisbot = {
 						self._paused = true;
 						self.current_state.set('is_waiting_between_tracks', 'true');
 						// self._play_next = true;
+
+            // TODO: setTimeout to start playing again
+            if (self.current_state.get('is_paused_time_enabled') == 'true') {
+              var wait_minutes = self.current_state.get('paused_track_time');
+              if (!_.isFinite(wait_minutes)) wait_minutes = 15;
+              logEvent(0, 'Wait for '+wait_minutes+' before playing.');
+
+              self._pause_timer = setTimeout(function() {
+                logEvent(0, 'Restart playing after wait');
+                self.play();
+              }, wait_minutes * 60000);
+            }
 					} else {
 						var nextTrack = playlist.get_next_track({ start_rho: self.current_state.get('_end_rho') });
 						self.current_state.set('active_track', nextTrack);
@@ -1666,6 +1679,8 @@ var sisbot = {
 	play: function(data, cb) {
 		var self = this;
 
+    clearTimeout(this._pause_timer); // in case we were waiting to play
+
 		if (this._validateConnection()) {
   		logEvent(1, "Sisbot Play", data);
       if (this._pause_timestamp != null && (Date.now() - this._pause_timestamp) < this.pause_play_lockout_msec) {
@@ -1723,6 +1738,8 @@ var sisbot = {
 		} else if (cb) cb('No Connection', null);
 	},
 	pause: function(data, cb) {
+    clearTimeout(this._pause_timer); // in case we were waiting to play
+
 		if (this._validateConnection()) {
   		logEvent(1, "Sisbot Pause", data);
 			this._paused = true;
@@ -2428,6 +2445,8 @@ var sisbot = {
 			return;
 		}
 
+    clearTimeout(this._pause_timer); // in case we were waiting to play
+
 		var do_save = true;
 		if (data.skip_save) {
 			do_save = false;
@@ -2536,6 +2555,8 @@ var sisbot = {
 			return;
 		}
 		logEvent(1, "Sisbot Set Track", data.name, data.firstR, data.lastR);
+
+    clearTimeout(this._pause_timer); // in case we were waiting to play
 
     // make sure verts are not a part of this
     if (data.verts) delete data.verts;
@@ -2863,10 +2884,12 @@ var sisbot = {
 		logEvent(1, 'Sisbot set pause between tracks', data);
 
 		this.current_state.set('is_paused_between_tracks', data.is_paused_between_tracks);
+    if (data.is_paused_time_enabled) this.current_state.set('is_paused_time_enabled', data.is_paused_time_enabled);
+    if (data.paused_track_time) this.current_state.set('paused_track_time', data.paused_track_time);
 
     // update table with info
     // logEvent(1, "set_pause_between_tracks() Socket Update", JSON.stringify(this.current_state.toJSON()).length);
-    var min_resp = _.pick(this.current_state.toJSON(), ['id','state','is_paused_between_tracks']);
+    var min_resp = _.pick(this.current_state.toJSON(), ['id','state','is_paused_between_tracks','is_paused_time_enabled','paused_track_time']);
 		this.socket_update(min_resp);
 
 		this.save(null, null);
