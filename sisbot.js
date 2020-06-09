@@ -389,6 +389,7 @@ var sisbot = {
       _end_rho: 0, // on startup, we should be at 0
 			state: "waiting",
 			is_available: "true",
+      is_waiting_between_tracks: "false",
 			reason_unavailable: "false",
       fault_status: "false",
 			is_serial_open: "false",
@@ -3269,13 +3270,16 @@ var sisbot = {
 		// disconnect Ansible
 		this._teardownAnsible();
 
-		logEvent(1, "Start_hotspot");
     var command = 'sudo /home/pi/sisbot-server/sisbot/start_hotspot.sh';
     if (data && data.password) {
-      // password must be at least 8 characters
-      if (data.password.length > 7) command += ' '+data.password;
+      // password must be 8-63 characters
+      if (data.password.length > 7 && data.password.length < 64) command += ' '+data.password;
+      this.current_state.set('hotspot_password', data.password);
+    } else {
+      this.current_state.set('hotspot_password', '');
     }
 
+		logEvent(1, "Start_hotspot", command);
 		exec(command, (error, stdout, stderr) => {
 			if (error) return logEvent(2, 'exec error:',error);
 			logEvent(1, "start_hotspot", stdout);

@@ -16,7 +16,7 @@ for line in file:lines() do
     end
   else
     if line:match("^#%s*"..key..".*") then
-    	line=line:sub(1):gsub("%%","")
+    	line=line:sub(2):gsub("%%","")
     end
   end
   print(line)
@@ -54,7 +54,7 @@ sudo cp /etc/wpa_supplicant/wpa_supplicant.conf.bak /etc/wpa_supplicant/wpa_supp
 
 # set password if given
 size=${#1}
-if [ -n "$1" ] && [ ]"$size" -gt 7]; then
+if [ -n "$1" ] && [ "$size" -gt 7 ]; then
   comment 'wpa=2' false /etc/hostapd/hostapd.conf
   replace "wpa_passphrase=" "wpa_passphrase=$1" /etc/hostapd/hostapd.conf
   # needs to be WPA-PSK
