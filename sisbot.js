@@ -1703,7 +1703,8 @@ var sisbot = {
 
 					var nextTrack = playlist.get_next_track({ start_rho: self.current_state.get('_end_rho') });
 					this.current_state.set('active_track', nextTrack);
-					if (nextTrack.id != 'false' && nextTrack.name != undefined) {
+          logEvent(0, "Play next track", nextTrack);
+					if (nextTrack.id && nextTrack.id != 'false' && nextTrack.name != undefined) {
 						if (nextTrack.name.toLowerCase().indexOf('attach') == 0 || nextTrack.name.toLowerCase().indexOf('detach') == 0) self._home_next = true;
 					}
 
