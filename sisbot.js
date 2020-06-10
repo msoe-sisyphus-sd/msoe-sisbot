@@ -1371,8 +1371,8 @@ var sisbot = {
                 }
               }
 
-              // error checking for empty sorted_tracks
-              if (playlist.get('sorted_tracks').length == 0) {
+              // error checking for empty sorted_tracks/next_tracks
+              if (playlist.get('sorted_tracks').length == 0 || playlist.get('next_tracks').length == 0) {
 				        playlist.set({active_track_id: "false", active_track_index: -1});
                 playlist.reset_tracks();
     						playlist.set_shuffle({ is_shuffle: playlist.get('is_shuffle'), start_rho: 0 }); // update order, active tracks indexing
