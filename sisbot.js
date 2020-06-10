@@ -1375,7 +1375,7 @@ var sisbot = {
               if (playlist.get('sorted_tracks').length == 0) {
 				        playlist.set({active_track_id: "false", active_track_index: -1});
                 playlist.reset_tracks();
-    						playlist.set_shuffle({ is_shuffle: "true", start_rho: 0 }); // update order, active tracks indexing
+    						playlist.set_shuffle({ is_shuffle: playlist.get('is_shuffle'), start_rho: 0 }); // update order, active tracks indexing
     						playlist.set({active_track_index: 0});
               }
 
