@@ -1999,9 +1999,9 @@ var sisbot = {
 				else return;
 			}
 
-      // TODO: save to all_tracks_playlist
+      // save to all_tracks_playlist
+      var all_tracks_playlist = self.collection.get('all_tracks_playlist');
       if (data.id != 'attach' && data.id != 'detach') {
-        var all_tracks_playlist = self.collection.get('all_tracks_playlist');
         if (all_tracks_playlist) {
           var tracks_array = all_tracks_playlist.get('tracks');
           var track_obj = {
@@ -2047,8 +2047,8 @@ var sisbot = {
           // logEvent(1, "add_track() thumbnail_generate Socket Update", JSON.stringify([track.toJSON(), self.current_state.toJSON()]).length);
           var min_track = _.pick(track.toJSON(), ['id','name','track_id']);
           var min_state = _.pick(self.current_state.toJSON(), ['id','state','thumbnail_queue_length']);
-          // TODO: add all_tracks_playlist
-					self.socket_update([min_track, min_state]);
+          var min_all_tracks = _.pick(all_tracks_playlist.toJSON(), ['id', 'tracks']);
+					self.socket_update([min_track, min_state,min_all_tracks]);
 				});
 			} else {
 				if (cb) cb(null, [track.toJSON(), self.current_state.toJSON()]); // send back current_state without track
@@ -2136,13 +2136,15 @@ var sisbot = {
   				// fix the sorted order, or just reshuffle
   				playlist.set_shuffle({ is_shuffle: playlist.get('is_shuffle') });
 
-  				return_objs.push(playlist.toJSON());
+          var min_playlist = _.pick(playlist.toJSON(), ['id','is_shuffle','tracks','sorted_tracks','next_tracks']);
+  				return_objs.push(min_playlist);
   			}
       }
 		});
 
-		// add sisbot_state
-		return_objs.push(this.current_state.toJSON());
+    // add sisbot_state
+    var min_state = _.pick(self.current_state.toJSON(), ['id','state','track_ids']);
+		return_objs.push(min_state);
 
     this.save(null, null);
 
