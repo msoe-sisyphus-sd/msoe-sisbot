@@ -576,8 +576,8 @@ function goThetaHome() {
     return;
   }
 
-  if (THETA_HOME_COUNTER == THETA_HOME_MAX) {
-    logEvent(2, 'Failed to find Theta home!');
+  if (THETA_HOME_COUNTER >= THETA_HOME_MAX) {
+    logEvent(2, 'Failed to find Theta home!', THETA_HOME_COUNTER, THETA_HOME_MAX);
     //setStatus('waiting');
   	thAccum = 0;
   	WAITING_THETA_HOMED = false;
@@ -595,7 +595,7 @@ function goThetaHome() {
     thetaHomingStr = "SM," + baseMS + "," + HOMETHSTEPS * thDirSign + "," + rCompSteps + "\r";
 
     THETA_HOME_COUNTER++;
-    // if (config.debug) logEvent(1, THETA_HOME_COUNTER);
+    // if (config.debug) logEvent(1, "THETA HOME COUNTER", THETA_HOME_COUNTER);
 
     sp.write(thetaHomingStr, function(err, res) {
       sp.drain(function(err, result) {
@@ -669,7 +669,7 @@ function goRhoHome() {
     return;
   }
 
-  if (RHO_HOME_COUNTER == RHO_HOME_MAX) {
+  if (RHO_HOME_COUNTER >= RHO_HOME_MAX) {
     logEvent(2, 'Failed to find Rho home!');
     //setStatus('waiting');
     rAccum = 0;
@@ -1206,9 +1206,9 @@ module.exports = {
     rthAsp = rSPRev / thSPRev;
     thSPRad = thSPRev / (2 * Math.PI);
 
-    THETA_HOME_MAX = Math.round(thSPRev * 1.03 / HOMETHSTEPS); //3% extra
+    THETA_HOME_MAX = Math.abs(Math.round(thSPRev * 1.03 / HOMETHSTEPS)); //3% extra
     // logEvent(1, 'T H MAX= '+THETA_HOME_MAX);
-    RHO_HOME_MAX = Math.round(rSPInch * (plotRadius + 0.25) / HOMERSTEPS); // 1/4" extra
+    RHO_HOME_MAX = Math.abs(Math.round(rSPInch * (plotRadius + 0.25) / HOMERSTEPS)); // 1/4" extra
 
     // Servo values
     if (config.isServo) {
