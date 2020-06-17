@@ -1277,6 +1277,8 @@ var sisbot = {
     if (is_change && data._save) {
       var pattern = this.collection.get(this.current_state.get('led_pattern'));
 
+      if (data.white_value) pattern.set('white_value', data.white_value);
+
       if (data.led_primary_color) {
         this.current_state.set('led_primary_color', data.led_primary_color);
 
