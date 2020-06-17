@@ -614,6 +614,8 @@ var sisbot = {
 			if (oldState == 'homing') {
 				if (newState == 'home_th_failed') {
           logEvent(2, "Failed home (theta)!");
+    			self.pause(null, null);
+    			self.current_state.set("fault_status", "th_fault");
 					return;
 				}
 				if (newState == 'home_rho_failed') {
