@@ -71,6 +71,7 @@ var sp // serial port
 var sp_lcp // light controller program socket
 
 var paused = true;
+var streaming = false; // streaming coordinates
 //pars stored for pause/resume:
 var Rmi, RmiMax, Rsi, RsiMax, RthStepsSeg, RrStepsSeg;
 var RthLOsteps, RrLOsteps, ReLOth, ReLOr, RfracSeg;
@@ -235,7 +236,6 @@ function add(a, b) {
 }
 
 function setStatus(newStatus) {
-
   // Callback when the state changes, only if the state changes.
   if (STATUS != newStatus) {
     var oldStatus = STATUS;
@@ -308,11 +308,16 @@ function nextMove(mi) {
     logEvent(1, 'all moves done');
     logEvent(1, 'thAccum = ' + thAccum);
     logEvent(1, 'rAccum = ' + rAccum);
-    verts = []; //clear verts array
 
-    onFinishTrack();
+    if (!streaming) {
+      verts = []; // clear verts array
+      onFinishTrack();
+    }
+
     setStatus('waiting');
     return;
+  // } else {
+  //   logEvent(0, "Next Move", mi);
   }
 
   thOld = verts[mi].th;
@@ -358,7 +363,6 @@ function nextMove(mi) {
   rStepsOld = Math.floor(rOld * rSPInch * plotRadius) * rDirSign;
   rStepsMove = rStepsNew - rStepsOld;
 
-
   //rStepsComp =  (Math.floor(thNew * thSPRad * rthAsp) -
   //  Math.floor(thOld  * thSPRad * rthAsp))  * nestedAxisSign;
 
@@ -373,7 +377,6 @@ function nextMove(mi) {
   //rStepsComp = Math.floor(thStepsMove * rthAsp )* nestedAxisSign;
   //logEvent(1, rStepsComp + '*');
 
-
   rStepsMove += rStepsComp;
 
   thStepsSeg = Math.floor(thStepsMove / segs);
@@ -385,7 +388,6 @@ function nextMove(mi) {
   //logEvent(1, 'move ' + mi + ' of ' + miMax);
 
   nextSeg(mi, miMax,0,segs, thStepsSeg, rStepsSeg, thLOsteps, rLOsteps, 0, 0, fracSeg);
-
 }
 //////      NEXTSEG     ///////////////////////////////////
 function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLOsteps, eLOth, eLOr, fracSeg) {
@@ -681,7 +683,6 @@ function goRhoHome() {
   sp.write(rhoHomeQueryStr); // ask if we are home
 
   if (!RHO_HOMED) { // not home yet, move toward home:
-
     rhoHomingStr = "SM," + baseMS + "," + 0 + "," + -HOMERSTEPS * rDirSign + "\r"; // move towards home
 
     RHO_HOME_COUNTER++;
@@ -1143,10 +1144,7 @@ function parseReceivedSerialData(data) {
           RHO_HOMED = false;
         }
       }
-
     }
-
-
   }
 }
 /* ------------------------------
@@ -1225,7 +1223,6 @@ module.exports = {
       useLED = !config.useRGBW;
     }
   },
-
 
   allowFaultChecking() {
     servo_wait_before_faulting = false;
@@ -1375,6 +1372,79 @@ module.exports = {
     }
   },
 
+  // Streaming
+  startStreaming: function(data) {
+    logEvent(0, 'Plotter: Start Streaming');
+
+    streaming = true;
+
+    // Save the motion config
+    if (data) {
+      if (data.vel) Vball = data.vel;
+      if (data.accel) Accel = data.accel;
+      if (data.thvmax) MTV = data.thvmax;
+    }
+
+    return null; // no error message
+  },
+  stopStreaming: function() {
+    logEvent(0, 'Plotter: Stop Streaming');
+
+    streaming = false;
+
+    return null; // no error message
+  },
+  clearVerts: function() {
+    if (STATUS == 'streaming') {
+      pauseRequest = true; // stop playing
+      return 'Still streaming coordinates, try again';
+    }
+
+    // TODO: maintain current vert?
+    var theta = this.getThetaPosition();
+    var rho = this.getRhoPosition();
+
+    logEvent(0, 'Plotter: Clear Verts', theta, rho);
+
+    verts = [{th:theta,r:rho},{th:0, r:0}];
+    mi = 0;
+    miMax = verts.length - 1;
+
+    setStatus('streaming');
+    nextMove(mi);
+
+    return null;
+  },
+  addVerts: function(data) {
+    if (streaming) {
+      logEvent(0, 'Plotter: Add Verts', data);
+
+      var old_vert_length = verts.length;
+      if (data.verts) {
+        verts = verts.concat(data.verts);
+        miMax = verts.length - 1;
+      }
+
+      if (data.vel)     Vball = track.vel;
+      if (data.accel)   Accel = track.accel;
+      if (data.thvmax)  MTV = track.thvmax;
+
+      // TODO: if streaming had hit the end of verts, nextMove()
+      if (STATUS == 'waiting') {
+        logEvent(0, "Plotter: Do Next Move", old_vert_length);
+        setStatus('streaming');
+        if (old_vert_length > 0) nextMove(old_vert_length-1);
+        else nextMove(0);
+      }
+
+      logEvent(0, "Plotter: New Verts", verts);
+      return null; // no error message
+    } else {
+      logEvent(2, 'Plotter: Not streaming, cannot add verts');
+      return 'Not streaming, cannot add verts';
+    }
+  },
+
   // Plot a track, with some motion config meta data.
   playTrack: function(track) {
     logEvent(1, "TRACKNAME = " + track.name);
@@ -1386,6 +1456,8 @@ module.exports = {
         balls = 1;
       }
     }
+
+    if (streaming) this.stopStreaming();
 
     // Save the track data
     verts = track.verts;
@@ -1469,12 +1541,13 @@ module.exports = {
     return Voverride;
   },
 
-  getThetaPosition: function() {
+  getThetaPosition: function(raw) {
   	var thetaDistHome, modRads, rawRads, shortestRads;
 
   	rawRads = thAccum / thSPRad;
   	// logEvent(1, "thAccum is " + thAccum + " steps");
   	// logEvent(1, "raw Theta postion is " + rawRads + " rads");
+    if (raw) return rawRads;
 
   	modRads = rawRads % (2 * Math.PI);
   	// logEvent(1, "modRads = " + modRads);
@@ -1492,7 +1565,6 @@ module.exports = {
   },
 
   getRhoPosition: function() {
-
     //rSeg = (rAccum - thAccum * rthAsp * nestedAxisSign) * rDirSign/ rSPInch;
 
     return ((rAccum - thAccum * rthAsp * nestedAxisSign) * rDirSign / rSPInch) / plotRadius;
@@ -1513,9 +1585,7 @@ module.exports = {
         RHO_HOME_COUNTER = 0;
         setStatus('homing');
         goThetaHome();
-
       } else {
-
         // Say we're home right here where everything lies.
         setStatus('homing');
         logEvent(1, 'Current THETA/RHO set as HOME');

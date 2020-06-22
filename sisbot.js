@@ -136,6 +136,9 @@ var sisbot = {
   _start_move_to_rho_1: false, // for startup from already playing playlist
 	_saving: false,
 
+  _is_streaming: false,
+  _init_streaming: false, // for clearing verts on start of streaming
+
   _thumbnail_playing: false, // was the table playing prior to generating thumbnail?
   _sleep_playing: false, // was the table playing when put to sleep?
 
@@ -604,9 +607,22 @@ var sisbot = {
 		});
   	plotter.onStateChanged(function(newState, oldState) {
 			if (newState == 'homing') self.current_state.set("state", "homing");
-			if (newState == 'playing' && !self._home_next) self.current_state.set("state", "playing");
+			if (newState == 'playing' && !self._home_next) {
+        self.current_state.set("state", "playing");
+
+        // clear streaming values
+        self._is_streaming = false;
+        self._init_streaming = false;
+      }
 			if (newState == 'waiting') {
-				if (self._paused) self.current_state.set("state", "paused");
+				if (self._paused) {
+          self.current_state.set("state", "paused");
+
+          if (self._is_streaming && !self._init_streaming) {
+            self.plotter.clearVerts();
+            self._init_streaming = true;
+          }
+        }
 				if (!self._paused) self.current_state.set("state", "waiting");
 			}
 			logEvent(1, "State changed to", newState, "("+self.current_state.get("state")+")", oldState, self._autoplay);
@@ -2153,6 +2169,104 @@ var sisbot = {
     this.save(null, null);
 
     if (cb) cb(null, return_objs);
+  },
+  /*********************** DIRECT TABLE CONTROL ************************/
+  get_ball_position: function(data, cb) {
+    var thetaPosition, rhoPosition;
+
+    if (data && data.actual_th) thetaPosition = this.plotter.getThetaPosition(data.actual_th);
+    else thetaPosition = this.plotter.getThetaPosition();
+    // logEvent(1, "theta dist away from home = " + thetaPosition + " rads");
+    rhoPosition = this.plotter.getRhoPosition();
+    // logEvent(1, "rho dist away form home = " + rhoPosition + " normalized");
+
+    if (cb) cb(null, {th: thetaPosition, r: rhoPosition});
+  },
+  start_streaming: function(data, cb) {
+    var self = this;
+
+    if (this._is_streaming) {
+      logEvent(2, "Already Streaming", data);
+      if (cb) cb('Already Streaming', null);
+      return;
+    }
+
+    logEvent(0, "Start Streaming", data);
+    if (!data) data = {};
+
+    // set speeds to defaults
+    if (!data.vel) data.vel = 1;
+    if (!data.accel) data.accel = 0.5;
+    if (!data.thvmax) data.thvmax = 1;
+
+    var paused = self.current_state.get("state") == 'paused';
+
+    if (paused) {
+      var error = self.plotter.startStreaming(data);
+
+      if (!error) {
+        self._is_streaming = true;
+
+        // clear active_playlist, active_track
+        self.current_state.set({active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
+
+        if (!self._init_streaming) {
+          self.plotter.clearVerts();
+          self._init_streaming = true;
+        }
+
+        var min_state = _.pick(self.current_state.toJSON(), ['id','state','active_playlist_id', 'active_track']);
+        if (cb) cb(null, min_state); // send current_state
+      } else if (cb) cb(error, null); // send error
+    } else {
+      // pause the currently playing track
+      this.pause(data, function(err, resp) {
+        var error = self.plotter.startStreaming(data);
+
+        if (!error) {
+          self._is_streaming = true;
+
+          // clear active_playlist, active_track
+          self.current_state.set({active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
+
+          var min_state = _.pick(self.current_state.toJSON(), ['id','state','active_playlist_id', 'active_track']);
+
+          if (cb) cb(null, min_state); // send current_state
+        } else if (cb) cb(error, null); // send error
+      });
+    }
+  },
+  stop_streaming: function(data, cb) {
+    var self = this;
+
+    this.pause(data, function(err, resp) {
+      var error = self.plotter.stopStreaming();
+
+      if (!error) {
+        self._is_streaming = false;
+        self._init_streaming = false;
+      }
+
+      if (cb) cb(error, null); // send error (or lack thereof)
+    });
+  },
+  add_verts_streaming: function(data, cb) {
+    if (!this._init_streaming) cb('Streaming not initialized', null);
+
+    // TODO: error checking on vert data
+    var error = this.plotter.addVerts(data);
+
+    if (cb) cb(error, null); // not sure what to respond yet
+  },
+  clear_verts_streaming: function(data, cb) {
+    if (!this._init_streaming) cb('Streaming not initialized', null);
+
+    var error = this.plotter.clearVerts();
+    if (error) {
+      logEvent(2, 'Still streaming, try clearing later');
+    }
+
+    if (cb) cb(error, null); // not sure what to respond yet
   },
   /*********************** GENERATE THUMBNAILS ******************************/
   find_missing_thumbnails: function(data, cb) {
