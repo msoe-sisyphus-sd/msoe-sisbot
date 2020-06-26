@@ -309,12 +309,14 @@ function nextMove(mi) {
     logEvent(1, 'thAccum = ' + thAccum);
     logEvent(1, 'rAccum = ' + rAccum);
 
-    if (!streaming) {
+    if (streaming) {
+      setStatus('streaming_waiting');
+    } else {
       verts = []; // clear verts array
       onFinishTrack();
+      setStatus('waiting');
     }
 
-    setStatus('waiting');
     return;
   // } else {
   //   logEvent(0, "Next Move", mi);
@@ -1420,24 +1422,34 @@ module.exports = {
       logEvent(0, 'Plotter: Add Verts', data);
 
       var old_vert_length = verts.length;
-      if (data.verts) {
-        verts = verts.concat(data.verts);
-        miMax = verts.length - 1;
-      }
+      if (data.verts && _.isArray(data.verts)) {
+        var new_verts = [];
+        _.each(data.verts, function(vert) {
+          if (vert.th && vert.r) {
+            // clamp rho to 0-1
+            if (vert.r < 0) vert.r = 0;
+            else if (vert.r > 1) vert.r = 1;
 
-      if (data.vel)     Vball = track.vel;
-      if (data.accel)   Accel = track.accel;
-      if (data.thvmax)  MTV = track.thvmax;
+            verts.push(vert);
+          }
+        });
+        // verts = verts.concat(data.verts);
+        miMax = verts.length - 1;
+      } else return "No verts given";
+
+      if (data.vel)     Vball = track.vel; // TODO: clamp
+      if (data.accel)   Accel = track.accel; // TODO: clamp
+      if (data.thvmax)  MTV = track.thvmax; // TODO: clamp
 
       // TODO: if streaming had hit the end of verts, nextMove()
-      if (STATUS == 'waiting') {
+      if (STATUS == 'streaming_waiting') {
         logEvent(0, "Plotter: Do Next Move", old_vert_length);
         setStatus('streaming');
         if (old_vert_length > 0) nextMove(old_vert_length-1);
         else nextMove(0);
       }
 
-      logEvent(0, "Plotter: New Verts", verts);
+      // logEvent(0, "Plotter: New Verts", verts);
       return null; // no error message
     } else {
       logEvent(2, 'Plotter: Not streaming, cannot add verts');

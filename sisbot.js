@@ -606,7 +606,13 @@ var sisbot = {
 			}
 		});
   	plotter.onStateChanged(function(newState, oldState) {
-			if (newState == 'homing') self.current_state.set("state", "homing");
+			if (newState == 'homing') {
+        self.current_state.set("state", "homing");
+
+        // clear streaming values
+        self._is_streaming = false;
+        self._init_streaming = false;
+      }
 			if (newState == 'playing' && !self._home_next) {
         self.current_state.set("state", "playing");
 
@@ -625,6 +631,9 @@ var sisbot = {
         }
 				if (!self._paused) self.current_state.set("state", "waiting");
 			}
+      if (newState.includes("streaming")) { // update sisbot with streaming state
+        self.current_state.set('state', newState);
+      }
 			logEvent(1, "State changed to", newState, "("+self.current_state.get("state")+")", oldState, self._autoplay);
 
 			if (oldState == 'homing') {
@@ -1803,7 +1812,7 @@ var sisbot = {
 					self._paused = false;
 					if (cb)	cb(err, resp);
 				});
-			} else if (this.current_state.get("state") == 'waiting' || this.current_state.get("state") == 'paused') {
+			} else if (this.current_state.get("state") == 'waiting' || this.current_state.get("state") == 'paused' || this.current_state.get("state") == 'streaming_waiting') {
 				this._paused = false;
 				this.current_state.set("state", "homing");
 
@@ -2172,15 +2181,11 @@ var sisbot = {
   },
   /*********************** DIRECT TABLE CONTROL ************************/
   get_ball_position: function(data, cb) {
-    var thetaPosition, rhoPosition;
+    var accumThetaPosition = this.plotter.getThetaPosition({actual_th:true});
+    var thetaPosition = this.plotter.getThetaPosition();
+    var rhoPosition = this.plotter.getRhoPosition();
 
-    if (data && data.actual_th) thetaPosition = this.plotter.getThetaPosition(data.actual_th);
-    else thetaPosition = this.plotter.getThetaPosition();
-    // logEvent(1, "theta dist away from home = " + thetaPosition + " rads");
-    rhoPosition = this.plotter.getRhoPosition();
-    // logEvent(1, "rho dist away form home = " + rhoPosition + " normalized");
-
-    if (cb) cb(null, {th: thetaPosition, r: rhoPosition});
+    if (cb) cb(null, {accum_th: accumThetaPosition, th: thetaPosition, r: rhoPosition});
   },
   start_streaming: function(data, cb) {
     var self = this;
@@ -2635,7 +2640,10 @@ var sisbot = {
 			is_waiting_between_tracks: "false"
 		});
 
-		if (this.current_state.get('state') == "playing") {
+    // stop streaming if we are
+    if (this.current_state.get('state').includes("streaming")) plotter.stopStreaming();
+
+		if (this.current_state.get('state') == "playing" || this.current_state.get('state') == "streaming") {
 			plotter.pause();
 			this._home_next = true;
 
@@ -2652,7 +2660,7 @@ var sisbot = {
         }
         this._move_to_rho = track.firstR;
       }
-		} else if (this.current_state.get('state') == "waiting" || this.current_state.get('state') == "paused") {
+		} else if (this.current_state.get('state') == "waiting" || this.current_state.get('state') == "paused" || this.current_state.get('state') == "streaming_waiting") {
 			var track = playlist.get_current_track();
 			if (track != undefined && track != "false")	{
 				this._autoplay = true;
@@ -2711,7 +2719,11 @@ var sisbot = {
 			is_loop: "true",
 			is_waiting_between_tracks: "false"
 		});
-		if (this.current_state.get('state') == "playing") {
+
+    // stop streaming if we are
+    if (this.current_state.get('state').includes("streaming")) plotter.stopStreaming();
+
+		if (this.current_state.get('state') == "playing" || this.current_state.get('state') == "streaming") {
 			plotter.pause();
 			this._home_next = true;
 
@@ -2724,7 +2736,7 @@ var sisbot = {
         this._move_to_rho = track.get('firstR');
         logEvent(1, "set_track() Not Reversible:", this.plotter.getRhoPosition(), "Next Rho:", this._move_to_rho);
       }
-		} else if (this.current_state.get('state') == "waiting" || this.current_state.get('state') == "paused") {
+		} else if (this.current_state.get('state') == "waiting" || this.current_state.get('state') == "paused" || this.current_state.get('state') == "streaming_waiting") {
 			this._autoplay = true;
 			this._play_track(track.toJSON(), null);
 		}
