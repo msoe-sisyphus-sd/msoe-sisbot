@@ -305,13 +305,14 @@ function nextMove(mi) {
 	*/
 
   if (mi >= miMax) {
-    logEvent(1, 'all moves done');
-    logEvent(1, 'thAccum = ' + thAccum);
-    logEvent(1, 'rAccum = ' + rAccum);
-
     if (streaming) {
       setStatus('streaming_waiting');
     } else {
+      // only log these when not streaming. It happens too often then
+      logEvent(1, 'all moves done');
+      logEvent(1, 'thAccum = ' + thAccum);
+      logEvent(1, 'rAccum = ' + rAccum);
+
       verts = []; // clear verts array
       onFinishTrack();
       setStatus('waiting');
@@ -1437,9 +1438,9 @@ module.exports = {
         miMax = verts.length - 1;
       } else return "No verts given";
 
-      if (data.vel)     Vball = track.vel; // TODO: clamp
-      if (data.accel)   Accel = track.accel; // TODO: clamp
-      if (data.thvmax)  MTV = track.thvmax; // TODO: clamp
+      if (data.vel)     Vball = data.vel; // TODO: clamp
+      if (data.accel)   Accel = data.accel; // TODO: clamp
+      if (data.thvmax)  MTV = data.thvmax; // TODO: clamp
 
       // TODO: if streaming had hit the end of verts, nextMove()
       if (STATUS == 'streaming_waiting') {
