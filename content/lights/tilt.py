@@ -39,21 +39,24 @@ def update(theta, rho, photo, primary_color, secondary_color, balls, strip):
         fill(strip, primary_color) # fill with color
 
         led_count = strip.numPixels()
+        led_offset = int(float(led_count)/2.0)
 
         # color the side of the table that you should be standing on for proper tilt orientation
-        strip.setPixelColor(0, colorBlend(zero_color,primary_color,1))
-        strip.setPixelColor(1, colorBlend(zero_color,primary_color,0.75))
-        strip.setPixelColor(led_count-1, colorBlend(zero_color,primary_color,0.75))
-        strip.setPixelColor(2, colorBlend(zero_color,primary_color,0.5))
-        strip.setPixelColor(led_count-2, colorBlend(zero_color,primary_color,0.5))
-        strip.setPixelColor(3, colorBlend(zero_color,primary_color,0.25))
-        strip.setPixelColor(led_count-3, colorBlend(zero_color,primary_color,0.25))
-        strip.setPixelColor(4, colorBlend(zero_color,primary_color,0.15))
-        strip.setPixelColor(led_count-4, colorBlend(zero_color,primary_color,0.15))
-        strip.setPixelColor(5, colorBlend(zero_color,primary_color,0.1))
-        strip.setPixelColor(led_count-5, colorBlend(zero_color,primary_color,0.1))
-        strip.setPixelColor(6, colorBlend(zero_color,primary_color,0.05))
-        strip.setPixelColor(led_count-6, colorBlend(zero_color,primary_color,0.05))
+        strip.setPixelColor(led_offset, zero_color)
+        strip.setPixelColor(led_offset+1, colorBlend(primary_color,zero_color,0.95))
+        strip.setPixelColor(led_offset-1, colorBlend(primary_color,zero_color,0.95))
+        strip.setPixelColor(led_offset+2, colorBlend(primary_color,zero_color,0.75))
+        strip.setPixelColor(led_offset-2, colorBlend(primary_color,zero_color,0.75))
+        strip.setPixelColor(led_offset+3, colorBlend(primary_color,zero_color,0.5))
+        strip.setPixelColor(led_offset-3, colorBlend(primary_color,zero_color,0.5))
+        strip.setPixelColor(led_offset+4, colorBlend(primary_color,zero_color,0.25))
+        strip.setPixelColor(led_offset-4, colorBlend(primary_color,zero_color,0.25))
+        strip.setPixelColor(led_offset+5, colorBlend(primary_color,zero_color,0.15))
+        strip.setPixelColor(led_offset-5, colorBlend(primary_color,zero_color,0.15))
+        strip.setPixelColor(led_offset+6, colorBlend(primary_color,zero_color,0.1))
+        strip.setPixelColor(led_offset-6, colorBlend(primary_color,zero_color,0.1))
+
+        # TODO: add blend for tilt pos?
 
     # increment time
     if transition < 1.0:

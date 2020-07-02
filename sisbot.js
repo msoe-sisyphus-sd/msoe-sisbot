@@ -2196,7 +2196,8 @@ var sisbot = {
       return;
     }
 
-    logEvent(0, "Start Streaming", data);
+    var current_speed = this.current_state.get('speed');
+    logEvent(0, "Start Streaming", data, current_speed);
     if (!data) data = {};
 
     // set speeds to defaults
@@ -2250,6 +2251,12 @@ var sisbot = {
       if (!error) {
         self._is_streaming = false;
         self._init_streaming = false;
+
+        // restore speed
+    		var percent = self.current_state.get('speed');
+    		var speed = self.config.min_speed + percent * (self.config.max_speed - self.config.min_speed);
+    		logEvent(1, "Set Plotter Speed", speed);
+      	self.plotter.setSpeed(speed);
       }
 
       if (cb) cb(error, null); // send error (or lack thereof)

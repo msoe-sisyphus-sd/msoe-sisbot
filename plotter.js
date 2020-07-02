@@ -292,7 +292,7 @@ function nextMove(mi) {
   var rStepsOld, rStepsNew, rStepsMove, rStepsComp, rStepsSeg, rLOsteps;
   var thOld, rOld, thNew, rNew;
   var headingNow;
-  // logEvent(1, util.inspect(process.memoryUsage()));
+  logEvent(1, "Next Move", mi);
 
   // if `mi` isn't set, we're starting a new track, so start at zero.
   mi = mi || 0;
@@ -442,7 +442,7 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLOstep
       // sp.write('EM,0,0\r'); // turn off motors
       // kill motors after 5 seconds if still paused
       setTimeout(function() {
-        if (paused) {
+        if (paused && !streaming) {
           logEvent(1, "Stop motors");
           sp.write('EM,0,0\r'); // turn off motors
         } else {
@@ -1381,6 +1381,8 @@ module.exports = {
 
     streaming = true;
 
+    Voverride = 1; // set speed to 1
+
     // Save the motion config
     if (data) {
       if (data.vel) Vball = data.vel;
@@ -1394,6 +1396,7 @@ module.exports = {
     logEvent(0, 'Plotter: Stop Streaming');
 
     streaming = false;
+    pauseRequest = true; // stop playing stream coordinates
 
     return null; // no error message
   },
@@ -1420,22 +1423,22 @@ module.exports = {
   },
   addVerts: function(data) {
     if (streaming) {
-      logEvent(0, 'Plotter: Add Verts', data);
+      logEvent(0, 'Plotter: Add Verts', data, verts.length - 1);
 
       var old_vert_length = verts.length;
       if (data.verts && _.isArray(data.verts)) {
         var new_verts = [];
         _.each(data.verts, function(vert) {
-          if (vert.th && vert.r) {
+          if (vert.th !== undefined && vert.r !== undefined) {
             // clamp rho to 0-1
             if (vert.r < 0) vert.r = 0;
             else if (vert.r > 1) vert.r = 1;
-
             verts.push(vert);
           }
         });
         // verts = verts.concat(data.verts);
         miMax = verts.length - 1;
+        logEvent(0, 'Plotter: new miMax', miMax);
       } else return "No verts given";
 
       if (data.vel)     Vball = data.vel; // TODO: clamp
