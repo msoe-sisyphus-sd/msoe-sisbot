@@ -3194,7 +3194,11 @@ var sisbot = {
 						} else {
 							logEvent(2, "Network not connected, reverting to hotspot.");
 							self.current_state.set({ wifi_error: "true" });
-							self.reset_to_hotspot(null,null);
+
+              var data = null;
+              var password = self.current_state.get('passcode');
+              if (password && password.length > 7 && password.length < 64) data = { password: password };
+							self.reset_to_hotspot(data,null);
 						}
 					}
         });
@@ -3417,10 +3421,16 @@ var sisbot = {
     var command = 'sudo /home/pi/sisbot-server/sisbot/start_hotspot.sh';
     if (data && data.password) {
       // password must be 8-63 characters
-      if (data.password.length > 7 && data.password.length < 64) command += ' '+data.password;
-      this.current_state.set('hotspot_password', data.password);
+      if (data.password.length > 7 && data.password.length < 64) {
+        // only allow specific characters
+        var regex = /^[0-9a-zA-Z_]+$/;
+        var is_allowed_password = data.password.match(regex);
+
+        if (is_allowed_password) command += ' '+data.password;
+      }
+      // this.current_state.set('hotspot_password', data.password); // changed to passcode
     } else {
-      this.current_state.set('hotspot_password', '');
+      // this.current_state.set('hotspot_password', ''); // changed to passcode
     }
 
 		logEvent(1, "Start_hotspot", command);
