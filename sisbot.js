@@ -2756,7 +2756,7 @@ var sisbot = {
 	_play_track: function(data, cb) {
 		var self = this;
 		logEvent(1, "Sisbot Play Track", data.name, "r:"+data.firstR+data.lastR, "reversed:", data.reversed, "Table R:", self.current_state.get('_end_rho'), this.current_state.get('state'));
-		if (data == undefined || data == null || data == "false") {
+		if (data == undefined || data == null || data == "false" || _.isEmpty(data)) {
 			logEvent(2, "No Track given");
 			if (cb) cb("No track", null);
 			return;

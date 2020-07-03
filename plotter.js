@@ -292,7 +292,7 @@ function nextMove(mi) {
   var rStepsOld, rStepsNew, rStepsMove, rStepsComp, rStepsSeg, rLOsteps;
   var thOld, rOld, thNew, rNew;
   var headingNow;
-  logEvent(1, "Next Move", mi);
+  // logEvent(1, "Next Move", mi);
 
   // if `mi` isn't set, we're starting a new track, so start at zero.
   mi = mi || 0;
