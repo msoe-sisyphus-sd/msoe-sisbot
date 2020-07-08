@@ -63,6 +63,9 @@ var vert = {
   th: 0,
   r: 0
 }; //vertex object
+// TODO: calc time left
+var miAccum = 0; // where we currently are in the verts
+// var trackTimeLeft = 0;
 var miMax, thAccum = 0,
   rAccum = 0;
 var pauseRequest = false;
@@ -88,6 +91,17 @@ var HOMETHSTEPS = 30 * thDirSign,
   HOMERSPANSTEPS = 10;
 
 var COUNTER = 0;
+
+// Calculating time left values
+var c_accelSegs = Vball * segRate / (2 * Accel); //logEvent(1, 'accelSegs: '+accelSegs );
+var c_RSEG = RSEG;
+var c_ASfin = ASfin;
+var c_MOVEDIST = MOVEDIST;
+var c_RDIST = RDIST;
+var c_THRAD = THRAD;
+var c_ASindex = ASindex;
+var c_thAccum = 0;
+var c_rAccum = 0;
 
 var THETA_HOME_COUNTER = 0,
   THETA_HOMED, WAITING_THETA_HOMED;
@@ -283,6 +297,192 @@ function setStatus(newStatus) {
       return;
   }
 }
+// TODO: calc time left in track
+function calcTime(index) {
+  logEvent(0, "Calc time left", index, verts.length);
+
+  var trackTimeLeft = 0;
+
+  var moveThRad, moveRdist, moveThDist, moveDist;
+  var segsReal, segs, fracSeg = 1.0;
+  var thStepsOld, thStepsNew, thStepsMove, thStepsSeg, thLOsteps;
+  var rStepsOld, rStepsNew, rStepsMove, rStepsComp, rStepsSeg, rLOsteps;
+  var thOld, rOld, thNew, rNew;
+  var headingNow;
+
+  // Reset the accum values
+  c_RSEG = 0;
+  c_ASfin = c_accelSegs;
+  c_MOVEDIST = 0;
+  c_RDIST = 0;
+  c_THRAD = 0;
+  c_ASindex = VminSegs;
+  c_thAccum = 0;
+  c_rAccum = 0;
+
+  // if `mi` isn't set, we're starting a new track, so start at zero.
+  mi = 0;
+  miMax = verts.length - 1; // force reset
+  include = index || 0;
+
+  try {
+    while (mi < miMax) {
+
+      thOld = verts[mi].th;
+      rOld = verts[mi].r;
+
+      thNew = verts[mi + 1].th;
+      rNew = verts[mi + 1].r;
+
+      moveThRad = thNew - thOld;
+      c_THRAD = moveThRad;
+      moveRdist = (rNew - rOld) * plotRadius;
+      c_RDIST = moveRdist;
+
+      moveThDist = moveThRad * rCrit;
+      moveDist = Math.sqrt((moveThDist * moveThDist) + (moveRdist * moveRdist));
+      c_MOVEDIST = moveDist;
+
+      headingNow = Math.atan2(moveRdist, moveThDist);
+
+      if (mi < miMax - 1) {
+        // lookAhead(mi, headingNow);
+        var LAthDist = (verts[mi + 2].th - verts[mi + 1].th) * rCrit;
+        var LArDist = (verts[mi + 2].r - verts[mi + 1].r) * plotRadius;
+
+        var LAheading = Math.atan2(LArDist, LAthDist)
+
+        var dHeading = LAheading - headingNow;
+        dHeading = Math.abs(dHeading);
+
+        var inertiaFactor = Math.sin(dHeading / 2);
+
+        c_ASfin = c_accelSegs * (1 - inertiaFactor); //+1?
+      } else c_ASfin = VminSegs; //next move is last
+
+      segsReal = moveDist * segRate / Vball;
+      segs = Math.floor(segsReal);
+
+      //deal with tiny moves here:
+      if (segs == 0) {
+        segs = 1;
+        fracSeg = segsReal;
+        //logEvent(1, 'TINY MOVE, frac= '+segsReal)
+      } else fracSeg = 1;
+
+      thStepsNew = Math.floor(thNew * thSPRad) * thDirSign;
+      thStepsOld = Math.floor(thOld * thSPRad) * thDirSign;
+      thStepsMove = thStepsNew - thStepsOld;
+
+      rStepsNew = Math.floor(rNew * rSPInch * plotRadius) * rDirSign;
+      rStepsOld = Math.floor(rOld * rSPInch * plotRadius) * rDirSign;
+      rStepsMove = rStepsNew - rStepsOld;
+
+      rStepsComp = Math.floor(thStepsNew * rthAsp * nestedAxisSign) - Math.floor(thStepsOld * rthAsp * nestedAxisSign);
+
+      rStepsMove += rStepsComp;
+
+      thStepsSeg = Math.floor(thStepsMove / segs);
+      thLOsteps = thStepsMove - thStepsSeg * segs; //th Left Over steps
+
+      rStepsSeg = Math.floor(rStepsMove / segs);
+      rLOsteps = rStepsMove - rStepsSeg * segs; //r Left Over steps
+
+      var currentSeg = 0;
+      while (currentSeg < segs) {
+        var add_time = calcNextSeg(mi, miMax, currentSeg, segs, thStepsSeg, rStepsSeg, thLOsteps, rLOsteps, 0, 0, fracSeg);
+        if (mi >= include) trackTimeLeft += add_time;
+        currentSeg++;
+      }
+
+      mi++;
+    }
+
+  } catch(err) {
+    logEvent(2, "Calc error", err);
+  }
+
+  logEvent(0, "Time left in track:", Math.round(trackTimeLeft/1000), 'seconds');
+  return trackTimeLeft;
+}
+//////      NEXTSEG     ///////////////////////////////////
+function calcNextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLOsteps, eLOth, eLOr, fracSeg) {
+  var msec = baseMS;
+
+  var thLOsign = 0,
+    rLOsign = 0;
+  var thStepsOut, rStepsOut;
+  var rSeg, rEffect, rFactor1, rFactor2;
+
+  if (si == siMax) return;
+
+  c_accelSegs = Vball * Voverride * segRate / (2 * Accel); //accel fix for speed slider effect
+
+  //ACCEL/DECEL ---------------------------
+  if ((c_ASindex > c_ASfin) && (c_ASindex - c_ASfin > siMax - si)) c_ASindex--; //decel;
+  else {
+    if (c_ASindex < c_accelSegs) c_ASindex++; //accel
+    if (c_ASindex > c_accelSegs) c_ASindex = c_accelSegs; //updates Accel changes ?--;?
+  }
+
+  if (c_ASindex < VminSegs) c_ASindex = VminSegs;
+  msec *= Math.sqrt(c_accelSegs / c_ASindex);
+  msec /= Voverride;
+  msec *= fracSeg;
+
+  rSeg = (c_rAccum - c_thAccum * rthAsp * nestedAxisSign) * rDirSign / rSPInch;
+  c_RSEG = rSeg;
+  //logEvent(1, 'rSeg: ' + Math.floor(rSeg*1000)/1000);
+  if (balls == 1) rEffect = rSeg; //sis
+  else rEffect = plotRadius / 2 + Math.abs(plotRadius / 2 - rSeg); //tant
+
+  if (rEffect > rCrit) { //ball is outside rCrit:
+    rFactor1 = Math.sqrt((c_RDIST * c_RDIST + c_THRAD * c_THRAD * rEffect * rEffect)) / c_MOVEDIST;
+    // logEvent(0, 'rFactor1: ' + rFactor1);
+    msec *= rFactor1;
+  } else if (c_MOVEDIST != 0) { //ball is inside rCrit-- this is shaky at best...
+    if (rSeg > RF2MIN) {
+      rFactor2 = Math.abs((c_RDIST / c_MOVEDIST) * (rCrit / rSeg));
+    } else {
+      rFactor2 = Math.abs((c_RDIST / c_MOVEDIST) * (rCrit / RF2MIN));
+    }
+    rFactor2 *= 0.7; //just empirical tweak downward
+    if (!_.isFinite(rFactor2)) logEvent(0, 'rFactor2: ' + rFactor2, c_MOVEDIST, rSeg, RF2MIN);
+    if (rFactor2 < 1) rFactor2 = 1;
+    msec *= rFactor2;
+  }
+
+  thStepsOut = thStepsSeg;
+  rStepsOut = rStepsSeg;
+
+  if (thLOsteps < 0) thLOsign = -1;
+  else thLOsign = 1;
+  if (rLOsteps < 0) rLOsign = -1;
+  else rLOsign = 1;
+
+  eLOth += Math.abs(thLOsteps);
+  eLOr += Math.abs(rLOsteps);
+
+  if (eLOth >= siMax) {
+    thStepsOut += thLOsign;
+    eLOth -= siMax;
+  }
+
+  if (eLOr >= siMax) {
+    rStepsOut += rLOsign;
+    eLOr -= siMax;
+  }
+
+  c_thAccum += thStepsOut;
+  c_rAccum += rStepsOut;
+
+  if (!_.isFinite(msec)) logEvent(2, "Not a Number", msec, mi, si, c_ASindex, Voverride, c_accelSegs, fracSeg, rFactor1, rFactor2);
+
+  msec = Math.floor(msec);
+  if (msec < 1) msec = 1;
+
+  return msec;
+}
 
 //////      NEXTMOVE     ///////////////////////////////////
 function nextMove(mi) {
@@ -296,6 +496,7 @@ function nextMove(mi) {
 
   // if `mi` isn't set, we're starting a new track, so start at zero.
   mi = mi || 0;
+  miAccum = mi; // remember where we are
 
   // log progress, without scrolling thousands of lines.
   /*
@@ -313,7 +514,7 @@ function nextMove(mi) {
       logEvent(1, 'thAccum = ' + thAccum);
       logEvent(1, 'rAccum = ' + rAccum);
 
-      verts = []; // clear verts array
+      // verts = []; // clear verts array // Removed for calc_track_time 7/8/2020
       onFinishTrack();
       setStatus('waiting');
     }
@@ -471,7 +672,7 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLOstep
     rFactor1 = Math.sqrt((RDIST * RDIST + THRAD * THRAD * rEffect * rEffect)) / MOVEDIST;
     //logEvent(1, 'rFactor1: ' + rFactor1);
     msec *= rFactor1;
-  } else { //ball is inside rCrit-- this is shaky at best...
+  } else if (c_MOVEDIST != 0) { //ball is inside rCrit-- this is shaky at best...
     if (rSeg > RF2MIN) {
       rFactor2 = Math.abs((RDIST / MOVEDIST) * (rCrit / rSeg));
     } else {
@@ -505,6 +706,8 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLOstep
     rStepsOut += rLOsign;
     eLOr -= siMax;
   }
+
+  if (!_.isFinite(msec)) logEvent(2, "Next Seg: Not a Number", msec, mi, si, ASindex);
 
   msec = Math.floor(msec);
   if (msec < 1) msec = 1;
@@ -1373,6 +1576,16 @@ module.exports = {
     } else {
       logEvent(1, 'cannot play');
     }
+  },
+
+  // Time left in track
+  calcTotalTime: function() {
+    logEvent(0, "Plotter: Calc total time");
+    return calcTime();
+  },
+  calcRemainingTime: function() {
+    logEvent(0, "Plotter: Calc remaining time", miAccum);
+    return calcTime(miAccum);
   },
 
   // Streaming

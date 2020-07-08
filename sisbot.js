@@ -137,6 +137,7 @@ var sisbot = {
 	_saving: false,
 
   _is_streaming: false,
+  _streaming_id: null,
   _init_streaming: false, // for clearing verts on start of streaming
 
   _thumbnail_playing: false, // was the table playing prior to generating thumbnail?
@@ -532,7 +533,7 @@ var sisbot = {
 		});
 		plotter.onFinishTrack(function() {
       var finished_track = self.current_state.get('active_track');
-			logEvent(1, "Track Finished", finished_track.id);
+			logEvent(1, "Track Finished", finished_track.id, moment().format('X'));
 
 			if (self._home_next == true) return logEvent(1, "Home Next, skip playing next");
 
@@ -1401,6 +1402,7 @@ var sisbot = {
               }
 
               // error checking for empty sorted_tracks/next_tracks
+              logEvent(0, "Playlist tracks", playlist.get('sorted_tracks').length, playlist.get('next_tracks').length);
               if (playlist.get('sorted_tracks').length == 0 || playlist.get('next_tracks').length == 0) {
 				        playlist.set({active_track_id: "false", active_track_index: -1});
                 playlist.reset_tracks();
@@ -2180,6 +2182,14 @@ var sisbot = {
     if (cb) cb(null, return_objs);
   },
   /*********************** DIRECT TABLE CONTROL ************************/
+  get_track_time: function(data, cb) {
+    var remaining_time = this.plotter.calcRemainingTime();
+    var total_time = this.plotter.calcTotalTime();
+
+    logEvent(0, "Track should finish:", moment().add(remaining_time, 'ms').format('X'));
+
+    if (cb) cb(null, {remaining_time: remaining_time, total_time: total_time});
+  },
   get_ball_position: function(data, cb) {
     var accumThetaPosition = this.plotter.getThetaPosition({actual_th:true});
     var thetaPosition = this.plotter.getThetaPosition();
@@ -2207,6 +2217,8 @@ var sisbot = {
 
     var paused = self.current_state.get("state") == 'paused';
 
+    this._streaming_id = uuid();
+
     if (paused) {
       var error = self.plotter.startStreaming(data);
 
@@ -2222,7 +2234,7 @@ var sisbot = {
         }
 
         var min_state = _.pick(self.current_state.toJSON(), ['id','state','active_playlist_id', 'active_track']);
-        if (cb) cb(null, min_state); // send current_state
+        if (cb) cb(null, [{streaming_id: self._streaming_id},min_state]); // send current_state
       } else if (cb) cb(error, null); // send error
     } else {
       // pause the currently playing track
@@ -2237,19 +2249,21 @@ var sisbot = {
 
           var min_state = _.pick(self.current_state.toJSON(), ['id','state','active_playlist_id', 'active_track']);
 
-          if (cb) cb(null, min_state); // send current_state
+          if (cb) cb(null, [{streaming_id: self._streaming_id},min_state]); // send current_state
         } else if (cb) cb(error, null); // send error
       });
     }
   },
   stop_streaming: function(data, cb) {
     var self = this;
+    if (data.id != this._streaming_id) return cb('Need correct ID to stop streaming', null);
 
     this.pause(data, function(err, resp) {
       var error = self.plotter.stopStreaming();
 
       if (!error) {
         self._is_streaming = false;
+        self._streaming_id = null;
         self._init_streaming = false;
 
         // restore speed
@@ -2263,7 +2277,11 @@ var sisbot = {
     });
   },
   add_verts_streaming: function(data, cb) {
-    if (!this._init_streaming) cb('Streaming not initialized', null);
+    if (!this._init_streaming) return cb('Streaming not initialized', null);
+    if (!data || data.id != this._streaming_id) {
+      if (cb) cb('Streaming not allowed', null);
+      return;
+    }
 
     // TODO: error checking on vert data
     var error = this.plotter.addVerts(data);
@@ -2271,7 +2289,8 @@ var sisbot = {
     if (cb) cb(error, null); // not sure what to respond yet
   },
   clear_verts_streaming: function(data, cb) {
-    if (!this._init_streaming) cb('Streaming not initialized', null);
+    if (!this._init_streaming) return cb('Streaming not initialized', null);
+    if (!data || data.id != this._streaming_id) return cb('Streaming not allowed', null);
 
     var error = this.plotter.clearVerts();
     if (error) {
