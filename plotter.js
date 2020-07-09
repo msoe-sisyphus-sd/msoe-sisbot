@@ -65,6 +65,7 @@ var vert = {
 }; //vertex object
 // TODO: calc time left
 var miAccum = 0; // where we currently are in the verts
+var segAccum = 0; // where we currently are in segments
 // var trackTimeLeft = 0;
 var miMax, thAccum = 0,
   rAccum = 0;
@@ -298,8 +299,8 @@ function setStatus(newStatus) {
   }
 }
 // TODO: calc time left in track
-function calcTime(index) {
-  logEvent(0, "Calc time left", index, verts.length);
+function calcTime(index, seg) {
+  logEvent(0, "Calc time left", index, seg, verts.length);
 
   var trackTimeLeft = 0;
 
@@ -323,7 +324,8 @@ function calcTime(index) {
   // if `mi` isn't set, we're starting a new track, so start at zero.
   mi = 0;
   miMax = verts.length - 1; // force reset
-  include = index || 0;
+  var include = index || 0;
+  var segInclude = seg || 0;
 
   try {
     while (mi < miMax) {
@@ -391,7 +393,7 @@ function calcTime(index) {
       var currentSeg = 0;
       while (currentSeg < segs) {
         var add_time = calcNextSeg(mi, miMax, currentSeg, segs, thStepsSeg, rStepsSeg, thLOsteps, rLOsteps, 0, 0, fracSeg);
-        if (mi >= include) trackTimeLeft += add_time;
+        if (mi > include || (mi == include && currentSeg >= segInclude)) trackTimeLeft += add_time;
         currentSeg++;
       }
 
@@ -590,6 +592,7 @@ function nextMove(mi) {
   rLOsteps = rStepsMove - rStepsSeg * segs; //r Left Over steps
 
   //logEvent(1, 'move ' + mi + ' of ' + miMax);
+  segAccum = 0;
 
   nextSeg(mi, miMax,0,segs, thStepsSeg, rStepsSeg, thLOsteps, rLOsteps, 0, 0, fracSeg);
 }
@@ -608,6 +611,9 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLOstep
     nextMove(mi);
     return;
   }
+
+  segAccum = si;
+
   accelSegs = Vball * Voverride * segRate / (2 * Accel); //accel fix for speed slider effect
   //ACCEL/DECEL ---------------------------
   if (!pauseRequest) {
@@ -1584,8 +1590,8 @@ module.exports = {
     return calcTime();
   },
   calcRemainingTime: function() {
-    logEvent(0, "Plotter: Calc remaining time", miAccum);
-    return calcTime(miAccum);
+    logEvent(0, "Plotter: Calc remaining time", miAccum, segAccum);
+    return calcTime(miAccum, segAccum);
   },
 
   // Streaming

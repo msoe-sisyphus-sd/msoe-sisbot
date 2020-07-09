@@ -798,8 +798,8 @@ var sisbot = {
 	_setupAnsible: function() {
 		var self = this;
 		_.each(self.config.services.sisbot.connect, function(service_name) {
-			//logEvent(1, 'service_name', service_name);
-			if (!self.ansible.sockets[service_name]) {
+			logEvent(1, 'Setup Ansible: ', service_name);
+			if (!self.ansible.sockets[service_name] || !self.ansible.sockets[service_name].maintain_conn) {
 				self.ansible.connect(service_name, self.config.services[service_name].address, self.config.services[service_name].ansible_port, function(err, resp) {
 					if (resp == true) {
 						logEvent(1, "Sisbot Connected to " + service_name);
@@ -2186,7 +2186,7 @@ var sisbot = {
     var remaining_time = this.plotter.calcRemainingTime();
     var total_time = this.plotter.calcTotalTime();
 
-    logEvent(0, "Track should finish:", moment().add(remaining_time, 'ms').format('X'));
+    logEvent(0, "Track should finish:", moment().add(remaining_time, 'ms').format('X'), moment().add(remaining_time, 'ms').format());
 
     if (cb) cb(null, {remaining_time: remaining_time, total_time: total_time});
   },
@@ -3061,11 +3061,12 @@ var sisbot = {
 		if (cb)	cb(null, this.current_state.toJSON());
 	},
 	set_share_log_files: function(data, cb) {
-		logEvent(1, 'Sisbot set share log files', data);
+		logEvent(1, 'Sisbot set share log files', data, this.current_state.get('share_log_files'), this.current_state.get('is_internet_connected'));
 
 		// toggle on/off ansible if different
 		if (data.value != this.current_state.get('share_log_files')) {
 			if (data.value == 'true') {
+        logEvent(0, 'Connect to Ansible', this.current_state.get('is_internet_connected'));
 				if (this.current_state.get('is_internet_connected') == 'true') this._setupAnsible();
 			} else this._teardownAnsible();
 		}
