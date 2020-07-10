@@ -641,7 +641,8 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLOstep
       logEvent(1, 'PAUSED, waiting...');
       paused = true;
       pauseRequest = false;
-      setStatus('waiting');
+      if (streaming) setStatus('streaming_waiting');
+      else setStatus('waiting');
 
       //record current segment pars:
       Rmi = mi;
