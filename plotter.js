@@ -24,7 +24,7 @@ var nestedAxisSign = 1,
 
 var rthAsp = rSPRev / thSPRev; //r-th aspect ratio
 var rCrit = Vball / MTV;
-var thSPRad //= thSPRev / (2* Math.PI);
+var thSPRad; //= thSPRev / (2* Math.PI);
 var accelSegs = Vball * segRate / (2 * Accel); //logEvent(1, 'accelSegs: '+accelSegs );
 var VminSegs = Vmin * segRate / (2 * Accel); // logEvent(1, 'VminSegs:'+VminSegs);
 var ASfin = accelSegs;
@@ -62,7 +62,8 @@ var verts = []; //array of path vertices
 var vert = {
   th: 0,
   r: 0
-}; //vertex object
+}; //vertex object (Unused)
+
 // TODO: calc time left
 var miAccum = 0; // where we currently are in the verts
 var segAccum = 0; // where we currently are in segments
@@ -94,6 +95,7 @@ var HOMETHSTEPS = 30 * thDirSign,
 var COUNTER = 0;
 
 // Calculating time left values
+var c_msec_offset = 0;
 var c_accelSegs = Vball * segRate / (2 * Accel); //logEvent(1, 'accelSegs: '+accelSegs );
 var c_RSEG = RSEG;
 var c_ASfin = ASfin;
@@ -115,10 +117,9 @@ var RETESTCOUNTER = 0,
   RETESTNUM = 5;
 var THETA_FAULTED, R_FAULTED;
 
-var plistRepeat = true;
+var plistRepeat = true; // Unused
 var PLHOMED = false;
-var ABLETOPLAY = true;
-var moment = require("moment");
+var ABLETOPLAY = true; // Unused
 
 //globals for autodimming:
 var autodim = "true";
@@ -416,7 +417,7 @@ function calcNextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLO
   var thStepsOut, rStepsOut;
   var rSeg, rEffect, rFactor1, rFactor2;
 
-  if (si == siMax) return;
+  if (si == siMax) return 0;
 
   c_accelSegs = Vball * Voverride * segRate / (2 * Accel); //accel fix for speed slider effect
 
@@ -483,6 +484,13 @@ function calcNextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLO
   msec = Math.floor(msec);
   if (msec < 1) msec = 1;
 
+  var r_rate = Math.abs(rStepsOut/(msec/1000));
+  var th_rate = Math.abs(thStepsOut/(msec/1000));
+  if (r_rate < 1.31 && th_rate < 1.31) logEvent(2, "Steps too slow for EBB:", th_rate, r_rate);
+  else if (r_rate > 25000 || th_rate > 25000) logEvent(2, "Steps too fast for EBB:", th_rate, r_rate);
+  if (Math.abs(rStepsOut) > 32767 || Math.abs(thStepsOut) > 32767) logEvent(2, "Steps outside range for EBB:", thStepsOut, rStepsOut);
+  if (msec < 3) logEvent(2, "Msec too low?", msec);
+
   return msec;
 }
 
@@ -515,6 +523,8 @@ function nextMove(mi) {
       logEvent(1, 'all moves done');
       logEvent(1, 'thAccum = ' + thAccum);
       logEvent(1, 'rAccum = ' + rAccum);
+
+      logEvent(0, 'c_msec_offset = ' + c_msec_offset);
 
       // verts = []; // clear verts array // Removed for calc_track_time 7/8/2020
       onFinishTrack();
@@ -678,7 +688,7 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLOstep
     rFactor1 = Math.sqrt((RDIST * RDIST + THRAD * THRAD * rEffect * rEffect)) / MOVEDIST;
     //logEvent(1, 'rFactor1: ' + rFactor1);
     msec *= rFactor1;
-  } else if (c_MOVEDIST != 0) { //ball is inside rCrit-- this is shaky at best...
+  } else if (MOVEDIST != 0) { //ball is inside rCrit-- this is shaky at best...
     if (rSeg > RF2MIN) {
       rFactor2 = Math.abs((RDIST / MOVEDIST) * (rCrit / rSeg));
     } else {
@@ -686,6 +696,7 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLOstep
     }
     rFactor2 *= 0.7; //just empirical tweak downward
     //logEvent(1, 'rFactor2: ' + rFactor2);
+    if (!_.isFinite(rFactor2)) logEvent(0, 'rFactor2: ' + rFactor2, MOVEDIST, rSeg, RF2MIN);
     if (rFactor2 < 1) rFactor2 = 1;
     msec *= rFactor2;
   }
@@ -730,6 +741,9 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLOstep
   if (modRads < -1 * Math.PI) shortestRads = -2 * Math.PI - modRads; //shortestRads = modRads + 2 * Math.PI;
   var newTh = shortestRads;
 
+  var before_write = Date.now();
+  c_msec_offset += msec;
+
   sp.write(cmd, function(err, res) {
     sp.drain(function(err, result) {
       if (err) logEvent(2, err, result);
@@ -741,6 +755,10 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLOstep
         si++;
         thAccum += thStepsOut;
         rAccum += rStepsOut;
+
+        var after_write = Date.now();
+        c_msec_offset -= after_write - before_write;
+        // logEvent(1, "sp time:", after_write - before_write, msec);
 
         nextSeg(mi, miMax, si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLOsteps, eLOth, eLOr, 1);
       }
@@ -1591,6 +1609,7 @@ module.exports = {
   },
   calcRemainingTime: function() {
     logEvent(0, "Plotter: Calc remaining time", miAccum, segAccum);
+    logEvent(0, "Plotter: c_msec_offset", c_msec_offset);
     return calcTime(miAccum, segAccum);
   },
 
@@ -1607,6 +1626,9 @@ module.exports = {
       if (data.vel) Vball = data.vel;
       if (data.accel) Accel = data.accel;
       if (data.thvmax) MTV = data.thvmax;
+
+      rCrit = Vball / MTV;
+      logEvent(0, "rCrit:", rCrit);
     }
 
     return null; // no error message
@@ -1664,6 +1686,9 @@ module.exports = {
       if (data.accel)   Accel = data.accel; // TODO: clamp
       if (data.thvmax)  MTV = data.thvmax; // TODO: clamp
 
+      rCrit = Vball / MTV;
+      logEvent(0, "rCrit:", rCrit);
+
       // TODO: if streaming had hit the end of verts, nextMove()
       if (STATUS == 'streaming_waiting') {
         logEvent(0, "Plotter: Do Next Move", old_vert_length);
@@ -1703,6 +1728,9 @@ module.exports = {
     Accel = track.accel;
     MTV = track.thvmax;
 
+    rCrit = Vball / MTV;
+    logEvent(0, "rCrit:", rCrit);
+
     // Log status
     logEvent(1,
       'Plotter: playing track with config:',
@@ -1714,6 +1742,11 @@ module.exports = {
 
     // Go!
     Rmi = 0;
+
+    // TODO: check full length
+    c_msec_offset = 0;
+    var total_time = this.calcTotalTime();
+    logEvent(0, "Total time:", total_time, moment().add(total_time, 'ms').format());
 
     paused = false;
     setStatus('playing');

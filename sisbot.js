@@ -533,7 +533,7 @@ var sisbot = {
 		});
 		plotter.onFinishTrack(function() {
       var finished_track = self.current_state.get('active_track');
-			logEvent(1, "Track Finished", finished_track.id, moment().format('X'));
+			logEvent(1, "Track Finished", finished_track.id, moment().format('X'), moment().format());
 
 			if (self._home_next == true) return logEvent(1, "Home Next, skip playing next");
 
@@ -798,8 +798,8 @@ var sisbot = {
 	_setupAnsible: function() {
 		var self = this;
 		_.each(self.config.services.sisbot.connect, function(service_name) {
-			logEvent(1, 'Setup Ansible: ', service_name);
 			if (!self.ansible.sockets[service_name] || !self.ansible.sockets[service_name].maintain_conn) {
+  			logEvent(1, 'Setup Ansible: ', service_name);
 				self.ansible.connect(service_name, self.config.services[service_name].address, self.config.services[service_name].ansible_port, function(err, resp) {
 					if (resp == true) {
 						logEvent(1, "Sisbot Connected to " + service_name);
@@ -2185,8 +2185,9 @@ var sisbot = {
   get_track_time: function(data, cb) {
     var remaining_time = this.plotter.calcRemainingTime();
     var total_time = this.plotter.calcTotalTime();
+    var now = moment();
 
-    logEvent(0, "Track should finish:", moment().add(remaining_time, 'ms').format('X'), moment().add(remaining_time, 'ms').format());
+    logEvent(0, "Track should finish:", now.format('X') +"+"+remaining_time+"="+ now.add(remaining_time, 'ms').format('X'), now.add(remaining_time, 'ms').format());
 
     if (cb) cb(null, {remaining_time: remaining_time, total_time: total_time});
   },
