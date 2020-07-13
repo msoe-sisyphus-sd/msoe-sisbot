@@ -622,18 +622,17 @@ var sisbot = {
         self._init_streaming = false;
       }
 			if (newState == 'waiting') {
-				if (self._paused) {
-          self.current_state.set("state", "paused");
-
-          if (self._is_streaming && !self._init_streaming) {
-            self.plotter.clearVerts();
-            self._init_streaming = true;
-          }
-        }
-				if (!self._paused) self.current_state.set("state", "waiting");
+				if (self._paused) self.current_state.set("state", "paused");
+        else self.current_state.set("state", "waiting");
 			}
       if (newState.includes("streaming")) { // update sisbot with streaming state
         self.current_state.set('state', newState);
+      }
+      if (newState == 'streaming_waiting') {
+        if (self._is_streaming && !self._init_streaming) {
+          self.plotter.clearVerts();
+          self._init_streaming = true;
+        }
       }
 			logEvent(1, "State changed to", newState, "("+self.current_state.get("state")+")", oldState, self._autoplay);
 
