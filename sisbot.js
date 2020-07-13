@@ -139,6 +139,7 @@ var sisbot = {
   _is_streaming: false,
   _streaming_id: null,
   _init_streaming: false, // for clearing verts on start of streaming
+  _streaming_clear_data: {},
 
   _thumbnail_playing: false, // was the table playing prior to generating thumbnail?
   _sleep_playing: false, // was the table playing when put to sleep?
@@ -630,7 +631,7 @@ var sisbot = {
       }
       if (newState == 'streaming_waiting') {
         if (self._is_streaming && !self._init_streaming) {
-          self.plotter.clearVerts();
+          self.plotter.clearVerts(self._streaming_clear_data);
           self._init_streaming = true;
         }
       }
@@ -2229,7 +2230,7 @@ var sisbot = {
         self.current_state.set({active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
 
         if (!self._init_streaming) {
-          self.plotter.clearVerts();
+          self.plotter.clearVerts(data);
           self._init_streaming = true;
         }
 
@@ -2237,6 +2238,8 @@ var sisbot = {
         if (cb) cb(null, [{streaming_id: self._streaming_id},min_state]); // send current_state
       } else if (cb) cb(error, null); // send error
     } else {
+      this._streaming_clear_data = data;
+
       // pause the currently playing track
       this.pause(data, function(err, resp) {
         var error = self.plotter.startStreaming(data);
@@ -2292,10 +2295,8 @@ var sisbot = {
     if (!this._init_streaming) return cb('Streaming not initialized', null);
     if (!data || data.id != this._streaming_id) return cb('Streaming not allowed', null);
 
-    var error = this.plotter.clearVerts();
-    if (error) {
-      logEvent(2, 'Still streaming, try clearing later');
-    }
+    var error = this.plotter.clearVerts(data);
+    if (error) logEvent(2, 'Still streaming, try clearing later');
 
     if (cb) cb(error, null); // not sure what to respond yet
   },

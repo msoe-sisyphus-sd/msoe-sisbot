@@ -688,6 +688,7 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLOstep
   if (rEffect > rCrit) { //ball is outside rCrit:
     rFactor1 = Math.sqrt((RDIST * RDIST + THRAD * THRAD * rEffect * rEffect)) / MOVEDIST;
     //logEvent(1, 'rFactor1: ' + rFactor1);
+    if (!_.isFinite(rFactor1)) logEvent(2, 'rFactor1: ' + rFactor1, MOVEDIST);
     msec *= rFactor1;
   } else if (MOVEDIST != 0) { //ball is inside rCrit-- this is shaky at best...
     if (rSeg > RF2MIN) {
@@ -697,7 +698,7 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLOstep
     }
     rFactor2 *= 0.7; //just empirical tweak downward
     //logEvent(1, 'rFactor2: ' + rFactor2);
-    if (!_.isFinite(rFactor2)) logEvent(0, 'rFactor2: ' + rFactor2, MOVEDIST, rSeg, RF2MIN);
+    if (!_.isFinite(rFactor2)) logEvent(2, 'rFactor2: ' + rFactor2, MOVEDIST, rSeg, RF2MIN);
     if (rFactor2 < 1) rFactor2 = 1;
     msec *= rFactor2;
   }
@@ -725,7 +726,10 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLOstep
     eLOr -= siMax;
   }
 
-  if (!_.isFinite(msec)) logEvent(2, "Next Seg: Not a Number", msec, mi, si, ASindex);
+  if (!_.isFinite(msec)) {
+    logEvent(2, "Next Seg: Not a Number", msec, mi, si, ASindex);
+    msec = 1;
+  }
 
   msec = Math.floor(msec);
   if (msec < 1) msec = 1;
@@ -1642,7 +1646,7 @@ module.exports = {
 
     return null; // no error message
   },
-  clearVerts: function() {
+  clearVerts: function(data) {
     if (STATUS == 'streaming') {
       pauseRequest = true; // stop playing
       return 'Still streaming coordinates, try again';
@@ -1652,9 +1656,32 @@ module.exports = {
     var theta = this.getThetaPosition();
     var rho = this.getRhoPosition();
 
-    logEvent(0, 'Plotter: Clear Verts', theta, rho);
+    if (!data) data = {};
+    logEvent(0, 'Plotter: Clear Verts', theta, rho, data);
 
-    verts = [{th:theta,r:rho},{th:0, r:0}];
+    Vball = data.vel || 1; // TODO: clamp
+    Accel = data.accel || 0.5; // TODO: clamp
+    MTV = data.thvmax || 1; // TODO: clamp
+
+    rCrit = Vball / MTV;
+
+    // allow to start at rho 1 (change to 0-1?)
+    var start_rho = 0;
+    if (data.start_rho && (data.start_rho == 0 || data.start_rho == 1)) start_rho = data.start_rho;
+
+    verts = [{th:theta,r:rho},{th:0, r:start_rho}];
+    if (data.verts && _.isArray(data.verts)) {
+      var new_verts = [];
+      _.each(data.verts, function(vert) {
+        if (vert.th !== undefined && vert.r !== undefined) {
+          // clamp rho to 0-1
+          if (vert.r < 0) vert.r = 0;
+          else if (vert.r > 1) vert.r = 1;
+          verts.push(vert);
+        }
+      });
+    }
+
     mi = 0;
     miMax = verts.length - 1;
 
