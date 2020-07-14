@@ -96,6 +96,7 @@ var COUNTER = 0;
 
 // Calculating time left values
 var c_msec_offset = 0;
+var c_time_since_send = 0;
 var c_accelSegs = Vball * segRate / (2 * Accel); //logEvent(1, 'accelSegs: '+accelSegs );
 var c_RSEG = RSEG;
 var c_ASfin = ASfin;
@@ -344,58 +345,63 @@ function calcTime(index, seg) {
 
       moveThDist = moveThRad * rCrit;
       moveDist = Math.sqrt((moveThDist * moveThDist) + (moveRdist * moveRdist));
-      c_MOVEDIST = moveDist;
 
-      headingNow = Math.atan2(moveRdist, moveThDist);
+      if (moveDist == 0) {
+        // logEvent(2, "No MOVEDIST, skip this move", mi, moveThRad, moveRdist);
+      } else {
+        c_MOVEDIST = moveDist;
 
-      if (mi < miMax - 1) {
-        // lookAhead(mi, headingNow);
-        var LAthDist = (verts[mi + 2].th - verts[mi + 1].th) * rCrit;
-        var LArDist = (verts[mi + 2].r - verts[mi + 1].r) * plotRadius;
+        headingNow = Math.atan2(moveRdist, moveThDist);
 
-        var LAheading = Math.atan2(LArDist, LAthDist)
+        if (mi < miMax - 1) {
+          // lookAhead(mi, headingNow);
+          var LAthDist = (verts[mi + 2].th - verts[mi + 1].th) * rCrit;
+          var LArDist = (verts[mi + 2].r - verts[mi + 1].r) * plotRadius;
 
-        var dHeading = LAheading - headingNow;
-        dHeading = Math.abs(dHeading);
+          var LAheading = Math.atan2(LArDist, LAthDist)
 
-        var inertiaFactor = Math.sin(dHeading / 2);
+          var dHeading = LAheading - headingNow;
+          dHeading = Math.abs(dHeading);
 
-        c_ASfin = c_accelSegs * (1 - inertiaFactor); //+1?
-      } else c_ASfin = VminSegs; //next move is last
+          var inertiaFactor = Math.sin(dHeading / 2);
 
-      segsReal = moveDist * segRate / Vball;
-      segs = Math.floor(segsReal);
+          c_ASfin = c_accelSegs * (1 - inertiaFactor); //+1?
+        } else c_ASfin = VminSegs; //next move is last
 
-      //deal with tiny moves here:
-      if (segs == 0) {
-        segs = 1;
-        fracSeg = segsReal;
-        //logEvent(1, 'TINY MOVE, frac= '+segsReal)
-      } else fracSeg = 1;
+        segsReal = moveDist * segRate / Vball;
+        segs = Math.floor(segsReal);
 
-      thStepsNew = Math.floor(thNew * thSPRad) * thDirSign;
-      thStepsOld = Math.floor(thOld * thSPRad) * thDirSign;
-      thStepsMove = thStepsNew - thStepsOld;
+        //deal with tiny moves here:
+        if (segs == 0) {
+          segs = 1;
+          fracSeg = segsReal;
+          //logEvent(1, 'TINY MOVE, frac= '+segsReal)
+        } else fracSeg = 1;
 
-      rStepsNew = Math.floor(rNew * rSPInch * plotRadius) * rDirSign;
-      rStepsOld = Math.floor(rOld * rSPInch * plotRadius) * rDirSign;
-      rStepsMove = rStepsNew - rStepsOld;
+        thStepsNew = Math.floor(thNew * thSPRad) * thDirSign;
+        thStepsOld = Math.floor(thOld * thSPRad) * thDirSign;
+        thStepsMove = thStepsNew - thStepsOld;
 
-      rStepsComp = Math.floor(thStepsNew * rthAsp * nestedAxisSign) - Math.floor(thStepsOld * rthAsp * nestedAxisSign);
+        rStepsNew = Math.floor(rNew * rSPInch * plotRadius) * rDirSign;
+        rStepsOld = Math.floor(rOld * rSPInch * plotRadius) * rDirSign;
+        rStepsMove = rStepsNew - rStepsOld;
 
-      rStepsMove += rStepsComp;
+        rStepsComp = Math.floor(thStepsNew * rthAsp * nestedAxisSign) - Math.floor(thStepsOld * rthAsp * nestedAxisSign);
 
-      thStepsSeg = Math.floor(thStepsMove / segs);
-      thLOsteps = thStepsMove - thStepsSeg * segs; //th Left Over steps
+        rStepsMove += rStepsComp;
 
-      rStepsSeg = Math.floor(rStepsMove / segs);
-      rLOsteps = rStepsMove - rStepsSeg * segs; //r Left Over steps
+        thStepsSeg = Math.floor(thStepsMove / segs);
+        thLOsteps = thStepsMove - thStepsSeg * segs; //th Left Over steps
 
-      var currentSeg = 0;
-      while (currentSeg < segs) {
-        var add_time = calcNextSeg(mi, miMax, currentSeg, segs, thStepsSeg, rStepsSeg, thLOsteps, rLOsteps, 0, 0, fracSeg);
-        if (mi > include || (mi == include && currentSeg >= segInclude)) trackTimeLeft += add_time;
-        currentSeg++;
+        rStepsSeg = Math.floor(rStepsMove / segs);
+        rLOsteps = rStepsMove - rStepsSeg * segs; //r Left Over steps
+
+        var currentSeg = 0;
+        while (currentSeg < segs) {
+          var add_time = calcNextSeg(mi, miMax, currentSeg, segs, thStepsSeg, rStepsSeg, thLOsteps, rLOsteps, 0, 0, fracSeg);
+          if (mi > include || (mi == include && currentSeg >= segInclude)) trackTimeLeft += add_time;
+          currentSeg++;
+        }
       }
 
       mi++;
@@ -489,7 +495,7 @@ function calcNextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLO
   if (r_rate < 1.31 && th_rate < 1.31) logEvent(2, "Steps too slow for EBB:", th_rate, r_rate);
   else if (r_rate > 25000 || th_rate > 25000) logEvent(2, "Steps too fast for EBB:", th_rate, r_rate);
   if (Math.abs(rStepsOut) > 32767 || Math.abs(thStepsOut) > 32767) logEvent(2, "Steps outside range for EBB:", thStepsOut, rStepsOut);
-  if (msec < 3) logEvent(2, "Msec too low?", msec);
+  // if (msec < 3) logEvent(2, "Msec too low?", msec);
 
   return msec;
 }
@@ -554,57 +560,66 @@ function nextMove(mi) {
 
   moveThDist = moveThRad * rCrit;
   moveDist = Math.sqrt((moveThDist * moveThDist) + (moveRdist * moveRdist));
-  MOVEDIST = moveDist;
 
-  headingNow = Math.atan2(moveRdist, moveThDist);
+  if (moveDist == 0) {
+    logEvent(2, "No MOVEDIST, skip this move", mi, thOld, rOld, thNew, rNew);
 
-  if (mi < miMax - 1) lookAhead(mi, headingNow);
-  else ASfin = VminSegs; //next move is last
+    mi++;
+    nextMove(mi);
+    return;
+  } else {
+    MOVEDIST = moveDist;
 
-  segsReal = moveDist * segRate / Vball;
-  segs = Math.floor(segsReal);
+    headingNow = Math.atan2(moveRdist, moveThDist);
 
-  //deal with tiny moves here:
-  if (segs == 0) {
-    segs = 1;
-    fracSeg = segsReal;
-    //logEvent(1, 'TINY MOVE, frac= '+segsReal)
-  } else fracSeg = 1;
+    if (mi < miMax - 1) lookAhead(mi, headingNow);
+    else ASfin = VminSegs; //next move is last
 
-  thStepsNew = Math.floor(thNew * thSPRad) * thDirSign;
-  thStepsOld = Math.floor(thOld * thSPRad) * thDirSign;
-  thStepsMove = thStepsNew - thStepsOld;
+    segsReal = moveDist * segRate / Vball;
+    segs = Math.floor(segsReal);
 
-  rStepsNew = Math.floor(rNew * rSPInch * plotRadius) * rDirSign;
-  rStepsOld = Math.floor(rOld * rSPInch * plotRadius) * rDirSign;
-  rStepsMove = rStepsNew - rStepsOld;
+    //deal with tiny moves here:
+    if (segs == 0) {
+      segs = 1;
+      fracSeg = segsReal;
+      //logEvent(1, 'TINY MOVE, frac= '+segsReal)
+    } else fracSeg = 1;
 
-  //rStepsComp =  (Math.floor(thNew * thSPRad * rthAsp) -
-  //  Math.floor(thOld  * thSPRad * rthAsp))  * nestedAxisSign;
+    thStepsNew = Math.floor(thNew * thSPRad) * thDirSign;
+    thStepsOld = Math.floor(thOld * thSPRad) * thDirSign;
+    thStepsMove = thStepsNew - thStepsOld;
 
-  //rStepsComp =  Math.floor(thNew / (2 * Math.PI) * rSPRev ) -
-  //      Math.floor(thOld / (2 * Math.PI) * rSPRev )  * nestedAxisSign;
-  //  logEvent(1, rStepsComp + '*');
+    rStepsNew = Math.floor(rNew * rSPInch * plotRadius) * rDirSign;
+    rStepsOld = Math.floor(rOld * rSPInch * plotRadius) * rDirSign;
+    rStepsMove = rStepsNew - rStepsOld;
 
-  rStepsComp = Math.floor(thStepsNew * rthAsp * nestedAxisSign) - Math.floor(thStepsOld * rthAsp * nestedAxisSign);
+    //rStepsComp =  (Math.floor(thNew * thSPRad * rthAsp) -
+    //  Math.floor(thOld  * thSPRad * rthAsp))  * nestedAxisSign;
 
-  //logEvent(1, rStepsComp + '');
+    //rStepsComp =  Math.floor(thNew / (2 * Math.PI) * rSPRev ) -
+    //      Math.floor(thOld / (2 * Math.PI) * rSPRev )  * nestedAxisSign;
+    //  logEvent(1, rStepsComp + '*');
 
-  //rStepsComp = Math.floor(thStepsMove * rthAsp )* nestedAxisSign;
-  //logEvent(1, rStepsComp + '*');
+    rStepsComp = Math.floor(thStepsNew * rthAsp * nestedAxisSign) - Math.floor(thStepsOld * rthAsp * nestedAxisSign);
 
-  rStepsMove += rStepsComp;
+    //logEvent(1, rStepsComp + '');
 
-  thStepsSeg = Math.floor(thStepsMove / segs);
-  thLOsteps = thStepsMove - thStepsSeg * segs; //th Left Over steps
+    //rStepsComp = Math.floor(thStepsMove * rthAsp )* nestedAxisSign;
+    //logEvent(1, rStepsComp + '*');
 
-  rStepsSeg = Math.floor(rStepsMove / segs);
-  rLOsteps = rStepsMove - rStepsSeg * segs; //r Left Over steps
+    rStepsMove += rStepsComp;
 
-  //logEvent(1, 'move ' + mi + ' of ' + miMax);
-  segAccum = 0;
+    thStepsSeg = Math.floor(thStepsMove / segs);
+    thLOsteps = thStepsMove - thStepsSeg * segs; //th Left Over steps
 
-  nextSeg(mi, miMax,0,segs, thStepsSeg, rStepsSeg, thLOsteps, rLOsteps, 0, 0, fracSeg);
+    rStepsSeg = Math.floor(rStepsMove / segs);
+    rLOsteps = rStepsMove - rStepsSeg * segs; //r Left Over steps
+
+    // logEvent(1, 'move ' + mi + ' of ' + miMax, 'segs: '+segs, 'pauseRequest: '+pauseRequest);
+    segAccum = 0;
+
+    nextSeg(mi, miMax,0,segs, thStepsSeg, rStepsSeg, thLOsteps, rLOsteps, 0, 0, fracSeg);
+  }
 }
 //////      NEXTSEG     ///////////////////////////////////
 function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLOsteps, eLOth, eLOr, fracSeg) {
@@ -616,7 +631,7 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLOstep
   var rSeg, rEffect, rFactor1, rFactor2;
 
   if (si == siMax) {
-    //logEvent(1, 'move '+mi+' done, ' + counter + ' segs');
+    // logEvent(0, 'move '+mi+' done, ' + miMax + ' segs');
     mi++;
     nextMove(mi);
     return;
@@ -746,8 +761,8 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLOstep
   if (modRads < -1 * Math.PI) shortestRads = -2 * Math.PI - modRads; //shortestRads = modRads + 2 * Math.PI;
   var newTh = shortestRads;
 
-  var before_write = Date.now();
-  c_msec_offset += msec;
+  // var before_write = Date.now();
+  // c_msec_offset += msec;
 
   sp.write(cmd, function(err, res) {
     sp.drain(function(err, result) {
@@ -761,9 +776,15 @@ function nextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLOstep
         thAccum += thStepsOut;
         rAccum += rStepsOut;
 
-        var after_write = Date.now();
-        c_msec_offset -= after_write - before_write;
-        // logEvent(1, "sp time:", after_write - before_write, msec);
+        var before_write = c_time_since_send;
+        c_time_since_send = Date.now();
+        var write_diff = c_time_since_send - before_write;
+        c_msec_offset += write_diff-msec;
+        if (write_diff > msec) {
+          // c_msec_offset += write_diff-msec;
+          // logEvent(2, "Diff: "+ (write_diff-msec), "Total: "+c_msec_offset);
+        }
+        // logEvent((c_msec_offset < 0) ? 2 : 0, "motors:", msec, "sp time:", c_time_since_send - last_write, "msec_offset:", c_msec_offset);
 
         nextSeg(mi, miMax, si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLOsteps, eLOth, eLOr, 1);
       }
@@ -1642,7 +1663,7 @@ module.exports = {
     logEvent(0, 'Plotter: Stop Streaming');
 
     streaming = false;
-    pauseRequest = true; // stop playing stream coordinates
+    if (STATUS == 'streaming') pauseRequest = true; // stop playing stream coordinates
 
     return null; // no error message
   },
@@ -1773,10 +1794,12 @@ module.exports = {
 
     // TODO: check full length
     c_msec_offset = 0;
+    c_time_since_send = Date.now();
     var total_time = this.calcTotalTime();
-    logEvent(0, "Total time:", total_time, moment().add(total_time, 'ms').format());
+    logEvent(0, "Total time:", total_time, moment().format('X'), moment().add(total_time, 'ms').format('X'), moment().add(total_time, 'ms').format());
 
     paused = false;
+    pauseRequest = false; // !Testing!
     setStatus('playing');
     nextMove(Rmi);
   },

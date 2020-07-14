@@ -1797,7 +1797,7 @@ var sisbot = {
         return logEvent(2, "Sisbot Already Homing");
       }
 
-	    logEvent(1, "Sisbot Home", data, this.current_state.get("state"));
+	    logEvent(1, "Sisbot Home", data, this.current_state.get("state"), this._sensored);
       this._home_requested = true; // keep from calling multiple times
 			if (data) { // special instructions?
 				if (data.stop) this._autoplay = false; // home without playing anything afterward
@@ -1836,7 +1836,7 @@ var sisbot = {
 						thvmax: 0.5
 					};
 					self._paused = false;
-					logEvent(1, "doing DEAD RECKONING homing...");
+					logEvent(1, "doing DEAD RECKONING homing...", track_obj);
 					self.plotter.playTrack(track_obj);
 					self._home_next = true; // home after this outward movement
 
