@@ -93,17 +93,43 @@ else
     sudo -u pi npm install
   fi
 fi
-cd /home/pi/sisbot-server/sisproxy && git reset --hard
-if [ -d "node_modules" ]; then
-  echo "Sisproxy node_modules found"
-else
-  echo "Sisproxy node_modules missing"
-  IS_CONNECTED=$(check_internet)
 
-  if [ "$IS_CONNECTED" = 0 ] ; then
-    echo "Failure! Unable to connect to network, please retry."
+cd /home/pi/sisbot-server/sisproxy
+# check if there are any fatal git errors
+OUTPUT=$(git status 2>&1)
+if echo "$OUTPUT" | grep -q "fatal:"; then
+    echo "Sisproxy git fatal error"
+
+    IS_CONNECTED=$(check_internet)
+
+    if [ "$IS_CONNECTED" = 0 ] ; then
+      echo "Failure! Unable to connect to network, please retry."
+    else
+      # move out of folder
+      cd /home/pi/sisbot-server
+
+      # remove the folder
+      rm -rf sisproxy
+
+      # clone the folder back
+      git clone pi@webcenter.sisyphus-industries.com:/git/sisproxy.git
+
+      # npm install
+      cd /home/pi/sisbot-server/sisproxy && sudo -u pi npm install
+    fi
+else
+  git reset --hard
+  if [ -d "node_modules" ]; then
+    echo "Sisproxy node_modules found"
   else
-    sudo -u pi npm install
+    echo "Sisproxy node_modules missing"
+    IS_CONNECTED=$(check_internet)
+
+    if [ "$IS_CONNECTED" = 0 ] ; then
+      echo "Failure! Unable to connect to network, please retry."
+    else
+      sudo -u pi npm install
+    fi
   fi
 fi
 
