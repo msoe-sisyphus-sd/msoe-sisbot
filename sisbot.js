@@ -121,6 +121,7 @@ var sisbot = {
   _first_home: true, // make sure we do a sensored home on startup
 	_paused: false,
   _pause_timestamp: null,
+  _pause_timer: null, // for waiting between tracks
 	_play_next: false,
 	_autoplay: false,
 	_home_next: false,
@@ -134,6 +135,11 @@ var sisbot = {
 	_move_to_rho: 0,
   _start_move_to_rho_1: false, // for startup from already playing playlist
 	_saving: false,
+
+  _is_streaming: false,
+  _streaming_id: null,
+  _init_streaming: false, // for clearing verts on start of streaming
+  _streaming_clear_data: {},
 
   _thumbnail_playing: false, // was the table playing prior to generating thumbnail?
   _sleep_playing: false, // was the table playing when put to sleep?
@@ -312,9 +318,40 @@ var sisbot = {
 
 		this.current_state = this.collection.findWhere({type: "sisbot"});
 
-    // logEvent(1,"setting track_ids to ", tracks);
     this.current_state.set("track_ids", tracks);
-    // logEvent(1,"done setting track_ids");
+
+    // remove all_tracks_playlist from playlists
+    var generate_all_tracks_playlist = true;
+    var all_tracks_playlist = this.current_state.get('all_tracks_playlist_id');
+    if (all_tracks_playlist && all_tracks_playlist != 'false') {
+      playlists = _.without(playlists, all_tracks_playlist);
+
+      if (self.collection.get(all_tracks_playlist)) generate_all_tracks_playlist = false;
+    }
+    if (generate_all_tracks_playlist){
+      logEvent(0, "Create all_tracks_playlist");
+      var tracks_array = [];
+      _.each(tracks, function(track_id) {
+        if (track_id != 'attach' && track_id != 'detach') {
+          var track = self.collection.get(track_id);
+          var track_obj = {
+      			id		: track_id,
+      			vel		: track.get('default_vel'),
+      			accel	: track.get('default_accel'),
+      			thvmax	: track.get('default_thvmax'),
+      			firstR	: track.get('firstR'),
+      			lastR	: track.get('lastR'),
+            name  : track.get('name')
+      		};
+          tracks_array.push(track_obj);
+        }
+      });
+      tracks_array = _.sortBy(tracks_array, function (i) { return i.name.toLowerCase(); });
+      var newPlaylist = new Playlist({id: "all_tracks_playlist", name:"All Tracks", tracks:tracks_array});
+      this.collection.add(newPlaylist);
+      this.current_state.set('all_tracks_playlist_id', 'all_tracks_playlist')
+      logEvent(0, "all_tracks_playlist added", tracks_array);
+    }
     this.current_state.set("playlist_ids", playlists);
 
     logEvent(1, "CSON:", config.sisbot_config);
@@ -357,6 +394,7 @@ var sisbot = {
       _end_rho: 0, // on startup, we should be at 0
 			state: "waiting",
 			is_available: "true",
+      is_waiting_between_tracks: "false",
 			reason_unavailable: "false",
       fault_status: "false",
 			is_serial_open: "false",
@@ -496,7 +534,7 @@ var sisbot = {
 		});
 		plotter.onFinishTrack(function() {
       var finished_track = self.current_state.get('active_track');
-			logEvent(1, "Track Finished", finished_track.id);
+			logEvent(1, "Track Finished", finished_track.id, moment().format('X'), moment().format());
 
 			if (self._home_next == true) return logEvent(1, "Home Next, skip playing next");
 
@@ -526,6 +564,18 @@ var sisbot = {
 						self._paused = true;
 						self.current_state.set('is_waiting_between_tracks', 'true');
 						// self._play_next = true;
+
+            // TODO: setTimeout to start playing again
+            if (self.current_state.get('is_paused_time_enabled') == 'true') {
+              var wait_minutes = self.current_state.get('paused_track_time');
+              if (!_.isFinite(wait_minutes)) wait_minutes = 15;
+              logEvent(0, 'Wait for '+wait_minutes+' before playing.');
+
+              self._pause_timer = setTimeout(function() {
+                logEvent(0, 'Restart playing after wait');
+                self.play();
+              }, wait_minutes * 60000);
+            }
 					} else {
 						var nextTrack = playlist.get_next_track({ start_rho: self.current_state.get('_end_rho') });
 						self.current_state.set('active_track', nextTrack);
@@ -558,17 +608,40 @@ var sisbot = {
 			}
 		});
   	plotter.onStateChanged(function(newState, oldState) {
-			if (newState == 'homing') self.current_state.set("state", "homing");
-			if (newState == 'playing' && !self._home_next) self.current_state.set("state", "playing");
+			if (newState == 'homing') {
+        self.current_state.set("state", "homing");
+
+        // clear streaming values
+        self._is_streaming = false;
+        self._init_streaming = false;
+      }
+			if (newState == 'playing' && !self._home_next) {
+        self.current_state.set("state", "playing");
+
+        // clear streaming values
+        self._is_streaming = false;
+        self._init_streaming = false;
+      }
 			if (newState == 'waiting') {
 				if (self._paused) self.current_state.set("state", "paused");
-				if (!self._paused) self.current_state.set("state", "waiting");
+        else self.current_state.set("state", "waiting");
 			}
+      if (newState.includes("streaming")) { // update sisbot with streaming state
+        self.current_state.set('state', newState);
+      }
+      if (newState == 'streaming_waiting') {
+        if (self._is_streaming && !self._init_streaming) {
+          self.plotter.clearVerts(self._streaming_clear_data);
+          self._init_streaming = true;
+        }
+      }
 			logEvent(1, "State changed to", newState, "("+self.current_state.get("state")+")", oldState, self._autoplay);
 
 			if (oldState == 'homing') {
 				if (newState == 'home_th_failed') {
           logEvent(2, "Failed home (theta)!");
+    			self.pause(null, null);
+    			self.current_state.set("fault_status", "th_fault");
 					return;
 				}
 				if (newState == 'home_rho_failed') {
@@ -613,7 +686,7 @@ var sisbot = {
           } else if (self.current_state.get('active_track').id != "false") {
             var track = self.current_state.get('active_track');
 
-            // TODO: check if we need to start at 1
+            // check if we need to start at 1
             if (self._start_move_to_rho_1 && track.firstR == 1) {
               self._move_to_rho = 1;
               logEvent(1, "Start Move to 1", self._move_to_rho, self.current_state.get('_end_rho'),self.current_state.get('active_track'));
@@ -725,8 +798,8 @@ var sisbot = {
 	_setupAnsible: function() {
 		var self = this;
 		_.each(self.config.services.sisbot.connect, function(service_name) {
-			//logEvent(1, 'service_name', service_name);
-			if (!self.ansible.sockets[service_name]) {
+			if (!self.ansible.sockets[service_name] || !self.ansible.sockets[service_name].maintain_conn) {
+  			logEvent(1, 'Setup Ansible: ', service_name);
 				self.ansible.connect(service_name, self.config.services[service_name].address, self.config.services[service_name].ansible_port, function(err, resp) {
 					if (resp == true) {
 						logEvent(1, "Sisbot Connected to " + service_name);
@@ -1230,6 +1303,8 @@ var sisbot = {
     if (is_change && data._save) {
       var pattern = this.collection.get(this.current_state.get('led_pattern'));
 
+      if (data.white_value) pattern.set('white_value', data.white_value);
+
       if (data.led_primary_color) {
         this.current_state.set('led_primary_color', data.led_primary_color);
 
@@ -1330,7 +1405,7 @@ var sisbot = {
               if (playlist.get('sorted_tracks').length == 0 || playlist.get('next_tracks').length == 0) {
 				        playlist.set({active_track_id: "false", active_track_index: -1});
                 playlist.reset_tracks();
-    						playlist.set_shuffle({ is_shuffle: "true", start_rho: 0 }); // update order, active tracks indexing
+    						playlist.set_shuffle({ is_shuffle: playlist.get('is_shuffle'), start_rho: 0 }); // update order, active tracks indexing
     						playlist.set({active_track_index: 0});
               }
 
@@ -1639,6 +1714,8 @@ var sisbot = {
 	play: function(data, cb) {
 		var self = this;
 
+    clearTimeout(this._pause_timer); // in case we were waiting to play
+
 		if (this._validateConnection()) {
   		logEvent(1, "Sisbot Play", data);
       if (this._pause_timestamp != null && (Date.now() - this._pause_timestamp) < this.pause_play_lockout_msec) {
@@ -1660,7 +1737,8 @@ var sisbot = {
 
 					var nextTrack = playlist.get_next_track({ start_rho: self.current_state.get('_end_rho') });
 					this.current_state.set('active_track', nextTrack);
-					if (nextTrack.id != 'false' && nextTrack.name != undefined) {
+          logEvent(0, "Play next track", nextTrack);
+					if (nextTrack.id && nextTrack.id != 'false' && nextTrack.name != undefined) {
 						if (nextTrack.name.toLowerCase().indexOf('attach') == 0 || nextTrack.name.toLowerCase().indexOf('detach') == 0) self._home_next = true;
 					}
 
@@ -1696,6 +1774,8 @@ var sisbot = {
 		} else if (cb) cb('No Connection', null);
 	},
 	pause: function(data, cb) {
+    clearTimeout(this._pause_timer); // in case we were waiting to play
+
 		if (this._validateConnection()) {
   		logEvent(1, "Sisbot Pause", data);
 			this._paused = true;
@@ -1716,7 +1796,7 @@ var sisbot = {
         return logEvent(2, "Sisbot Already Homing");
       }
 
-	    logEvent(1, "Sisbot Home", data, this.current_state.get("state"));
+	    logEvent(1, "Sisbot Home", data, this.current_state.get("state"), this._sensored);
       this._home_requested = true; // keep from calling multiple times
 			if (data) { // special instructions?
 				if (data.stop) this._autoplay = false; // home without playing anything afterward
@@ -1733,7 +1813,7 @@ var sisbot = {
 					self._paused = false;
 					if (cb)	cb(err, resp);
 				});
-			} else if (this.current_state.get("state") == 'waiting' || this.current_state.get("state") == 'paused') {
+			} else if (this.current_state.get("state") == 'waiting' || this.current_state.get("state") == 'paused' || this.current_state.get("state") == 'streaming_waiting') {
 				this._paused = false;
 				this.current_state.set("state", "homing");
 
@@ -1755,7 +1835,7 @@ var sisbot = {
 						thvmax: 0.5
 					};
 					self._paused = false;
-					logEvent(1, "doing DEAD RECKONING homing...");
+					logEvent(1, "doing DEAD RECKONING homing...", track_obj);
 					self.plotter.playTrack(track_obj);
 					self._home_next = true; // home after this outward movement
 
@@ -1949,6 +2029,26 @@ var sisbot = {
 				else return;
 			}
 
+      // save to all_tracks_playlist
+      var all_tracks_playlist = self.collection.get('all_tracks_playlist');
+      if (data.id != 'attach' && data.id != 'detach') {
+        if (all_tracks_playlist) {
+          var tracks_array = all_tracks_playlist.get('tracks');
+          var track_obj = {
+            id		: data.id,
+            vel		: track.get('default_vel'),
+            accel	: track.get('default_accel'),
+            thvmax	: track.get('default_thvmax'),
+            firstR	: track.get('firstR'),
+            lastR	: track.get('lastR'),
+            name  : track.get('name')
+          };
+          tracks_array.push(track_obj);
+          tracks_array = _.sortBy(tracks_array, function (i) { return i.name.toLowerCase(); });
+          all_tracks_playlist.set('tracks', tracks_array);
+        }
+      }
+
 			self.save(null, null);
 
 			var generate_first = (self._thumbnail_queue.length <= 0);
@@ -1977,7 +2077,8 @@ var sisbot = {
           // logEvent(1, "add_track() thumbnail_generate Socket Update", JSON.stringify([track.toJSON(), self.current_state.toJSON()]).length);
           var min_track = _.pick(track.toJSON(), ['id','name','track_id']);
           var min_state = _.pick(self.current_state.toJSON(), ['id','state','thumbnail_queue_length']);
-					self.socket_update([min_track, min_state]);
+          var min_all_tracks = _.pick(all_tracks_playlist.toJSON(), ['id', 'tracks']);
+					self.socket_update([min_track, min_state,min_all_tracks]);
 				});
 			} else {
 				if (cb) cb(null, [track.toJSON(), self.current_state.toJSON()]); // send back current_state without track
@@ -2044,35 +2145,159 @@ var sisbot = {
 
 		// remove from playlists
 		var playlists = this.current_state.get("playlist_ids");
+    playlists.push('all_tracks_playlist'); // add all_tracks_playlist
 		var return_objs = [];
 		_.each(playlists, function(playlist_id) {
 			var playlist = self.collection.get(playlist_id);
-			var did_remove = false;
+      if (playlist) {
+  			var did_remove = false;
 
-			var tracks = playlist.get("tracks");
-      var clean_tracks = [];
-			// remove all instances of the track_id
-			_.each(tracks, function(track_obj) {
-				if (track_obj.id != data.id) clean_tracks.push(track_obj);
-				else did_remove = true;
-			});
+  			var tracks = playlist.get("tracks");
+        var clean_tracks = [];
+  			// remove all instances of the track_id
+  			_.each(tracks, function(track_obj) {
+  				if (track_obj.id != data.id) clean_tracks.push(track_obj);
+  				else did_remove = true;
+  			});
 
-			if (did_remove) {
-        playlist.set("tracks", clean_tracks);
+  			if (did_remove) {
+          playlist.set("tracks", clean_tracks);
 
-				// fix the sorted order, or just reshuffle
-				playlist.set_shuffle({ is_shuffle: playlist.get('is_shuffle') });
+  				// fix the sorted order, or just reshuffle
+  				playlist.set_shuffle({ is_shuffle: playlist.get('is_shuffle') });
 
-				return_objs.push(playlist.toJSON());
-			}
+          var min_playlist = _.pick(playlist.toJSON(), ['id','is_shuffle','tracks','sorted_tracks','next_tracks']);
+  				return_objs.push(min_playlist);
+  			}
+      }
 		});
 
-		// add sisbot_state
-		return_objs.push(this.current_state.toJSON());
+    // add sisbot_state
+    var min_state = _.pick(self.current_state.toJSON(), ['id','state','track_ids']);
+		return_objs.push(min_state);
 
     this.save(null, null);
 
     if (cb) cb(null, return_objs);
+  },
+  /*********************** DIRECT TABLE CONTROL ************************/
+  get_track_time: function(data, cb) {
+    var remaining_time = this.plotter.calcRemainingTime();
+    var total_time = this.plotter.calcTotalTime();
+    var now = moment();
+
+    logEvent(0, "Track should finish:", now.format('X') +"+"+remaining_time+"="+ now.add(remaining_time, 'ms').format('X'), now.add(remaining_time, 'ms').format());
+
+    if (cb) cb(null, {remaining_time: remaining_time, total_time: total_time});
+  },
+  get_ball_position: function(data, cb) {
+    var accumThetaPosition = this.plotter.getThetaPosition({actual_th:true});
+    var thetaPosition = this.plotter.getThetaPosition();
+    var rhoPosition = this.plotter.getRhoPosition();
+
+    if (cb) cb(null, {accum_th: accumThetaPosition, th: thetaPosition, r: rhoPosition});
+  },
+  start_streaming: function(data, cb) {
+    var self = this;
+
+    if (this._is_streaming) {
+      logEvent(2, "Already Streaming", data);
+      if (cb) cb('Already Streaming', null);
+      return;
+    }
+
+    var current_speed = this.current_state.get('speed');
+    logEvent(0, "Start Streaming", data, current_speed);
+    if (!data) data = {};
+
+    // set speeds to defaults
+    if (!data.vel) data.vel = 1;
+    if (!data.accel) data.accel = 0.5;
+    if (!data.thvmax) data.thvmax = 1;
+
+    var paused = self.current_state.get("state") == 'paused';
+
+    this._streaming_id = uuid();
+
+    if (paused) {
+      var error = self.plotter.startStreaming(data);
+
+      if (!error) {
+        self._is_streaming = true;
+
+        // clear active_playlist, active_track
+        self.current_state.set({active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
+
+        if (!self._init_streaming) {
+          self.plotter.clearVerts(data);
+          self._init_streaming = true;
+        }
+
+        var min_state = _.pick(self.current_state.toJSON(), ['id','state','active_playlist_id', 'active_track']);
+        if (cb) cb(null, [{streaming_id: self._streaming_id},min_state]); // send current_state
+      } else if (cb) cb(error, null); // send error
+    } else {
+      this._streaming_clear_data = data;
+
+      // pause the currently playing track
+      this.pause(data, function(err, resp) {
+        var error = self.plotter.startStreaming(data);
+
+        if (!error) {
+          self._is_streaming = true;
+
+          // clear active_playlist, active_track
+          self.current_state.set({active_playlist_id: "false", active_track: { id: "false" }}); // we don't keep track of where we are at anymore
+
+          var min_state = _.pick(self.current_state.toJSON(), ['id','state','active_playlist_id', 'active_track']);
+
+          if (cb) cb(null, [{streaming_id: self._streaming_id},min_state]); // send current_state
+        } else if (cb) cb(error, null); // send error
+      });
+    }
+  },
+  stop_streaming: function(data, cb) {
+    var self = this;
+    if (data.id != this._streaming_id) return cb('Need correct ID to stop streaming', null);
+
+    this.pause(data, function(err, resp) {
+      var error = self.plotter.stopStreaming();
+
+      if (!error) {
+        self._is_streaming = false;
+        self._streaming_id = null;
+        self._init_streaming = false;
+
+        // restore speed
+    		var percent = self.current_state.get('speed');
+    		var speed = self.config.min_speed + percent * (self.config.max_speed - self.config.min_speed);
+    		logEvent(1, "Set Plotter Speed", speed);
+      	self.plotter.setSpeed(speed);
+      }
+
+      if (cb) cb(error, null); // send error (or lack thereof)
+    });
+  },
+  add_verts_streaming: function(data, cb) {
+    if (!this._init_streaming) return cb('Streaming not initialized', null);
+    if (!data || data.id != this._streaming_id) {
+      if (cb) cb('Streaming not allowed', null);
+      return;
+    }
+
+    // TODO: error checking on vert data
+    var error = this.plotter.addVerts(data);
+
+    if (cb) cb(error, null); // not sure what to respond yet
+  },
+  clear_verts_streaming: function(data, cb) {
+    if (!this._init_streaming) return cb('Streaming not initialized', null);
+    if (!data || data.id != this._streaming_id) return cb('Streaming not allowed', null);
+
+    var error = this.plotter.clearVerts(data);
+    if (error) logEvent(2, 'Still streaming, try clearing later');
+
+    if (cb) cb(error, null); // not sure what to respond yet
   },
   /*********************** GENERATE THUMBNAILS ******************************/
   find_missing_thumbnails: function(data, cb) {
@@ -2377,6 +2602,8 @@ var sisbot = {
 			return;
 		}
 
+    clearTimeout(this._pause_timer); // in case we were waiting to play
+
 		var do_save = true;
 		if (data.skip_save) {
 			do_save = false;
@@ -2439,7 +2666,10 @@ var sisbot = {
 			is_waiting_between_tracks: "false"
 		});
 
-		if (this.current_state.get('state') == "playing") {
+    // stop streaming if we are
+    if (this.current_state.get('state').includes("streaming")) plotter.stopStreaming();
+
+		if (this.current_state.get('state') == "playing" || this.current_state.get('state') == "streaming") {
 			plotter.pause();
 			this._home_next = true;
 
@@ -2456,7 +2686,7 @@ var sisbot = {
         }
         this._move_to_rho = track.firstR;
       }
-		} else if (this.current_state.get('state') == "waiting" || this.current_state.get('state') == "paused") {
+		} else if (this.current_state.get('state') == "waiting" || this.current_state.get('state') == "paused" || this.current_state.get('state') == "streaming_waiting") {
 			var track = playlist.get_current_track();
 			if (track != undefined && track != "false")	{
 				this._autoplay = true;
@@ -2486,6 +2716,8 @@ var sisbot = {
 		}
 		logEvent(1, "Sisbot Set Track", data.name, data.firstR, data.lastR);
 
+    clearTimeout(this._pause_timer); // in case we were waiting to play
+
     // make sure verts are not a part of this
     if (data.verts) delete data.verts;
 
@@ -2513,7 +2745,11 @@ var sisbot = {
 			is_loop: "true",
 			is_waiting_between_tracks: "false"
 		});
-		if (this.current_state.get('state') == "playing") {
+
+    // stop streaming if we are
+    if (this.current_state.get('state').includes("streaming")) plotter.stopStreaming();
+
+		if (this.current_state.get('state') == "playing" || this.current_state.get('state') == "streaming") {
 			plotter.pause();
 			this._home_next = true;
 
@@ -2526,7 +2762,7 @@ var sisbot = {
         this._move_to_rho = track.get('firstR');
         logEvent(1, "set_track() Not Reversible:", this.plotter.getRhoPosition(), "Next Rho:", this._move_to_rho);
       }
-		} else if (this.current_state.get('state') == "waiting" || this.current_state.get('state') == "paused") {
+		} else if (this.current_state.get('state') == "waiting" || this.current_state.get('state') == "paused" || this.current_state.get('state') == "streaming_waiting") {
 			this._autoplay = true;
 			this._play_track(track.toJSON(), null);
 		}
@@ -2539,7 +2775,7 @@ var sisbot = {
 	_play_track: function(data, cb) {
 		var self = this;
 		logEvent(1, "Sisbot Play Track", data.name, "r:"+data.firstR+data.lastR, "reversed:", data.reversed, "Table R:", self.current_state.get('_end_rho'), this.current_state.get('state'));
-		if (data == undefined || data == null || data == "false") {
+		if (data == undefined || data == null || data == "false" || _.isEmpty(data)) {
 			logEvent(2, "No Track given");
 			if (cb) cb("No track", null);
 			return;
@@ -2812,10 +3048,12 @@ var sisbot = {
 		logEvent(1, 'Sisbot set pause between tracks', data);
 
 		this.current_state.set('is_paused_between_tracks', data.is_paused_between_tracks);
+    if (data.is_paused_time_enabled) this.current_state.set('is_paused_time_enabled', data.is_paused_time_enabled);
+    if (data.paused_track_time) this.current_state.set('paused_track_time', data.paused_track_time);
 
     // update table with info
     // logEvent(1, "set_pause_between_tracks() Socket Update", JSON.stringify(this.current_state.toJSON()).length);
-    var min_resp = _.pick(this.current_state.toJSON(), ['id','state','is_paused_between_tracks']);
+    var min_resp = _.pick(this.current_state.toJSON(), ['id','state','is_paused_between_tracks','is_paused_time_enabled','paused_track_time']);
 		this.socket_update(min_resp);
 
 		this.save(null, null);
@@ -2823,11 +3061,12 @@ var sisbot = {
 		if (cb)	cb(null, this.current_state.toJSON());
 	},
 	set_share_log_files: function(data, cb) {
-		logEvent(1, 'Sisbot set share log files', data);
+		logEvent(1, 'Sisbot set share log files', data, this.current_state.get('share_log_files'), this.current_state.get('is_internet_connected'));
 
 		// toggle on/off ansible if different
 		if (data.value != this.current_state.get('share_log_files')) {
 			if (data.value == 'true') {
+        logEvent(0, 'Connect to Ansible', this.current_state.get('is_internet_connected'));
 				if (this.current_state.get('is_internet_connected') == 'true') this._setupAnsible();
 			} else this._teardownAnsible();
 		}
@@ -2975,7 +3214,11 @@ var sisbot = {
 						} else {
 							logEvent(2, "Network not connected, reverting to hotspot.");
 							self.current_state.set({ wifi_error: "true" });
-							self.reset_to_hotspot(null,null);
+
+              var data = null;
+              var password = self.current_state.get('passcode');
+              if (password && password.length > 7 && password.length < 64) data = { password: password };
+							self.reset_to_hotspot(data,null);
 						}
 					}
         });
@@ -3140,7 +3383,7 @@ var sisbot = {
 			wifi_error: "false",
 			is_internet_connected: "false",
   		is_network_connected: "false",
-			reason_unavailable: "disconnect_from_wifi" // TODO: is this necessary? Could just be "reset_to_hotspot", UI shows same for both
+			reason_unavailable: "disconnect_from_wifi" // is this necessary? Could just be "reset_to_hotspot", UI shows same for both
 		});
 
 		// make sure we don't throw an error, we wanted to disconnect
@@ -3195,8 +3438,23 @@ var sisbot = {
 		// disconnect Ansible
 		this._teardownAnsible();
 
-		logEvent(1, "Start_hotspot");
-		exec('sudo /home/pi/sisbot-server/sisbot/start_hotspot.sh', (error, stdout, stderr) => {
+    var command = 'sudo /home/pi/sisbot-server/sisbot/start_hotspot.sh';
+    if (data && data.password) {
+      // password must be 8-63 characters
+      if (data.password.length > 7 && data.password.length < 64) {
+        // only allow specific characters
+        var regex = /^[0-9a-zA-Z_]+$/;
+        var is_allowed_password = data.password.match(regex);
+
+        if (is_allowed_password) command += ' '+data.password;
+      }
+      // this.current_state.set('hotspot_password', data.password); // changed to passcode
+    } else {
+      // this.current_state.set('hotspot_password', ''); // changed to passcode
+    }
+
+		logEvent(1, "Start_hotspot", command);
+		exec(command, (error, stdout, stderr) => {
 			if (error) return logEvent(2, 'exec error:',error);
 			logEvent(1, "start_hotspot", stdout);
 
