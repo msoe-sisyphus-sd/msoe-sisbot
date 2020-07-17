@@ -1,160 +1,91 @@
 #!/usr/bin/env bash
 
-# echo current time
-echo "Startup: $(date)"
-
-# start LED lights?
-if [ -f "/home/pi/sisbot-server/sisbot/content/lights/led_startup.py" ]; then
-  cd /home/pi/sisbot-server/sisbot/content/lights/
-  python led_startup.py -n 167 & # 167 lights, this may need to be different based on cson
-fi
-if [ -f "/home/pi/sisbot-server/sisbot/pulse_leds.sh" ]; then
-  cd /home/pi/sisbot-server/sisbot/
-  ./pulse_leds.sh 2 & # pulse led strip once
-fi
-
-# check for wifi adapters plugged in
-if [ -f "/home/pi/sisbot-server/sisbot/wifi_adapter_check.sh" ]; then
-  /home/pi/sisbot-server/sisbot/wifi_adapter_check.sh
-fi
-
-check_internet () {
-  echo "Make sure we are connected to internet"
-  RETRIES=0
-  FAILED=false
-  while ! ping -c 1 -W 2 google.com ; do
-    sleep 1
-    let "RETRIES++"
-    if [ $RETRIES -gt 25 ] ; then
-      FAILED=true
-      break
-    fi
-  done
-
-  echo "Retries $RETRIES, Failed $FAILED"
-
-  if [ "$FAILED" = true ] ; then
-    echo "Failure! Unable to connect to network, please retry."
-    return 0
-  else
-    return 1
-  fi
+save_backup () {
+	echo "Save Backup"
+	cd /home/pi/sisbot-server/
+	mkdir -p backup.0
+	sudo cp -rf sisbot/ backup.0/
+	sudo cp -rf siscloud/ backup.0/
+	sudo cp -rf sisproxy/ backup.0/
+	sudo rm -rf /home/pi/sisbot-server/backup
+	sudo mv -f /home/pi/sisbot-server/backup.0/ /home/pi/sisbot-server/backup
 }
 
-# fix USB npm compile issue
-PKG_LIBUDEV_V="$(dpkg -l libudev-dev 2>&1)"
-if [[ $PKG_LIBUDEV_V == "dpkg-query: no packages found matching libudev-dev"* ]]; then
-  echo "No libudev package found"
-  IS_CONNECTED=$(check_internet)
+# make backup if master branch
+#if [ -z "$1" ] && [ -z "$2" ] && [ -z "$3" ]; then
+	# save_backup
+#elif [ "$1" = "master" ] && [ "$2" = "master" ] && [ "$3" = "master" ]; then
+	# save_backup
+#fi
 
-  if [ "$IS_CONNECTED" = 0 ] ; then
-    echo "Failure! Unable to connect to network, please retry."
-  else
-    apt-get install -yq libudev-dev
-  fi
-fi
+# update_status
+echo "1" > /home/pi/sisbot-server/sisbot/update_status
 
-# check for node_modules in each folder
+# backup each of the package files
 cd /home/pi/sisbot-server/sisbot
-if [ -d "node_modules" ]; then
-  echo "Sisbot node_modules found"
-else
-  echo "Sisbot node_modules missing"
-  IS_CONNECTED=$(check_internet)
-
-  if [ "$IS_CONNECTED" = 0 ] ; then
-    echo "Failure! Unable to connect to network, please retry."
-  else
-    # if package.json doesn't exist or is empty, reset head
-    if [ ! -f "package.json" ] || [ ! -s "package.json" ]; then
-      echo "Package.json missing/empty, git reset"
-      git reset --hard
-    fi
-
-    sudo -u pi npm install
-  fi
-fi
+cp package.json package.json.bak
 cd /home/pi/sisbot-server/siscloud
-if [ -d "node_modules" ]; then
-  echo "Siscloud node_modules found"
-else
-  echo "Siscloud node_modules missing"
-  IS_CONNECTED=$(check_internet)
+cp package.json package.json.bak
+cd /home/pi/sisbot-server/sisproxy
+cp package.json package.json.bak
 
-  if [ "$IS_CONNECTED" = 0 ] ; then
-    echo "Failure! Unable to connect to network, please retry."
-  else
-    # if package.json doesn't exist or is empty, reset head
-    if [ ! -f "package.json" ] || [ ! -s "package.json" ]; then
-      echo "Package.json missing/empty, git reset"
-      git reset --hard
-    fi
-
-    sudo -u pi npm install
-  fi
+cd /home/pi/sisbot-server/sisbot
+# Check for .git/index.lock
+if [ -f ".git/index.lock" ]; then
+	rm .git/index.lock
 fi
+git reset --hard
+if [ -n "$1" ]; then
+	git pull origin "$1"
+else
+	git pull origin master
+fi
+
+# update_status
+echo "2" > /home/pi/sisbot-server/sisbot/update_status
+
+cd /home/pi/sisbot-server/siscloud
+# Check for .git/index.lock
+if [ -f ".git/index.lock" ]; then
+	rm .git/index.lock
+fi
+git reset --hard
+if [ -n "$2" ]; then
+	git pull origin "$2"
+else
+	git pull origin master
+fi
+
+# update_status
+echo "3" > /home/pi/sisbot-server/sisbot/update_status
 
 cd /home/pi/sisbot-server/sisproxy
-# check if there are any fatal git errors
-OUTPUT=$(git status 2>&1)
-if echo "$OUTPUT" | grep -q "fatal:"; then
-    echo "Sisproxy git fatal error"
-
-    IS_CONNECTED=$(check_internet)
-
-    if [ "$IS_CONNECTED" = 0 ] ; then
-      echo "Failure! Unable to connect to network, please retry."
-    else
-      # move out of folder
-      cd /home/pi/sisbot-server
-
-      # remove the folder
-      rm -rf sisproxy
-
-      # clone the folder back
-      git clone pi@webcenter.sisyphus-industries.com:/git/sisproxy.git
-
-      # npm install
-      cd /home/pi/sisbot-server/sisproxy && sudo -u pi npm install
-    fi
+# Check for .git/index.lock
+if [ -f ".git/index.lock" ]; then
+	rm .git/index.lock
+fi
+git reset --hard
+if [ -n "$3" ]; then
+	git pull origin "$3"
 else
-  git reset --hard
-  if [ -d "node_modules" ]; then
-    echo "Sisproxy node_modules found"
-  else
-    echo "Sisproxy node_modules missing"
-    IS_CONNECTED=$(check_internet)
-
-    if [ "$IS_CONNECTED" = 0 ] ; then
-      echo "Failure! Unable to connect to network, please retry."
-    else
-      sudo -u pi npm install
-    fi
-  fi
+	git pull origin master
 fi
 
-start_time="$(date -u +%s)"
+# update_status
+echo "4" > /home/pi/sisbot-server/sisbot/update_status
 
-{
-  sudo NODE_ENV=sisbot node server.js >> /var/log/sisyphus/proxy.log  2>&1
-} || {
-  end_time="$(date -u +%s)"
-  elapsed="$(($end_time-$start_time))"
-  echo "Test failure: $elapsed"
-  if [ $elapsed -lt 3 ]; then
-    echo "Proxy crashed"
+cd /home/pi/sisbot-server/
+sudo chown -R pi sisbot
+sudo chown -R pi siscloud
+sudo chown -R pi sisproxy
 
-    IS_CONNECTED=$(check_internet)
+if [ -n "$4" ]; then
+	sudo /home/pi/sisbot-server/sisbot/update_finish.sh "$4"
+else
+	sudo /home/pi/sisbot-server/sisbot/update_finish.sh
+fi
 
-    if [ "$IS_CONNECTED" = 0 ] ; then
-      echo "Failure! Unable to connect to network, please retry."
-    else
-      rm -rf node_modules
-      sudo -u pi npm install
-      sleep 5
-      ./restart.sh &
-    fi
-  else
-    echo "Normal stop"
-  fi
-}
+echo "Upgrade completed"
+
+# sudo killall node
+# cd /home/pi/sisbot-server/sisproxy && sudo NODE_ENV=sisbot node server.js &
