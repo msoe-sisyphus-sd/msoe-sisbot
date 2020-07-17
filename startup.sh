@@ -25,7 +25,7 @@ check_internet () {
   while ! ping -c 1 -W 2 google.com ; do
     sleep 1
     let "RETRIES++"
-    if [ $RETRIES -gt 25 ]; then
+    if [ $RETRIES -gt 25 ] ; then
       FAILED=true
       break
     fi
@@ -33,7 +33,7 @@ check_internet () {
 
   echo "Retries $RETRIES, Failed $FAILED"
 
-  if [ "$FAILED" = true ]; then
+  if [ "$FAILED" = true ] ; then
     echo "Failure! Unable to connect to network, please retry."
     return 0
   else
@@ -47,7 +47,7 @@ if [[ $PKG_LIBUDEV_V == "dpkg-query: no packages found matching libudev-dev"* ]]
   echo "No libudev package found"
   IS_CONNECTED=$(check_internet)
 
-  if [ "$IS_CONNECTED" = 0 ]; then
+  if [ "$IS_CONNECTED" = 0 ] ; then
     echo "Failure! Unable to connect to network, please retry."
   else
     apt-get install -yq libudev-dev
@@ -55,8 +55,6 @@ if [[ $PKG_LIBUDEV_V == "dpkg-query: no packages found matching libudev-dev"* ]]
 fi
 
 # check for node_modules in each folder
-
-#SISBOT
 cd /home/pi/sisbot-server/sisbot
 # check if there are any fatal git errors
 OUTPUT=$(git status 2>&1)
@@ -65,7 +63,7 @@ if echo "$OUTPUT" | grep -q "fatal:"; then
 
     IS_CONNECTED=$(check_internet)
 
-    if [ "$IS_CONNECTED" = 0 ]; then
+    if [ "$IS_CONNECTED" = 0 ] ; then
       echo "Failure! Unable to connect to network, please retry."
     else
       # move out of folder
@@ -82,26 +80,25 @@ if echo "$OUTPUT" | grep -q "fatal:"; then
     fi
 else
   git reset --hard
-if [ -d "node_modules" ]; then
-  echo "Sisbot node_modules found"
-else
-  echo "Sisbot node_modules missing"
-  IS_CONNECTED=$(check_internet)
-
-  if [ "$IS_CONNECTED" = 0 ]; then
-    echo "Failure! Unable to connect to network, please retry."
+  if [ -d "node_modules" ]; then
+    echo "Sisbot node_modules found"
   else
-    # if package.json doesn't exist or is empty, reset head
-    if [ ! -f "package.json" ] || [ ! -s "package.json" ]; then
-      echo "Package.json missing/empty, git reset"
-      git reset --hard
-    fi
+    echo "Sisbot node_modules missing"
+    IS_CONNECTED=$(check_internet)
 
-    sudo -u pi npm install
+    if [ "$IS_CONNECTED" = 0 ] ; then
+      echo "Failure! Unable to connect to network, please retry."
+    else
+      # if package.json doesn't exist or is empty, reset head
+      if [ ! -f "package.json" ] || [ ! -s "package.json" ]; then
+        echo "Package.json missing/empty, git reset"
+        git reset --hard
+      fi
+
+      sudo -u pi npm install
+    fi
   fi
 fi
-
-#SISCLOUD
 cd /home/pi/sisbot-server/siscloud
 # check if there are any fatal git errors
 OUTPUT=$(git status 2>&1)
@@ -110,7 +107,7 @@ if echo "$OUTPUT" | grep -q "fatal:"; then
 
     IS_CONNECTED=$(check_internet)
 
-    if [ "$IS_CONNECTED" = 0 ]; then
+    if [ "$IS_CONNECTED" = 0 ] ; then
       echo "Failure! Unable to connect to network, please retry."
     else
       # move out of folder
@@ -127,26 +124,25 @@ if echo "$OUTPUT" | grep -q "fatal:"; then
     fi
 else
   git reset --hard
-if [ -d "node_modules" ]; then
-  echo "Siscloud node_modules found"
-else
-  echo "Siscloud node_modules missing"
-  IS_CONNECTED=$(check_internet)
-
-  if [ "$IS_CONNECTED" = 0 ]; then
-    echo "Failure! Unable to connect to network, please retry."
+  if [ -d "node_modules" ]; then
+    echo "Siscloud node_modules found"
   else
-    # if package.json doesn't exist or is empty, reset head
-    if [ ! -f "package.json" ] || [ ! -s "package.json" ]; then
-      echo "Package.json missing/empty, git reset"
-      git reset --hard
-    fi
+    echo "Siscloud node_modules missing"
+    IS_CONNECTED=$(check_internet)
 
-    sudo -u pi npm install
+    if [ "$IS_CONNECTED" = 0 ] ; then
+      echo "Failure! Unable to connect to network, please retry."
+    else
+      # if package.json doesn't exist or is empty, reset head
+      if [ ! -f "package.json" ] || [ ! -s "package.json" ]; then
+        echo "Package.json missing/empty, git reset"
+        git reset --hard
+      fi
+
+      sudo -u pi npm install
+    fi
   fi
 fi
-
-#SISPROXY
 cd /home/pi/sisbot-server/sisproxy
 # check if there are any fatal git errors
 OUTPUT=$(git status 2>&1)
@@ -155,7 +151,7 @@ if echo "$OUTPUT" | grep -q "fatal:"; then
 
     IS_CONNECTED=$(check_internet)
 
-    if [ "$IS_CONNECTED" = 0 ]; then
+    if [ "$IS_CONNECTED" = 0 ] ; then
       echo "Failure! Unable to connect to network, please retry."
     else
       # move out of folder
@@ -178,7 +174,7 @@ else
     echo "Sisproxy node_modules missing"
     IS_CONNECTED=$(check_internet)
 
-    if [ "$IS_CONNECTED" = 0 ]; then
+    if [ "$IS_CONNECTED" = 0 ] ; then
       echo "Failure! Unable to connect to network, please retry."
     else
       sudo -u pi npm install
@@ -199,7 +195,7 @@ start_time="$(date -u +%s)"
 
     IS_CONNECTED=$(check_internet)
 
-    if [ "$IS_CONNECTED" = 0 ]; then
+    if [ "$IS_CONNECTED" = 0 ] ; then
       echo "Failure! Unable to connect to network, please retry."
     else
       rm -rf node_modules
