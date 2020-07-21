@@ -65,6 +65,11 @@ echo "9" > /home/pi/sisbot-server/sisbot/update_status
 # make sure python is installed
 sudo /home/pi/sisbot-server/sisbot/install_python.sh
 
+# copy startup.sh to sisbot-server folder (to protect startup from update errors)
+if [ -f "/home/pi/sisbot-server/sisbot/startup.sh" ] && [ -s "/home/pi/sisbot-server/sisbot/startup.sh" ]; then
+  cp /home/pi/sisbot-server/sisbot/startup.sh /home/pi/sisbot-server/startup.sh
+fi
+
 echo "Upgrade_Finish completed"
 
 # 1.0-1.2 reboot necessity, to make sure bluetooth updates self
