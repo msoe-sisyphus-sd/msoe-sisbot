@@ -1,7 +1,10 @@
 #!/bin/sh -e
 
-if [ -f "/home/pi/sisbot-server/sisbot/startup.sh" ] && [ -s "/home/pi/sisbot-server/sisbot/startup.sh" ]; then
+if [ -s "/home/pi/sisbot-server/startup.sh" ]; then
   echo "Sisyphus Startup"
+  /home/pi/sisbot-server/startup.sh >> /var/log/sisyphus/startup.log  2>&1 &
+elif [ -s "/home/pi/sisbot-server/sisbot/startup.sh" ]; then
+  echo "Sisyphus Startup (sisbot)"
   /home/pi/sisbot-server/sisbot/startup.sh >> /var/log/sisyphus/startup.log  2>&1 &
 else
   echo "Fallback"

@@ -1156,6 +1156,9 @@ var sisbot = {
         args.push('-o');
         args.push(this.led_default_offset);
       }
+      if (data.quick) {
+        args.push('-q');
+      }
       logEvent(1, "Start LED", args);
   		this.py = spawn('./start_leds.sh',args,{cwd:"/home/pi/sisbot-server/sisbot",detached:true,stdio:'ignore'});
       this.py.on('error', (err) => {
@@ -1326,6 +1329,7 @@ var sisbot = {
   },
   lcpWrite: function(data, cb) {
     logEvent(1, 'LCP-write:',data.value);
+    var self = this;
 
     if (typeof this.lcp_socket === 'undefined' || this.lcp_socket === null) {
       logEvent(1, 'lcpWrite: FAIL lcp is not initialized');
@@ -1342,7 +1346,16 @@ var sisbot = {
       rval.lcp_send = data.value;
     } catch(err) {
       // console.error('LCP write err', err);
-      logEvent(2, 'LCP socket write err:' + err);
+      logEvent(2, 'LCP socket write err: ' + err);
+      if (err.code == -111) {
+        logEvent(1, 'Restart LEDs:');
+        // TODO: restart python
+        self.set_led({is_rgbw: 'true', quick: true}, function(err, resp) {
+          if (err) logEvent(2, 'Unable to restart python', err);
+          else logEvent(1, 'Python restarted', resp);
+        });
+      }
+
       rval.lcp_send_err = err;
       errv = {"err":"LCP socket write threw an error"}
     }
