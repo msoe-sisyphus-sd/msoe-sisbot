@@ -161,6 +161,7 @@ else
     fi
   fi
 fi
+
 #SISPROXY
 cd /home/pi/sisbot-server/sisproxy
 # check if there are any fatal git errors

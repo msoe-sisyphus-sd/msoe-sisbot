@@ -36,7 +36,7 @@ if [ -f ".git/index.lock" ]; then
 fi
 git reset --hard
 if [ -n "$1" ]; then
-	git pull origin "$1"
+	git pull --no-edit origin "$1"
 else
 	git pull origin master
 fi
@@ -51,7 +51,7 @@ if [ -f ".git/index.lock" ]; then
 fi
 git reset --hard
 if [ -n "$2" ]; then
-	git pull origin "$2"
+	git pull --no-edit origin "$2"
 else
 	git pull origin master
 fi
@@ -66,7 +66,7 @@ if [ -f ".git/index.lock" ]; then
 fi
 git reset --hard
 if [ -n "$3" ]; then
-	git pull origin "$3"
+	git pull --no-edit origin "$3"
 else
 	git pull origin master
 fi
