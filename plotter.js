@@ -1653,7 +1653,7 @@ module.exports = {
       if (data.accel) Accel = data.accel;
       if (data.thvmax) MTV = data.thvmax;
 
-      rCrit = Vball / MTV;
+      // rCrit = Vball / MTV; // TODO: more testing
       logEvent(0, "rCrit:", rCrit);
     }
 
@@ -1684,7 +1684,7 @@ module.exports = {
     Accel = data.accel || 0.5; // TODO: clamp
     MTV = data.thvmax || 1; // TODO: clamp
 
-    rCrit = Vball / MTV;
+    // rCrit = Vball / MTV; // TODO: More testing
 
     // allow to start at rho 1 (change to 0-1?)
     var start_rho = 0;
@@ -1735,7 +1735,7 @@ module.exports = {
       if (data.accel)   Accel = data.accel; // TODO: clamp
       if (data.thvmax)  MTV = data.thvmax; // TODO: clamp
 
-      rCrit = Vball / MTV;
+      // rCrit = Vball / MTV; // TODO: More testing
       logEvent(0, "rCrit:", rCrit);
 
       // TODO: if streaming had hit the end of verts, nextMove()
@@ -1777,7 +1777,7 @@ module.exports = {
     Accel = track.accel;
     MTV = track.thvmax;
 
-    rCrit = Vball / MTV;
+    // rCrit = Vball / MTV; // TODO: More testing
     logEvent(0, "rCrit:", rCrit);
 
     // Log status
