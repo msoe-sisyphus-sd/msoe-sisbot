@@ -2576,7 +2576,7 @@ var sisbot = {
       }
     };
 
-    var base_url = 'http://' + this.current_state.get('local_ip') + ':' + this.config.servers.app.port + '/';
+    var base_url = 'http://127.0.0.1:' + this.config.servers.app.port + '/';
     var html = '<html><!DOCTYPE html>\
     <head>\
         <meta charset="utf-8" />\
