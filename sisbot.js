@@ -1159,6 +1159,10 @@ var sisbot = {
       if (data.quick) {
         args.push('-q');
       }
+      if (data.pattern) {
+        args.push('-p');
+        args.push(data.pattern);
+      }
       logEvent(1, "Start LED", args);
   		this.py = spawn('./start_leds.sh',args,{cwd:"/home/pi/sisbot-server/sisbot",detached:true,stdio:'ignore'});
       this.py.on('error', (err) => {
@@ -1348,11 +1352,12 @@ var sisbot = {
       // console.error('LCP write err', err);
       logEvent(2, 'LCP socket write err: ' + err);
       if (err.code == -111) {
-        logEvent(1, 'Restart LEDs:');
+        logEvent(1, 'Restart LEDs:', {is_rgbw: 'true', quick: true, pattern: self.current_state.get('led_pattern')});
         // TODO: restart python
-        self.set_led({is_rgbw: 'true', quick: true}, function(err, resp) {
+        self.set_led({is_rgbw: 'true', quick: true, pattern: self.current_state.get('led_pattern')}, function(err, resp) {
           if (err) logEvent(2, 'Unable to restart python', err);
           else logEvent(1, 'Python restarted', resp);
+          if (cb) return cb(err, resp);
         });
       }
 
