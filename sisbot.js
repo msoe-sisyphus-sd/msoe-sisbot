@@ -329,7 +329,7 @@ var sisbot = {
       if (self.collection.get(all_tracks_playlist)) generate_all_tracks_playlist = false;
     }
     if (generate_all_tracks_playlist){
-      logEvent(0, "Create all_tracks_playlist");
+      logEvent(1, "Create all_tracks_playlist");
       var tracks_array = [];
       _.each(tracks, function(track_id) {
         if (track_id != 'attach' && track_id != 'detach') {
@@ -350,7 +350,7 @@ var sisbot = {
       var newPlaylist = new Playlist({id: "all_tracks_playlist", name:"All Tracks", tracks:tracks_array});
       this.collection.add(newPlaylist);
       this.current_state.set('all_tracks_playlist_id', 'all_tracks_playlist')
-      logEvent(0, "all_tracks_playlist added", tracks_array);
+      logEvent(1, "all_tracks_playlist added", tracks_array.length);
     }
     this.current_state.set("playlist_ids", playlists);
 
@@ -569,10 +569,10 @@ var sisbot = {
             if (self.current_state.get('is_paused_time_enabled') == 'true') {
               var wait_minutes = self.current_state.get('paused_track_time');
               if (!_.isFinite(wait_minutes)) wait_minutes = 15;
-              logEvent(0, 'Wait for '+wait_minutes+' before playing.');
+              logEvent(1, 'Wait for '+wait_minutes+' before playing.');
 
               self._pause_timer = setTimeout(function() {
-                logEvent(0, 'Restart playing after wait');
+                logEvent(1, 'Restart playing after wait');
                 self.play();
               }, wait_minutes * 60000);
             }
@@ -1660,6 +1660,8 @@ var sisbot = {
 
 			var returnObjects = [];
 
+      var new_passcode = false;
+
 			// merge the given data into collection and save
 			if (data != null) {
 				if (!_.isArray(data)) data = [data];
@@ -1677,6 +1679,8 @@ var sisbot = {
 							self.set_hostname({hostname: clean_hostname}, null);
 						}
 						if (obj.share_log_files != self.current_state.get('share_log_files')) self.set_share_log_files({value: obj.share_log_files}, null);
+            // TODO: check for passcode
+            if (obj.passcode != self.current_state.get('passcode') && self.current_state.get("is_hotspot") == "true") new_passcode = obj.passcode;
 					}
 					returnObjects.push(self.collection.add(obj, {merge:true}).toJSON());
 				});
@@ -1724,6 +1728,12 @@ var sisbot = {
 			});
 
 			if (cb) cb(null, returnObjects);
+
+      // reset hotspot after response
+      if (new_passcode) {
+        logEvent(1, "New passcode, reset_hotspot!");
+        self.reset_to_hotspot({password: new_passcode}, null);
+      }
 		} else {
       // save into a queue
       this._save_queue.push({data:data, cb:cb});
@@ -1755,7 +1765,7 @@ var sisbot = {
 
 					var nextTrack = playlist.get_next_track({ start_rho: self.current_state.get('_end_rho') });
 					this.current_state.set('active_track', nextTrack);
-          logEvent(0, "Play next track", nextTrack);
+          // logEvent(0, "Play next track", nextTrack);
 					if (nextTrack.id && nextTrack.id != 'false' && nextTrack.name != undefined) {
 						if (nextTrack.name.toLowerCase().indexOf('attach') == 0 || nextTrack.name.toLowerCase().indexOf('detach') == 0) self._home_next = true;
 					}
@@ -2204,7 +2214,7 @@ var sisbot = {
     var total_time = this.plotter.calcTotalTime();
     var now = moment();
 
-    logEvent(0, "Track should finish:", now.format('X') +"+"+remaining_time+"="+ now.add(remaining_time, 'ms').format('X'), now.add(remaining_time, 'ms').format());
+    // logEvent(1, "Track should finish:", now.format('X') +"+"+remaining_time+"="+ now.add(remaining_time, 'ms').format('X'), now.add(remaining_time, 'ms').format());
 
     if (cb) cb(null, {remaining_time: remaining_time, total_time: total_time});
   },
@@ -2225,7 +2235,7 @@ var sisbot = {
     }
 
     var current_speed = this.current_state.get('speed');
-    logEvent(0, "Start Streaming", data, current_speed);
+    logEvent(1, "Start Streaming", data, current_speed);
     if (!data) data = {};
 
     // set speeds to defaults
@@ -3084,7 +3094,7 @@ var sisbot = {
 		// toggle on/off ansible if different
 		if (data.value != this.current_state.get('share_log_files')) {
 			if (data.value == 'true') {
-        logEvent(0, 'Connect to Ansible', this.current_state.get('is_internet_connected'));
+        // logEvent(0, 'Connect to Ansible', this.current_state.get('is_internet_connected'));
 				if (this.current_state.get('is_internet_connected') == 'true') this._setupAnsible();
 			} else this._teardownAnsible();
 		}
@@ -3466,9 +3476,6 @@ var sisbot = {
 
         if (is_allowed_password) command += ' '+data.password;
       }
-      // this.current_state.set('hotspot_password', data.password); // changed to passcode
-    } else {
-      // this.current_state.set('hotspot_password', ''); // changed to passcode
     }
 
 		logEvent(1, "Start_hotspot", command);
