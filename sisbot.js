@@ -4158,7 +4158,7 @@ var sisbot = {
   },
 	_factory_reset: function(data, cb) {
 		logEvent(1, "Sisbot Factory Reset", data);
-		this.current_state.set({is_available: "false", reason_unavailable: "resetting"});
+		this.current_state.set({is_available: "false", reason_unavailable: "resetting", passcode:"false"});
 		if (cb) cb(null, this.current_state.toJSON());
 		var ls = spawn('./factory_reset.sh',[],{cwd:"/home/pi/sisbot-server/",detached:true,stdio:'ignore'});
 		ls.on('error', (err) => {
