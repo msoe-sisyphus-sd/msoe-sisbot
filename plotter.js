@@ -302,7 +302,7 @@ function setStatus(newStatus) {
 }
 // TODO: calc time left in track
 function calcTime(index, seg) {
-  logEvent(0, "Calc time left", index, seg, verts.length);
+  // logEvent(0, "Calc time left", index, seg, verts.length);
 
   var trackTimeLeft = 0;
 
@@ -411,7 +411,7 @@ function calcTime(index, seg) {
     logEvent(2, "Calc error", err);
   }
 
-  logEvent(0, "Time left in track:", Math.round(trackTimeLeft/1000), 'seconds');
+  // logEvent(0, "Time left in track:", Math.round(trackTimeLeft/1000), 'seconds');
   return trackTimeLeft;
 }
 //////      NEXTSEG     ///////////////////////////////////
@@ -456,7 +456,7 @@ function calcNextSeg(mi, miMax ,si, siMax, thStepsSeg, rStepsSeg, thLOsteps, rLO
       rFactor2 = Math.abs((c_RDIST / c_MOVEDIST) * (rCrit / RF2MIN));
     }
     rFactor2 *= 0.7; //just empirical tweak downward
-    if (!_.isFinite(rFactor2)) logEvent(0, 'rFactor2: ' + rFactor2, c_MOVEDIST, rSeg, RF2MIN);
+    // if (!_.isFinite(rFactor2)) logEvent(0, 'rFactor2: ' + rFactor2, c_MOVEDIST, rSeg, RF2MIN);
     if (rFactor2 < 1) rFactor2 = 1;
     msec *= rFactor2;
   }
@@ -530,7 +530,7 @@ function nextMove(mi) {
       logEvent(1, 'thAccum = ' + thAccum);
       logEvent(1, 'rAccum = ' + rAccum);
 
-      logEvent(0, 'c_msec_offset = ' + c_msec_offset);
+      // logEvent(0, 'c_msec_offset = ' + c_msec_offset);
 
       // verts = []; // clear verts array // Removed for calc_track_time 7/8/2020
       onFinishTrack();
@@ -1630,18 +1630,18 @@ module.exports = {
 
   // Time left in track
   calcTotalTime: function() {
-    logEvent(0, "Plotter: Calc total time");
+    // logEvent(0, "Plotter: Calc total time");
     return calcTime();
   },
   calcRemainingTime: function() {
-    logEvent(0, "Plotter: Calc remaining time", miAccum, segAccum);
-    logEvent(0, "Plotter: c_msec_offset", c_msec_offset);
+    // logEvent(0, "Plotter: Calc remaining time", miAccum, segAccum);
+    // logEvent(0, "Plotter: c_msec_offset", c_msec_offset);
     return calcTime(miAccum, segAccum);
   },
 
   // Streaming
   startStreaming: function(data) {
-    logEvent(0, 'Plotter: Start Streaming');
+    logEvent(1, 'Plotter: Start Streaming');
 
     streaming = true;
 
@@ -1654,13 +1654,13 @@ module.exports = {
       if (data.thvmax) MTV = data.thvmax;
 
       // rCrit = Vball / MTV; // TODO: more testing
-      logEvent(0, "rCrit:", rCrit);
+      // logEvent(0, "rCrit:", rCrit);
     }
 
     return null; // no error message
   },
   stopStreaming: function() {
-    logEvent(0, 'Plotter: Stop Streaming');
+    logEvent(1, 'Plotter: Stop Streaming');
 
     streaming = false;
     if (STATUS == 'streaming') pauseRequest = true; // stop playing stream coordinates
@@ -1678,7 +1678,7 @@ module.exports = {
     var rho = this.getRhoPosition();
 
     if (!data) data = {};
-    logEvent(0, 'Plotter: Clear Verts', theta, rho, data);
+    logEvent(1, 'Plotter: Clear Verts', theta, rho, data);
 
     Vball = data.vel || 1; // TODO: clamp
     Accel = data.accel || 0.5; // TODO: clamp
@@ -1713,7 +1713,7 @@ module.exports = {
   },
   addVerts: function(data) {
     if (streaming) {
-      logEvent(0, 'Plotter: Add Verts', data, verts.length - 1);
+      // logEvent(0, 'Plotter: Add Verts', data, verts.length - 1);
 
       var old_vert_length = verts.length;
       if (data.verts && _.isArray(data.verts)) {
@@ -1728,7 +1728,7 @@ module.exports = {
         });
         // verts = verts.concat(data.verts);
         miMax = verts.length - 1;
-        logEvent(0, 'Plotter: new miMax', miMax);
+        // logEvent(0, 'Plotter: new miMax', miMax);
       } else return "No verts given";
 
       if (data.vel)     Vball = data.vel; // TODO: clamp
@@ -1736,11 +1736,11 @@ module.exports = {
       if (data.thvmax)  MTV = data.thvmax; // TODO: clamp
 
       // rCrit = Vball / MTV; // TODO: More testing
-      logEvent(0, "rCrit:", rCrit);
+      // logEvent(0, "rCrit:", rCrit);
 
       // TODO: if streaming had hit the end of verts, nextMove()
       if (STATUS == 'streaming_waiting') {
-        logEvent(0, "Plotter: Do Next Move", old_vert_length);
+        // logEvent(0, "Plotter: Do Next Move", old_vert_length);
         setStatus('streaming');
         if (old_vert_length > 0) nextMove(old_vert_length-1);
         else nextMove(0);
@@ -1778,7 +1778,7 @@ module.exports = {
     MTV = track.thvmax;
 
     // rCrit = Vball / MTV; // TODO: More testing
-    logEvent(0, "rCrit:", rCrit);
+    // logEvent(0, "rCrit:", rCrit);
 
     // Log status
     logEvent(1,
@@ -1796,7 +1796,7 @@ module.exports = {
     c_msec_offset = 0;
     c_time_since_send = Date.now();
     var total_time = this.calcTotalTime();
-    logEvent(0, "Total time:", total_time, moment().format('X'), moment().add(total_time, 'ms').format('X'), moment().add(total_time, 'ms').format());
+    // logEvent(0, "Total time:", total_time, moment().format('X'), moment().add(total_time, 'ms').format('X'), moment().add(total_time, 'ms').format());
 
     paused = false;
     pauseRequest = false; // !Testing!
