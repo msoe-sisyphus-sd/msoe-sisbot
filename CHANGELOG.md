@@ -1,4 +1,9 @@
-# 2020-03-11 1.10.67-70
+# 2020-05-22 1.10.71-72
+  - Auto-generates "All Tracks Playlist"
+  - Hotspot password/passcode merged
+  - Calculate Track time remaining
+  - Fix Ansible reconnect
+# 2020-03-11 1.10.67-70 504acb2722c107f9898ad105bd6dd671b5e8958f
   - Clear passcode on GPIO hold
   - Prevent crash if trying to generate thumbnail and thr file is (somehow) missing
   - Fix Artist models that were saved as Playlists (preventing edit from working)

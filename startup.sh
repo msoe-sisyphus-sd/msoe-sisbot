@@ -55,55 +55,150 @@ if [[ $PKG_LIBUDEV_V == "dpkg-query: no packages found matching libudev-dev"* ]]
 fi
 
 # check for node_modules in each folder
+
+#SISBOT
 cd /home/pi/sisbot-server/sisbot
-if [ -d "node_modules" ]; then
-  echo "Sisbot node_modules found"
-else
-  echo "Sisbot node_modules missing"
-  IS_CONNECTED=$(check_internet)
+# check if there are any fatal git errors
+OUTPUT=$(git status 2>&1)
+if echo "$OUTPUT" | grep -q "fatal:"; then
+    echo "Sisbot git fatal error"
 
-  if [ "$IS_CONNECTED" = 0 ] ; then
-    echo "Failure! Unable to connect to network, please retry."
-  else
-    # if package.json doesn't exist or is empty, reset head
-    if [ ! -f "package.json" ] || [ ! -s "package.json" ]; then
-      echo "Package.json missing/empty, git reset"
-      git reset --hard
+    IS_CONNECTED=$(check_internet)
+
+    if [ "$IS_CONNECTED" = 0 ] ; then
+      echo "Failure! Unable to connect to network, please retry."
+    else
+      # move status and tracks out of folder
+      if [ -s "content/status.json" ]; then
+        mv content/status.json /home/pi/sisbot-server
+      fi
+      if [ -d "content/tracks" ]; then
+        mv content/tracks /home/pi/sisbot-server
+      fi
+
+      # move out of folder
+      cd /home/pi/sisbot-server
+
+      # remove the folder
+      rm -rf sisbot
+
+      # clone the folder back
+      git clone pi@webcenter.sisyphus-industries.com:/git/sisbot.git
+
+      # npm install
+      cd /home/pi/sisbot-server/sisbot && sudo -u pi npm install
+
+      # move status and tracks back into sisbot
+      if [ -s "../status.json" ]; then
+        mv ../status.json /home/pi/sisbot-server/sisbot/content
+      fi
+      if [ -d "../tracks" ]; then
+        mv ../tracks /home/pi/sisbot-server/sisbot/content
+      fi
     fi
+else
+  if [ -d "node_modules" ]; then
+    echo "Sisbot node_modules found"
+  else
+    echo "Sisbot node_modules missing"
+    IS_CONNECTED=$(check_internet)
 
-    sudo -u pi npm install
+    if [ "$IS_CONNECTED" = 0 ] ; then
+      echo "Failure! Unable to connect to network, please retry."
+    else
+      # if package.json doesn't exist or is empty, reset head
+      if [ ! -f "package.json" ] || [ ! -s "package.json" ]; then
+        echo "Package.json missing/empty, git reset"
+        git reset --hard
+      fi
+
+      sudo -u pi npm install
+    fi
   fi
 fi
+
+#SISCLOUD
 cd /home/pi/sisbot-server/siscloud
-if [ -d "node_modules" ]; then
-  echo "Siscloud node_modules found"
-else
-  echo "Siscloud node_modules missing"
-  IS_CONNECTED=$(check_internet)
+# check if there are any fatal git errors
+OUTPUT=$(git status 2>&1)
+if echo "$OUTPUT" | grep -q "fatal:"; then
+    echo "Siscloud git fatal error"
 
-  if [ "$IS_CONNECTED" = 0 ] ; then
-    echo "Failure! Unable to connect to network, please retry."
-  else
-    # if package.json doesn't exist or is empty, reset head
-    if [ ! -f "package.json" ] || [ ! -s "package.json" ]; then
-      echo "Package.json missing/empty, git reset"
-      git reset --hard
+    IS_CONNECTED=$(check_internet)
+
+    if [ "$IS_CONNECTED" = 0 ] ; then
+      echo "Failure! Unable to connect to network, please retry."
+    else
+      # move out of folder
+      cd /home/pi/sisbot-server
+
+      # remove the folder
+      rm -rf siscloud
+
+      # clone the folder back
+      git clone pi@webcenter.sisyphus-industries.com:/git/siscloud.git
+
+      # npm install
+      cd /home/pi/sisbot-server/siscloud && sudo -u pi npm install
     fi
+else
+  if [ -d "node_modules" ]; then
+    echo "Siscloud node_modules found"
+  else
+    echo "Siscloud node_modules missing"
+    IS_CONNECTED=$(check_internet)
 
-    sudo -u pi npm install
+    if [ "$IS_CONNECTED" = 0 ] ; then
+      echo "Failure! Unable to connect to network, please retry."
+    else
+      # if package.json doesn't exist or is empty, reset head
+      if [ ! -f "package.json" ] || [ ! -s "package.json" ]; then
+        echo "Package.json missing/empty, git reset"
+        git reset --hard
+      fi
+
+      sudo -u pi npm install
+    fi
   fi
 fi
-cd /home/pi/sisbot-server/sisproxy && git reset --hard
-if [ -d "node_modules" ]; then
-  echo "Sisproxy node_modules found"
-else
-  echo "Sisproxy node_modules missing"
-  IS_CONNECTED=$(check_internet)
 
-  if [ "$IS_CONNECTED" = 0 ] ; then
-    echo "Failure! Unable to connect to network, please retry."
+#SISPROXY
+cd /home/pi/sisbot-server/sisproxy
+# check if there are any fatal git errors
+OUTPUT=$(git status 2>&1)
+if echo "$OUTPUT" | grep -q "fatal:"; then
+    echo "Sisproxy git fatal error"
+
+    IS_CONNECTED=$(check_internet)
+
+    if [ "$IS_CONNECTED" = 0 ] ; then
+      echo "Failure! Unable to connect to network, please retry."
+    else
+      # move out of folder
+      cd /home/pi/sisbot-server
+
+      # remove the folder
+      rm -rf sisproxy
+
+      # clone the folder back
+      git clone pi@webcenter.sisyphus-industries.com:/git/sisproxy.git
+
+      # npm install
+      cd /home/pi/sisbot-server/sisproxy && sudo -u pi npm install
+    fi
+else
+  git reset --hard
+  if [ -d "node_modules" ]; then
+    echo "Sisproxy node_modules found"
   else
-    sudo -u pi npm install
+    echo "Sisproxy node_modules missing"
+    IS_CONNECTED=$(check_internet)
+
+    if [ "$IS_CONNECTED" = 0 ] ; then
+      echo "Failure! Unable to connect to network, please retry."
+    else
+      sudo -u pi npm install
+    fi
   fi
 fi
 
