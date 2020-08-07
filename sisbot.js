@@ -692,7 +692,7 @@ var sisbot = {
               logEvent(1, "Start Move to 1", self._move_to_rho, self.current_state.get('_end_rho'),self.current_state.get('active_track'));
               self._start_move_to_rho_1 = false; // clear
 
-              track.reversible = 'false';
+              track.is_reversible = 'false';
             }
 
             self._play_given_track(track, null);
@@ -719,7 +719,7 @@ var sisbot = {
             logEvent(1, "Start Move to 1", self._move_to_rho, self.current_state.get('_end_rho'),self.current_state.get('active_track'));
             self._start_move_to_rho_1 = false; // clear
 
-            track.reversible = 'false';
+            track.is_reversible = 'false';
             self._play_given_track(track, null);
           } else {
   					self._play_track(track, null); // autoplay after first home
@@ -1948,7 +1948,7 @@ var sisbot = {
             self._move_to_rho = 1;
             logEvent(1, "Start Move to 1", self._move_to_rho, self.current_state.get('_end_rho'),self.current_state.get('active_track'));
             self._start_move_to_rho_1 = false; // clear
-            track.reversible = "false"; // disallow reversing
+            track.is_reversible = "false"; // disallow reversing
           }
 
           // reverse the track?
@@ -2899,7 +2899,7 @@ var sisbot = {
     var move_to_rho = false; // do we even need to?
 
     // reverse track?
-    if (track.firstR != self.current_state.get('_end_rho') && track.lastR == self.current_state.get('_end_rho') && track.reversible == 'true') {
+    if (track.firstR != self.current_state.get('_end_rho') && track.lastR == self.current_state.get('_end_rho') && track.is_reversible == 'true') {
       logEvent(1, "Reverse track", _.omit(track, 'verts'));
     } else if (track.firstR != undefined && track.firstR != self.current_state.get('_end_rho')) {
       move_to_rho = track.firstR;
