@@ -55,6 +55,7 @@ balls           = 1
 
 default_offset  = 0         # Degrees to offset the theta position 0-360 (float), as defined by CSON
 start_pattern   = "white" # what pattern to begin with
+state           = 0 # 0:paused, 1:playing, 2:homing, 3:sleep, 4:wake
 old_photo       = 0 # to reduce recreation of colors
 
 g_time_start = 0 # for elapsed time
@@ -247,20 +248,25 @@ if __name__ == '__main__':
                     print "Secondary color {0} {1} {2} {3}\n".format(red,green,blue,white),
                     sys.stdout.flush()
                     new_color = True
-                elif command == 104: # h: homing state
-                    print "homing...\n",
+                elif command == 112: # p: paused state
+                    print "paused...\n",
+                    state = 0
                     sys.stdout.flush()
                 elif command == 80: # P: playing state
                     print "Playing...\n",
+                    state = 1
                     sys.stdout.flush()
-                elif command == 112: # p: paused state
-                    print "paused...\n",
+                elif command == 104: # h: homing state
+                    print "homing...\n",
+                    state = 2
                     sys.stdout.flush()
                 elif command == 115: # s: sleep state
                     print "sleep...\n",
+                    state = 3
                     sys.stdout.flush()
                 elif command == 119: # w: wake state
                     print "wake...\n",
+                    state = 4
                     sys.stdout.flush()
                 elif command == 111: # o: offset
                     [led_offset] = struct.unpack_from('>f', socket_bytes, 1)

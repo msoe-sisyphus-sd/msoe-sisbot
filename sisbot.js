@@ -865,6 +865,38 @@ var sisbot = {
 
 	  return mac_address;
 	},
+  get_system_stats: function(data, cb) {
+    logEvent(0, "Get System Stats", data);
+    var used = process.memoryUsage();
+    var return_value = {
+      node: { version: process.version},
+      fs: {}
+    };
+
+    for (var key in used) {
+      return_value.node[key] = Math.round(used[key] / 1024 / 1024 * 100) / 100;
+    }
+
+    // TODO: get file system space
+    exec('df | grep /dev/root', (error, stdout, stderr) => {
+      if (error) logEvent(2, 'df exec error:', error);
+      else {
+        var output = stdout.trim();
+        var split = output.match(/^[a-z\/]+\s+([0-9]+)\s+([0-9]+)\s+([0-9]+)\s+([0-9]+)%\s+\//i);
+        if (split && split.length == 5) {
+          return_value.fs.blocks = parseInt(split[1]);
+          return_value.fs.used = parseInt(split[2]);
+          return_value.fs.available = parseInt(split[3]);
+          return_value.fs.use_percent = parseInt(split[4]);
+        } else {
+          logEvent(2, "Mismatch on df results", output, split);
+          return_value.fs = output; // send what we got
+        }
+      }
+
+      if (cb) cb(null, return_value);
+    });
+  },
 	/***************************** Ansible connection ************************/
 	_register: function(self, service) {
 		logEvent(1, "_Register", service);
@@ -2868,7 +2900,7 @@ var sisbot = {
 
     // reverse track?
     if (track.firstR != self.current_state.get('_end_rho') && track.lastR == self.current_state.get('_end_rho') && track.reversible == 'true') {
-      logEvent(1, "Reverse track", track);
+      logEvent(1, "Reverse track", _.omit(track, 'verts'));
     } else if (track.firstR != undefined && track.firstR != self.current_state.get('_end_rho')) {
       move_to_rho = track.firstR;
       logEvent(1, "Not reversible, move to rho:", move_to_rho);
