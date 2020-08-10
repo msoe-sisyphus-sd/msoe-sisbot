@@ -1,10 +1,10 @@
-# 2020-08-05 1.10.73
+# 2020-08-05 1.10.71-73
   - System stats endpoint
   - State added to LEDs
-# 2020-05-22 1.10.71-72 1f9746343c83bb5c388fc85eeac234ba5763cd1b
   - Auto-generates "All Tracks Playlist"
   - Hotspot password/passcode merged
   - Calculate Track time remaining
+  - Pause between tracks timer
   - Streaming coordinates
   - Fix Ansible reconnect
 # 2020-03-11 1.10.67-70 504acb2722c107f9898ad105bd6dd671b5e8958f
