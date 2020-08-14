@@ -1249,6 +1249,11 @@ var sisbot = {
     var self = this;
     logEvent(1, "Set led pattern", data);
 
+    // =save pattern
+    if (data && data.id && data.type && data.type == 'led_pattern') {
+	    var pattern = this.collection.add(data, {merge: true});
+    }
+
     // set pattern
     this.lcpWrite({ value: 'i'+data.id }, function(err, resp) {
       if (err) return logEvent(2, "LCP Error", err);
@@ -1342,19 +1347,19 @@ var sisbot = {
     if (is_change && data._save) {
       var pattern = this.collection.get(this.current_state.get('led_pattern'));
 
-      if (data.white_value) pattern.set('white_value', data.white_value);
+      if (pattern && data.white_value) pattern.set('white_value', data.white_value);
 
       if (data.led_primary_color) {
         this.current_state.set('led_primary_color', data.led_primary_color);
 
         // update current pattern with this new color
-        pattern.set('led_primary_color', data.led_primary_color);
+        if (pattern) pattern.set('led_primary_color', data.led_primary_color);
       }
       if (data.led_secondary_color) {
         this.current_state.set('led_secondary_color', data.led_secondary_color);
 
         // update current pattern with this new color
-        pattern.set('led_secondary_color', data.led_secondary_color);
+        if (pattern) pattern.set('led_secondary_color', data.led_secondary_color);
       }
       logEvent(1, "Save color change", data.led_primary_color, data.led_secondary_color);
       this.save(null, null);

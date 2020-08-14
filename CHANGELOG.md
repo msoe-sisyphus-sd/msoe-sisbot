@@ -7,6 +7,7 @@
   - Pause between tracks timer
   - Streaming coordinates
   - Fix Ansible reconnect
+  - Fix LED pattern save bug
 # 2020-03-11 1.10.67-70 504acb2722c107f9898ad105bd6dd671b5e8958f
   - Clear passcode on GPIO hold
   - Prevent crash if trying to generate thumbnail and thr file is (somehow) missing
