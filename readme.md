@@ -1,3 +1,55 @@
+# MSOE Senior Design Team (WIP) Setup
+
+## Lights
+
+### The Best Approach
+* Buy some adafruit neopixels.
+* Obtain a power stepper chip and power supply from adafruit.
+* TODO - @ anyone who didn't set up their pi with the "I'm Broke Approach"
+
+### The I'm-Broke Approach
+* Buy a tiny adafruit neopixel [ring](https://www.googleadservices.com/pagead/aclk?sa=L&ai=DChcSEwiirOOo9KXsAhUP1sAKHWwHAmsYABAEGgJpbQ&ohost=www.google.com&cid=CAESQeD2k_xiOmpFU0NrGgKOQiSYEKDUKC_M6YeXkzNyOzruKMVyXRzbfb-lRwNbRhyCz9seKd6PXzYYWGN0_7Sc-eMU&sig=AOD64_12sBla0PVDRv2xbXUjTMTBWO6tkg&ctype=5&q=&ved=2ahUKEwib1deo9KXsAhXCHM0KHbWoBp8Q9aACegQIDBA6&adurl=)
+* Obtain 4 AAAA batteries, and a [battery holder](https://www.adafruit.com/product/3859)
+* Buy some very cheap jumper cables. You will need 2 male-male and 2 male-female.
+  * EECS helpdesk has some, and any EE student will also have some on hand you can borrow.
+  * Ebay sells these at approximately $2/bundle.
+* Obtain a breadboard. I got mine [here](https://www.ebay.com/itm/Universal-Mini-Solderless-Breadboard-400-Tie-Points-Arduino-and-Raspberry-Pi/193530856290?_trkparms=ispr%3D1&hash=item2d0f568362:g:LoIAAOSwAadfey5L&amdata=enc%3AAQAFAAACYBaobrjLl8XobRIiIML1V4Imu%252Fn%252BzU5L90Z278x5ickkfKe2vUidqHRg3XM2X2xOVP5H%252BeinU9fPtGWoMnxsCfTlWSvBiOIZi5vO65OBeNaHW9iwoAferZ%252Fpe2w74y%252FWPnFp3%252FQI34iZpSSGQ%252F8KEOhy8Gw0uXyinTdtSOrHmI5nKhgPDxu5ySrTA14RK8Cpnga50kTMdSX5N0mTQ5NGOeWZFqOSNgIpgQ8fvF%252BHlyXSvt%252Fw7Tiy1qSwv1yRPz2xELkggsGISLKuTo7e2bl%252Bla6uy0Pp4Xyvn6m4oYOcSp%252B7n75NX94UiPsiBbRC%252Ben0VOYndISADAZh2YUdwtZ%252FOm2Ef9J%252B%252BJqgkEC5rhGtB32RlMVBmUsQksVyXgf3yaFTNAGUEn6kU31PHDut%252FMAEXPIONOhLmZQwvoDWv1oyNhDyS49VqSUOGujqTkLp64cUjdpphPz9p2OGJIPcxyGBmdnLrHs9zMV%252FykMAk8D%252BwVIm%252BFxhSqhT%252BwiP0GC3emm4UJF4UIc5MNLAsmLOj1fy%252BbZt3kXNXMqnMba3IJOnJO7nzDd8fPLbZa%252BZHzROPksWOuuVAn7TJEb1JCqcYs%252Bzkuv5QprQPkY%252Bm3HnsapmqoC4bIkr7Kmk5LEq1zIzsoHxGUXgTqv8ySFntAsmx3qzBzuaiUE%252FNybaOw3W%252BjD5vM3CdVlZd%252BInlVejBTZ97KKKtAdU%252B1HzdPvCT1sH28NKIi0o%252FvCK%252B9WgEGpR8%252FwE0ku3lT1i4KE9szlyIbvrhuNYrhApKbHm5CZlHX%252FWoHvQuBHzMAYc4pg3ge2ysK2CDszc%7Ccksum%3A1935308562907c997ec6791e44859ffc986a7da9c496%7Campid%3APL_CLK%7Cclp%3A2334524) for $4.
+* Wiring:
+  * Connect the red lead on the battery housing to the (+) length-wise vertical column of the breadboard.
+  * Connect the black lead on the battery housing to the (-) length-wise vertical column on the breadboard.
+  * Connect a female-male lead from a GND on the raspberry pi to the (-) length-wise vertical column on the breadboard. This should be the same column the battery is using.
+  * Connect a male-female lead from GPIO 18 on the raspberry pi to the DataIn on the neopixel.
+  * Connect a male-female lead from a GND on the neopixel to the (-) column on the breadboard, after the GND from the raspberry pi.
+  * Connect a male-female lead from the 5V on the neopixel to the (+) column on the breadboard.
+
+* Your pixels should now be connected. They WILL NOT light up until you run something on them, so don't be alarmed if they do nothing.
+* Make friends with someone who owns a soldering iron and have the solder your cables to the neopixel itself. This is not required but can save some connectivity headaches.
+* This section is a work in progress and will be updated as the semester continues.
+
+
+## Pi Setup
+
+### The Quick and Dirty Approach
+* Probably the easiest way to do this is going to be to use a production image off the SD card.
+* This image is currently located [here](https://msoe365-my.sharepoint.com/:u:/g/personal/flemingg_msoe_edu/EcWzDhn2a0xEp_nhoAfBOZsBfAl_P7hAyI2DwEuwnBZu2g?e=OErzQn)
+* Once you have downloaded the disk file, you will need to use a disk imager.
+  * I used the disk imager [here](https://sourceforge.net/projects/win32diskimager/)
+  * It looks like malware but it worked for me.
+* Use disk imager to write to a CLEAN sd card (see linked article above). Be careful that you are writing the correct card!
+  * This might take a bit to write. For me it took ~20 minutes.
+* Once written, you can run the image on a raspberry pi 3. I am not sure whether this works on a pi 4, so be careful.
+
+* For adding access to our team's work in gitlab without losing sync with the origin, run the following commands:
+  * in /home/pi/sisbot-server/sisproxy: `git remote add fork git@gitlab.com:msoe.edu/sdl/sd21/sisyphus/msoe-sisproxy.git`
+  * in /home/pi/sisbot-server/siscloud: `git remote add fork git@gitlab.com:msoe.edu/sdl/sd21/sisyphus/msoe-siscloud.git`
+  * in /home/pi/sisbot-server/sisbot: `git remote add fork git@gitlab.com:msoe.edu/sdl/sdl21/sisyphus/msoe-sisbot.git`
+
+* Now when you push and pull from our team's repo, you'll use commands like `git pull fork master` or `git push fork <my-feature-branch`.
+
+
+### A More Refined Approach
+TODO - how to manually get pi to prod standards
+
 # Sisbot Server
 
 > Web server that controls the Sisyphus sand plotter
@@ -10,8 +62,10 @@ Consists of a Node.js web server using Socket.io to provide a WebSocket API to t
 2. Run `nvm install` to make sure you have the proper version of Node.js installed.
 3. Run `nvm use` to activate the current version of Node.js (as specified in the `.nvmrc` file)
 4. Run `npm install` to install project dependences.
-5. Run `npm start` to boot up the application.
-6. View the application at <http://localhost/>
+5. Make a copy of `configs/example-whichcson.js` and rename it to `configs/whichcson.js`
+6. Modify the module export in `configs/whichcson.js` to be `default.cson`
+7. Run `npm start` to boot up the application.
+8. View the application at <http://localhost/>
 
 ## Development
 
