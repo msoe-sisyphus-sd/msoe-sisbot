@@ -235,7 +235,19 @@ if __name__ == '__main__':
                     [green] = struct.unpack_from('>B', socket_bytes, 2)
                     [blue] = struct.unpack_from('>B', socket_bytes, 3)
                     [white] = struct.unpack_from('>B', socket_bytes, 4)
-                    primary_color = Color(red,green,blue,white)
+
+                    current_color = primary_color
+                    changed_color = Color(red, green, blue, white)
+
+                    fade_time = 0
+                    fade_total = 128
+                    while fade_time < fade_total:
+                        fill(strip, colorBlend(primary_color, changed_color, fade_time/float(fade_total)))
+                        strip.show()
+                        time.sleep(10/1000.0)
+                        fade_time += 1
+                    primary_color = changed_color
+
                     print "Primary color {0} {1} {2} {3}\n".format(red,green,blue,white),
                     sys.stdout.flush()
                     new_color = True
