@@ -205,7 +205,7 @@ fi
 start_time="$(date -u +%s)"
 
 {
-  sudo NODE_ENV=sisbot node server.js >> /var/log/sisyphus/proxy.log  2>&1
+  sudo NODE_ENV=sisbot FLASK_ENV=production node server.js >> /var/log/sisyphus/proxy.log  2>&1
 } || {
   end_time="$(date -u +%s)"
   elapsed="$(($end_time-$start_time))"
